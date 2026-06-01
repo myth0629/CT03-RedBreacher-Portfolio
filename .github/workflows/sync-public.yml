@@ -46,8 +46,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          source_subject="$(git -C ../private-source log -1 --pretty=%s)"
-          source_sha="$(git -C ../private-source rev-parse --short HEAD)"
+          source_subject="$(git -C ../private-source log -1 --first-parent --no-merges --pretty=%s)"
+          source_sha="$(git -C ../private-source log -1 --first-parent --no-merges --pretty=%h)"
 
           if [ -z "$(git status --porcelain)" ]; then
             echo "No public-safe changes to sync."
