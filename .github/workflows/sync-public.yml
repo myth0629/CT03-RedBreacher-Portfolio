@@ -30,32 +30,12 @@ jobs:
         run: |
           mkdir public-snapshot
 
-          # 유료 에셋 누락을 방지하기 위해 제외 목록이 아니라 공개 허용 파일만 복사한다.
+          # 외부 유료 에셋은 External Assets 폴더에 모아두고 공개 동기화에서 제외한다.
           rsync -av \
             --exclude='.git/***' \
-            --include='*/' \
-            --include='.gitignore' \
-            --include='README*' \
-            --include='LICENSE*' \
-            --include='Packages/***' \
-            --include='ProjectSettings/***' \
-            --include='Assets/*.cs' \
-            --include='Assets/*.cs.meta' \
-            --include='Assets/*.asmdef' \
-            --include='Assets/*.asmdef.meta' \
-            --include='Assets/*.asmref' \
-            --include='Assets/*.asmref.meta' \
-            --include='Assets/*.inputactions' \
-            --include='Assets/*.inputactions.meta' \
-            --include='Assets/**/*.cs' \
-            --include='Assets/**/*.cs.meta' \
-            --include='Assets/**/*.asmdef' \
-            --include='Assets/**/*.asmdef.meta' \
-            --include='Assets/**/*.asmref' \
-            --include='Assets/**/*.asmref.meta' \
-            --include='Assets/**/*.inputactions' \
-            --include='Assets/**/*.inputactions.meta' \
-            --exclude='*' \
+            --exclude='.github/workflows/sync-public.yml' \
+            --exclude='Assets/External Assets/***' \
+            --exclude='Assets/External Assets.meta' \
             private-source/ public-snapshot/
 
       - name: Publish snapshot
