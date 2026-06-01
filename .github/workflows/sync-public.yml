@@ -38,6 +38,14 @@ jobs:
             --include='LICENSE*' \
             --include='Packages/***' \
             --include='ProjectSettings/***' \
+            --include='Assets/*.cs' \
+            --include='Assets/*.cs.meta' \
+            --include='Assets/*.asmdef' \
+            --include='Assets/*.asmdef.meta' \
+            --include='Assets/*.asmref' \
+            --include='Assets/*.asmref.meta' \
+            --include='Assets/*.inputactions' \
+            --include='Assets/*.inputactions.meta' \
             --include='Assets/**/*.cs' \
             --include='Assets/**/*.cs.meta' \
             --include='Assets/**/*.asmdef' \
