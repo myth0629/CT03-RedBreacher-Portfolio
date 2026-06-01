@@ -32,6 +32,7 @@ jobs:
 
           # 유료 에셋 누락을 방지하기 위해 제외 목록이 아니라 공개 허용 파일만 복사한다.
           rsync -av \
+            --exclude='.git/***' \
             --include='*/' \
             --include='.gitignore' \
             --include='README*' \
@@ -65,7 +66,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if git diff --quiet && git diff --cached --quiet; then
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No public-safe changes to sync."
             exit 0
           fi
