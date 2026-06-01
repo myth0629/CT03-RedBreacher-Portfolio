@@ -46,11 +46,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          source_subject="$(git -C ../private-source log -1 --pretty=%s)"
+          source_sha="$(git -C ../private-source rev-parse --short HEAD)"
+
           if [ -z "$(git status --porcelain)" ]; then
             echo "No public-safe changes to sync."
             exit 0
           fi
 
           git add -A
-          git commit -m "Sync public-safe source snapshot"
+          git commit -m "${source_subject}" -m "Synced from private source commit ${source_sha}."
           git push
