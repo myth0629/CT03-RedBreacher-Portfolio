@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 3776493461757379785}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.45651, y: 0, z: 2.30007}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -50,3 +50,4 @@ MonoBehaviour:
   hitEffectPrefab: {fileID: 1096352044232144, guid: 6e4b9c1925f0d3f4d8446e551a2e20d3, type: 3}
   effectCleanupDelay: 2
   collisionRadius: 0.2
+  knockbackForce: 2

@@ -99,6 +99,7 @@ public class PlayerProjectile : MonoBehaviour
         hasHit = false;
 
         transform.position = CombatPlane.WithFixedY(transform.position);
+        // Hovl 투사체는 transform.forward 기준으로 움직이므로 루트 forward를 실제 발사 방향에 맞춘다.
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
 
         SpawnFireFlashEffect();

@@ -88,7 +88,7 @@ public class EnemyController : MonoBehaviour
         if (distance <= StopDistanceValue)
         {
             // 플레이어와 겹치지 않도록 지정 거리에서 멈춘다.
-            transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            CombatPlane.SetYOnlyRotation(transform, direction);
             StopBody();
             return;
         }
@@ -96,7 +96,7 @@ public class EnemyController : MonoBehaviour
         float moveDistance = MoveSpeedValue * Time.fixedDeltaTime;
         float clampedMoveDistance = Mathf.Min(moveDistance, distance - StopDistanceValue);
         transform.position = CombatPlane.WithFixedY(Vector3.MoveTowards(currentPosition, targetPosition, clampedMoveDistance));
-        transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        CombatPlane.SetYOnlyRotation(transform, direction);
         StopBody();
     }
 

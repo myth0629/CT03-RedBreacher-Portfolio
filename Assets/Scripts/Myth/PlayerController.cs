@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Config")]
     [SerializeField] private PlayerUnitConfig unitConfig;
+    [SerializeField] private Transform unitRoot;
 
     [Header("Auto Combat")]
     [SerializeField] private float attackRange = 6f;
@@ -28,7 +29,11 @@ public class PlayerController : MonoBehaviour
 
     private CombatHealth health;
     private Vehicle vehicle;
+    private Turret turret;
     private CombatHealth currentTarget;
+    private PlayerUnitConfig appliedUnitConfig;
+    private GameObject spawnedUnitObject;
+    private Vector3 weaponAimDirection;
     private float nextAttackTime;
 
     public CombatHealth Health => health;
@@ -50,13 +55,15 @@ public class PlayerController : MonoBehaviour
             health = gameObject.AddComponent<CombatHealth>();
         }
 
+        ApplyUnitConfig();
         EnsureCombatComponents();
-        vehicle = GetComponentInChildren<Vehicle>();
+        RefreshUnitReferences();
     }
 
     private void Update()
     {
         CombatPlane.ClampTransform(transform);
+        ApplyUnitConfig();
 
         if (health != null && health.IsDead)
         {
@@ -81,17 +88,18 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        RotateToward(targetDirection);
-
         if (!IsTargetInRange(currentTarget))
         {
+            RotateToward(targetDirection);
+            AimWeaponForward();
             MoveUntilInRange(currentTarget, targetDirection);
             return;
         }
 
         SetVehicleMoveInput(0f, 0f);
+        AimWeaponToward(targetDirection);
 
-        if (!IsFacing(targetDirection) || Time.time < nextAttackTime)
+        if (!IsWeaponFacing(targetDirection) || Time.time < nextAttackTime)
         {
             return;
         }
@@ -127,6 +135,11 @@ public class PlayerController : MonoBehaviour
             playerCollider.radius = 0.45f;
         }
 
+        EnsureFirePoint();
+    }
+
+    private void EnsureFirePoint()
+    {
         if (firePoint == null)
         {
             GameObject point = new GameObject("FirePoint");
@@ -134,6 +147,105 @@ public class PlayerController : MonoBehaviour
             point.transform.localPosition = Vector3.forward * 0.45f;
             firePoint = point.transform;
         }
+    }
+
+    private void ApplyUnitConfig()
+    {
+        if (appliedUnitConfig == unitConfig)
+        {
+            return;
+        }
+
+        appliedUnitConfig = unitConfig;
+        ReplaceUnitPrefab(unitConfig != null ? unitConfig.UnitPrefab : null);
+        RefreshUnitReferences();
+        EnsureFirePoint();
+    }
+
+    private void ReplaceUnitPrefab(GameObject unitPrefab)
+    {
+        if (spawnedUnitObject != null)
+        {
+            Destroy(spawnedUnitObject);
+            spawnedUnitObject = null;
+        }
+
+        if (unitPrefab == null)
+        {
+            return;
+        }
+
+        Transform root = GetOrCreateUnitRoot();
+        spawnedUnitObject = Instantiate(unitPrefab, root);
+        spawnedUnitObject.transform.localPosition = Vector3.zero;
+        spawnedUnitObject.transform.localRotation = Quaternion.identity;
+        spawnedUnitObject.transform.localScale = Vector3.one;
+
+        // 기체 프리팹을 교체하면 이전 타겟/총구 참조가 어긋날 수 있어 다시 잡는다.
+        currentTarget = null;
+        firePoint = FindChildByName(spawnedUnitObject.transform, "FirePoint");
+    }
+
+    private Transform GetOrCreateUnitRoot()
+    {
+        if (unitRoot != null)
+        {
+            return unitRoot;
+        }
+
+        Transform existingRoot = transform.Find("UnitRoot");
+        if (existingRoot != null)
+        {
+            unitRoot = existingRoot;
+            return unitRoot;
+        }
+
+        GameObject rootObject = new GameObject("UnitRoot");
+        rootObject.transform.SetParent(transform);
+        rootObject.transform.localPosition = Vector3.zero;
+        rootObject.transform.localRotation = Quaternion.identity;
+        rootObject.transform.localScale = Vector3.one;
+        unitRoot = rootObject.transform;
+        return unitRoot;
+    }
+
+    private void RefreshUnitReferences()
+    {
+        if (firePoint == null && spawnedUnitObject != null)
+        {
+            firePoint = FindChildByName(spawnedUnitObject.transform, "FirePoint");
+        }
+
+        vehicle = GetComponentInChildren<Vehicle>();
+        turret = GetComponentInChildren<Turret>();
+        if (firePoint == null && turret != null && turret.FireTransform != null)
+        {
+            firePoint = turret.FireTransform;
+        }
+    }
+
+    private Transform FindChildByName(Transform root, string childName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindChildByName(root.GetChild(i), childName);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private CombatHealth FindClosestTarget()
@@ -193,9 +305,8 @@ public class PlayerController : MonoBehaviour
 
     private void RotateToward(Vector3 direction)
     {
-        // 플레이어 정면이 타겟을 향하도록 X/Z 평면에서만 회전한다.
-        Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, RotationSpeedValue * Time.deltaTime);
+        // 플레이어 본체는 눕힌 스프라이트 기준이라 X/Z를 유지하고 Y축만 이동 방향으로 돌린다.
+        CombatPlane.RotateYOnlyToward(transform, direction, RotationSpeedValue * Time.deltaTime);
     }
 
     private void MoveUntilInRange(CombatHealth target, Vector3 direction)
@@ -220,9 +331,49 @@ public class PlayerController : MonoBehaviour
         return Vector3.Angle(forward, direction) <= FireAngleToleranceValue;
     }
 
+    private void AimWeaponToward(Vector3 direction)
+    {
+        weaponAimDirection = CombatPlane.ProjectDirection(direction);
+
+        if (turret != null)
+        {
+            turret.AimWorld(direction);
+            return;
+        }
+
+        if (firePoint != null)
+        {
+            // 터렛 컴포넌트가 없으면 본체 대신 총구 Transform의 Z축만 돌린다.
+            CombatPlane.RotateZOnlyToward(firePoint, direction, RotationSpeedValue * Time.deltaTime);
+        }
+    }
+
+    private void AimWeaponForward()
+    {
+        Vector3 forwardDirection = CombatPlane.DirectionFromYRotation(transform);
+        if (forwardDirection.sqrMagnitude <= 0f)
+        {
+            forwardDirection = CombatPlane.ProjectDirection(transform.forward);
+        }
+
+        // 이동 중에는 타겟 조준보다 본체 정면 정렬을 우선한다.
+        AimWeaponToward(forwardDirection);
+    }
+
+    private bool IsWeaponFacing(Vector3 direction)
+    {
+        Vector3 forward = weaponAimDirection.sqrMagnitude > 0f ? weaponAimDirection : GetWeaponForwardDirection();
+        if (forward.sqrMagnitude <= 0f)
+        {
+            return false;
+        }
+
+        return Vector3.Angle(forward, direction) <= FireAngleToleranceValue;
+    }
+
     private void FireForward()
     {
-        Vector3 direction = CombatPlane.ProjectDirection(firePoint.forward);
+        Vector3 direction = weaponAimDirection.sqrMagnitude > 0f ? weaponAimDirection : GetWeaponForwardDirection();
         if (direction.sqrMagnitude <= 0f)
         {
             direction = CombatPlane.ProjectDirection(transform.forward);
@@ -236,11 +387,40 @@ public class PlayerController : MonoBehaviour
         // 투사체는 타겟 위치가 아니라 플레이어 정면 방향으로만 발사한다.
         ProjectileConfig activeProjectileConfig = ProjectileConfigValue;
         PlayerProjectile projectile = CreateProjectile();
-        projectile.transform.position = CombatPlane.WithFixedY(firePoint.position);
-        projectile.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        projectile.transform.position = GetFirePosition();
         projectile.Configure(activeProjectileConfig);
         projectile.ConfigureEffects(fireFlashEffectPrefab, projectileEffectPrefab, hitEffectPrefab);
         projectile.Launch(direction, AttackDamageValue, GetProjectileSpeed(activeProjectileConfig), GetProjectileLifetime(activeProjectileConfig), health);
+    }
+
+    private Vector3 GetFirePosition()
+    {
+        if (turret != null && firePoint != null)
+        {
+            return CombatPlane.PositionFromZPlaneChild(turret.transform, firePoint, weaponAimDirection);
+        }
+
+        if (firePoint != null)
+        {
+            return CombatPlane.WithFixedY(firePoint.position);
+        }
+
+        return CombatPlane.WithFixedY(transform.position);
+    }
+
+    private Vector3 GetWeaponForwardDirection()
+    {
+        if (turret != null)
+        {
+            return CombatPlane.DirectionFromZRotation(turret.transform);
+        }
+
+        if (firePoint != null)
+        {
+            return CombatPlane.DirectionFromZRotation(firePoint);
+        }
+
+        return CombatPlane.DirectionFromYRotation(transform);
     }
 
     private PlayerProjectile CreateProjectile()

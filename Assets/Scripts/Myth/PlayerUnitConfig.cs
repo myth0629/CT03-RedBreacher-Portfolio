@@ -3,6 +3,9 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Myth/Combat/Player Unit Config")]
 public class PlayerUnitConfig : ScriptableObject
 {
+    [Header("Visual")]
+    [SerializeField] private GameObject unitPrefab;
+
     [Header("Combat")]
     [SerializeField] private float attackRange = 6f;
     [SerializeField] private float attackDamage = 10f;
@@ -14,6 +17,7 @@ public class PlayerUnitConfig : ScriptableObject
     [Header("Projectile")]
     [SerializeField] private ProjectileConfig projectileConfig;
 
+    public GameObject UnitPrefab => unitPrefab;
     public float AttackRange => attackRange;
     public float AttackDamage => attackDamage;
     public float AttackInterval => attackInterval;
