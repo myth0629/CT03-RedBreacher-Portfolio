@@ -1,0 +1,67 @@
+name: Sync public repository
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout private source
+        uses: actions/checkout@v4
+        with:
+          path: private-source
+
+      - name: Checkout public repository
+        uses: actions/checkout@v4
+        with:
+          repository: kyungil-meta12/CT03-RedBreacher
+          path: public-repo
+          ssh-key: ${{ secrets.PUBLIC_SYNC_DEPLOY_KEY }}
+
+      - name: Build public-safe snapshot
+        run: |
+          mkdir public-snapshot
+
+          # 유료 에셋 누락을 방지하기 위해 제외 목록이 아니라 공개 허용 파일만 복사한다.
+          rsync -av \
+            --include='*/' \
+            --include='.gitignore' \
+            --include='README*' \
+            --include='LICENSE*' \
+            --include='Packages/***' \
+            --include='ProjectSettings/***' \
+            --include='Assets/**/*.cs' \
+            --include='Assets/**/*.cs.meta' \
+            --include='Assets/**/*.asmdef' \
+            --include='Assets/**/*.asmdef.meta' \
+            --include='Assets/**/*.asmref' \
+            --include='Assets/**/*.asmref.meta' \
+            --include='Assets/**/*.inputactions' \
+            --include='Assets/**/*.inputactions.meta' \
+            --exclude='*' \
+            private-source/ public-snapshot/
+
+      - name: Publish snapshot
+        run: |
+          rsync -av --delete --exclude='.git/' public-snapshot/ public-repo/
+
+          cd public-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No public-safe changes to sync."
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "Sync public-safe source snapshot"
+          git push
