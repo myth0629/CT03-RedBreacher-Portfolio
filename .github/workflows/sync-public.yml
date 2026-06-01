@@ -24,7 +24,7 @@ jobs:
         with:
           repository: kyungil-meta12/CT03-RedBreacher
           path: public-repo
-          ssh-key: ${{ secrets.PUBLIC_SYNC_DEPLOY_KEY }}
+          token: ${{ secrets.PUBLIC_SYNC_TOKEN }}
 
       - name: Build public-safe snapshot
         run: |
