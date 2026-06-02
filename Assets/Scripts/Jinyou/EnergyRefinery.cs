@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -17,7 +18,9 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
     [SerializeField] private int upgradeCost = 250;
     [SerializeField] private int requiredCommanderLevel = 1;
     [SerializeField] private int requiredResearchLabLevel = 1;
+    [SerializeField] private List<int> requiredResearchLabLevelByLevel = new List<int>();
     [SerializeField] private float upgradeDurationSeconds = 10f;
+    [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
 
     [Header("Events")]
     public UnityEvent<int> OnCreditsChanged = new UnityEvent<int>();
@@ -28,15 +31,18 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
     private float productionBuffer;
     private bool isUpgrading;
     private float upgradeRemainingSeconds;
+    private float currentUpgradeDurationSeconds;
 
     public int Level => level;
+    public int MaxLevel => maxLevel;
     public int StoredCredits => storedCredits;
     public int StorageCapacity => storageCapacity;
     public int UpgradeCost => upgradeCost;
     public int RequiredCommanderLevel => requiredCommanderLevel;
-    public int RequiredResearchLabLevel => requiredResearchLabLevel;
+    public int RequiredResearchLabLevel => GetRequiredResearchLabLevelForCurrentUpgrade();
     public bool IsUpgrading => isUpgrading;
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
+    public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
     public float CreditsPerMinute => creditsPerMinute;
     public bool IsStorageFull => storedCredits >= storageCapacity;
 
@@ -78,9 +84,16 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
         return !isUpgrading && level < maxLevel && credits >= upgradeCost && commanderLevel >= requiredCommanderLevel;
     }
 
+    public int GetLevelLimit(int researchLabLevel)
+    {
+        return Mathf.Min(maxLevel, Mathf.Max(1, researchLabLevel) * 2);
+    }
+
     public bool CanStartUpgrade(int availableCredits, int commanderLevel, int researchLabLevel)
     {
-        return CanUpgrade(availableCredits, commanderLevel) && researchLabLevel >= requiredResearchLabLevel;
+        return CanUpgrade(availableCredits, commanderLevel)
+            && researchLabLevel >= RequiredResearchLabLevel
+            && level < GetLevelLimit(researchLabLevel);
     }
 
     public bool TryStartUpgrade(ref int availableCredits, int commanderLevel, int researchLabLevel)
@@ -121,14 +134,16 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
     {
         OnUpgradeStarted.Invoke();
 
-        if (upgradeDurationSeconds <= 0f)
+        currentUpgradeDurationSeconds = GetUpgradeDurationForCurrentLevel();
+
+        if (currentUpgradeDurationSeconds <= 0f)
         {
             CompleteUpgrade();
             return;
         }
 
         isUpgrading = true;
-        upgradeRemainingSeconds = upgradeDurationSeconds;
+        upgradeRemainingSeconds = currentUpgradeDurationSeconds;
     }
 
     private void TickUpgrade(float deltaTime)
@@ -157,6 +172,7 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
 
         isUpgrading = false;
         upgradeRemainingSeconds = 0f;
+        currentUpgradeDurationSeconds = 0f;
         level++;
         storageCapacity = Mathf.RoundToInt(storageCapacity * 1.25f);
         creditsPerMinute = Mathf.Round(creditsPerMinute * 1.2f);
@@ -164,6 +180,56 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
         requiredCommanderLevel++;
         OnLevelChanged.Invoke(level);
         OnUpgradeCompleted.Invoke();
+    }
+
+    private float GetUpgradeDurationForCurrentLevel()
+    {
+        int index = Mathf.Max(0, level - 1);
+        if (index < upgradeDurationSecondsByLevel.Count)
+        {
+            return Mathf.Max(0f, upgradeDurationSecondsByLevel[index]);
+        }
+
+        return upgradeDurationSeconds;
+    }
+
+    private int GetRequiredResearchLabLevelForCurrentUpgrade()
+    {
+        int index = Mathf.Max(0, level - 1);
+        if (index < requiredResearchLabLevelByLevel.Count)
+        {
+            return Mathf.Max(1, requiredResearchLabLevelByLevel[index]);
+        }
+
+        return Mathf.Max(1, requiredResearchLabLevel);
+    }
+
+    private void NormalizeUpgradeDurations()
+    {
+        int targetCount = Mathf.Max(0, maxLevel - 1);
+        while (upgradeDurationSecondsByLevel.Count < targetCount)
+        {
+            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
+        }
+
+        for (int i = 0; i < upgradeDurationSecondsByLevel.Count; i++)
+        {
+            upgradeDurationSecondsByLevel[i] = Mathf.Max(0f, upgradeDurationSecondsByLevel[i]);
+        }
+    }
+
+    private void NormalizeResearchLabRequirements()
+    {
+        int targetCount = Mathf.Max(0, maxLevel - 1);
+        while (requiredResearchLabLevelByLevel.Count < targetCount)
+        {
+            requiredResearchLabLevelByLevel.Add(requiredResearchLabLevel);
+        }
+
+        for (int i = 0; i < requiredResearchLabLevelByLevel.Count; i++)
+        {
+            requiredResearchLabLevelByLevel[i] = Mathf.Max(1, requiredResearchLabLevelByLevel[i]);
+        }
     }
 
     private void OnValidate()
@@ -176,6 +242,8 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
         upgradeCost = Mathf.Max(0, upgradeCost);
         requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
         requiredResearchLabLevel = Mathf.Max(1, requiredResearchLabLevel);
+        NormalizeResearchLabRequirements();
         upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
+        NormalizeUpgradeDurations();
     }
 }

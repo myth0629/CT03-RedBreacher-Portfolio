@@ -12,8 +12,11 @@ public class EnergyRefineryPanel : MonoBehaviour
     [SerializeField] private TMP_Text storedCreditsText;
     [SerializeField] private TMP_Text productionText;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeConditionText;
+    [SerializeField] private Image upgradeProgressFill;
 
     private EnergyRefinery refinery;
+    private float observedUpgradeDuration;
 
     private void OnEnable()
     {
@@ -102,7 +105,14 @@ public class EnergyRefineryPanel : MonoBehaviour
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel);
+            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
+                refinery,
+                baseCampManager.Credits,
+                baseCampManager.CommanderLevel,
+                researchLabLevel));
         }
+
+        BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, refinery, ref observedUpgradeDuration);
     }
 
     private void ResolveReferences()

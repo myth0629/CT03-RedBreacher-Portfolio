@@ -12,15 +12,17 @@ public class StrategyResearchLabPanel : MonoBehaviour
     [SerializeField] private TMP_Text bossTicketText;
     [SerializeField] private TMP_Text offlineRewardText;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeConditionText;
+    [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text unlockText;
 
     private StrategyResearchLab researchLab;
+    private float observedUpgradeDuration;
 
     private void OnEnable()
     {
         ResolveReferences();
         upgradeButton?.onClick.AddListener(UpgradeResearchLab);
-        bossTicketButton?.onClick.AddListener(UseBossTicket);
         closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
@@ -28,7 +30,6 @@ public class StrategyResearchLabPanel : MonoBehaviour
     private void OnDisable()
     {
         upgradeButton?.onClick.RemoveListener(UpgradeResearchLab);
-        bossTicketButton?.onClick.RemoveListener(UseBossTicket);
         closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
@@ -66,12 +67,6 @@ public class StrategyResearchLabPanel : MonoBehaviour
         Refresh();
     }
 
-    private void UseBossTicket()
-    {
-        baseCampManager?.UseBossTicket();
-        Refresh();
-    }
-
     private void ClosePanel()
     {
         gameObject.SetActive(false);
@@ -88,7 +83,7 @@ public class StrategyResearchLabPanel : MonoBehaviour
 
         SetText(levelText, $"Lv. {researchLab.Level}");
         SetText(bossTicketText, $"{researchLab.BossTickets}/{researchLab.BossTicketCapacity}");
-        SetText(offlineRewardText, $"{researchLab.OfflineRewardLimitHours:0.0}h");
+        SetText(offlineRewardText, $"{researchLab.BossTicketsProducedPerDay}/day");
         SetText(upgradeText, researchLab.IsUpgrading
             ? $"Upgrading {researchLab.UpgradeRemainingSeconds:0}s"
             : $"Upgrade Cost {researchLab.UpgradeCost}");
@@ -96,15 +91,23 @@ public class StrategyResearchLabPanel : MonoBehaviour
 
         if (upgradeButton != null && baseCampManager != null)
         {
+            int researchLabLevel = researchLab.Level;
             upgradeButton.interactable = researchLab.CanStartUpgrade(
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
-                researchLab.Level);
+                researchLabLevel);
+            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
+                researchLab,
+                baseCampManager.Credits,
+                baseCampManager.CommanderLevel,
+                researchLabLevel));
         }
+
+        BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, researchLab, ref observedUpgradeDuration);
 
         if (bossTicketButton != null)
         {
-            bossTicketButton.interactable = researchLab.BossTickets > 0;
+            bossTicketButton.interactable = false;
         }
     }
 

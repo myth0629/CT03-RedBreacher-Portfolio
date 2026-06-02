@@ -10,6 +10,8 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private EnergyRefinery energyRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
+    [SerializeField] private BossDungeon bossDungeon;
+    [SerializeField] private PlayerProgression playerProgression;
     [SerializeField] private bool autoFindFacilities = true;
 
     [Header("Facility Panels")]
@@ -32,6 +34,8 @@ public class BaseCampManager : MonoBehaviour
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
+    public BossDungeon BossDungeon => bossDungeon;
+    public PlayerProgression PlayerProgression => playerProgression;
     public int CommanderLevel => commanderLevel;
     public int Credits => credits;
 
@@ -75,6 +79,8 @@ public class BaseCampManager : MonoBehaviour
         energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
+        bossDungeon ??= FindFirstObjectByType<BossDungeon>();
+        playerProgression ??= FindFirstObjectByType<PlayerProgression>();
     }
 
     public void CollectRefineryCredits()
@@ -115,9 +121,19 @@ public class BaseCampManager : MonoBehaviour
         coreCharger?.TrySelectRoute(routeId);
     }
 
+    public void InvestCoreRoute(string routeId)
+    {
+        coreCharger?.TryInvestRoute(routeId);
+    }
+
+    public void AddPlayerEnemyKillExperience(int stage)
+    {
+        (playerProgression ??= FindFirstObjectByType<PlayerProgression>())?.AddEnemyKillExperience(stage);
+    }
+
     public void UseBossTicket()
     {
-        researchLab?.TryUseBossTicket();
+        // Boss tickets are produced by the research lab and consumed only by BossDungeon.
     }
 
     public void OpenPanel(GameObject panel)
@@ -207,11 +223,14 @@ public class BaseCampManager : MonoBehaviour
 public interface IBaseCampFacility
 {
     int Level { get; }
+    int MaxLevel { get; }
     int UpgradeCost { get; }
     int RequiredCommanderLevel { get; }
     int RequiredResearchLabLevel { get; }
     bool IsUpgrading { get; }
     float UpgradeRemainingSeconds { get; }
+    float CurrentUpgradeDurationSeconds { get; }
+    int GetLevelLimit(int researchLabLevel);
     bool CanUpgrade(int credits, int commanderLevel);
     bool CanStartUpgrade(int credits, int commanderLevel, int researchLabLevel);
     bool TryStartUpgrade(ref int availableCredits, int commanderLevel, int researchLabLevel);

@@ -10,13 +10,18 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private Button shieldRouteButton;
     [SerializeField] private Button pierceDefenseRouteButton;
     [SerializeField] private Button survivalRouteButton;
+    [SerializeField] private Button investRouteButton;
     [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeConditionText;
+    [SerializeField] private Image upgradeProgressFill;
+    [SerializeField] private TMP_Text traitPointText;
     [SerializeField] private TMP_Text selectedRouteText;
     [SerializeField] private TMP_Text routeStateText;
 
     private CoreCharger coreCharger;
+    private float observedUpgradeDuration;
 
     private void OnEnable()
     {
@@ -26,6 +31,7 @@ public class CoreChargerPanel : MonoBehaviour
         shieldRouteButton?.onClick.AddListener(SelectShieldRoute);
         pierceDefenseRouteButton?.onClick.AddListener(SelectPierceDefenseRoute);
         survivalRouteButton?.onClick.AddListener(SelectSurvivalRoute);
+        investRouteButton?.onClick.AddListener(InvestSelectedRoute);
         closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
@@ -38,6 +44,7 @@ public class CoreChargerPanel : MonoBehaviour
         shieldRouteButton?.onClick.RemoveListener(SelectShieldRoute);
         pierceDefenseRouteButton?.onClick.RemoveListener(SelectPierceDefenseRoute);
         survivalRouteButton?.onClick.RemoveListener(SelectSurvivalRoute);
+        investRouteButton?.onClick.RemoveListener(InvestSelectedRoute);
     }
 
     private void Update()
@@ -80,27 +87,38 @@ public class CoreChargerPanel : MonoBehaviour
 
     private void SelectArmorRoute()
     {
-        SelectRoute("armor");
+        SelectRoute("health");
     }
 
     private void SelectShieldRoute()
     {
-        SelectRoute("shield");
+        SelectRoute("attack");
     }
 
     private void SelectPierceDefenseRoute()
     {
-        SelectRoute("pierce_defense");
+        SelectRoute("mobility");
     }
 
     private void SelectSurvivalRoute()
     {
-        SelectRoute("survival");
+        SelectRoute("critical");
     }
 
     private void SelectRoute(string routeId)
     {
         baseCampManager?.SelectCoreRoute(routeId);
+        Refresh();
+    }
+
+    private void InvestSelectedRoute()
+    {
+        if (coreCharger == null)
+        {
+            return;
+        }
+
+        baseCampManager?.InvestCoreRoute(coreCharger.SelectedRouteId);
         Refresh();
     }
 
@@ -122,6 +140,9 @@ public class CoreChargerPanel : MonoBehaviour
         SetText(upgradeText, coreCharger.IsUpgrading
             ? $"Upgrading {coreCharger.UpgradeRemainingSeconds:0}s"
             : $"Upgrade Cost {coreCharger.UpgradeCost}");
+        SetText(traitPointText, baseCampManager != null && baseCampManager.PlayerProgression != null
+            ? $"Trait Points {baseCampManager.PlayerProgression.TraitPoints}"
+            : "Trait Points --");
         SetText(selectedRouteText, string.IsNullOrEmpty(coreCharger.SelectedRouteId) ? "No Route Selected" : $"Selected: {coreCharger.SelectedRouteId}");
         SetText(routeStateText, BuildRouteSummary());
 
@@ -132,12 +153,24 @@ public class CoreChargerPanel : MonoBehaviour
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel);
+            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
+                coreCharger,
+                baseCampManager.Credits,
+                baseCampManager.CommanderLevel,
+                researchLabLevel));
         }
 
-        SetRouteButton(armorRouteButton, "armor");
-        SetRouteButton(shieldRouteButton, "shield");
-        SetRouteButton(pierceDefenseRouteButton, "pierce_defense");
-        SetRouteButton(survivalRouteButton, "survival");
+        BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, coreCharger, ref observedUpgradeDuration);
+
+        if (investRouteButton != null)
+        {
+            investRouteButton.interactable = coreCharger.CanInvestRoute(coreCharger.SelectedRouteId);
+        }
+
+        SetRouteButton(armorRouteButton, "health");
+        SetRouteButton(shieldRouteButton, "attack");
+        SetRouteButton(pierceDefenseRouteButton, "mobility");
+        SetRouteButton(survivalRouteButton, "critical");
     }
 
     private string BuildRouteSummary()
@@ -146,7 +179,9 @@ public class CoreChargerPanel : MonoBehaviour
 
         foreach (CoreCharger.CoreRoute route in coreCharger.Routes)
         {
-            summary += $"{route.displayName}: {(route.unlocked ? "OPEN" : $"Lv.{route.requiredChargerLevel}")}\n";
+            string state = route.unlocked ? "OPEN" : $"Charger Lv.{route.requiredChargerLevel}";
+            float bonus = route.investedPoints * route.bonusPerPoint;
+            summary += $"{route.displayName}: {state} / {route.investedPoints}/{route.maxPoints} {route.statType} +{bonus:0.##}\n";
         }
 
         return summary.TrimEnd();

@@ -10,7 +10,11 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     {
         public string routeId;
         public string displayName;
+        public PlayerUnitStatType statType;
         public int requiredChargerLevel = 1;
+        public int investedPoints;
+        public int maxPoints = 10;
+        public float bonusPerPoint = 1f;
         public bool unlocked;
     }
 
@@ -21,16 +25,21 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     [Header("Upgrade")]
     [SerializeField] private int upgradeCost = 400;
     [SerializeField] private int requiredCommanderLevel = 1;
-    [SerializeField] private int requiredResearchLabLevel = 2;
+    [SerializeField] private int requiredResearchLabLevel = 3;
+    [SerializeField] private List<int> requiredResearchLabLevelByLevel = new List<int>();
     [SerializeField] private float upgradeDurationSeconds = 10f;
+    [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
 
     [Header("Placeholder Core Routes")]
     [SerializeField] private List<CoreRoute> routes = new List<CoreRoute>
     {
-        new CoreRoute { routeId = "armor", displayName = "Armor Route", requiredChargerLevel = 1, unlocked = true },
-        new CoreRoute { routeId = "shield", displayName = "Shield Route", requiredChargerLevel = 1, unlocked = true },
-        new CoreRoute { routeId = "survival", displayName = "Survival Route", requiredChargerLevel = 2 }
+        new CoreRoute { routeId = "health", displayName = "Health Route", statType = PlayerUnitStatType.MaxHealth, requiredChargerLevel = 1, maxPoints = 10, bonusPerPoint = 10f, unlocked = true },
+        new CoreRoute { routeId = "attack", displayName = "Attack Route", statType = PlayerUnitStatType.AttackDamage, requiredChargerLevel = 1, maxPoints = 10, bonusPerPoint = 2f, unlocked = true },
+        new CoreRoute { routeId = "mobility", displayName = "Mobility Route", statType = PlayerUnitStatType.MoveSpeed, requiredChargerLevel = 2, maxPoints = 5, bonusPerPoint = 0.1f },
+        new CoreRoute { routeId = "critical", displayName = "Critical Route", statType = PlayerUnitStatType.CritChance, requiredChargerLevel = 3, maxPoints = 5, bonusPerPoint = 0.02f }
     };
+
+    [SerializeField] private PlayerProgression playerProgression;
 
     [Header("Events")]
     public UnityEvent<int> OnLevelChanged = new UnityEvent<int>();
@@ -42,13 +51,16 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     private string selectedRouteId;
     private bool isUpgrading;
     private float upgradeRemainingSeconds;
+    private float currentUpgradeDurationSeconds;
 
     public int Level => level;
+    public int MaxLevel => maxLevel;
     public int UpgradeCost => upgradeCost;
     public int RequiredCommanderLevel => requiredCommanderLevel;
-    public int RequiredResearchLabLevel => requiredResearchLabLevel;
+    public int RequiredResearchLabLevel => GetRequiredResearchLabLevelForCurrentUpgrade();
     public bool IsUpgrading => isUpgrading;
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
+    public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
     public string SelectedRouteId => selectedRouteId;
     public IReadOnlyList<CoreRoute> Routes => routes;
 
@@ -80,14 +92,60 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return true;
     }
 
+    public bool CanInvestRoute(string routeId)
+    {
+        CoreRoute route = FindRoute(routeId);
+        return route != null
+            && route.unlocked
+            && route.investedPoints < route.maxPoints
+            && ResolvePlayerProgression() != null
+            && playerProgression.TraitPoints > 0;
+    }
+
+    public bool TryInvestRoute(string routeId)
+    {
+        CoreRoute route = FindRoute(routeId);
+        if (route == null || !CanInvestRoute(routeId) || !playerProgression.TrySpendTraitPoint())
+        {
+            return false;
+        }
+
+        route.investedPoints++;
+        selectedRouteId = routeId;
+        Debug.Log($"Core route invested: {route.displayName} Lv.{route.investedPoints}, {route.statType} +{GetRouteBonus(route):0.##}");
+        OnRouteSelected.Invoke(routeId);
+        return true;
+    }
+
+    public float GetStatBonus(PlayerUnitStatType statType)
+    {
+        float bonus = 0f;
+        foreach (CoreRoute route in routes)
+        {
+            if (route.statType == statType)
+            {
+                bonus += GetRouteBonus(route);
+            }
+        }
+
+        return bonus;
+    }
+
     public bool CanUpgrade(int credits, int commanderLevel)
     {
         return !isUpgrading && level < maxLevel && credits >= upgradeCost && commanderLevel >= requiredCommanderLevel;
     }
 
+    public int GetLevelLimit(int researchLabLevel)
+    {
+        return Mathf.Min(maxLevel, Mathf.Max(1, researchLabLevel) + 2);
+    }
+
     public bool CanStartUpgrade(int availableCredits, int commanderLevel, int researchLabLevel)
     {
-        return CanUpgrade(availableCredits, commanderLevel) && researchLabLevel >= requiredResearchLabLevel;
+        return CanUpgrade(availableCredits, commanderLevel)
+            && researchLabLevel >= RequiredResearchLabLevel
+            && level < GetLevelLimit(researchLabLevel);
     }
 
     public bool TryStartUpgrade(ref int availableCredits, int commanderLevel, int researchLabLevel)
@@ -128,14 +186,16 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     {
         OnUpgradeStarted.Invoke();
 
-        if (upgradeDurationSeconds <= 0f)
+        currentUpgradeDurationSeconds = GetUpgradeDurationForCurrentLevel();
+
+        if (currentUpgradeDurationSeconds <= 0f)
         {
             CompleteUpgrade();
             return;
         }
 
         isUpgrading = true;
-        upgradeRemainingSeconds = upgradeDurationSeconds;
+        upgradeRemainingSeconds = currentUpgradeDurationSeconds;
     }
 
     private void TickUpgrade(float deltaTime)
@@ -164,6 +224,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
         isUpgrading = false;
         upgradeRemainingSeconds = 0f;
+        currentUpgradeDurationSeconds = 0f;
         level++;
         upgradeCost = Mathf.RoundToInt(upgradeCost * 1.35f);
         requiredCommanderLevel++;
@@ -184,6 +245,82 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
     }
 
+    private CoreRoute FindRoute(string routeId)
+    {
+        return routes.Find(item => item.routeId == routeId);
+    }
+
+    private float GetRouteBonus(CoreRoute route)
+    {
+        return route != null ? route.investedPoints * route.bonusPerPoint : 0f;
+    }
+
+    private PlayerProgression ResolvePlayerProgression()
+    {
+        if (playerProgression != null)
+        {
+            return playerProgression;
+        }
+
+        if (BaseCampManager.Instance != null && BaseCampManager.Instance.PlayerProgression != null)
+        {
+            playerProgression = BaseCampManager.Instance.PlayerProgression;
+        }
+
+        playerProgression ??= FindFirstObjectByType<PlayerProgression>();
+        return playerProgression;
+    }
+
+    private float GetUpgradeDurationForCurrentLevel()
+    {
+        int index = Mathf.Max(0, level - 1);
+        if (index < upgradeDurationSecondsByLevel.Count)
+        {
+            return Mathf.Max(0f, upgradeDurationSecondsByLevel[index]);
+        }
+
+        return upgradeDurationSeconds;
+    }
+
+    private int GetRequiredResearchLabLevelForCurrentUpgrade()
+    {
+        int index = Mathf.Max(0, level - 1);
+        if (index < requiredResearchLabLevelByLevel.Count)
+        {
+            return Mathf.Max(1, requiredResearchLabLevelByLevel[index]);
+        }
+
+        return Mathf.Max(1, requiredResearchLabLevel);
+    }
+
+    private void NormalizeUpgradeDurations()
+    {
+        int targetCount = Mathf.Max(0, maxLevel - 1);
+        while (upgradeDurationSecondsByLevel.Count < targetCount)
+        {
+            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
+        }
+
+        for (int i = 0; i < upgradeDurationSecondsByLevel.Count; i++)
+        {
+            upgradeDurationSecondsByLevel[i] = Mathf.Max(0f, upgradeDurationSecondsByLevel[i]);
+        }
+    }
+
+    private void NormalizeResearchLabRequirements()
+    {
+        int targetCount = Mathf.Max(0, maxLevel - 1);
+        while (requiredResearchLabLevelByLevel.Count < targetCount)
+        {
+            requiredResearchLabLevelByLevel.Add(requiredResearchLabLevel);
+        }
+
+        for (int i = 0; i < requiredResearchLabLevelByLevel.Count; i++)
+        {
+            requiredResearchLabLevelByLevel[i] = Mathf.Max(1, requiredResearchLabLevelByLevel[i]);
+        }
+    }
+
     private void OnValidate()
     {
         level = Mathf.Max(1, level);
@@ -191,6 +328,21 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         upgradeCost = Mathf.Max(0, upgradeCost);
         requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
         requiredResearchLabLevel = Mathf.Max(1, requiredResearchLabLevel);
+        NormalizeResearchLabRequirements();
         upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
+        NormalizeUpgradeDurations();
+
+        foreach (CoreRoute route in routes)
+        {
+            if (route == null)
+            {
+                continue;
+            }
+
+            route.requiredChargerLevel = Mathf.Max(1, route.requiredChargerLevel);
+            route.maxPoints = Mathf.Max(1, route.maxPoints);
+            route.investedPoints = Mathf.Clamp(route.investedPoints, 0, route.maxPoints);
+            route.bonusPerPoint = Mathf.Max(0f, route.bonusPerPoint);
+        }
     }
 }

@@ -13,10 +13,13 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeConditionText;
+    [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text selectedMenuText;
     [SerializeField] private TMP_Text menuStateText;
 
     private AssemblyFactory assemblyFactory;
+    private float observedUpgradeDuration;
 
     private void OnEnable()
     {
@@ -132,7 +135,14 @@ public class AssemblyFactoryPanel : MonoBehaviour
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel);
+            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
+                assemblyFactory,
+                baseCampManager.Credits,
+                baseCampManager.CommanderLevel,
+                researchLabLevel));
         }
+
+        BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, assemblyFactory, ref observedUpgradeDuration);
 
         SetMenuButton(weaponMenuButton, "weapon");
         SetMenuButton(mechMenuButton, "mech");
