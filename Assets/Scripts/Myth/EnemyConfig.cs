@@ -12,6 +12,7 @@ public class EnemyConfig : ScriptableObject
     [SerializeField] private float stopDistance = 1.1f;
     [SerializeField] private float contactDamage = 5f;
     [SerializeField] private float contactInterval = 1f;
+    [SerializeField] private float experienceReward = 10f;
 
     public GameObject EnemyPrefab => enemyPrefab;
     public float MaxHealth => maxHealth;
@@ -19,4 +20,5 @@ public class EnemyConfig : ScriptableObject
     public float StopDistance => stopDistance;
     public float ContactDamage => contactDamage;
     public float ContactInterval => contactInterval;
+    public float ExperienceReward => experienceReward;
 }

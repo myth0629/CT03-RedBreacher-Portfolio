@@ -2,11 +2,17 @@ using UnityEngine;
 using TopDownAssets.Common.Scripts;
 
 [RequireComponent(typeof(CombatHealth))]
+[RequireComponent(typeof(PlayerProgression))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Config")]
     [SerializeField] private PlayerUnitConfig unitConfig;
     [SerializeField] private Transform unitRoot;
+
+    [Header("Stats")]
+    [SerializeField] private float maxHealth = 100f;
+    [SerializeField, Range(0f, 1f)] private float critChance = 0.1f;
+    [SerializeField] private float critMultiplier = 1.5f;
 
     [Header("Auto Combat")]
     [SerializeField] private float attackRange = 6f;
@@ -28,17 +34,23 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject hitEffectPrefab;
 
     private CombatHealth health;
+    private PlayerProgression progression;
     private Vehicle vehicle;
     private Turret turret;
     private CombatHealth currentTarget;
     private PlayerUnitConfig appliedUnitConfig;
     private GameObject spawnedUnitObject;
     private Vector3 weaponAimDirection;
+    private float appliedMaxHealth;
     private float nextAttackTime;
 
     public CombatHealth Health => health;
+    public PlayerProgression Progression => progression;
     public float AttackRange => AttackRangeValue;
 
+    private float MaxHealthValue => unitConfig != null ? unitConfig.MaxHealth : maxHealth;
+    private float CritChanceValue => unitConfig != null ? unitConfig.CritChance : critChance;
+    private float CritMultiplierValue => unitConfig != null ? unitConfig.CritMultiplier : critMultiplier;
     private float AttackRangeValue => unitConfig != null ? unitConfig.AttackRange : attackRange;
     private float AttackDamageValue => unitConfig != null ? unitConfig.AttackDamage : attackDamage;
     private float AttackIntervalValue => unitConfig != null ? unitConfig.AttackInterval : attackInterval;
@@ -55,9 +67,21 @@ public class PlayerController : MonoBehaviour
             health = gameObject.AddComponent<CombatHealth>();
         }
 
+        progression = GetComponent<PlayerProgression>();
+        if (progression == null)
+        {
+            progression = gameObject.AddComponent<PlayerProgression>();
+        }
+
         ApplyUnitConfig();
+        ApplyHealthStats();
         EnsureCombatComponents();
         RefreshUnitReferences();
+    }
+
+    private void Start()
+    {
+        ApplyHealthStats();
     }
 
     private void Update()
@@ -153,6 +177,7 @@ public class PlayerController : MonoBehaviour
     {
         if (appliedUnitConfig == unitConfig)
         {
+            ApplyHealthStats();
             return;
         }
 
@@ -160,6 +185,25 @@ public class PlayerController : MonoBehaviour
         ReplaceUnitPrefab(unitConfig != null ? unitConfig.UnitPrefab : null);
         RefreshUnitReferences();
         EnsureFirePoint();
+        ApplyHealthStats();
+    }
+
+    private void ApplyHealthStats()
+    {
+        if (health == null)
+        {
+            return;
+        }
+
+        float configuredMaxHealth = Mathf.Max(1f, MaxHealthValue);
+        if (Mathf.Approximately(appliedMaxHealth, configuredMaxHealth))
+        {
+            return;
+        }
+
+        // 플레이어 SO의 체력 값이 바뀔 때만 CombatHealth를 다시 초기화한다.
+        appliedMaxHealth = configuredMaxHealth;
+        health.Initialize(configuredMaxHealth);
     }
 
     private void ReplaceUnitPrefab(GameObject unitPrefab)
@@ -390,7 +434,22 @@ public class PlayerController : MonoBehaviour
         projectile.transform.position = GetFirePosition();
         projectile.Configure(activeProjectileConfig);
         projectile.ConfigureEffects(fireFlashEffectPrefab, projectileEffectPrefab, hitEffectPrefab);
-        projectile.Launch(direction, AttackDamageValue, GetProjectileSpeed(activeProjectileConfig), GetProjectileLifetime(activeProjectileConfig), health);
+        projectile.Launch(direction, CalculateAttackDamage(), GetProjectileSpeed(activeProjectileConfig), GetProjectileLifetime(activeProjectileConfig), health);
+    }
+
+    private float CalculateAttackDamage()
+    {
+        float damage = AttackDamageValue;
+        float chance = Mathf.Clamp01(CritChanceValue);
+        float multiplier = Mathf.Max(1f, CritMultiplierValue);
+
+        // 치명타는 방어력 없이 최종 발사 데미지에만 단순 배율로 적용한다.
+        if (Random.value < chance)
+        {
+            damage *= multiplier;
+        }
+
+        return damage;
     }
 
     private Vector3 GetFirePosition()
@@ -465,5 +524,45 @@ public class PlayerController : MonoBehaviour
 
         // 실제 이동은 PlayerController가 하고, Vehicle은 바퀴/트랙 연출만 따라간다.
         vehicle.SetAutoMoveInput(torque, steering);
+    }
+}
+
+public class PlayerProgression : MonoBehaviour
+{
+    [Header("Level")]
+    [SerializeField] private int level = 1;
+    [SerializeField] private float currentExperience;
+    [SerializeField] private float experienceToNextLevel = 100f;
+    [SerializeField] private float experienceGrowthRate = 1.2f;
+    [SerializeField] private int statPoints;
+
+    public int Level => level;
+    public float CurrentExperience => currentExperience;
+    public float ExperienceToNextLevel => experienceToNextLevel;
+    public int StatPoints => statPoints;
+
+    public void AddExperience(float amount)
+    {
+        if (amount <= 0f)
+        {
+            return;
+        }
+
+        // 적 처치 경험치를 누적하고 필요하면 여러 레벨업도 한 번에 처리한다.
+        currentExperience += amount;
+        while (currentExperience >= experienceToNextLevel)
+        {
+            currentExperience -= experienceToNextLevel;
+            LevelUp();
+        }
+    }
+
+    private void LevelUp()
+    {
+        level++;
+        statPoints++;
+        experienceToNextLevel = Mathf.Max(1f, experienceToNextLevel * experienceGrowthRate);
+
+        Debug.Log($"플레이어 레벨업: Lv.{level}, 특성 포인트 {statPoints}");
     }
 }

@@ -231,9 +231,28 @@ public class PlayerProjectile : MonoBehaviour
         // 명중한 대상에게 데미지를 주고 충돌 이펙트를 재생한다.
         hasHit = true;
         target.TakeDamage(damage);
+        GrantExperienceIfKilled(target);
         ApplyKnockback(target);
         SpawnHitEffect();
         Destroy(gameObject);
+    }
+
+    private void GrantExperienceIfKilled(CombatHealth target)
+    {
+        if (target == null || !target.IsDead || owner == null)
+        {
+            return;
+        }
+
+        PlayerProgression progression = owner.GetComponent<PlayerProgression>();
+        EnemyController enemy = target.GetComponentInParent<EnemyController>();
+        if (progression == null || enemy == null)
+        {
+            return;
+        }
+
+        // 플레이어 투사체가 적을 처치하면 v1 경험치를 지급한다.
+        progression.AddExperience(enemy.ExperienceReward);
     }
 
     private void ApplyKnockback(CombatHealth target)

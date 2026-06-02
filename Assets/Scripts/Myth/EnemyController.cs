@@ -19,6 +19,7 @@ public class EnemyController : MonoBehaviour
     private float StopDistanceValue => enemyConfig != null ? enemyConfig.StopDistance : stopDistance;
     private float ContactDamageValue => enemyConfig != null ? enemyConfig.ContactDamage : contactDamage;
     private float ContactIntervalValue => enemyConfig != null ? enemyConfig.ContactInterval : contactInterval;
+    public float ExperienceReward => enemyConfig != null ? enemyConfig.ExperienceReward : 10f;
 
     private void Awake()
     {
@@ -157,7 +158,12 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        // 이동은 Transform 기준으로 처리하므로 Rigidbody 속도는 항상 제거한다.
+        if (body.isKinematic)
+        {
+            return;
+        }
+
+        // 이동은 Transform 기준으로 처리하므로 동적 Rigidbody일 때만 속도를 제거한다.
         body.linearVelocity = Vector3.zero;
         body.angularVelocity = Vector3.zero;
     }
