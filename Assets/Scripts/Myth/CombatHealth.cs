@@ -8,6 +8,7 @@ public class CombatHealth : MonoBehaviour
     private float currentHealth;
     private bool isDead;
 
+    public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
     public bool IsDead => isDead;
 

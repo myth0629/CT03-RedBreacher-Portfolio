@@ -8,6 +8,7 @@ public class PlayerController : MonoBehaviour
     [Header("Config")]
     [SerializeField] private PlayerUnitConfig unitConfig;
     [SerializeField] private Transform unitRoot;
+    [SerializeField] private string displayName = "탱크이름";
 
     [Header("Stats")]
     [SerializeField] private float maxHealth = 100f;
@@ -46,6 +47,7 @@ public class PlayerController : MonoBehaviour
 
     public CombatHealth Health => health;
     public PlayerProgression Progression => progression;
+    public string DisplayName => unitConfig != null ? unitConfig.DisplayName : displayName;
     public float AttackRange => AttackRangeValue;
 
     private float MaxHealthValue => unitConfig != null ? unitConfig.MaxHealth : maxHealth;
@@ -524,45 +526,5 @@ public class PlayerController : MonoBehaviour
 
         // 실제 이동은 PlayerController가 하고, Vehicle은 바퀴/트랙 연출만 따라간다.
         vehicle.SetAutoMoveInput(torque, steering);
-    }
-}
-
-public class PlayerProgression : MonoBehaviour
-{
-    [Header("Level")]
-    [SerializeField] private int level = 1;
-    [SerializeField] private float currentExperience;
-    [SerializeField] private float experienceToNextLevel = 100f;
-    [SerializeField] private float experienceGrowthRate = 1.2f;
-    [SerializeField] private int statPoints;
-
-    public int Level => level;
-    public float CurrentExperience => currentExperience;
-    public float ExperienceToNextLevel => experienceToNextLevel;
-    public int StatPoints => statPoints;
-
-    public void AddExperience(float amount)
-    {
-        if (amount <= 0f)
-        {
-            return;
-        }
-
-        // 적 처치 경험치를 누적하고 필요하면 여러 레벨업도 한 번에 처리한다.
-        currentExperience += amount;
-        while (currentExperience >= experienceToNextLevel)
-        {
-            currentExperience -= experienceToNextLevel;
-            LevelUp();
-        }
-    }
-
-    private void LevelUp()
-    {
-        level++;
-        statPoints++;
-        experienceToNextLevel = Mathf.Max(1f, experienceToNextLevel * experienceGrowthRate);
-
-        Debug.Log($"플레이어 레벨업: Lv.{level}, 특성 포인트 {statPoints}");
     }
 }

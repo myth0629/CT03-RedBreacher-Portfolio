@@ -88,8 +88,9 @@ public class EnemyController : MonoBehaviour
 
         if (distance <= StopDistanceValue)
         {
-            // 플레이어와 겹치지 않도록 지정 거리에서 멈춘다.
+            // 플레이어와 겹치지 않도록 지정 거리에서 멈추고 거리 기반 공격을 처리한다.
             CombatPlane.SetYOnlyRotation(transform, direction);
+            TryContactDamage(targetPlayer);
             StopBody();
             return;
         }
@@ -166,16 +167,6 @@ public class EnemyController : MonoBehaviour
         // 이동은 Transform 기준으로 처리하므로 동적 Rigidbody일 때만 속도를 제거한다.
         body.linearVelocity = Vector3.zero;
         body.angularVelocity = Vector3.zero;
-    }
-
-    private void OnCollisionStay(Collision collision)
-    {
-        TryContactDamage(collision.collider.GetComponentInParent<PlayerController>());
-    }
-
-    private void OnTriggerStay(Collider other)
-    {
-        TryContactDamage(other.GetComponentInParent<PlayerController>());
     }
 
     private void TryContactDamage(PlayerController player)

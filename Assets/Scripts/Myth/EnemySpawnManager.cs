@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
 {
+    [Header("Stage")]
+    [SerializeField] private int startStage = 1;
+
     [Header("Round")]
     [SerializeField] private bool startOnAwake = true;
     [SerializeField] private int startRound = 1;
@@ -20,16 +23,19 @@ public class EnemySpawnManager : MonoBehaviour
 
     private readonly List<CombatHealth> aliveEnemies = new List<CombatHealth>();
     private Coroutine roundRoutine;
+    private int currentStage;
     private int currentRound;
     private bool roundsActive;
     private bool spawningRound;
 
+    public int CurrentStage => currentStage;
     public int CurrentRound => currentRound;
     public int AliveEnemyCount => aliveEnemies.Count;
     public bool IsSpawningRound => spawningRound;
 
     private void Awake()
     {
+        currentStage = Mathf.Max(1, startStage);
         currentRound = Mathf.Max(1, startRound);
     }
 
@@ -72,6 +78,7 @@ public class EnemySpawnManager : MonoBehaviour
             yield return new WaitForSeconds(timeBetweenRounds);
         }
 
+        currentStage = GetStageForRound(currentRound);
         int spawnCount = GetEnemyCountForRound(currentRound);
         for (int i = 0; i < spawnCount; i++)
         {
@@ -88,6 +95,12 @@ public class EnemySpawnManager : MonoBehaviour
     {
         int roundOffset = Mathf.Max(0, round - 1);
         return Mathf.Max(1, baseEnemyCount + enemyCountIncreasePerRound * roundOffset);
+    }
+
+    private int GetStageForRound(int round)
+    {
+        int roundOffset = Mathf.Max(0, round - startRound);
+        return Mathf.Max(1, startStage + roundOffset);
     }
 
     private void SpawnEnemy(int index)
