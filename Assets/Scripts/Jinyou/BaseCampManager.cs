@@ -25,6 +25,7 @@ public class BaseCampManager : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool showDebugPanel = true;
     [SerializeField] private Rect debugPanelRect = new Rect(16f, 16f, 280f, 220f);
+    [SerializeField] private int debugStatPointsToAdd = 1;
 
     [Header("Events")]
     public UnityEvent<int> OnCreditsChanged = new UnityEvent<int>();
@@ -121,9 +122,19 @@ public class BaseCampManager : MonoBehaviour
         coreCharger?.TrySelectRoute(routeId);
     }
 
+    public void SelectCoreOption(string optionId)
+    {
+        coreCharger?.TrySelectOption(optionId);
+    }
+
     public void InvestCoreRoute(string routeId)
     {
         coreCharger?.TryInvestRoute(routeId);
+    }
+
+    public void InvestCoreOption(string optionId)
+    {
+        coreCharger?.TryInvestOption(optionId);
     }
 
     public void UseBossTicket()
@@ -160,6 +171,11 @@ public class BaseCampManager : MonoBehaviour
     public void AddCommanderLevel(int amount)
     {
         SetCommanderLevel(commanderLevel + Mathf.Max(0, amount));
+    }
+
+    public void AddPlayerStatPoints(int amount)
+    {
+        (playerProgression ??= FindFirstObjectByType<PlayerProgression>())?.AddStatPoints(amount);
     }
 
     public void SetCommanderLevel(int value)
@@ -202,9 +218,20 @@ public class BaseCampManager : MonoBehaviour
     {
         GUILayout.Label($"Commander Lv. {commanderLevel}");
         GUILayout.Label($"Credits: {credits}");
+        GUILayout.Label($"Stat Points: {(playerProgression != null ? playerProgression.StatPoints : 0)}");
 
         if (GUILayout.Button("+ Level")) AddCommanderLevel(1);
         if (GUILayout.Button("+ 1000 Credits")) AddCredits(1000);
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Add Stat Points", GUILayout.Width(110f));
+        string statPointInput = GUILayout.TextField(debugStatPointsToAdd.ToString(), GUILayout.Width(48f));
+        if (int.TryParse(statPointInput, out int parsedStatPoints))
+        {
+            debugStatPointsToAdd = Mathf.Max(0, parsedStatPoints);
+        }
+
+        if (GUILayout.Button("Add")) AddPlayerStatPoints(debugStatPointsToAdd);
+        GUILayout.EndHorizontal();
         if (GUILayout.Button("Collect Refinery")) CollectRefineryCredits();
         if (GUILayout.Button("Upgrade Research")) UpgradeResearchLab();
         if (GUILayout.Button("Upgrade Refinery")) UpgradeEnergyRefinery();

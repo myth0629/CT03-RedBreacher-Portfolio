@@ -37,20 +37,15 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
     private void OnEnable()
     {
         ResolveReferences();
+        SubscribeFacilityEvents();
         facilityButton?.onClick.AddListener(SelectFacility);
-        UpdateVisual();
-        UpdateInteractable();
+        SyncView();
     }
 
     private void OnDisable()
     {
+        UnsubscribeFacilityEvents();
         facilityButton?.onClick.RemoveListener(SelectFacility);
-    }
-
-    private void Update()
-    {
-        UpdateVisual();
-        UpdateInteractable();
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -92,12 +87,29 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
         Image targetImage,
         Sprite[] sprites)
     {
+        if (isActiveAndEnabled)
+        {
+            UnsubscribeFacilityEvents();
+        }
+
         facilityType = type;
         baseCampManager = manager;
         facilityPanel = panel;
         facilityImage = targetImage;
         levelSprites = sprites;
+
+        if (isActiveAndEnabled)
+        {
+            SubscribeFacilityEvents();
+        }
+
+        SyncView();
+    }
+
+    public void SyncView()
+    {
         UpdateVisual();
+        UpdateInteractable();
     }
 
     public void UpdateVisual()
@@ -164,6 +176,106 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
         {
             facilityButton.interactable = IsUnlocked();
         }
+    }
+
+    private void SubscribeFacilityEvents()
+    {
+        UnsubscribeFacilityEvents();
+        ResolveReferences();
+
+        switch (facilityType)
+        {
+            case FacilityType.StrategyResearchLab:
+                if (baseCampManager?.ResearchLab != null)
+                {
+                    baseCampManager.ResearchLab.OnLevelChanged.AddListener(HandleLevelChanged);
+                    baseCampManager.ResearchLab.OnUpgradeStarted.AddListener(SyncView);
+                    baseCampManager.ResearchLab.OnUpgradeCompleted.AddListener(SyncView);
+                }
+                break;
+            case FacilityType.EnergyRefinery:
+                SubscribeResearchLabUnlockEvents();
+                if (baseCampManager?.EnergyRefinery != null)
+                {
+                    baseCampManager.EnergyRefinery.OnLevelChanged.AddListener(HandleLevelChanged);
+                    baseCampManager.EnergyRefinery.OnUpgradeStarted.AddListener(SyncView);
+                    baseCampManager.EnergyRefinery.OnUpgradeCompleted.AddListener(SyncView);
+                }
+                break;
+            case FacilityType.AssemblyFactory:
+                SubscribeResearchLabUnlockEvents();
+                if (baseCampManager?.AssemblyFactory != null)
+                {
+                    baseCampManager.AssemblyFactory.OnLevelChanged.AddListener(HandleLevelChanged);
+                    baseCampManager.AssemblyFactory.OnUpgradeStarted.AddListener(SyncView);
+                    baseCampManager.AssemblyFactory.OnUpgradeCompleted.AddListener(SyncView);
+                }
+                break;
+            case FacilityType.CoreCharger:
+                SubscribeResearchLabUnlockEvents();
+                if (baseCampManager?.CoreCharger != null)
+                {
+                    baseCampManager.CoreCharger.OnLevelChanged.AddListener(HandleLevelChanged);
+                    baseCampManager.CoreCharger.OnUpgradeStarted.AddListener(SyncView);
+                    baseCampManager.CoreCharger.OnUpgradeCompleted.AddListener(SyncView);
+                }
+                break;
+            case FacilityType.BossDungeon:
+                SubscribeResearchLabUnlockEvents();
+                break;
+        }
+    }
+
+    private void UnsubscribeFacilityEvents()
+    {
+        if (baseCampManager == null)
+        {
+            return;
+        }
+
+        if (baseCampManager.ResearchLab != null)
+        {
+            baseCampManager.ResearchLab.OnLevelChanged.RemoveListener(HandleLevelChanged);
+            baseCampManager.ResearchLab.OnUpgradeStarted.RemoveListener(SyncView);
+            baseCampManager.ResearchLab.OnUpgradeCompleted.RemoveListener(SyncView);
+        }
+
+        if (baseCampManager.EnergyRefinery != null)
+        {
+            baseCampManager.EnergyRefinery.OnLevelChanged.RemoveListener(HandleLevelChanged);
+            baseCampManager.EnergyRefinery.OnUpgradeStarted.RemoveListener(SyncView);
+            baseCampManager.EnergyRefinery.OnUpgradeCompleted.RemoveListener(SyncView);
+        }
+
+        if (baseCampManager.AssemblyFactory != null)
+        {
+            baseCampManager.AssemblyFactory.OnLevelChanged.RemoveListener(HandleLevelChanged);
+            baseCampManager.AssemblyFactory.OnUpgradeStarted.RemoveListener(SyncView);
+            baseCampManager.AssemblyFactory.OnUpgradeCompleted.RemoveListener(SyncView);
+        }
+
+        if (baseCampManager.CoreCharger != null)
+        {
+            baseCampManager.CoreCharger.OnLevelChanged.RemoveListener(HandleLevelChanged);
+            baseCampManager.CoreCharger.OnUpgradeStarted.RemoveListener(SyncView);
+            baseCampManager.CoreCharger.OnUpgradeCompleted.RemoveListener(SyncView);
+        }
+    }
+
+    private void SubscribeResearchLabUnlockEvents()
+    {
+        if (baseCampManager?.ResearchLab == null)
+        {
+            return;
+        }
+
+        baseCampManager.ResearchLab.OnLevelChanged.AddListener(HandleLevelChanged);
+        baseCampManager.ResearchLab.OnUpgradeCompleted.AddListener(SyncView);
+    }
+
+    private void HandleLevelChanged(int level)
+    {
+        SyncView();
     }
 
     private void ResolveReferences()

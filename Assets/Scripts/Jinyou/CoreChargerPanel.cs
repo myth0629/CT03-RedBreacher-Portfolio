@@ -9,7 +9,6 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private Button armorRouteButton;
     [SerializeField] private Button shieldRouteButton;
     [SerializeField] private Button pierceDefenseRouteButton;
-    [SerializeField] private Button survivalRouteButton;
     [SerializeField] private Button investRouteButton;
     [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
@@ -30,7 +29,6 @@ public class CoreChargerPanel : MonoBehaviour
         armorRouteButton?.onClick.AddListener(SelectArmorRoute);
         shieldRouteButton?.onClick.AddListener(SelectShieldRoute);
         pierceDefenseRouteButton?.onClick.AddListener(SelectPierceDefenseRoute);
-        survivalRouteButton?.onClick.AddListener(SelectSurvivalRoute);
         investRouteButton?.onClick.AddListener(InvestSelectedRoute);
         closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
@@ -43,7 +41,6 @@ public class CoreChargerPanel : MonoBehaviour
         armorRouteButton?.onClick.RemoveListener(SelectArmorRoute);
         shieldRouteButton?.onClick.RemoveListener(SelectShieldRoute);
         pierceDefenseRouteButton?.onClick.RemoveListener(SelectPierceDefenseRoute);
-        survivalRouteButton?.onClick.RemoveListener(SelectSurvivalRoute);
         investRouteButton?.onClick.RemoveListener(InvestSelectedRoute);
     }
 
@@ -58,7 +55,6 @@ public class CoreChargerPanel : MonoBehaviour
         Button armor,
         Button shield,
         Button pierceDefense,
-        Button survival,
         Button close,
         TMP_Text level,
         TMP_Text upgradeLabel,
@@ -70,7 +66,6 @@ public class CoreChargerPanel : MonoBehaviour
         armorRouteButton = armor;
         shieldRouteButton = shield;
         pierceDefenseRouteButton = pierceDefense;
-        survivalRouteButton = survival;
         closeButton = close;
         levelText = level;
         upgradeText = upgradeLabel;
@@ -97,17 +92,24 @@ public class CoreChargerPanel : MonoBehaviour
 
     private void SelectPierceDefenseRoute()
     {
-        SelectRoute("mobility");
-    }
-
-    private void SelectSurvivalRoute()
-    {
         SelectRoute("critical");
     }
 
     private void SelectRoute(string routeId)
     {
         baseCampManager?.SelectCoreRoute(routeId);
+        Refresh();
+    }
+
+    public void SelectOption(string optionId)
+    {
+        baseCampManager?.SelectCoreOption(optionId);
+        Refresh();
+    }
+
+    public void InvestOption(string optionId)
+    {
+        baseCampManager?.InvestCoreOption(optionId);
         Refresh();
     }
 
@@ -143,7 +145,9 @@ public class CoreChargerPanel : MonoBehaviour
         SetText(traitPointText, baseCampManager != null && baseCampManager.PlayerProgression != null
             ? $"Stat Points {baseCampManager.PlayerProgression.StatPoints}"
             : "Stat Points --");
-        SetText(selectedRouteText, string.IsNullOrEmpty(coreCharger.SelectedRouteId) ? "No Route Selected" : $"Selected: {coreCharger.SelectedRouteId}");
+        SetText(selectedRouteText, string.IsNullOrEmpty(coreCharger.SelectedRouteId)
+            ? "No Route Selected"
+            : $"Selected: {coreCharger.SelectedRouteId}/{coreCharger.SelectedOptionId}");
         SetText(routeStateText, BuildRouteSummary());
 
         if (upgradeButton != null && baseCampManager != null)
@@ -169,8 +173,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         SetRouteButton(armorRouteButton, "health");
         SetRouteButton(shieldRouteButton, "attack");
-        SetRouteButton(pierceDefenseRouteButton, "mobility");
-        SetRouteButton(survivalRouteButton, "critical");
+        SetRouteButton(pierceDefenseRouteButton, "critical");
     }
 
     private string BuildRouteSummary()
@@ -180,8 +183,26 @@ public class CoreChargerPanel : MonoBehaviour
         foreach (CoreCharger.CoreRoute route in coreCharger.Routes)
         {
             string state = route.unlocked ? "OPEN" : $"Charger Lv.{route.requiredChargerLevel}";
-            float bonus = route.investedPoints * route.bonusPerPoint;
-            summary += $"{route.displayName}: {state} / {route.investedPoints}/{route.maxPoints} {route.statId} +{bonus:0.##}\n";
+            summary += $"{route.displayName}: {state}\n";
+
+            if (route.options == null)
+            {
+                continue;
+            }
+
+            foreach (CoreCharger.CoreRouteOption option in route.options)
+            {
+                if (option == null)
+                {
+                    continue;
+                }
+
+                int maxPoints = coreCharger.GetOptionMaxPoints(option);
+                float bonus = coreCharger.GetOptionBonus(option);
+                float currentTierBonus = coreCharger.GetCurrentOptionTierBonusPerPoint(option);
+                string selected = option.optionId == coreCharger.SelectedOptionId ? " *" : string.Empty;
+                summary += $"  {option.displayName}{selected}: {coreCharger.GetOptionTierLabel(option)} / {option.investedPoints}/{maxPoints} {option.statId} +{bonus:0.##} (+{currentTierBonus:0.##}/pt)\n";
+            }
         }
 
         return summary.TrimEnd();

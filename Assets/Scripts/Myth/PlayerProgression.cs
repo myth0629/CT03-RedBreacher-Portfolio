@@ -15,6 +15,16 @@ public class PlayerProgression : MonoBehaviour
     public float ExperienceProgress01 => experienceToNextLevel > 0f ? Mathf.Clamp01(currentExperience / experienceToNextLevel) : 0f;
     public int StatPoints => statPoints;
 
+    public void AddStatPoints(int amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        statPoints += amount;
+    }
+
     public bool TrySpendStatPoint()
     {
         if (statPoints <= 0)
