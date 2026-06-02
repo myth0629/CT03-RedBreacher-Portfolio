@@ -126,11 +126,6 @@ public class BaseCampManager : MonoBehaviour
         coreCharger?.TryInvestRoute(routeId);
     }
 
-    public void AddPlayerEnemyKillExperience(int stage)
-    {
-        (playerProgression ??= FindFirstObjectByType<PlayerProgression>())?.AddEnemyKillExperience(stage);
-    }
-
     public void UseBossTicket()
     {
         // Boss tickets are produced by the research lab and consumed only by BossDungeon.

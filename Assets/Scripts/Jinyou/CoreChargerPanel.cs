@@ -141,8 +141,8 @@ public class CoreChargerPanel : MonoBehaviour
             ? $"Upgrading {coreCharger.UpgradeRemainingSeconds:0}s"
             : $"Upgrade Cost {coreCharger.UpgradeCost}");
         SetText(traitPointText, baseCampManager != null && baseCampManager.PlayerProgression != null
-            ? $"Trait Points {baseCampManager.PlayerProgression.TraitPoints}"
-            : "Trait Points --");
+            ? $"Stat Points {baseCampManager.PlayerProgression.StatPoints}"
+            : "Stat Points --");
         SetText(selectedRouteText, string.IsNullOrEmpty(coreCharger.SelectedRouteId) ? "No Route Selected" : $"Selected: {coreCharger.SelectedRouteId}");
         SetText(routeStateText, BuildRouteSummary());
 
@@ -181,7 +181,7 @@ public class CoreChargerPanel : MonoBehaviour
         {
             string state = route.unlocked ? "OPEN" : $"Charger Lv.{route.requiredChargerLevel}";
             float bonus = route.investedPoints * route.bonusPerPoint;
-            summary += $"{route.displayName}: {state} / {route.investedPoints}/{route.maxPoints} {route.statType} +{bonus:0.##}\n";
+            summary += $"{route.displayName}: {state} / {route.investedPoints}/{route.maxPoints} {route.statId} +{bonus:0.##}\n";
         }
 
         return summary.TrimEnd();

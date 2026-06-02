@@ -10,7 +10,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     {
         public string routeId;
         public string displayName;
-        public PlayerUnitStatType statType;
+        public string statId;
         public int requiredChargerLevel = 1;
         public int investedPoints;
         public int maxPoints = 10;
@@ -33,10 +33,10 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     [Header("Placeholder Core Routes")]
     [SerializeField] private List<CoreRoute> routes = new List<CoreRoute>
     {
-        new CoreRoute { routeId = "health", displayName = "Health Route", statType = PlayerUnitStatType.MaxHealth, requiredChargerLevel = 1, maxPoints = 10, bonusPerPoint = 10f, unlocked = true },
-        new CoreRoute { routeId = "attack", displayName = "Attack Route", statType = PlayerUnitStatType.AttackDamage, requiredChargerLevel = 1, maxPoints = 10, bonusPerPoint = 2f, unlocked = true },
-        new CoreRoute { routeId = "mobility", displayName = "Mobility Route", statType = PlayerUnitStatType.MoveSpeed, requiredChargerLevel = 2, maxPoints = 5, bonusPerPoint = 0.1f },
-        new CoreRoute { routeId = "critical", displayName = "Critical Route", statType = PlayerUnitStatType.CritChance, requiredChargerLevel = 3, maxPoints = 5, bonusPerPoint = 0.02f }
+        new CoreRoute { routeId = "health", displayName = "Health Route", statId = "maxHealth", requiredChargerLevel = 1, maxPoints = 10, bonusPerPoint = 10f, unlocked = true },
+        new CoreRoute { routeId = "attack", displayName = "Attack Route", statId = "attackDamage", requiredChargerLevel = 1, maxPoints = 10, bonusPerPoint = 2f, unlocked = true },
+        new CoreRoute { routeId = "mobility", displayName = "Mobility Route", statId = "moveSpeed", requiredChargerLevel = 2, maxPoints = 5, bonusPerPoint = 0.1f },
+        new CoreRoute { routeId = "critical", displayName = "Critical Route", statId = "critChance", requiredChargerLevel = 3, maxPoints = 5, bonusPerPoint = 0.02f }
     };
 
     [SerializeField] private PlayerProgression playerProgression;
@@ -99,30 +99,30 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             && route.unlocked
             && route.investedPoints < route.maxPoints
             && ResolvePlayerProgression() != null
-            && playerProgression.TraitPoints > 0;
+            && playerProgression.StatPoints > 0;
     }
 
     public bool TryInvestRoute(string routeId)
     {
         CoreRoute route = FindRoute(routeId);
-        if (route == null || !CanInvestRoute(routeId) || !playerProgression.TrySpendTraitPoint())
+        if (route == null || !CanInvestRoute(routeId) || !playerProgression.TrySpendStatPoint())
         {
             return false;
         }
 
         route.investedPoints++;
         selectedRouteId = routeId;
-        Debug.Log($"Core route invested: {route.displayName} Lv.{route.investedPoints}, {route.statType} +{GetRouteBonus(route):0.##}");
+        Debug.Log($"Core route invested: {route.displayName} Lv.{route.investedPoints}, {route.statId} +{GetRouteBonus(route):0.##}");
         OnRouteSelected.Invoke(routeId);
         return true;
     }
 
-    public float GetStatBonus(PlayerUnitStatType statType)
+    public float GetStatBonus(string statId)
     {
         float bonus = 0f;
         foreach (CoreRoute route in routes)
         {
-            if (route.statType == statType)
+            if (route.statId == statId)
             {
                 bonus += GetRouteBonus(route);
             }
