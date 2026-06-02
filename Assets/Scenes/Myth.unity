@@ -1373,7 +1373,7 @@ MonoBehaviour:
   baseEnemyCount: 4
   enemyCountIncreasePerRound: 2
   timeBetweenRounds: 2
-  enemyConfig: {fileID: 11400000, guid: eb70362dd7491490d8e2f7c8ae678621, type: 2}
+  enemyConfig: {fileID: 11400000, guid: 69366f638fefc49aa9cb8a43f38903e4, type: 2}
   enemyPrefab: {fileID: 65694122745414656, guid: 912a4ab9df6c34b0992e2e89741007c6, type: 3}
   spawnCenter: {fileID: 2078203334}
   spawnRadius: 10
@@ -1478,6 +1478,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
+      propertyPath: unitConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 3c6fcd0bc55e74b4c95dd9ea83d57e5f, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

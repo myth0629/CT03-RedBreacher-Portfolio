@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b6a649172b8254b66b5c5d2c0331ddef, type: 3}
-  m_Name: Tank01
+  m_Name: Unit_unit_2
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUnitConfig
-  id: unit_1
-  displayName: "\uD0F1\uD06C\uC774\uB984"
-  unitPrefab: {fileID: 6483762977116725696, guid: d5358ed55036949d79e06706787124be, type: 3}
-  maxHealth: 100
+  id: unit_2
+  displayName: "\uD0F1\uD06C2"
+  unitPrefab: {fileID: 214164098778057125, guid: 129660349e2234cba81267de636b9864, type: 3}
+  maxHealth: 150
   critChance: 0.1
   critMultiplier: 1.5
-  attackRange: 5
+  attackRange: 6
   attackDamage: 10
   attackInterval: 1
   moveSpeed: 2
   rotationSpeed: 120
   fireAngleTolerance: 3
-  projectileConfig: {fileID: 11400000, guid: f6a04bdbcdcdd4a868549b706fa13040, type: 2}
+  projectileConfig: {fileID: 11400000, guid: b3ec73aed18774d2d8ae83671a29b586, type: 2}

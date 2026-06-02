@@ -3,6 +3,10 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Myth/Combat/Projectile Config")]
 public class ProjectileConfig : ScriptableObject
 {
+    [Header("Identity")]
+    [SerializeField] private string id = "weapon_default";
+    [SerializeField] private string displayName = "기본 무기";
+
     [Header("Projectile")]
     [SerializeField] private PlayerProjectile projectilePrefab;
     [SerializeField] private float speed = 10f;
@@ -16,6 +20,8 @@ public class ProjectileConfig : ScriptableObject
     [SerializeField] private GameObject hitEffectPrefab;
     [SerializeField] private float effectCleanupDelay = 2f;
 
+    public string Id => id;
+    public string DisplayName => displayName;
     public PlayerProjectile ProjectilePrefab => projectilePrefab;
     public float Speed => speed;
     public float Lifetime => lifetime;

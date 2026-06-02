@@ -4,6 +4,7 @@ using UnityEngine;
 public class PlayerUnitConfig : ScriptableObject
 {
     [Header("Visual")]
+    [SerializeField] private string id = "unit_default";
     [SerializeField] private string displayName = "탱크이름";
     [SerializeField] private GameObject unitPrefab;
 
@@ -23,6 +24,7 @@ public class PlayerUnitConfig : ScriptableObject
     [Header("Projectile")]
     [SerializeField] private ProjectileConfig projectileConfig;
 
+    public string Id => id;
     public string DisplayName => displayName;
     public GameObject UnitPrefab => unitPrefab;
     public float MaxHealth => maxHealth;
