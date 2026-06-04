@@ -107,9 +107,47 @@ public class BaseCampManager : MonoBehaviour
         TrySpendAndUpgrade(assemblyFactory);
     }
 
+    public void EnhanceAssemblyWeapon()
+    {
+        if (assemblyFactory == null)
+        {
+            return;
+        }
+
+        int availableCredits = credits;
+        if (assemblyFactory.TryEnhanceSelectedWeapon(ref availableCredits))
+        {
+            SetCredits(availableCredits);
+        }
+    }
+
     public void UpgradeCoreCharger()
     {
         TrySpendAndUpgrade(coreCharger);
+    }
+
+    public void EnhanceCoreUnit()
+    {
+        if (coreCharger == null)
+        {
+            return;
+        }
+
+        int availableCredits = credits;
+        if (coreCharger.TryEnhanceSelectedUnit(ref availableCredits))
+        {
+            SetCredits(availableCredits);
+        }
+    }
+
+    public void SelectCoreUnit(PlayerUnitConfig unitConfig)
+    {
+        coreCharger?.TrySelectUnit(unitConfig);
+    }
+
+    public void SelectCoreUnit(int unitIndex)
+    {
+        coreCharger?.TrySelectUnit(unitIndex);
     }
 
     public void SelectAssemblyMenu(string menuId)
@@ -117,24 +155,14 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.TrySelectMenu(menuId);
     }
 
-    public void SelectCoreRoute(string routeId)
+    public void SelectAssemblyWeapon(ProjectileConfig weaponConfig)
     {
-        coreCharger?.TrySelectRoute(routeId);
+        assemblyFactory?.TrySelectWeapon(weaponConfig);
     }
 
-    public void SelectCoreOption(string optionId)
+    public void SelectAssemblyWeapon(int weaponIndex)
     {
-        coreCharger?.TrySelectOption(optionId);
-    }
-
-    public void InvestCoreRoute(string routeId)
-    {
-        coreCharger?.TryInvestRoute(routeId);
-    }
-
-    public void InvestCoreOption(string optionId)
-    {
-        coreCharger?.TryInvestOption(optionId);
+        assemblyFactory?.TrySelectWeapon(weaponIndex);
     }
 
     public void UseBossTicket()
@@ -236,7 +264,9 @@ public class BaseCampManager : MonoBehaviour
         if (GUILayout.Button("Upgrade Research")) UpgradeResearchLab();
         if (GUILayout.Button("Upgrade Refinery")) UpgradeEnergyRefinery();
         if (GUILayout.Button("Upgrade Assembly")) UpgradeAssemblyFactory();
+        if (GUILayout.Button("Enhance Weapon")) EnhanceAssemblyWeapon();
         if (GUILayout.Button("Upgrade Core")) UpgradeCoreCharger();
+        if (GUILayout.Button("Enhance Core Unit")) EnhanceCoreUnit();
 
         GUI.DragWindow();
     }

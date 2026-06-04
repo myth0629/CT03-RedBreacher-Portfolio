@@ -6,19 +6,18 @@ public class CoreChargerPanel : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button upgradeButton;
-    [SerializeField] private Button armorRouteButton;
-    [SerializeField] private Button shieldRouteButton;
-    [SerializeField] private Button pierceDefenseRouteButton;
-    [SerializeField] private Button investRouteButton;
+    [SerializeField] private Button firstUnitButton;
+    [SerializeField] private Button secondUnitButton;
+    [SerializeField] private Button thirdUnitButton;
+    [SerializeField] private Button enhanceUnitButton;
     [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
-    [SerializeField] private TMP_Text traitPointText;
-    [SerializeField] private TMP_Text selectedRouteText;
-    [SerializeField] private TMP_Text routeStateText;
-    [SerializeField] private CoreChargerTreeBuilder treeBuilder;
+    [SerializeField] private TMP_Text currencyText;
+    [SerializeField] private TMP_Text selectedUnitText;
+    [SerializeField] private TMP_Text unitStateText;
 
     private CoreCharger coreCharger;
     private float observedUpgradeDuration;
@@ -27,10 +26,10 @@ public class CoreChargerPanel : MonoBehaviour
     {
         ResolveReferences();
         upgradeButton?.onClick.AddListener(UpgradeCharger);
-        armorRouteButton?.onClick.AddListener(SelectArmorRoute);
-        shieldRouteButton?.onClick.AddListener(SelectShieldRoute);
-        pierceDefenseRouteButton?.onClick.AddListener(SelectPierceDefenseRoute);
-        investRouteButton?.onClick.AddListener(InvestSelectedRoute);
+        firstUnitButton?.onClick.AddListener(SelectFirstUnit);
+        secondUnitButton?.onClick.AddListener(SelectSecondUnit);
+        thirdUnitButton?.onClick.AddListener(SelectThirdUnit);
+        enhanceUnitButton?.onClick.AddListener(EnhanceSelectedUnit);
         closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
@@ -39,10 +38,10 @@ public class CoreChargerPanel : MonoBehaviour
     {
         upgradeButton?.onClick.RemoveListener(UpgradeCharger);
         closeButton?.onClick.RemoveListener(ClosePanel);
-        armorRouteButton?.onClick.RemoveListener(SelectArmorRoute);
-        shieldRouteButton?.onClick.RemoveListener(SelectShieldRoute);
-        pierceDefenseRouteButton?.onClick.RemoveListener(SelectPierceDefenseRoute);
-        investRouteButton?.onClick.RemoveListener(InvestSelectedRoute);
+        firstUnitButton?.onClick.RemoveListener(SelectFirstUnit);
+        secondUnitButton?.onClick.RemoveListener(SelectSecondUnit);
+        thirdUnitButton?.onClick.RemoveListener(SelectThirdUnit);
+        enhanceUnitButton?.onClick.RemoveListener(EnhanceSelectedUnit);
     }
 
     private void Update()
@@ -53,25 +52,37 @@ public class CoreChargerPanel : MonoBehaviour
     public void Configure(
         BaseCampManager manager,
         Button upgrade,
-        Button armor,
-        Button shield,
-        Button pierceDefense,
+        Button firstUnit,
+        Button secondUnit,
+        Button thirdUnit,
         Button close,
         TMP_Text level,
         TMP_Text upgradeLabel,
-        TMP_Text selectedRoute,
-        TMP_Text routeState)
+        TMP_Text selectedUnit,
+        TMP_Text unitState)
     {
         baseCampManager = manager;
         upgradeButton = upgrade;
-        armorRouteButton = armor;
-        shieldRouteButton = shield;
-        pierceDefenseRouteButton = pierceDefense;
+        firstUnitButton = firstUnit;
+        secondUnitButton = secondUnit;
+        thirdUnitButton = thirdUnit;
         closeButton = close;
         levelText = level;
         upgradeText = upgradeLabel;
-        selectedRouteText = selectedRoute;
-        routeStateText = routeState;
+        selectedUnitText = selectedUnit;
+        unitStateText = unitState;
+        Refresh();
+    }
+
+    public void SelectUnit(PlayerUnitConfig unitConfig)
+    {
+        baseCampManager?.SelectCoreUnit(unitConfig);
+        Refresh();
+    }
+
+    public void SelectUnitByIndex(int unitIndex)
+    {
+        baseCampManager?.SelectCoreUnit(unitIndex);
         Refresh();
     }
 
@@ -81,48 +92,24 @@ public class CoreChargerPanel : MonoBehaviour
         Refresh();
     }
 
-    private void SelectArmorRoute()
+    private void SelectFirstUnit()
     {
-        SelectRoute("health");
+        SelectUnitByIndex(0);
     }
 
-    private void SelectShieldRoute()
+    private void SelectSecondUnit()
     {
-        SelectRoute("attack");
+        SelectUnitByIndex(1);
     }
 
-    private void SelectPierceDefenseRoute()
+    private void SelectThirdUnit()
     {
-        SelectRoute("critical");
+        SelectUnitByIndex(2);
     }
 
-    private void SelectRoute(string routeId)
+    private void EnhanceSelectedUnit()
     {
-        baseCampManager?.SelectCoreRoute(routeId);
-        treeBuilder?.RebuildRoute(routeId);
-        Refresh();
-    }
-
-    public void SelectOption(string optionId)
-    {
-        baseCampManager?.SelectCoreOption(optionId);
-        Refresh();
-    }
-
-    public void InvestOption(string optionId)
-    {
-        baseCampManager?.InvestCoreOption(optionId);
-        Refresh();
-    }
-
-    private void InvestSelectedRoute()
-    {
-        if (coreCharger == null)
-        {
-            return;
-        }
-
-        baseCampManager?.InvestCoreRoute(coreCharger.SelectedRouteId);
+        baseCampManager?.EnhanceCoreUnit();
         Refresh();
     }
 
@@ -144,13 +131,9 @@ public class CoreChargerPanel : MonoBehaviour
         SetText(upgradeText, coreCharger.IsUpgrading
             ? $"Upgrading {coreCharger.UpgradeRemainingSeconds:0}s"
             : $"Upgrade Cost {coreCharger.UpgradeCost}");
-        SetText(traitPointText, baseCampManager != null && baseCampManager.PlayerProgression != null
-            ? $"Stat Points {baseCampManager.PlayerProgression.StatPoints}"
-            : "Stat Points --");
-        SetText(selectedRouteText, string.IsNullOrEmpty(coreCharger.SelectedRouteId)
-            ? "No Route Selected"
-            : $"Selected: {coreCharger.SelectedRouteId}/{coreCharger.SelectedOptionId}");
-        SetText(routeStateText, BuildRouteSummary());
+        SetText(currencyText, baseCampManager != null ? $"Credits {baseCampManager.Credits}" : "Credits --");
+        SetText(selectedUnitText, BuildSelectedUnitText());
+        SetText(unitStateText, BuildUnitSummary());
 
         if (upgradeButton != null && baseCampManager != null)
         {
@@ -168,56 +151,98 @@ public class CoreChargerPanel : MonoBehaviour
 
         BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, coreCharger, ref observedUpgradeDuration);
 
-        if (investRouteButton != null)
+        if (enhanceUnitButton != null && baseCampManager != null)
         {
-            investRouteButton.interactable = coreCharger.CanInvestRoute(coreCharger.SelectedRouteId);
+            enhanceUnitButton.interactable = coreCharger.CanEnhanceSelectedUnit(baseCampManager.Credits);
         }
 
-        SetRouteButton(armorRouteButton, "health");
-        SetRouteButton(shieldRouteButton, "attack");
-        SetRouteButton(pierceDefenseRouteButton, "critical");
+        SetUnitButton(firstUnitButton, 0);
+        SetUnitButton(secondUnitButton, 1);
+        SetUnitButton(thirdUnitButton, 2);
     }
 
-    private string BuildRouteSummary()
+    private string BuildSelectedUnitText()
+    {
+        CoreCharger.UnitEnhancement selectedUnit = coreCharger.SelectedUnitEnhancement;
+        if (selectedUnit == null)
+        {
+            return "No Unit Selected";
+        }
+
+        if (selectedUnit.IsMaxLevel)
+        {
+            return $"{selectedUnit.DisplayName} Lv.MAX {BuildStatBonusSummary(selectedUnit)}";
+        }
+
+        return $"{selectedUnit.DisplayName} Lv.{selectedUnit.enhanceLevel}/{selectedUnit.MaxEnhanceLevel} {BuildStatBonusSummary(selectedUnit)} / Cost {selectedUnit.NextEnhanceCost} / Next {BuildNextStatIncreaseSummary(selectedUnit)}";
+    }
+
+    private string BuildUnitSummary()
     {
         string summary = string.Empty;
-
-        foreach (CoreCharger.CoreRoute route in coreCharger.Routes)
+        foreach (CoreCharger.UnitEnhancement unitEnhancement in coreCharger.UnitEnhancements)
         {
-            string state = route.unlocked ? "OPEN" : $"Charger Lv.{route.requiredChargerLevel}";
-            summary += $"{route.displayName}: {state} / Route Points {coreCharger.GetRouteInvestedPoints(route)}\n";
-
-            if (route.options == null)
+            if (unitEnhancement == null)
             {
                 continue;
             }
 
-            foreach (CoreCharger.CoreRouteOption option in route.options)
-            {
-                if (option == null)
-                {
-                    continue;
-                }
-
-                int maxPoints = coreCharger.GetOptionMaxPoints(option);
-                float bonus = coreCharger.GetOptionBonus(option);
-                float currentTierBonus = coreCharger.GetCurrentOptionTierBonusPerPoint(option);
-                string selected = option.optionId == coreCharger.SelectedOptionId ? " *" : string.Empty;
-                string optionState = coreCharger.IsOptionUnlocked(route, option)
-                    ? "OPEN"
-                    : $"LOCKED Need {option.requiredRoutePoints}";
-                summary += $"  {option.displayName}{selected}: {optionState} / {coreCharger.GetOptionTierLabel(option)} / {option.investedPoints}/{maxPoints} {option.statId} +{bonus:0.##} (+{currentTierBonus:0.##}/pt)\n";
-            }
+            string selected = unitEnhancement == coreCharger.SelectedUnitEnhancement ? " *" : string.Empty;
+            summary += $"{unitEnhancement.DisplayName}{selected}: {BuildStatBonusSummary(unitEnhancement)} (Lv.{unitEnhancement.enhanceLevel}/{unitEnhancement.MaxEnhanceLevel})\n";
         }
 
         return summary.TrimEnd();
     }
 
-    private void SetRouteButton(Button button, string routeId)
+    private static string BuildStatBonusSummary(CoreCharger.UnitEnhancement unitEnhancement)
+    {
+        if (unitEnhancement == null)
+        {
+            return string.Empty;
+        }
+
+        string summary = string.Empty;
+        foreach (CoreCharger.UnitEnhancementStat stat in System.Enum.GetValues(typeof(CoreCharger.UnitEnhancementStat)))
+        {
+            float bonus = unitEnhancement.GetStatBonus(stat);
+            if (Mathf.Approximately(bonus, 0f))
+            {
+                continue;
+            }
+
+            summary += $"{CoreCharger.GetStatDisplayName(stat)} {FormatSigned(bonus)} ";
+        }
+
+        return string.IsNullOrWhiteSpace(summary) ? "No Bonus" : summary.TrimEnd();
+    }
+
+    private static string BuildNextStatIncreaseSummary(CoreCharger.UnitEnhancement unitEnhancement)
+    {
+        CoreCharger.UnitEnhancementLevel nextLevel = unitEnhancement?.GetEnhancementLevel(unitEnhancement.enhanceLevel);
+        if (nextLevel == null || nextLevel.statIncreases == null || nextLevel.statIncreases.Count == 0)
+        {
+            return "No Bonus";
+        }
+
+        string summary = string.Empty;
+        foreach (CoreCharger.UnitStatIncrease statIncrease in nextLevel.statIncreases)
+        {
+            if (statIncrease == null || Mathf.Approximately(statIncrease.amount, 0f))
+            {
+                continue;
+            }
+
+            summary += $"{CoreCharger.GetStatDisplayName(statIncrease.stat)} {FormatSigned(statIncrease.amount)} ";
+        }
+
+        return string.IsNullOrWhiteSpace(summary) ? "No Bonus" : summary.TrimEnd();
+    }
+
+    private void SetUnitButton(Button button, int unitIndex)
     {
         if (button != null)
         {
-            button.interactable = coreCharger.IsRouteUnlocked(routeId);
+            button.interactable = coreCharger.UnitEnhancements != null && unitIndex >= 0 && unitIndex < coreCharger.UnitEnhancements.Count;
         }
     }
 
@@ -225,6 +250,11 @@ public class CoreChargerPanel : MonoBehaviour
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
         coreCharger = baseCampManager != null ? baseCampManager.CoreCharger : null;
+    }
+
+    private static string FormatSigned(float value)
+    {
+        return value >= 0f ? $"+{value:0.##}" : $"{value:0.##}";
     }
 
     private static void SetText(TMP_Text target, string value)

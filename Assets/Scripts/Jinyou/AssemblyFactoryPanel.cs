@@ -10,9 +10,11 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [SerializeField] private Button mechMenuButton;
     [SerializeField] private Button skillMenuButton;
     [SerializeField] private Button partsMenuButton;
+    [SerializeField] private Button weaponEnhanceButton;
     [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text weaponEnhanceText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text selectedMenuText;
@@ -29,6 +31,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         mechMenuButton?.onClick.AddListener(SelectMechMenu);
         skillMenuButton?.onClick.AddListener(SelectSkillMenu);
         partsMenuButton?.onClick.AddListener(SelectPartsMenu);
+        weaponEnhanceButton?.onClick.AddListener(EnhanceWeapon);
         closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
@@ -41,6 +44,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         mechMenuButton?.onClick.RemoveListener(SelectMechMenu);
         skillMenuButton?.onClick.RemoveListener(SelectSkillMenu);
         partsMenuButton?.onClick.RemoveListener(SelectPartsMenu);
+        weaponEnhanceButton?.onClick.RemoveListener(EnhanceWeapon);
     }
 
     private void Update()
@@ -78,6 +82,24 @@ public class AssemblyFactoryPanel : MonoBehaviour
     private void UpgradeFactory()
     {
         baseCampManager?.UpgradeAssemblyFactory();
+        Refresh();
+    }
+
+    private void EnhanceWeapon()
+    {
+        baseCampManager?.EnhanceAssemblyWeapon();
+        Refresh();
+    }
+
+    public void SelectWeapon(ProjectileConfig weaponConfig)
+    {
+        baseCampManager?.SelectAssemblyWeapon(weaponConfig);
+        Refresh();
+    }
+
+    public void SelectWeaponByIndex(int weaponIndex)
+    {
+        baseCampManager?.SelectAssemblyWeapon(weaponIndex);
         Refresh();
     }
 
@@ -125,6 +147,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         SetText(upgradeText, assemblyFactory.IsUpgrading
             ? $"Upgrading {assemblyFactory.UpgradeRemainingSeconds:0}s"
             : $"Upgrade Cost {assemblyFactory.UpgradeCost}");
+        SetText(weaponEnhanceText, BuildSelectedWeaponEnhancementText());
         SetText(selectedMenuText, string.IsNullOrEmpty(assemblyFactory.SelectedMenuId) ? "No Menu Selected" : $"Selected: {assemblyFactory.SelectedMenuId}");
         SetText(menuStateText, BuildMenuSummary());
 
@@ -148,6 +171,11 @@ public class AssemblyFactoryPanel : MonoBehaviour
         SetMenuButton(mechMenuButton, "mech");
         SetMenuButton(skillMenuButton, "skill");
         SetMenuButton(partsMenuButton, "parts");
+
+        if (weaponEnhanceButton != null && baseCampManager != null)
+        {
+            weaponEnhanceButton.interactable = assemblyFactory.CanEnhanceSelectedWeapon(baseCampManager.Credits);
+        }
     }
 
     private string BuildMenuSummary()
@@ -159,7 +187,77 @@ public class AssemblyFactoryPanel : MonoBehaviour
             summary += $"{menu.displayName}: {(menu.unlocked ? "OPEN" : $"Lv.{menu.requiredFactoryLevel}")}\n";
         }
 
+        foreach (AssemblyFactory.WeaponEnhancement weaponEnhancement in assemblyFactory.WeaponEnhancements)
+        {
+            if (weaponEnhancement == null)
+            {
+                continue;
+            }
+
+            summary += $"{weaponEnhancement.DisplayName}: {BuildStatBonusSummary(weaponEnhancement)} (Lv.{weaponEnhancement.enhanceLevel}/{weaponEnhancement.MaxEnhanceLevel})\n";
+        }
+
         return summary.TrimEnd();
+    }
+
+    private string BuildSelectedWeaponEnhancementText()
+    {
+        AssemblyFactory.WeaponEnhancement selectedWeapon = assemblyFactory.SelectedWeaponEnhancement;
+        if (selectedWeapon == null)
+        {
+            return "No Weapon Selected";
+        }
+
+        if (selectedWeapon.IsMaxLevel)
+        {
+            return $"{selectedWeapon.DisplayName} Lv.MAX {BuildStatBonusSummary(selectedWeapon)}";
+        }
+
+        return $"{selectedWeapon.DisplayName} Lv.{selectedWeapon.enhanceLevel}/{selectedWeapon.MaxEnhanceLevel} {BuildStatBonusSummary(selectedWeapon)} / Cost {selectedWeapon.NextEnhanceCost} / Next {BuildNextStatIncreaseSummary(selectedWeapon)}";
+    }
+
+    private static string BuildStatBonusSummary(AssemblyFactory.WeaponEnhancement weaponEnhancement)
+    {
+        if (weaponEnhancement == null)
+        {
+            return string.Empty;
+        }
+
+        string summary = string.Empty;
+        foreach (AssemblyFactory.WeaponEnhancementStat stat in System.Enum.GetValues(typeof(AssemblyFactory.WeaponEnhancementStat)))
+        {
+            float bonus = weaponEnhancement.GetStatBonus(stat);
+            if (bonus <= 0f)
+            {
+                continue;
+            }
+
+            summary += $"{AssemblyFactory.GetStatDisplayName(stat)} +{bonus:0.#} ";
+        }
+
+        return string.IsNullOrWhiteSpace(summary) ? "No Bonus" : summary.TrimEnd();
+    }
+
+    private static string BuildNextStatIncreaseSummary(AssemblyFactory.WeaponEnhancement weaponEnhancement)
+    {
+        AssemblyFactory.WeaponEnhancementLevel nextLevel = weaponEnhancement?.GetEnhancementLevel(weaponEnhancement.enhanceLevel);
+        if (nextLevel == null || nextLevel.statIncreases == null || nextLevel.statIncreases.Count == 0)
+        {
+            return "No Bonus";
+        }
+
+        string summary = string.Empty;
+        foreach (AssemblyFactory.WeaponStatIncrease statIncrease in nextLevel.statIncreases)
+        {
+            if (statIncrease == null || statIncrease.amount <= 0f)
+            {
+                continue;
+            }
+
+            summary += $"{AssemblyFactory.GetStatDisplayName(statIncrease.stat)} +{statIncrease.amount:0.#} ";
+        }
+
+        return string.IsNullOrWhiteSpace(summary) ? "No Bonus" : summary.TrimEnd();
     }
 
     private void SetMenuButton(Button button, string menuId)
