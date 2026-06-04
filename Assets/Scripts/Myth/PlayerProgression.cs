@@ -2,18 +2,34 @@ using UnityEngine;
 
 public class PlayerProgression : MonoBehaviour
 {
+    private const string LevelKey = "PlayerProgression.Level";
+    private const string CurrentExperienceKey = "PlayerProgression.CurrentExperience";
+    private const string ExperienceToNextLevelKey = "PlayerProgression.ExperienceToNextLevel";
+    private const string StatPointsKey = "PlayerProgression.StatPoints";
+
     [Header("Level")]
     [SerializeField] private int level = 1;
     [SerializeField] private float currentExperience;
     [SerializeField] private float experienceToNextLevel = 100f;
     [SerializeField] private float experienceGrowthRate = 1.2f;
     [SerializeField] private int statPoints;
+    [SerializeField] private bool saveToPlayerPrefs = true;
+
+    private int initialLevel;
+    private float initialExperienceToNextLevel;
 
     public int Level => level;
     public float CurrentExperience => currentExperience;
     public float ExperienceToNextLevel => experienceToNextLevel;
     public float ExperienceProgress01 => experienceToNextLevel > 0f ? Mathf.Clamp01(currentExperience / experienceToNextLevel) : 0f;
     public int StatPoints => statPoints;
+
+    private void Awake()
+    {
+        initialLevel = Mathf.Max(1, level);
+        initialExperienceToNextLevel = Mathf.Max(1f, experienceToNextLevel);
+        Load();
+    }
 
     public void AddExperience(float amount)
     {
@@ -29,6 +45,18 @@ public class PlayerProgression : MonoBehaviour
             currentExperience -= experienceToNextLevel;
             LevelUp();
         }
+
+        Save();
+    }
+
+    public void ResetProgression()
+    {
+        // 디버그 초기화는 Inspector 기본값 기준으로 레벨/경험치를 되돌린다.
+        level = initialLevel;
+        currentExperience = 0f;
+        experienceToNextLevel = initialExperienceToNextLevel;
+        statPoints = 0;
+        Save();
     }
 
     private void LevelUp()
@@ -38,5 +66,32 @@ public class PlayerProgression : MonoBehaviour
         experienceToNextLevel = Mathf.Max(1f, experienceToNextLevel * experienceGrowthRate);
 
         Debug.Log($"플레이어 레벨업: Lv.{level}, 특성 포인트 {statPoints}");
+    }
+
+    private void Load()
+    {
+        if (!saveToPlayerPrefs)
+        {
+            return;
+        }
+
+        level = Mathf.Max(1, PlayerPrefs.GetInt(LevelKey, level));
+        currentExperience = Mathf.Max(0f, PlayerPrefs.GetFloat(CurrentExperienceKey, currentExperience));
+        experienceToNextLevel = Mathf.Max(1f, PlayerPrefs.GetFloat(ExperienceToNextLevelKey, experienceToNextLevel));
+        statPoints = Mathf.Max(0, PlayerPrefs.GetInt(StatPointsKey, statPoints));
+    }
+
+    private void Save()
+    {
+        if (!saveToPlayerPrefs)
+        {
+            return;
+        }
+
+        PlayerPrefs.SetInt(LevelKey, level);
+        PlayerPrefs.SetFloat(CurrentExperienceKey, currentExperience);
+        PlayerPrefs.SetFloat(ExperienceToNextLevelKey, experienceToNextLevel);
+        PlayerPrefs.SetInt(StatPointsKey, statPoints);
+        PlayerPrefs.Save();
     }
 }

@@ -341,9 +341,9 @@ public class PlayerProjectile : MonoBehaviour
             return;
         }
 
-        // 적 처치 보상은 기본 재화와 희귀 재화를 같은 wallet에 누적한다.
-        wallet.AddCredits(enemy.CreditReward);
-        wallet.AddCoreCrystals(enemy.CoreCrystalReward);
+        // 적 처치 보상은 공통 재화 API로 누적한다.
+        wallet.Add(CurrencyType.Credits, enemy.CreditReward);
+        wallet.Add(CurrencyType.CoreCrystals, enemy.CoreCrystalReward);
     }
 
     private void ApplyKnockback(CombatHealth target)

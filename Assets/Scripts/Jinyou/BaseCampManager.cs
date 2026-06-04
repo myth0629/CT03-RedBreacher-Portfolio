@@ -191,9 +191,15 @@ public class BaseCampManager : MonoBehaviour
         int availableCredits = Credits;
         int researchLabLevel = researchLab != null ? researchLab.Level : 1;
 
-        if (facility.TryStartUpgrade(ref availableCredits, commanderLevel, researchLabLevel))
+        if (!facility.CanStartUpgrade(availableCredits, commanderLevel, researchLabLevel))
         {
-            SetCredits(availableCredits);
+            return;
+        }
+
+        // 실제 재화 차감은 wallet 인터페이스 한 곳으로 모은다.
+        if (CurrencyWallet.TrySpend(CurrencyType.Credits, facility.UpgradeCost))
+        {
+            facility.Upgrade();
         }
     }
 
@@ -201,6 +207,7 @@ public class BaseCampManager : MonoBehaviour
     {
         if (showDebugPanel)
         {
+            debugPanelRect.height = Mathf.Max(debugPanelRect.height, 260f);
             debugPanelRect = GUILayout.Window(GetInstanceID(), debugPanelRect, DrawDebugPanel, "Base Camp");
         }
     }
@@ -219,8 +226,33 @@ public class BaseCampManager : MonoBehaviour
         if (GUILayout.Button("Upgrade Refinery")) UpgradeEnergyRefinery();
         if (GUILayout.Button("Upgrade Assembly")) UpgradeAssemblyFactory();
         if (GUILayout.Button("Upgrade Core")) UpgradeCoreCharger();
+        if (GUILayout.Button("Reset Level/Stage")) ResetLevelAndStageDebug();
 
         GUI.DragWindow();
+    }
+
+    private void ResetLevelAndStageDebug()
+    {
+        ResetPlayerProgressionDebug();
+        ResetStageProgressDebug();
+    }
+
+    private void ResetPlayerProgressionDebug()
+    {
+        PlayerProgression progression = FindFirstObjectByType<PlayerProgression>();
+        if (progression != null)
+        {
+            progression.ResetProgression();
+        }
+    }
+
+    private void ResetStageProgressDebug()
+    {
+        EnemySpawnManager spawnManager = FindFirstObjectByType<EnemySpawnManager>();
+        if (spawnManager != null)
+        {
+            spawnManager.ResetStageProgress();
+        }
     }
 
     private PlayerCurrencyWallet EnsureCurrencyWallet()
@@ -286,7 +318,21 @@ public class BaseCampManager : MonoBehaviour
     }
 }
 
-public class PlayerCurrencyWallet : MonoBehaviour
+public enum CurrencyType
+{
+    Credits,
+    CoreCrystals
+}
+
+public interface ICurrencyWallet
+{
+    int GetAmount(CurrencyType type);
+    void Add(CurrencyType type, int amount);
+    bool CanSpend(CurrencyType type, int amount);
+    bool TrySpend(CurrencyType type, int amount);
+}
+
+public class PlayerCurrencyWallet : MonoBehaviour, ICurrencyWallet
 {
     private const string CreditsKey = "PlayerCurrencyWallet.Credits";
     private const string CoreCrystalsKey = "PlayerCurrencyWallet.CoreCrystals";
@@ -310,35 +356,76 @@ public class PlayerCurrencyWallet : MonoBehaviour
 
     public void AddCredits(int amount)
     {
-        SetCredits(credits + Mathf.Max(0, amount));
+        Add(CurrencyType.Credits, amount);
     }
 
     public bool TrySpendCredits(int amount)
     {
-        amount = Mathf.Max(0, amount);
-        if (credits < amount)
-        {
-            return false;
-        }
-
-        SetCredits(credits - amount);
-        return true;
+        return TrySpend(CurrencyType.Credits, amount);
     }
 
     public void AddCoreCrystals(int amount)
     {
-        SetCoreCrystals(coreCrystals + Mathf.Max(0, amount));
+        Add(CurrencyType.CoreCrystals, amount);
     }
 
     public bool TrySpendCoreCrystals(int amount)
     {
+        return TrySpend(CurrencyType.CoreCrystals, amount);
+    }
+
+    public int GetAmount(CurrencyType type)
+    {
+        switch (type)
+        {
+            case CurrencyType.Credits:
+                return credits;
+            case CurrencyType.CoreCrystals:
+                return coreCrystals;
+            default:
+                return 0;
+        }
+    }
+
+    public void Add(CurrencyType type, int amount)
+    {
         amount = Mathf.Max(0, amount);
-        if (coreCrystals < amount)
+        switch (type)
+        {
+            case CurrencyType.Credits:
+                SetCredits(credits + amount);
+                break;
+            case CurrencyType.CoreCrystals:
+                SetCoreCrystals(coreCrystals + amount);
+                break;
+        }
+    }
+
+    public bool CanSpend(CurrencyType type, int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        return GetAmount(type) >= amount;
+    }
+
+    public bool TrySpend(CurrencyType type, int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        if (!CanSpend(type, amount))
         {
             return false;
         }
 
-        SetCoreCrystals(coreCrystals - amount);
+        // 재화 종류별 이벤트/저장은 기존 Set 메서드에 위임한다.
+        switch (type)
+        {
+            case CurrencyType.Credits:
+                SetCredits(credits - amount);
+                break;
+            case CurrencyType.CoreCrystals:
+                SetCoreCrystals(coreCrystals - amount);
+                break;
+        }
+
         return true;
     }
 

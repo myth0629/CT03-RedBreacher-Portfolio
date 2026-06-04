@@ -4,9 +4,12 @@ using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
 {
+    private const string CurrentRoundKey = "EnemySpawnManager.CurrentRound";
+
     [Header("Stage")]
     [SerializeField] private int startStage = 1;
     [SerializeField] private int roundsPerStage = 5;
+    [SerializeField] private bool saveToPlayerPrefs = true;
 
     [Header("Round")]
     [SerializeField] private bool startOnAwake = true;
@@ -15,6 +18,10 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] private int enemyCountIncreasePerStage = 3;
     [SerializeField] private int enemyCountIncreasePerRound = 1;
     [SerializeField] private float timeBetweenRounds = 2f;
+
+    [Header("Player Death")]
+    [SerializeField] private PlayerController player;
+    [SerializeField] private float restartDelayOnPlayerDeath = 3f;
 
     [Header("Enemy Scaling")]
     [SerializeField] private float healthIncreasePerStage = 0.2f;
@@ -31,6 +38,7 @@ public class EnemySpawnManager : MonoBehaviour
 
     private readonly List<CombatHealth> aliveEnemies = new List<CombatHealth>();
     private Coroutine roundRoutine;
+    private Coroutine playerDeathRestartRoutine;
     private int currentStage;
     private int currentRound;
     private int currentRoundInStage;
@@ -47,7 +55,7 @@ public class EnemySpawnManager : MonoBehaviour
     private void Awake()
     {
         currentStage = Mathf.Max(1, startStage);
-        currentRound = Mathf.Max(1, startRound);
+        currentRound = LoadCurrentRound();
         RefreshStageRoundState();
     }
 
@@ -62,6 +70,7 @@ public class EnemySpawnManager : MonoBehaviour
     private void Update()
     {
         CleanupAliveEnemies();
+        HandlePlayerDeathRestart();
 
         if (roundsActive && !spawningRound && roundRoutine == null && aliveEnemies.Count == 0)
         {
@@ -100,7 +109,38 @@ public class EnemySpawnManager : MonoBehaviour
 
         spawningRound = false;
         currentRound++;
+        SaveProgress();
         roundRoutine = null;
+    }
+
+    public void ResetStageProgress()
+    {
+        roundsActive = false;
+
+        if (roundRoutine != null)
+        {
+            StopCoroutine(roundRoutine);
+            roundRoutine = null;
+        }
+
+        if (playerDeathRestartRoutine != null)
+        {
+            StopCoroutine(playerDeathRestartRoutine);
+            playerDeathRestartRoutine = null;
+        }
+
+        spawningRound = false;
+        ClearSpawnedEnemies();
+        RevivePlayer();
+        currentRound = Mathf.Max(1, startRound);
+        RefreshStageRoundState();
+        SaveProgress();
+
+        // 디버그 초기화 직후에도 기존 start 설정에 맞춰 바로 재시작한다.
+        if (startOnAwake)
+        {
+            StartRounds();
+        }
     }
 
     private int GetEnemyCountForRound(int round)
@@ -122,6 +162,12 @@ public class EnemySpawnManager : MonoBehaviour
     {
         int roundOffset = Mathf.Max(0, round - startRound);
         return roundOffset % RoundsPerStage + 1;
+    }
+
+    private int GetFirstRoundForStage(int stage)
+    {
+        int stageOffset = Mathf.Max(0, stage - startStage);
+        return Mathf.Max(1, startRound + stageOffset * RoundsPerStage);
     }
 
     private void RefreshStageRoundState()
@@ -230,5 +276,94 @@ public class EnemySpawnManager : MonoBehaviour
                 aliveEnemies.RemoveAt(i);
             }
         }
+    }
+
+    private void HandlePlayerDeathRestart()
+    {
+        if (player == null)
+        {
+            player = FindFirstObjectByType<PlayerController>();
+        }
+
+        if (player == null || player.Health == null || !player.Health.IsDead || playerDeathRestartRoutine != null)
+        {
+            return;
+        }
+
+        playerDeathRestartRoutine = StartCoroutine(RestartCurrentStageAfterPlayerDeath());
+    }
+
+    private IEnumerator RestartCurrentStageAfterPlayerDeath()
+    {
+        int stageToRestart = Mathf.Max(1, currentStage);
+        roundsActive = false;
+
+        if (roundRoutine != null)
+        {
+            StopCoroutine(roundRoutine);
+            roundRoutine = null;
+        }
+
+        spawningRound = false;
+        ClearSpawnedEnemies();
+
+        // 사망 연출/확인 시간을 둔 뒤 현재 스테이지를 처음부터 다시 시작한다.
+        yield return new WaitForSeconds(Mathf.Max(0f, restartDelayOnPlayerDeath));
+
+        RevivePlayer();
+        currentRound = GetFirstRoundForStage(stageToRestart);
+        RefreshStageRoundState();
+        SaveProgress();
+        roundsActive = true;
+        playerDeathRestartRoutine = null;
+        StartRounds();
+    }
+
+    private void RevivePlayer()
+    {
+        if (player == null || player.Health == null)
+        {
+            return;
+        }
+
+        // CombatHealth 초기화로 사망 상태와 체력을 함께 복구한다.
+        player.Health.Initialize(player.Health.MaxHealth);
+        CombatPlane.ClampTransform(player.transform);
+    }
+
+    private void ClearSpawnedEnemies()
+    {
+        EnemyController[] enemies = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            if (enemies[i] != null)
+            {
+                Destroy(enemies[i].gameObject);
+            }
+        }
+
+        aliveEnemies.Clear();
+    }
+
+    private int LoadCurrentRound()
+    {
+        int defaultRound = Mathf.Max(1, startRound);
+        if (!saveToPlayerPrefs)
+        {
+            return defaultRound;
+        }
+
+        return Mathf.Max(defaultRound, PlayerPrefs.GetInt(CurrentRoundKey, defaultRound));
+    }
+
+    private void SaveProgress()
+    {
+        if (!saveToPlayerPrefs)
+        {
+            return;
+        }
+
+        PlayerPrefs.SetInt(CurrentRoundKey, Mathf.Max(1, currentRound));
+        PlayerPrefs.Save();
     }
 }
