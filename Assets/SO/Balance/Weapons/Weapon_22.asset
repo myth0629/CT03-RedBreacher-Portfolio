@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c529ea981bc074109bb7afba98b3e58f, type: 3}
-  m_Name: Weapon_06
+  m_Name: Weapon_22
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
-  id: 06
-  displayName: "\uD3EC\uD0C406"
-  attackDamage: 13
+  id: 20
+  displayName: "\uD3EC\uD0C420"
+  attackDamage: 100
   speed: 20
   lifetime: 2
   collisionRadius: 0.2
-  knockbackForce: 3.6
+  knockbackForce: 5
   multiMuzzleFireMode: 2
   maxBurstMuzzleCount: 3
   muzzleNamePrefix: FireMuzzle
-  fireFlashEffectPrefab: {fileID: 1664480636356834, guid: 804ae8f9f84a897418a43058844761ab, type: 3}
-  projectileEffectPrefab: {fileID: 3074607357671227079, guid: f4f43c3b45212814fa33c20fda29a5e6, type: 3}
-  hitEffectPrefab: {fileID: 1738658161782828, guid: c2b56ab585925cb4caf968d84119f31a, type: 3}
+  fireFlashEffectPrefab: {fileID: 1419324454515648, guid: aecc560af92180649bf3836f66f9bd9e, type: 3}
+  projectileEffectPrefab: {fileID: 1136050290210760, guid: 1ffb4163de809e8478e8896ee971f8c8, type: 3}
+  hitEffectPrefab: {fileID: 1774151147760336, guid: da71abe683e03674098dc818adf74def, type: 3}
   effectCleanupDelay: 2

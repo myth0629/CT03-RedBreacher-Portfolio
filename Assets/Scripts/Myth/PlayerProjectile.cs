@@ -199,6 +199,41 @@ public class PlayerProjectile : MonoBehaviour
         projectileEffectInstance = CombatObjectPool.GetEffect(projectileEffectPrefab, transform.position, transform.rotation, transform);
         projectileEffectInstance.transform.localPosition = Vector3.zero;
         projectileEffectInstance.transform.localRotation = Quaternion.identity;
+        DisableExternalProjectileMotion(projectileEffectInstance);
+    }
+
+    private void DisableExternalProjectileMotion(GameObject effect)
+    {
+        if (effect == null)
+        {
+            return;
+        }
+
+        // 외부 VFX 에셋의 데모용 이동/충돌 스크립트는 우리 발사체 이동과 겹치므로 비활성화한다.
+        MonoBehaviour[] behaviours = effect.GetComponentsInChildren<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            MonoBehaviour behaviour = behaviours[i];
+            if (behaviour != null && behaviour.GetType().Name == "ProjectileMoveScript")
+            {
+                behaviour.enabled = false;
+            }
+        }
+
+        Rigidbody[] rigidbodies = effect.GetComponentsInChildren<Rigidbody>(true);
+        for (int i = 0; i < rigidbodies.Length; i++)
+        {
+            rigidbodies[i].linearVelocity = Vector3.zero;
+            rigidbodies[i].angularVelocity = Vector3.zero;
+            rigidbodies[i].isKinematic = true;
+            rigidbodies[i].useGravity = false;
+        }
+
+        Collider[] colliders = effect.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            colliders[i].enabled = false;
+        }
     }
 
     private void SpawnHitEffect()

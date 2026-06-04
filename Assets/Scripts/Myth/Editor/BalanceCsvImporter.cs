@@ -17,7 +17,7 @@ public static class BalanceCsvImporter
     private const string WeaponOutputPath = "Assets/SO/Balance/Weapons";
     private const string EnemyOutputPath = "Assets/SO/Balance/Enemies";
 
-    [MenuItem("Tools/Balance/Import All CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/All")]
     public static void ImportAll()
     {
         EnsureOutputFolders();
@@ -29,7 +29,7 @@ public static class BalanceCsvImporter
         Debug.Log("밸런스 CSV 임포트 완료");
     }
 
-    [MenuItem("Tools/Balance/Export All CSV")]
+    [MenuItem("Tools/Balance/SO to CSV/All")]
     public static void ExportAll()
     {
         ExportUnits();
@@ -39,7 +39,7 @@ public static class BalanceCsvImporter
         Debug.Log("밸런스 SO CSV 내보내기 완료");
     }
 
-    [MenuItem("Tools/Balance/Import Units CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/Units")]
     public static void ImportUnits()
     {
         foreach (Dictionary<string, string> row in ReadCsv(UnitCsvPath))
@@ -66,7 +66,7 @@ public static class BalanceCsvImporter
         }
     }
 
-    [MenuItem("Tools/Balance/Import Weapons CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/Weapons")]
     public static void ImportWeapons()
     {
         foreach (Dictionary<string, string> row in ReadCsv(WeaponCsvPath))
@@ -95,7 +95,7 @@ public static class BalanceCsvImporter
         }
     }
 
-    [MenuItem("Tools/Balance/Import Enemies CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/Enemies")]
     public static void ImportEnemies()
     {
         foreach (Dictionary<string, string> row in ReadCsv(EnemyCsvPath))
@@ -119,7 +119,7 @@ public static class BalanceCsvImporter
         }
     }
 
-    [MenuItem("Tools/Balance/Export Units CSV")]
+    [MenuItem("Tools/Balance/SO to CSV/Units")]
     public static void ExportUnits()
     {
         string[] headers =
@@ -152,7 +152,7 @@ public static class BalanceCsvImporter
         Debug.Log($"유닛 SO CSV 내보내기 완료: {UnitCsvPath}");
     }
 
-    [MenuItem("Tools/Balance/Export Weapons CSV")]
+    [MenuItem("Tools/Balance/SO to CSV/Weapons")]
     public static void ExportWeapons()
     {
         string[] headers =
@@ -188,7 +188,7 @@ public static class BalanceCsvImporter
         Debug.Log($"무기 SO CSV 내보내기 완료: {WeaponCsvPath}");
     }
 
-    [MenuItem("Tools/Balance/Export Enemies CSV")]
+    [MenuItem("Tools/Balance/SO to CSV/Enemies")]
     public static void ExportEnemies()
     {
         string[] headers =
