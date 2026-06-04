@@ -21,6 +21,7 @@ public class EnemySpawnManager : MonoBehaviour
 
     [Header("Player Death")]
     [SerializeField] private PlayerController player;
+    [SerializeField] private Transform playerRespawnPoint;
     [SerializeField] private float restartDelayOnPlayerDeath = 3f;
 
     [Header("Enemy Scaling")]
@@ -36,9 +37,16 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] private float spawnRadius = 8f;
     [SerializeField] private float spawnInterval = 0.25f;
 
+    [Header("Spawn Bounds")]
+    [SerializeField] private bool clampSpawnToBounds = true;
+    [SerializeField] private Transform spawnBoundsCenter;
+    [SerializeField] private Vector2 spawnBoundsSize = new Vector2(24f, 24f);
+    [SerializeField] private float spawnBoundsPadding = 1f;
+
     private readonly List<CombatHealth> aliveEnemies = new List<CombatHealth>();
     private Coroutine roundRoutine;
     private Coroutine playerDeathRestartRoutine;
+    private Vector3 fallbackPlayerRespawnPosition;
     private int currentStage;
     private int currentRound;
     private int currentRoundInStage;
@@ -54,6 +62,10 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void Awake()
     {
+        ResolvePlayer();
+        fallbackPlayerRespawnPosition = player != null
+            ? CombatPlane.WithFixedY(player.transform.position)
+            : CombatPlane.WithFixedY(transform.position);
         currentStage = Mathf.Max(1, startStage);
         currentRound = LoadCurrentRound();
         RefreshStageRoundState();
@@ -223,7 +235,7 @@ public class EnemySpawnManager : MonoBehaviour
         Vector3 center = GetSpawnCenterPosition();
         float angle = (index * 137.5f + currentRound * 29f) * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * spawnRadius;
-        return CombatPlane.WithFixedY(center + offset);
+        return ClampSpawnPositionToBounds(center + offset);
     }
 
     private int GetEnemyLevel()
@@ -249,6 +261,38 @@ public class EnemySpawnManager : MonoBehaviour
         if (player != null)
         {
             return CombatPlane.WithFixedY(player.transform.position);
+        }
+
+        return CombatPlane.WithFixedY(transform.position);
+    }
+
+    private Vector3 ClampSpawnPositionToBounds(Vector3 position)
+    {
+        position = CombatPlane.WithFixedY(position);
+        if (!clampSpawnToBounds)
+        {
+            return position;
+        }
+
+        Vector3 center = GetSpawnBoundsCenter();
+        Vector2 halfSize = Vector2.Max(Vector2.zero, spawnBoundsSize * 0.5f - Vector2.one * Mathf.Max(0f, spawnBoundsPadding));
+
+        // 벽 콜라이더 안쪽으로 스폰 위치를 제한해 적이 벽 밖에서 생성되지 않게 한다.
+        position.x = Mathf.Clamp(position.x, center.x - halfSize.x, center.x + halfSize.x);
+        position.z = Mathf.Clamp(position.z, center.z - halfSize.y, center.z + halfSize.y);
+        return CombatPlane.WithFixedY(position);
+    }
+
+    private Vector3 GetSpawnBoundsCenter()
+    {
+        if (spawnBoundsCenter != null)
+        {
+            return CombatPlane.WithFixedY(spawnBoundsCenter.position);
+        }
+
+        if (spawnCenter != null)
+        {
+            return CombatPlane.WithFixedY(spawnCenter.position);
         }
 
         return CombatPlane.WithFixedY(transform.position);
@@ -280,10 +324,7 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void HandlePlayerDeathRestart()
     {
-        if (player == null)
-        {
-            player = FindFirstObjectByType<PlayerController>();
-        }
+        ResolvePlayer();
 
         if (player == null || player.Health == null || !player.Health.IsDead || playerDeathRestartRoutine != null)
         {
@@ -326,9 +367,28 @@ public class EnemySpawnManager : MonoBehaviour
             return;
         }
 
-        // CombatHealth 초기화로 사망 상태와 체력을 함께 복구한다.
+        // 부활 시 아레나 시작 위치로 되돌려 구석 재시작을 막는다.
+        player.transform.position = GetPlayerRespawnPosition();
         player.Health.Initialize(player.Health.MaxHealth);
         CombatPlane.ClampTransform(player.transform);
+    }
+
+    private void ResolvePlayer()
+    {
+        if (player == null)
+        {
+            player = FindFirstObjectByType<PlayerController>();
+        }
+    }
+
+    private Vector3 GetPlayerRespawnPosition()
+    {
+        if (playerRespawnPoint != null)
+        {
+            return CombatPlane.WithFixedY(playerRespawnPoint.position);
+        }
+
+        return CombatPlane.WithFixedY(fallbackPlayerRespawnPosition);
     }
 
     private void ClearSpawnedEnemies()
@@ -343,6 +403,18 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         aliveEnemies.Clear();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!clampSpawnToBounds)
+        {
+            return;
+        }
+
+        Vector3 center = GetSpawnBoundsCenter();
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireCube(center, new Vector3(spawnBoundsSize.x, 0.1f, spawnBoundsSize.y));
     }
 
     private int LoadCurrentRound()
