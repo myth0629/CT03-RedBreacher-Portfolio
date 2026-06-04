@@ -18,6 +18,7 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private TMP_Text traitPointText;
     [SerializeField] private TMP_Text selectedRouteText;
     [SerializeField] private TMP_Text routeStateText;
+    [SerializeField] private CoreChargerTreeBuilder treeBuilder;
 
     private CoreCharger coreCharger;
     private float observedUpgradeDuration;
@@ -98,6 +99,7 @@ public class CoreChargerPanel : MonoBehaviour
     private void SelectRoute(string routeId)
     {
         baseCampManager?.SelectCoreRoute(routeId);
+        treeBuilder?.RebuildRoute(routeId);
         Refresh();
     }
 
@@ -183,7 +185,7 @@ public class CoreChargerPanel : MonoBehaviour
         foreach (CoreCharger.CoreRoute route in coreCharger.Routes)
         {
             string state = route.unlocked ? "OPEN" : $"Charger Lv.{route.requiredChargerLevel}";
-            summary += $"{route.displayName}: {state}\n";
+            summary += $"{route.displayName}: {state} / Route Points {coreCharger.GetRouteInvestedPoints(route)}\n";
 
             if (route.options == null)
             {
@@ -201,7 +203,10 @@ public class CoreChargerPanel : MonoBehaviour
                 float bonus = coreCharger.GetOptionBonus(option);
                 float currentTierBonus = coreCharger.GetCurrentOptionTierBonusPerPoint(option);
                 string selected = option.optionId == coreCharger.SelectedOptionId ? " *" : string.Empty;
-                summary += $"  {option.displayName}{selected}: {coreCharger.GetOptionTierLabel(option)} / {option.investedPoints}/{maxPoints} {option.statId} +{bonus:0.##} (+{currentTierBonus:0.##}/pt)\n";
+                string optionState = coreCharger.IsOptionUnlocked(route, option)
+                    ? "OPEN"
+                    : $"LOCKED Need {option.requiredRoutePoints}";
+                summary += $"  {option.displayName}{selected}: {optionState} / {coreCharger.GetOptionTierLabel(option)} / {option.investedPoints}/{maxPoints} {option.statId} +{bonus:0.##} (+{currentTierBonus:0.##}/pt)\n";
             }
         }
 

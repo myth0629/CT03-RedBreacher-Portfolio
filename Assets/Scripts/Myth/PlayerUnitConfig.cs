@@ -4,6 +4,7 @@ using UnityEngine;
 public class PlayerUnitConfig : ScriptableObject
 {
     [Header("Visual")]
+    [SerializeField] private string id = "unit_default";
     [SerializeField] private string displayName = "탱크이름";
     [SerializeField] private GameObject unitPrefab;
 
@@ -20,9 +21,7 @@ public class PlayerUnitConfig : ScriptableObject
     [SerializeField] private float rotationSpeed = 540f;
     [SerializeField] private float fireAngleTolerance = 3f;
 
-    [Header("Projectile")]
-    [SerializeField] private ProjectileConfig projectileConfig;
-
+    public string Id => id;
     public string DisplayName => displayName;
     public GameObject UnitPrefab => unitPrefab;
     public float MaxHealth => maxHealth;
@@ -34,5 +33,4 @@ public class PlayerUnitConfig : ScriptableObject
     public float MoveSpeed => moveSpeed;
     public float RotationSpeed => rotationSpeed;
     public float FireAngleTolerance => fireAngleTolerance;
-    public ProjectileConfig ProjectileConfig => projectileConfig;
 }

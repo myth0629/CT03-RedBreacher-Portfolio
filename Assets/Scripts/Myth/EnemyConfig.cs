@@ -3,6 +3,10 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Myth/Combat/Enemy Config")]
 public class EnemyConfig : ScriptableObject
 {
+    [Header("Identity")]
+    [SerializeField] private string id = "enemy_default";
+    [SerializeField] private string displayName = "기본 적";
+
     [Header("Prefab")]
     [SerializeField] private GameObject enemyPrefab;
 
@@ -14,6 +18,8 @@ public class EnemyConfig : ScriptableObject
     [SerializeField] private float contactInterval = 1f;
     [SerializeField] private float experienceReward = 10f;
 
+    public string Id => id;
+    public string DisplayName => displayName;
     public GameObject EnemyPrefab => enemyPrefab;
     public float MaxHealth => maxHealth;
     public float MoveSpeed => moveSpeed;

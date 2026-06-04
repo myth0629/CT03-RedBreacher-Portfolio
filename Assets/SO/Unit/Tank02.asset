@@ -12,7 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6a649172b8254b66b5c5d2c0331ddef, type: 3}
   m_Name: Tank02
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUnitConfig
+  id: unit_2
+  displayName: "\uD0F1\uD06C\uC774\uB984"
   unitPrefab: {fileID: 214164098778057125, guid: 129660349e2234cba81267de636b9864, type: 3}
+  maxHealth: 100
+  critChance: 0.1
+  critMultiplier: 1.5
   attackRange: 5
   attackDamage: 10
   attackInterval: 1

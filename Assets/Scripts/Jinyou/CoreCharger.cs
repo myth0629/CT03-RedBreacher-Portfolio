@@ -6,18 +6,6 @@ using UnityEngine.Events;
 public class CoreCharger : MonoBehaviour, IBaseCampFacility
 {
     [Serializable]
-    public class CoreRouteTier
-    {
-        [Tooltip("Tier label shown in the core charger route summary.")]
-        public string displayName = "Tier 1";
-        [Tooltip("How many stat points can be invested before moving to the next tier.")]
-        public int maxPoints = 5;
-        [Tooltip("Stat bonus gained for each invested stat point in this tier.")]
-        [Min(0f)]
-        public float bonusPerPoint = 1f;
-    }
-
-    [Serializable]
     public class CoreRouteOption
     {
         [Tooltip("Unique option key used by buttons and save data.")]
@@ -26,10 +14,17 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         public string displayName;
         [Tooltip("Target stat key, such as maxHealth, healthRegen, moveSpeed, attackDamage, attackSpeed, critChance, or critMultiplier.")]
         public string statId;
+        [Tooltip("Visual tree tier. Higher tiers are shown as later stat tree rows.")]
+        public int tier = 1;
+        [Tooltip("Required total invested points in this route before this option can be selected.")]
+        public int requiredRoutePoints;
         [Tooltip("Current invested stat points for this option.")]
         public int investedPoints;
-        [Tooltip("Tiered stat growth settings. Tier 1 is used first, then Tier 2, then Tier 3.")]
-        public List<CoreRouteTier> tiers = new List<CoreRouteTier>();
+        [Tooltip("Maximum stat points that can be invested in this option.")]
+        public int maxPoints = 5;
+        [Tooltip("Stat bonus gained for each invested stat point in this option.")]
+        [Min(0f)]
+        public float bonusPerPoint = 1f;
     }
 
     [Serializable]
@@ -69,9 +64,15 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             unlocked = true,
             options = new List<CoreRouteOption>
             {
-                CreateOption("max_health", "Max Health", "maxHealth", 10f, 20f, 35f),
-                CreateOption("health_regen", "Health Regen", "healthRegen", 0.2f, 0.4f, 0.8f),
-                CreateOption("move_speed", "Move Speed", "moveSpeed", 0.05f, 0.1f, 0.2f)
+                CreateOption("max_health", "Max Health", "maxHealth", 1, 0, 5, 10f),
+                CreateOption("health_regen", "Health Regen", "healthRegen", 1, 0, 5, 0.2f),
+                CreateOption("move_speed", "Move Speed", "moveSpeed", 1, 0, 5, 0.05f),
+                CreateOption("max_health_t2", "Max Health II", "maxHealth", 2, 10, 5, 20f),
+                CreateOption("health_regen_t2", "Health Regen II", "healthRegen", 2, 10, 5, 0.4f),
+                CreateOption("move_speed_t2", "Move Speed II", "moveSpeed", 2, 10, 5, 0.1f),
+                CreateOption("max_health_t3", "Max Health III", "maxHealth", 3, 20, 5, 35f),
+                CreateOption("health_regen_t3", "Health Regen III", "healthRegen", 3, 20, 5, 0.8f),
+                CreateOption("move_speed_t3", "Move Speed III", "moveSpeed", 3, 20, 5, 0.2f)
             }
         },
         new CoreRoute
@@ -82,8 +83,12 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             unlocked = true,
             options = new List<CoreRouteOption>
             {
-                CreateOption("attack_damage", "Attack Damage", "attackDamage", 2f, 4f, 7f),
-                CreateOption("attack_speed", "Attack Speed", "attackSpeed", 0.03f, 0.06f, 0.1f)
+                CreateOption("attack_damage", "Attack Damage", "attackDamage", 1, 0, 5, 2f),
+                CreateOption("attack_speed", "Attack Speed", "attackSpeed", 1, 0, 5, 0.03f),
+                CreateOption("attack_damage_t2", "Attack Damage II", "attackDamage", 2, 10, 5, 4f),
+                CreateOption("attack_speed_t2", "Attack Speed II", "attackSpeed", 2, 10, 5, 0.06f),
+                CreateOption("attack_damage_t3", "Attack Damage III", "attackDamage", 3, 20, 5, 7f),
+                CreateOption("attack_speed_t3", "Attack Speed III", "attackSpeed", 3, 20, 5, 0.1f)
             }
         },
         new CoreRoute
@@ -94,8 +99,12 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             unlocked = true,
             options = new List<CoreRouteOption>
             {
-                CreateOption("crit_chance", "Crit Chance", "critChance", 0.01f, 0.02f, 0.04f),
-                CreateOption("crit_multiplier", "Crit Multiplier", "critMultiplier", 0.05f, 0.1f, 0.2f)
+                CreateOption("crit_chance", "Crit Chance", "critChance", 1, 0, 5, 0.01f),
+                CreateOption("crit_multiplier", "Crit Multiplier", "critMultiplier", 1, 0, 5, 0.05f),
+                CreateOption("crit_chance_t2", "Crit Chance II", "critChance", 2, 10, 5, 0.02f),
+                CreateOption("crit_multiplier_t2", "Crit Multiplier II", "critMultiplier", 2, 10, 5, 0.1f),
+                CreateOption("crit_chance_t3", "Crit Chance III", "critChance", 3, 20, 5, 0.04f),
+                CreateOption("crit_multiplier_t3", "Crit Multiplier III", "critMultiplier", 3, 20, 5, 0.2f)
             }
         }
     };
@@ -168,7 +177,9 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     public bool TrySelectOption(string optionId)
     {
-        if (!TryFindOption(optionId, out CoreRoute route, out CoreRouteOption option) || !IsRouteUnlocked(route.routeId))
+        if (!TryFindOption(optionId, out CoreRoute route, out CoreRouteOption option)
+            || !IsRouteUnlocked(route.routeId)
+            || !IsOptionUnlocked(route, option))
         {
             return false;
         }
@@ -187,6 +198,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return route != null
             && route.unlocked
             && option != null
+            && IsOptionUnlocked(route, option)
             && option.investedPoints < GetOptionMaxPoints(option)
             && ResolvePlayerProgression() != null
             && playerProgression.StatPoints > 0;
@@ -200,6 +212,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
 
         return route.unlocked
+            && IsOptionUnlocked(route, option)
             && option.investedPoints < GetOptionMaxPoints(option)
             && ResolvePlayerProgression() != null
             && playerProgression.StatPoints > 0;
@@ -239,6 +252,17 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         OnRouteSelected.Invoke(selectedRouteId);
         OnOptionSelected.Invoke(selectedOptionId);
         return true;
+    }
+
+    public bool TryGetOption(string optionId, out CoreRoute route, out CoreRouteOption option)
+    {
+        return TryFindOption(optionId, out route, out option);
+    }
+
+    public bool TryGetRoute(string routeId, out CoreRoute route)
+    {
+        route = FindRoute(routeId);
+        return route != null;
     }
 
     public float GetStatBonus(string statId)
@@ -467,34 +491,17 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     public int GetOptionMaxPoints(CoreRouteOption option)
     {
-        if (option == null || option.tiers == null)
-        {
-            return 0;
-        }
-
-        int maxPoints = 0;
-        foreach (CoreRouteTier tier in option.tiers)
-        {
-            if (tier != null)
-            {
-                maxPoints += Mathf.Max(1, tier.maxPoints);
-            }
-        }
-
-        return maxPoints;
+        return option != null ? Mathf.Max(1, option.maxPoints) : 0;
     }
 
     public string GetOptionTierLabel(CoreRouteOption option)
     {
-        CoreRouteTier tier = GetCurrentTier(option);
-        int tierIndex = GetCurrentTierIndex(option) + 1;
-        return tier != null ? $"{tier.displayName} ({tierIndex})" : "Tier --";
+        return option != null ? $"Tier {Mathf.Max(1, option.tier)}" : "Tier --";
     }
 
     public float GetCurrentOptionTierBonusPerPoint(CoreRouteOption option)
     {
-        CoreRouteTier tier = GetCurrentTier(option);
-        return tier != null ? tier.bonusPerPoint : 0f;
+        return option != null ? Mathf.Max(0f, option.bonusPerPoint) : 0f;
     }
 
     public float GetRouteBonus(CoreRoute route)
@@ -515,27 +522,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     public float GetOptionBonus(CoreRouteOption option)
     {
-        if (option == null || option.tiers == null)
-        {
-            return 0f;
-        }
-
-        int remainingPoints = option.investedPoints;
-        float bonus = 0f;
-
-        foreach (CoreRouteTier tier in option.tiers)
-        {
-            if (tier == null || remainingPoints <= 0)
-            {
-                continue;
-            }
-
-            int tierPoints = Mathf.Min(remainingPoints, Mathf.Max(1, tier.maxPoints));
-            bonus += tierPoints * Mathf.Max(0f, tier.bonusPerPoint);
-            remainingPoints -= tierPoints;
-        }
-
-        return bonus;
+        return option != null ? option.investedPoints * Mathf.Max(0f, option.bonusPerPoint) : 0f;
     }
 
     private PlayerProgression ResolvePlayerProgression()
@@ -604,39 +591,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
     }
 
-    private CoreRouteTier GetCurrentTier(CoreRouteOption option)
-    {
-        if (option == null || option.tiers == null || option.tiers.Count == 0)
-        {
-            return null;
-        }
-
-        return option.tiers[Mathf.Clamp(GetCurrentTierIndex(option), 0, option.tiers.Count - 1)];
-    }
-
-    private int GetCurrentTierIndex(CoreRouteOption option)
-    {
-        if (option == null || option.tiers == null || option.tiers.Count == 0)
-        {
-            return 0;
-        }
-
-        int pointsBeforeTier = 0;
-        for (int i = 0; i < option.tiers.Count; i++)
-        {
-            CoreRouteTier tier = option.tiers[i];
-            int tierMaxPoints = tier != null ? Mathf.Max(1, tier.maxPoints) : 1;
-            if (option.investedPoints < pointsBeforeTier + tierMaxPoints)
-            {
-                return i;
-            }
-
-            pointsBeforeTier += tierMaxPoints;
-        }
-
-        return option.tiers.Count - 1;
-    }
-
     private void NormalizeRoute(CoreRoute route)
     {
         if (route == null)
@@ -653,6 +607,33 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
     }
 
+    public int GetRouteInvestedPoints(CoreRoute route)
+    {
+        if (route?.options == null)
+        {
+            return 0;
+        }
+
+        int points = 0;
+        foreach (CoreRouteOption option in route.options)
+        {
+            if (option != null)
+            {
+                points += option.investedPoints;
+            }
+        }
+
+        return points;
+    }
+
+    public bool IsOptionUnlocked(CoreRoute route, CoreRouteOption option)
+    {
+        return route != null
+            && option != null
+            && route.unlocked
+            && GetRouteInvestedPoints(route) >= Mathf.Max(0, option.requiredRoutePoints);
+    }
+
     private void NormalizeOption(CoreRouteOption option)
     {
         if (option == null)
@@ -660,24 +641,10 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             return;
         }
 
-        option.tiers ??= new List<CoreRouteTier>();
-        while (option.tiers.Count < 3)
-        {
-            option.tiers.Add(new CoreRouteTier { displayName = $"Tier {option.tiers.Count + 1}" });
-        }
-
-        for (int i = 0; i < option.tiers.Count; i++)
-        {
-            option.tiers[i] ??= new CoreRouteTier();
-            if (string.IsNullOrWhiteSpace(option.tiers[i].displayName))
-            {
-                option.tiers[i].displayName = $"Tier {i + 1}";
-            }
-
-            option.tiers[i].maxPoints = Mathf.Max(1, option.tiers[i].maxPoints);
-            option.tiers[i].bonusPerPoint = Mathf.Max(0f, option.tiers[i].bonusPerPoint);
-        }
-
+        option.tier = Mathf.Clamp(option.tier, 1, 3);
+        option.requiredRoutePoints = Mathf.Max(0, option.requiredRoutePoints);
+        option.maxPoints = Mathf.Max(1, option.maxPoints);
+        option.bonusPerPoint = Mathf.Max(0f, option.bonusPerPoint);
         option.investedPoints = Mathf.Clamp(option.investedPoints, 0, GetOptionMaxPoints(option));
     }
 
@@ -716,19 +683,33 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         {
             case "health":
                 route.displayName = string.IsNullOrWhiteSpace(route.displayName) ? "Health Route" : route.displayName;
-                EnsureDefaultOption(route, "max_health", "Max Health", "maxHealth", 10f, 20f, 35f);
-                EnsureDefaultOption(route, "health_regen", "Health Regen", "healthRegen", 0.2f, 0.4f, 0.8f);
-                EnsureDefaultOption(route, "move_speed", "Move Speed", "moveSpeed", 0.05f, 0.1f, 0.2f);
+                EnsureDefaultOption(route, "max_health", "Max Health", "maxHealth", 1, 0, 5, 10f);
+                EnsureDefaultOption(route, "health_regen", "Health Regen", "healthRegen", 1, 0, 5, 0.2f);
+                EnsureDefaultOption(route, "move_speed", "Move Speed", "moveSpeed", 1, 0, 5, 0.05f);
+                EnsureDefaultOption(route, "max_health_t2", "Max Health II", "maxHealth", 2, 10, 5, 20f);
+                EnsureDefaultOption(route, "health_regen_t2", "Health Regen II", "healthRegen", 2, 10, 5, 0.4f);
+                EnsureDefaultOption(route, "move_speed_t2", "Move Speed II", "moveSpeed", 2, 10, 5, 0.1f);
+                EnsureDefaultOption(route, "max_health_t3", "Max Health III", "maxHealth", 3, 20, 5, 35f);
+                EnsureDefaultOption(route, "health_regen_t3", "Health Regen III", "healthRegen", 3, 20, 5, 0.8f);
+                EnsureDefaultOption(route, "move_speed_t3", "Move Speed III", "moveSpeed", 3, 20, 5, 0.2f);
                 break;
             case "attack":
                 route.displayName = string.IsNullOrWhiteSpace(route.displayName) ? "Attack Route" : route.displayName;
-                EnsureDefaultOption(route, "attack_damage", "Attack Damage", "attackDamage", 2f, 4f, 7f);
-                EnsureDefaultOption(route, "attack_speed", "Attack Speed", "attackSpeed", 0.03f, 0.06f, 0.1f);
+                EnsureDefaultOption(route, "attack_damage", "Attack Damage", "attackDamage", 1, 0, 5, 2f);
+                EnsureDefaultOption(route, "attack_speed", "Attack Speed", "attackSpeed", 1, 0, 5, 0.03f);
+                EnsureDefaultOption(route, "attack_damage_t2", "Attack Damage II", "attackDamage", 2, 10, 5, 4f);
+                EnsureDefaultOption(route, "attack_speed_t2", "Attack Speed II", "attackSpeed", 2, 10, 5, 0.06f);
+                EnsureDefaultOption(route, "attack_damage_t3", "Attack Damage III", "attackDamage", 3, 20, 5, 7f);
+                EnsureDefaultOption(route, "attack_speed_t3", "Attack Speed III", "attackSpeed", 3, 20, 5, 0.1f);
                 break;
             case "critical":
                 route.displayName = string.IsNullOrWhiteSpace(route.displayName) ? "Critical Route" : route.displayName;
-                EnsureDefaultOption(route, "crit_chance", "Crit Chance", "critChance", 0.01f, 0.02f, 0.04f);
-                EnsureDefaultOption(route, "crit_multiplier", "Crit Multiplier", "critMultiplier", 0.05f, 0.1f, 0.2f);
+                EnsureDefaultOption(route, "crit_chance", "Crit Chance", "critChance", 1, 0, 5, 0.01f);
+                EnsureDefaultOption(route, "crit_multiplier", "Crit Multiplier", "critMultiplier", 1, 0, 5, 0.05f);
+                EnsureDefaultOption(route, "crit_chance_t2", "Crit Chance II", "critChance", 2, 10, 5, 0.02f);
+                EnsureDefaultOption(route, "crit_multiplier_t2", "Crit Multiplier II", "critMultiplier", 2, 10, 5, 0.1f);
+                EnsureDefaultOption(route, "crit_chance_t3", "Crit Chance III", "critChance", 3, 20, 5, 0.04f);
+                EnsureDefaultOption(route, "crit_multiplier_t3", "Crit Multiplier III", "critMultiplier", 3, 20, 5, 0.2f);
                 break;
         }
     }
@@ -738,59 +719,50 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         string optionId,
         string displayName,
         string statId,
-        float tierOneBonus,
-        float tierTwoBonus,
-        float tierThreeBonus)
+        int tier,
+        int requiredRoutePoints,
+        int maxPoints,
+        float bonusPerPoint)
     {
         route.options ??= new List<CoreRouteOption>();
 
         CoreRouteOption option = route.options.Find(item => item != null && item.optionId == optionId);
         if (option == null)
         {
-            option = CreateOption(optionId, displayName, statId, tierOneBonus, tierTwoBonus, tierThreeBonus);
+            option = CreateOption(optionId, displayName, statId, tier, requiredRoutePoints, maxPoints, bonusPerPoint);
             route.options.Add(option);
             return;
         }
 
         option.displayName = string.IsNullOrWhiteSpace(option.displayName) ? displayName : option.displayName;
         option.statId = string.IsNullOrWhiteSpace(option.statId) ? statId : option.statId;
-        EnsureDefaultTiers(option, tierOneBonus, tierTwoBonus, tierThreeBonus);
+        option.tier = option.tier <= 0 ? tier : option.tier;
+        option.maxPoints = option.maxPoints <= 0 ? maxPoints : option.maxPoints;
+        option.bonusPerPoint = option.bonusPerPoint <= 0f ? bonusPerPoint : option.bonusPerPoint;
+        option.requiredRoutePoints = Mathf.Max(0, option.requiredRoutePoints);
+        option.maxPoints = Mathf.Max(1, option.maxPoints);
+        option.bonusPerPoint = Mathf.Max(0f, option.bonusPerPoint);
     }
 
     private static CoreRouteOption CreateOption(
         string optionId,
         string displayName,
         string statId,
-        float tierOneBonus,
-        float tierTwoBonus,
-        float tierThreeBonus)
+        int tier,
+        int requiredRoutePoints,
+        int maxPoints,
+        float bonusPerPoint)
     {
-        CoreRouteOption option = new CoreRouteOption
+        return new CoreRouteOption
         {
             optionId = optionId,
             displayName = displayName,
-            statId = statId
+            statId = statId,
+            tier = tier,
+            requiredRoutePoints = requiredRoutePoints,
+            maxPoints = maxPoints,
+            bonusPerPoint = bonusPerPoint
         };
-
-        EnsureDefaultTiers(option, tierOneBonus, tierTwoBonus, tierThreeBonus);
-        return option;
-    }
-
-    private static void EnsureDefaultTiers(CoreRouteOption option, float tierOneBonus, float tierTwoBonus, float tierThreeBonus)
-    {
-        option.tiers ??= new List<CoreRouteTier>();
-        float[] defaultBonuses = { tierOneBonus, tierTwoBonus, tierThreeBonus };
-
-        while (option.tiers.Count < defaultBonuses.Length)
-        {
-            int tierIndex = option.tiers.Count;
-            option.tiers.Add(new CoreRouteTier
-            {
-                displayName = $"Tier {tierIndex + 1}",
-                maxPoints = 5,
-                bonusPerPoint = defaultBonuses[tierIndex]
-            });
-        }
     }
 
     private void OnValidate()
