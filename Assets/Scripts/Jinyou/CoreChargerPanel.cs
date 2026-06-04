@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,30 +19,41 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private TMP_Text currencyText;
     [SerializeField] private TMP_Text selectedUnitText;
     [SerializeField] private TMP_Text unitStateText;
+    [SerializeField] private InventoryPanel inventoryPanel;
+    [SerializeField] private GameObject unitInventoryArea;
+    [SerializeField] private RectTransform unitInventoryContentRoot;
+    [SerializeField] private Button inventoryUnitButtonPrefab;
+    [SerializeField] private TMP_Text inventoryUnitListText;
 
     private CoreCharger coreCharger;
+    private InventoryFacility inventory;
+    private readonly List<Button> spawnedUnitButtons = new List<Button>();
     private float observedUpgradeDuration;
 
     private void OnEnable()
     {
         ResolveReferences();
+        SubscribeInventoryEvents();
         upgradeButton?.onClick.AddListener(UpgradeCharger);
-        firstUnitButton?.onClick.AddListener(SelectFirstUnit);
+        firstUnitButton?.onClick.AddListener(OpenInventoryUnitSelection);
         secondUnitButton?.onClick.AddListener(SelectSecondUnit);
         thirdUnitButton?.onClick.AddListener(SelectThirdUnit);
         enhanceUnitButton?.onClick.AddListener(EnhanceSelectedUnit);
         closeButton?.onClick.AddListener(ClosePanel);
+        SetActive(unitInventoryArea, false);
         Refresh();
     }
 
     private void OnDisable()
     {
+        UnsubscribeInventoryEvents();
         upgradeButton?.onClick.RemoveListener(UpgradeCharger);
         closeButton?.onClick.RemoveListener(ClosePanel);
-        firstUnitButton?.onClick.RemoveListener(SelectFirstUnit);
+        firstUnitButton?.onClick.RemoveListener(OpenInventoryUnitSelection);
         secondUnitButton?.onClick.RemoveListener(SelectSecondUnit);
         thirdUnitButton?.onClick.RemoveListener(SelectThirdUnit);
         enhanceUnitButton?.onClick.RemoveListener(EnhanceSelectedUnit);
+        ClearUnitButtons();
     }
 
     private void Update()
@@ -77,12 +89,14 @@ public class CoreChargerPanel : MonoBehaviour
     public void SelectUnit(PlayerUnitConfig unitConfig)
     {
         baseCampManager?.SelectCoreUnit(unitConfig);
+        RebuildInventoryUnitButtons();
         Refresh();
     }
 
     public void SelectUnitByIndex(int unitIndex)
     {
         baseCampManager?.SelectCoreUnit(unitIndex);
+        RebuildInventoryUnitButtons();
         Refresh();
     }
 
@@ -94,7 +108,7 @@ public class CoreChargerPanel : MonoBehaviour
 
     private void SelectFirstUnit()
     {
-        SelectUnitByIndex(0);
+        OpenInventoryUnitSelection();
     }
 
     private void SelectSecondUnit()
@@ -134,6 +148,8 @@ public class CoreChargerPanel : MonoBehaviour
         SetText(currencyText, baseCampManager != null ? $"Credits {baseCampManager.Credits}" : "Credits --");
         SetText(selectedUnitText, BuildSelectedUnitText());
         SetText(unitStateText, BuildUnitSummary());
+        SetText(inventoryUnitListText, BuildInventoryUnitListText());
+        SetActive(unitInventoryArea, inventoryPanel == null);
 
         if (upgradeButton != null && baseCampManager != null)
         {
@@ -194,6 +210,35 @@ public class CoreChargerPanel : MonoBehaviour
         return summary.TrimEnd();
     }
 
+    private string BuildInventoryUnitListText()
+    {
+        if (inventory == null)
+        {
+            return "Inventory not connected";
+        }
+
+        if (inventory.UnitConfigs.Count == 0)
+        {
+            return "No Inventory Units";
+        }
+
+        string summary = string.Empty;
+        for (int i = 0; i < inventory.UnitConfigs.Count; i++)
+        {
+            PlayerUnitConfig unit = inventory.UnitConfigs[i];
+            if (unit == null)
+            {
+                continue;
+            }
+
+            string selected = unit == coreCharger.SelectedUnitConfig ? " *" : string.Empty;
+            string configured = coreCharger.HasUnitEnhancement(unit) ? string.Empty : " (No Enhance Data)";
+            summary += $"{i + 1}. {unit.DisplayName}{selected}{configured}\n";
+        }
+
+        return summary.TrimEnd();
+    }
+
     private static string BuildStatBonusSummary(CoreCharger.UnitEnhancement unitEnhancement)
     {
         if (unitEnhancement == null)
@@ -246,10 +291,95 @@ public class CoreChargerPanel : MonoBehaviour
         }
     }
 
+    private void RebuildInventoryUnitButtons()
+    {
+        ClearUnitButtons();
+
+        if (unitInventoryContentRoot == null || inventoryUnitButtonPrefab == null || inventory == null)
+        {
+            return;
+        }
+
+        foreach (PlayerUnitConfig unit in inventory.UnitConfigs)
+        {
+            if (unit == null)
+            {
+                continue;
+            }
+
+            Button button = Instantiate(inventoryUnitButtonPrefab, unitInventoryContentRoot);
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+            {
+                string selected = unit == coreCharger.SelectedUnitConfig ? " *" : string.Empty;
+                string configured = coreCharger.HasUnitEnhancement(unit) ? string.Empty : " (No Data)";
+                label.text = $"{unit.DisplayName}{selected}{configured}";
+            }
+
+            PlayerUnitConfig capturedUnit = unit;
+            button.interactable = coreCharger.HasUnitEnhancement(capturedUnit);
+            button.onClick.AddListener(() => SelectUnit(capturedUnit));
+            spawnedUnitButtons.Add(button);
+        }
+    }
+
+    private void ClearUnitButtons()
+    {
+        foreach (Button button in spawnedUnitButtons)
+        {
+            if (button != null)
+            {
+                Destroy(button.gameObject);
+            }
+        }
+
+        spawnedUnitButtons.Clear();
+    }
+
+    private void SubscribeInventoryEvents()
+    {
+        if (inventory != null)
+        {
+            inventory.OnInventoryChanged.AddListener(HandleInventoryChanged);
+        }
+    }
+
+    private void UnsubscribeInventoryEvents()
+    {
+        if (inventory != null)
+        {
+            inventory.OnInventoryChanged.RemoveListener(HandleInventoryChanged);
+        }
+    }
+
+    private void HandleInventoryChanged()
+    {
+        RebuildInventoryUnitButtons();
+        Refresh();
+    }
+
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
         coreCharger = baseCampManager != null ? baseCampManager.CoreCharger : null;
+        inventory = baseCampManager != null ? baseCampManager.Inventory : FindFirstObjectByType<InventoryFacility>();
+        inventoryPanel ??= FindFirstObjectByType<InventoryPanel>(FindObjectsInactive.Include);
+    }
+
+    private void OpenInventoryUnitSelection()
+    {
+        ResolveReferences();
+
+        if (inventoryPanel == null || coreCharger == null)
+        {
+            SetActive(unitInventoryArea, true);
+            RebuildInventoryUnitButtons();
+            return;
+        }
+
+        inventoryPanel.OpenUnitSelectMode(
+            SelectUnit,
+            unit => coreCharger.HasUnitEnhancement(unit));
     }
 
     private static string FormatSigned(float value)
@@ -262,6 +392,14 @@ public class CoreChargerPanel : MonoBehaviour
         if (target != null)
         {
             target.text = value;
+        }
+    }
+
+    private static void SetActive(GameObject target, bool value)
+    {
+        if (target != null)
+        {
+            target.SetActive(value);
         }
     }
 }

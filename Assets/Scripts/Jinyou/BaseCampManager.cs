@@ -10,6 +10,8 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private EnergyRefinery energyRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
+    [SerializeField] private InventoryFacility inventory;
+    [SerializeField] private WeaponGachaFacility weaponGacha;
     [SerializeField] private BossDungeon bossDungeon;
     [SerializeField] private PlayerProgression playerProgression;
     [SerializeField] private bool autoFindFacilities = true;
@@ -35,6 +37,8 @@ public class BaseCampManager : MonoBehaviour
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
+    public InventoryFacility Inventory => inventory;
+    public WeaponGachaFacility WeaponGacha => weaponGacha;
     public BossDungeon BossDungeon => bossDungeon;
     public PlayerProgression PlayerProgression => playerProgression;
     public int CommanderLevel => commanderLevel;
@@ -80,6 +84,8 @@ public class BaseCampManager : MonoBehaviour
         energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
+        inventory ??= FindFirstObjectByType<InventoryFacility>();
+        weaponGacha ??= FindFirstObjectByType<WeaponGachaFacility>();
         bossDungeon ??= FindFirstObjectByType<BossDungeon>();
         playerProgression ??= FindFirstObjectByType<PlayerProgression>();
     }
@@ -210,6 +216,11 @@ public class BaseCampManager : MonoBehaviour
     {
         commanderLevel = Mathf.Max(1, value);
         OnCommanderLevelChanged.Invoke(commanderLevel);
+    }
+
+    public void SetCreditsForFacility(int value)
+    {
+        SetCredits(value);
     }
 
     private void SetCredits(int value)

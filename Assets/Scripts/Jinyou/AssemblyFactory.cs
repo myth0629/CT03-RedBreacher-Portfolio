@@ -254,6 +254,11 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         return false;
     }
 
+    public bool HasWeaponEnhancement(ProjectileConfig weaponConfig)
+    {
+        return FindWeaponEnhancement(weaponConfig) != null;
+    }
+
     public bool CanEnhanceSelectedWeapon(int credits)
     {
         WeaponEnhancement selectedWeapon = SelectedWeaponEnhancement;

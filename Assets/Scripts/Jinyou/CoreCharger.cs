@@ -195,6 +195,11 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return false;
     }
 
+    public bool HasUnitEnhancement(PlayerUnitConfig unitConfig)
+    {
+        return FindUnitEnhancement(unitConfig) != null;
+    }
+
     public bool CanEnhanceSelectedUnit(int credits)
     {
         UnitEnhancement selectedUnit = SelectedUnitEnhancement;
