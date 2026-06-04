@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c529ea981bc074109bb7afba98b3e58f, type: 3}
-  m_Name: Weapon_weapon_default
+  m_Name: Weapon_03
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
-  id: weapon_default
-  displayName: "\uAE30\uBCF8 \uD3EC\uD0C4"
-  attackDamage: 0
-  projectilePrefab: {fileID: 4873074593752115563, guid: e75eeca4394f04d3f84eaf9d13787b23, type: 3}
+  id: 03
+  displayName: "\uD3EC\uD0C403"
+  attackDamage: 7
+  projectilePrefab: {fileID: 0}
   speed: 20
   lifetime: 2
   collisionRadius: 0.2
-  knockbackForce: 1.5
+  knockbackForce: 2.5
   multiMuzzleFireMode: 2
   maxBurstMuzzleCount: 3
   muzzleNamePrefix: FireMuzzle
-  fireFlashEffectPrefab: {fileID: 1069073989498846, guid: 7658ae01d0a0655468898c47617f4de6, type: 3}
-  projectileEffectPrefab: {fileID: 5409117354312477861, guid: bc756ad9bf07a5d46be7f6aac93a2524, type: 3}
-  hitEffectPrefab: {fileID: 1096352044232144, guid: 6e4b9c1925f0d3f4d8446e551a2e20d3, type: 3}
+  fireFlashEffectPrefab: {fileID: 0}
+  projectileEffectPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 0}
   effectCleanupDelay: 2

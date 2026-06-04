@@ -102,6 +102,7 @@ GameObject:
   - component: {fileID: 4696198792450951766}
   - component: {fileID: 6223792534563652184}
   - component: {fileID: 7644490488002421366}
+  - component: {fileID: 1908932380892413804}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -153,7 +154,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   unitConfig: {fileID: 11400000, guid: 8a3270d70f9b8495d9fcff64b4b83ab1, type: 2}
+  weaponConfig: {fileID: 11400000, guid: f699ec7c70a6c4eb1a179dbaee2310de, type: 2}
   unitRoot: {fileID: 1065801000117078494}
+  displayName: "\uD0F1\uD06C\uC774\uB984"
+  maxHealth: 100
+  critChance: 0.1
+  critMultiplier: 1.5
   attackRange: 4
   attackDamage: 10
   attackInterval: 1
@@ -166,11 +172,26 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   firePoint: {fileID: 0}
-  projectileConfig: {fileID: 0}
-  projectilePrefab: {fileID: 1564468091806366, guid: f1dc4df701f37324c98ea16f41770afc, type: 3}
   fireFlashEffectPrefab: {fileID: 0}
   projectileEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
+--- !u!114 &1908932380892413804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2376926328701285538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05af993a152c0404a93dc61b1abc0dca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
+  level: 1
+  currentExperience: 0
+  experienceToNextLevel: 100
+  experienceGrowthRate: 1.2
+  statPoints: 0
 --- !u!1 &8927736348518091184
 GameObject:
   m_ObjectHideFlags: 0

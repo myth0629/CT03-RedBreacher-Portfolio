@@ -301,11 +301,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 437183674}
   m_CullTransparentMesh: 1
---- !u!1 &716241097 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2376926328701285538, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
-  m_PrefabInstance: {fileID: 3007835671500335650}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &800254867
 GameObject:
   m_ObjectHideFlags: 0
@@ -1403,29 +1398,12 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
   m_PrefabInstance: {fileID: 3007835671500335650}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 716241097}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 476576e4865e143768d3a9fd83b9de3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
---- !u!114 &2078203337
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 716241097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 05af993a152c0404a93dc61b1abc0dca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
-  level: 1
-  currentExperience: 0
-  experienceToNextLevel: 100
-  experienceGrowthRate: 1.2
-  statPoints: 0
 --- !u!1001 &3007835671500335650
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1478,17 +1456,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
-      propertyPath: unitConfig
-      value: 
-      objectReference: {fileID: 11400000, guid: 3c6fcd0bc55e74b4c95dd9ea83d57e5f, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2376926328701285538, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2078203337}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

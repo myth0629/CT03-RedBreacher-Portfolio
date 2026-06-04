@@ -21,9 +21,6 @@ public class PlayerUnitConfig : ScriptableObject
     [SerializeField] private float rotationSpeed = 540f;
     [SerializeField] private float fireAngleTolerance = 3f;
 
-    [Header("Projectile")]
-    [SerializeField] private ProjectileConfig projectileConfig;
-
     public string Id => id;
     public string DisplayName => displayName;
     public GameObject UnitPrefab => unitPrefab;
@@ -36,5 +33,4 @@ public class PlayerUnitConfig : ScriptableObject
     public float MoveSpeed => moveSpeed;
     public float RotationSpeed => rotationSpeed;
     public float FireAngleTolerance => fireAngleTolerance;
-    public ProjectileConfig ProjectileConfig => projectileConfig;
 }

@@ -44,9 +44,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95661724e2bf64f0bbcfdcc736439b36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProjectile
-  projectileConfig: {fileID: 11400000, guid: f6a04bdbcdcdd4a868549b706fa13040, type: 2}
+  projectileConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
   fireFlashEffectPrefab: {fileID: 1069073989498846, guid: 7658ae01d0a0655468898c47617f4de6, type: 3}
   projectileEffectPrefab: {fileID: 5409117354312477861, guid: bc756ad9bf07a5d46be7f6aac93a2524, type: 3}
   hitEffectPrefab: {fileID: 1096352044232144, guid: 6e4b9c1925f0d3f4d8446e551a2e20d3, type: 3}
   effectCleanupDelay: 2
   collisionRadius: 0.2
+  knockbackForce: 2

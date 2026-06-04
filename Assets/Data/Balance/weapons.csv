@@ -1,2 +1,11 @@
-id,displayName,projectilePrefab,speed,lifetime,collisionRadius,knockbackForce,fireFlashEffect,projectileEffect,hitEffect,effectCleanupDelay
-weapon_default,기본 포탄,,10,2,0.2,2,,,,2
+id,displayName,attackDamage,speed,lifetime,collisionRadius,knockbackForce,multiMuzzleFireMode,maxBurstMuzzleCount,muzzleNamePrefix,fireFlashEffect,projectileEffect,hitEffect,effectCleanupDelay
+01,포탄01,5,10,2,0.2,2,BurstKeepsDps,3,FireMuzzle,,,,2
+02,포탄02,5,11,2,0.2,2.2,BurstKeepsDps,3,FireMuzzle,,,,2
+03,포탄03,7,12,2.1,0.22,2.5,BurstKeepsDps,3,FireMuzzle,,,,2
+04,포탄04,8,13,2.1,0.24,2.8,BurstKeepsDps,3,FireMuzzle,,,,2
+05,포탄05,10,14,2.2,0.26,3.2,BurstKeepsDps,3,FireMuzzle,,,,2
+06,포탄06,13,15,2.2,0.28,3.6,BurstKeepsDps,3,FireMuzzle,,,,2
+07,포탄07,16,16,2.3,0.3,4,BurstKeepsDps,3,FireMuzzle,,,,2
+08,포탄08,20,17,2.3,0.32,4.5,BurstKeepsDps,3,FireMuzzle,,,,2
+09,포탄09,25,18,2.4,0.35,5,BurstKeepsDps,3,FireMuzzle,,,,2
+10,포탄10,33,20,2.5,0.4,6,BurstKeepsDps,3,FireMuzzle,,,,2

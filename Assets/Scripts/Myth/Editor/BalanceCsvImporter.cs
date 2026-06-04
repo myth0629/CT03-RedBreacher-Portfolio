@@ -29,6 +29,16 @@ public static class BalanceCsvImporter
         Debug.Log("밸런스 CSV 임포트 완료");
     }
 
+    [MenuItem("Tools/Balance/Export All CSV")]
+    public static void ExportAll()
+    {
+        ExportUnits();
+        ExportWeapons();
+        ExportEnemies();
+        AssetDatabase.Refresh();
+        Debug.Log("밸런스 SO CSV 내보내기 완료");
+    }
+
     [MenuItem("Tools/Balance/Import Units CSV")]
     public static void ImportUnits()
     {
@@ -41,7 +51,6 @@ public static class BalanceCsvImporter
             SetString(serializedObject, "id", id);
             SetString(serializedObject, "displayName", Get(row, "displayName"));
             SetObject(serializedObject, "unitPrefab", GetAsset<GameObject>(row, "unitPrefab"));
-            SetObject(serializedObject, "projectileConfig", GetAsset<ProjectileConfig>(row, "projectileConfig"));
             SetFloat(serializedObject, "maxHealth", row, "maxHealth");
             SetFloat(serializedObject, "critChance", row, "critChance");
             SetFloat(serializedObject, "critMultiplier", row, "critMultiplier");
@@ -68,11 +77,14 @@ public static class BalanceCsvImporter
 
             SetString(serializedObject, "id", id);
             SetString(serializedObject, "displayName", Get(row, "displayName"));
-            SetObject(serializedObject, "projectilePrefab", GetAsset<PlayerProjectile>(row, "projectilePrefab"));
+            SetFloat(serializedObject, "attackDamage", row, "attackDamage");
             SetFloat(serializedObject, "speed", row, "speed");
             SetFloat(serializedObject, "lifetime", row, "lifetime");
             SetFloat(serializedObject, "collisionRadius", row, "collisionRadius");
             SetFloat(serializedObject, "knockbackForce", row, "knockbackForce");
+            SetEnum(serializedObject, "multiMuzzleFireMode", row, "multiMuzzleFireMode");
+            SetInt(serializedObject, "maxBurstMuzzleCount", row, "maxBurstMuzzleCount");
+            SetString(serializedObject, "muzzleNamePrefix", Get(row, "muzzleNamePrefix"));
             SetObject(serializedObject, "fireFlashEffectPrefab", GetAsset<GameObject>(row, "fireFlashEffect"));
             SetObject(serializedObject, "projectileEffectPrefab", GetAsset<GameObject>(row, "projectileEffect"));
             SetObject(serializedObject, "hitEffectPrefab", GetAsset<GameObject>(row, "hitEffect"));
@@ -105,6 +117,105 @@ public static class BalanceCsvImporter
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
         }
+    }
+
+    [MenuItem("Tools/Balance/Export Units CSV")]
+    public static void ExportUnits()
+    {
+        string[] headers =
+        {
+            "id", "displayName", "unitPrefab", "maxHealth", "critChance", "critMultiplier", "attackRange",
+            "attackDamage", "attackInterval", "moveSpeed", "rotationSpeed", "fireAngleTolerance"
+        };
+
+        List<string[]> rows = new List<string[]>();
+        foreach (PlayerUnitConfig config in LoadAllAssets<PlayerUnitConfig>(UnitOutputPath))
+        {
+            rows.Add(new[]
+            {
+                config.Id,
+                config.DisplayName,
+                GetAssetPath(config.UnitPrefab),
+                FormatFloat(config.MaxHealth),
+                FormatFloat(config.CritChance),
+                FormatFloat(config.CritMultiplier),
+                FormatFloat(config.AttackRange),
+                FormatFloat(config.AttackDamage),
+                FormatFloat(config.AttackInterval),
+                FormatFloat(config.MoveSpeed),
+                FormatFloat(config.RotationSpeed),
+                FormatFloat(config.FireAngleTolerance)
+            });
+        }
+
+        WriteCsv(UnitCsvPath, headers, rows);
+        Debug.Log($"유닛 SO CSV 내보내기 완료: {UnitCsvPath}");
+    }
+
+    [MenuItem("Tools/Balance/Export Weapons CSV")]
+    public static void ExportWeapons()
+    {
+        string[] headers =
+        {
+            "id", "displayName", "attackDamage", "speed", "lifetime", "collisionRadius", "knockbackForce",
+            "multiMuzzleFireMode", "maxBurstMuzzleCount", "muzzleNamePrefix", "fireFlashEffect",
+            "projectileEffect", "hitEffect", "effectCleanupDelay"
+        };
+
+        List<string[]> rows = new List<string[]>();
+        foreach (ProjectileConfig config in LoadAllAssets<ProjectileConfig>(WeaponOutputPath))
+        {
+            rows.Add(new[]
+            {
+                config.Id,
+                config.DisplayName,
+                FormatFloat(config.AttackDamage),
+                FormatFloat(config.Speed),
+                FormatFloat(config.Lifetime),
+                FormatFloat(config.CollisionRadius),
+                FormatFloat(config.KnockbackForce),
+                config.MultiMuzzleFireMode.ToString(),
+                config.MaxBurstMuzzleCount.ToString(CultureInfo.InvariantCulture),
+                config.MuzzleNamePrefix,
+                GetAssetPath(config.FireFlashEffectPrefab),
+                GetAssetPath(config.ProjectileEffectPrefab),
+                GetAssetPath(config.HitEffectPrefab),
+                FormatFloat(config.EffectCleanupDelay)
+            });
+        }
+
+        WriteCsv(WeaponCsvPath, headers, rows);
+        Debug.Log($"무기 SO CSV 내보내기 완료: {WeaponCsvPath}");
+    }
+
+    [MenuItem("Tools/Balance/Export Enemies CSV")]
+    public static void ExportEnemies()
+    {
+        string[] headers =
+        {
+            "id", "displayName", "enemyPrefab", "maxHealth", "moveSpeed", "stopDistance", "contactDamage",
+            "contactInterval", "experienceReward"
+        };
+
+        List<string[]> rows = new List<string[]>();
+        foreach (EnemyConfig config in LoadAllAssets<EnemyConfig>(EnemyOutputPath))
+        {
+            rows.Add(new[]
+            {
+                config.Id,
+                config.DisplayName,
+                GetAssetPath(config.EnemyPrefab),
+                FormatFloat(config.MaxHealth),
+                FormatFloat(config.MoveSpeed),
+                FormatFloat(config.StopDistance),
+                FormatFloat(config.ContactDamage),
+                FormatFloat(config.ContactInterval),
+                FormatFloat(config.ExperienceReward)
+            });
+        }
+
+        WriteCsv(EnemyCsvPath, headers, rows);
+        Debug.Log($"적 SO CSV 내보내기 완료: {EnemyCsvPath}");
     }
 
     private static T LoadOrCreate<T>(string outputPath, string id, string prefix) where T : ScriptableObject
@@ -177,7 +288,104 @@ public static class BalanceCsvImporter
                 row[headers[j]] = value;
             }
 
-            yield return row;
+        yield return row;
+        }
+    }
+
+    private static IEnumerable<T> LoadAllAssets<T>(string folderPath) where T : ScriptableObject
+    {
+        if (!AssetDatabase.IsValidFolder(folderPath))
+        {
+            Debug.LogWarning($"SO 폴더를 찾을 수 없습니다: {folderPath}");
+            yield break;
+        }
+
+        string[] guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { folderPath });
+        List<T> assets = new List<T>();
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
+            T asset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
+            if (asset != null)
+            {
+                assets.Add(asset);
+            }
+        }
+
+        assets.Sort((left, right) => string.Compare(GetSortId(left), GetSortId(right), StringComparison.Ordinal));
+        foreach (T asset in assets)
+        {
+            yield return asset;
+        }
+    }
+
+    private static void WriteCsv(string path, string[] headers, List<string[]> rows)
+    {
+        string directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.AppendLine(string.Join(",", headers));
+        for (int i = 0; i < rows.Count; i++)
+        {
+            string[] row = rows[i];
+            for (int j = 0; j < row.Length; j++)
+            {
+                if (j > 0)
+                {
+                    builder.Append(',');
+                }
+
+                builder.Append(EscapeCsv(row[j]));
+            }
+
+            builder.AppendLine();
+        }
+
+        File.WriteAllText(path, builder.ToString(), Encoding.UTF8);
+    }
+
+    private static string EscapeCsv(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        bool needsQuotes = value.Contains(",") || value.Contains("\"") || value.Contains("\n") || value.Contains("\r");
+        if (!needsQuotes)
+        {
+            return value;
+        }
+
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
+
+    private static string FormatFloat(float value)
+    {
+        return value.ToString("0.###", CultureInfo.InvariantCulture);
+    }
+
+    private static string GetAssetPath(UnityEngine.Object asset)
+    {
+        return asset != null ? AssetDatabase.GetAssetPath(asset) : string.Empty;
+    }
+
+    private static string GetSortId(ScriptableObject asset)
+    {
+        switch (asset)
+        {
+            case PlayerUnitConfig unit:
+                return unit.Id;
+            case ProjectileConfig weapon:
+                return weapon.Id;
+            case EnemyConfig enemy:
+                return enemy.Id;
+            default:
+                return asset.name;
         }
     }
 
@@ -283,6 +491,53 @@ public static class BalanceCsvImporter
         {
             property.floatValue = parsed;
         }
+    }
+
+    private static void SetInt(SerializedObject serializedObject, string propertyName, Dictionary<string, string> row, string key)
+    {
+        string value = Get(row, key);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed))
+        {
+            Debug.LogWarning($"정수 파싱 실패: {key}={value}");
+            return;
+        }
+
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property != null)
+        {
+            property.intValue = parsed;
+        }
+    }
+
+    private static void SetEnum(SerializedObject serializedObject, string propertyName, Dictionary<string, string> row, string key)
+    {
+        string value = Get(row, key);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < property.enumNames.Length; i++)
+        {
+            if (string.Equals(property.enumNames[i], value, StringComparison.OrdinalIgnoreCase))
+            {
+                property.enumValueIndex = i;
+                return;
+            }
+        }
+
+        Debug.LogWarning($"enum 파싱 실패: {key}={value}");
     }
 
     private static void SetObject(SerializedObject serializedObject, string propertyName, UnityEngine.Object value)

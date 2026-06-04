@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using TopDownAssets.Common.Scripts;
 
 [RequireComponent(typeof(CombatHealth))]
@@ -7,6 +9,7 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Config")]
     [SerializeField] private PlayerUnitConfig unitConfig;
+    [SerializeField, FormerlySerializedAs("projectileConfig")] private ProjectileConfig weaponConfig;
     [SerializeField] private Transform unitRoot;
     [SerializeField] private string displayName = "탱크이름";
 
@@ -27,13 +30,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask targetMask;
     [SerializeField] private Transform firePoint;
 
-    [Header("Fallback Projectile")]
-    [SerializeField] private ProjectileConfig projectileConfig;
-    [SerializeField] private PlayerProjectile projectilePrefab;
+    [Header("Fallback Effects")]
     [SerializeField] private GameObject fireFlashEffectPrefab;
     [SerializeField] private GameObject projectileEffectPrefab;
     [SerializeField] private GameObject hitEffectPrefab;
 
+    private readonly List<Transform> fireMuzzles = new List<Transform>();
     private CombatHealth health;
     private PlayerProgression progression;
     private Vehicle vehicle;
@@ -59,7 +61,7 @@ public class PlayerController : MonoBehaviour
     private float MoveSpeedValue => unitConfig != null ? unitConfig.MoveSpeed : moveSpeed;
     private float RotationSpeedValue => unitConfig != null ? unitConfig.RotationSpeed : rotationSpeed;
     private float FireAngleToleranceValue => unitConfig != null ? unitConfig.FireAngleTolerance : fireAngleTolerance;
-    private ProjectileConfig ProjectileConfigValue => unitConfig != null && unitConfig.ProjectileConfig != null ? unitConfig.ProjectileConfig : projectileConfig;
+    private ProjectileConfig ProjectileConfigValue => weaponConfig;
 
     private void Awake()
     {
@@ -130,8 +132,8 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        FireForward();
-        nextAttackTime = Time.time + AttackIntervalValue;
+        float attackIntervalMultiplier = FireForward();
+        nextAttackTime = Time.time + AttackIntervalValue * attackIntervalMultiplier;
     }
 
     private bool HasValidCurrentTarget()
@@ -268,6 +270,8 @@ public class PlayerController : MonoBehaviour
         {
             firePoint = turret.FireTransform;
         }
+
+        RefreshFireMuzzles();
     }
 
     private Transform FindChildByName(Transform root, string childName)
@@ -408,7 +412,7 @@ public class PlayerController : MonoBehaviour
 
     private bool IsWeaponFacing(Vector3 direction)
     {
-        Vector3 forward = weaponAimDirection.sqrMagnitude > 0f ? weaponAimDirection : GetWeaponForwardDirection();
+        Vector3 forward = GetWeaponForwardDirection();
         if (forward.sqrMagnitude <= 0f)
         {
             return false;
@@ -417,12 +421,12 @@ public class PlayerController : MonoBehaviour
         return Vector3.Angle(forward, direction) <= FireAngleToleranceValue;
     }
 
-    private void FireForward()
+    private float FireForward()
     {
-        Vector3 direction = weaponAimDirection.sqrMagnitude > 0f ? weaponAimDirection : GetWeaponForwardDirection();
+        Vector3 direction = GetWeaponForwardDirection();
         if (direction.sqrMagnitude <= 0f)
         {
-            direction = CombatPlane.ProjectDirection(transform.forward);
+            direction = weaponAimDirection.sqrMagnitude > 0f ? weaponAimDirection : CombatPlane.ProjectDirection(transform.forward);
         }
 
         if (direction.sqrMagnitude <= 0f)
@@ -432,16 +436,36 @@ public class PlayerController : MonoBehaviour
 
         // 투사체는 타겟 위치가 아니라 플레이어 정면 방향으로만 발사한다.
         ProjectileConfig activeProjectileConfig = ProjectileConfigValue;
-        PlayerProjectile projectile = CreateProjectile();
-        projectile.transform.position = GetFirePosition();
-        projectile.Configure(activeProjectileConfig);
-        projectile.ConfigureEffects(fireFlashEffectPrefab, projectileEffectPrefab, hitEffectPrefab);
-        projectile.Launch(direction, CalculateAttackDamage(), GetProjectileSpeed(activeProjectileConfig), GetProjectileLifetime(activeProjectileConfig), health);
+        RefreshFireMuzzles();
+
+        int muzzleCount = GetFireMuzzleCount(activeProjectileConfig);
+        float damage = CalculateAttackDamage(activeProjectileConfig);
+        if (GetMultiMuzzleFireMode(activeProjectileConfig) == MultiMuzzleFireMode.SplitDamage)
+        {
+            damage /= Mathf.Max(1, muzzleCount);
+        }
+
+        for (int i = 0; i < muzzleCount; i++)
+        {
+            FireProjectileFrom(GetFireMuzzle(i), direction, damage, activeProjectileConfig);
+        }
+
+        return GetAttackIntervalMultiplier(activeProjectileConfig);
     }
 
-    private float CalculateAttackDamage()
+    private void FireProjectileFrom(Transform muzzle, Vector3 direction, float damage, ProjectileConfig activeProjectileConfig)
     {
-        float damage = AttackDamageValue;
+        PlayerProjectile projectile = CreateProjectile();
+        projectile.transform.position = GetFirePosition(muzzle, direction);
+        projectile.Configure(activeProjectileConfig);
+        projectile.ConfigureEffects(fireFlashEffectPrefab, projectileEffectPrefab, hitEffectPrefab);
+        projectile.Launch(direction, damage, GetProjectileSpeed(activeProjectileConfig), GetProjectileLifetime(activeProjectileConfig), health);
+    }
+
+    private float CalculateAttackDamage(ProjectileConfig activeProjectileConfig)
+    {
+        // 최종 기본 피해는 기체 공격력과 장착 무기 공격력을 합산한다.
+        float damage = AttackDamageValue + GetWeaponAttackDamage(activeProjectileConfig);
         float chance = Mathf.Clamp01(CritChanceValue);
         float multiplier = Mathf.Max(1f, CritMultiplierValue);
 
@@ -454,16 +478,21 @@ public class PlayerController : MonoBehaviour
         return damage;
     }
 
-    private Vector3 GetFirePosition()
+    private float GetWeaponAttackDamage(ProjectileConfig activeProjectileConfig)
     {
-        if (turret != null && firePoint != null)
+        return activeProjectileConfig != null ? activeProjectileConfig.AttackDamage : 0f;
+    }
+
+    private Vector3 GetFirePosition(Transform muzzle, Vector3 direction)
+    {
+        if (turret != null && muzzle != null)
         {
-            return CombatPlane.PositionFromZPlaneChild(turret.transform, firePoint, weaponAimDirection);
+            return CombatPlane.PositionFromZPlaneChild(turret.transform, muzzle, direction);
         }
 
-        if (firePoint != null)
+        if (muzzle != null)
         {
-            return CombatPlane.WithFixedY(firePoint.position);
+            return CombatPlane.WithFixedY(muzzle.position);
         }
 
         return CombatPlane.WithFixedY(transform.position);
@@ -486,25 +515,91 @@ public class PlayerController : MonoBehaviour
 
     private PlayerProjectile CreateProjectile()
     {
-        PlayerProjectile activeProjectilePrefab = GetProjectilePrefab(ProjectileConfigValue);
-        if (activeProjectilePrefab != null)
-        {
-            return Instantiate(activeProjectilePrefab);
-        }
-
-        // 프리팹이 없어도 기본 발사체를 런타임에 만들어 전투 루프를 검증한다.
-        GameObject fallbackProjectileObject = new GameObject("Combat Projectile");
-        return fallbackProjectileObject.AddComponent<PlayerProjectile>();
+        // 발사체 본체는 공통 풀에서 꺼내고, 외형/스탯은 무기 SO에서 적용한다.
+        return CombatObjectPool.GetProjectile();
     }
 
-    private PlayerProjectile GetProjectilePrefab(ProjectileConfig activeProjectileConfig)
+    private void RefreshFireMuzzles()
     {
-        if (activeProjectileConfig != null && activeProjectileConfig.ProjectilePrefab != null)
+        fireMuzzles.Clear();
+
+        Transform muzzleRoot = turret != null ? turret.transform : spawnedUnitObject != null ? spawnedUnitObject.transform : transform;
+        CollectFireMuzzles(muzzleRoot, GetMuzzleNamePrefix(ProjectileConfigValue), fireMuzzles);
+
+        if (fireMuzzles.Count == 0 && turret != null && turret.FireTransform != null)
         {
-            return activeProjectileConfig.ProjectilePrefab;
+            fireMuzzles.Add(turret.FireTransform);
         }
 
-        return projectilePrefab;
+        if (fireMuzzles.Count == 0 && firePoint != null)
+        {
+            fireMuzzles.Add(firePoint);
+        }
+    }
+
+    private void CollectFireMuzzles(Transform root, string muzzleNamePrefix, List<Transform> results)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        if (root.name.StartsWith(muzzleNamePrefix))
+        {
+            results.Add(root);
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            CollectFireMuzzles(root.GetChild(i), muzzleNamePrefix, results);
+        }
+    }
+
+    private int GetFireMuzzleCount(ProjectileConfig activeProjectileConfig)
+    {
+        if (GetMultiMuzzleFireMode(activeProjectileConfig) == MultiMuzzleFireMode.Single)
+        {
+            return 1;
+        }
+
+        int maxBurstMuzzleCount = activeProjectileConfig != null ? activeProjectileConfig.MaxBurstMuzzleCount : 1;
+        return Mathf.Clamp(fireMuzzles.Count, 1, Mathf.Max(1, maxBurstMuzzleCount));
+    }
+
+    private Transform GetFireMuzzle(int index)
+    {
+        if (fireMuzzles.Count == 0)
+        {
+            return firePoint;
+        }
+
+        return fireMuzzles[Mathf.Clamp(index, 0, fireMuzzles.Count - 1)];
+    }
+
+    private MultiMuzzleFireMode GetMultiMuzzleFireMode(ProjectileConfig activeProjectileConfig)
+    {
+        return activeProjectileConfig != null ? activeProjectileConfig.MultiMuzzleFireMode : MultiMuzzleFireMode.Single;
+    }
+
+    private string GetMuzzleNamePrefix(ProjectileConfig activeProjectileConfig)
+    {
+        if (activeProjectileConfig != null && !string.IsNullOrWhiteSpace(activeProjectileConfig.MuzzleNamePrefix))
+        {
+            return activeProjectileConfig.MuzzleNamePrefix;
+        }
+
+        return "FireMuzzle";
+    }
+
+    private float GetAttackIntervalMultiplier(ProjectileConfig activeProjectileConfig)
+    {
+        MultiMuzzleFireMode mode = GetMultiMuzzleFireMode(activeProjectileConfig);
+        if (mode != MultiMuzzleFireMode.BurstKeepsDps)
+        {
+            return 1f;
+        }
+
+        return Mathf.Max(1, GetFireMuzzleCount(activeProjectileConfig));
     }
 
     private float GetProjectileSpeed(ProjectileConfig activeProjectileConfig)

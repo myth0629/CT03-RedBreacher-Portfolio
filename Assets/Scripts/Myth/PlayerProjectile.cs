@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerProjectile : MonoBehaviour
@@ -23,6 +25,7 @@ public class PlayerProjectile : MonoBehaviour
     private Rigidbody body;
     private bool hasHit;
     private GameObject projectileEffectInstance;
+    private bool isReleased;
 
     private void Awake()
     {
@@ -38,7 +41,36 @@ public class PlayerProjectile : MonoBehaviour
 
         if (Time.time >= expireTime)
         {
-            Destroy(gameObject);
+            ReturnToPool();
+        }
+    }
+
+    public void PrepareForReuse()
+    {
+        isReleased = false;
+        hasHit = false;
+    }
+
+    public void ResetForPool()
+    {
+        isReleased = true;
+        hasHit = true;
+        damage = 0f;
+        speed = 0f;
+        expireTime = 0f;
+        owner = null;
+        direction = Vector3.zero;
+
+        if (body != null)
+        {
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+
+        if (projectileEffectInstance != null)
+        {
+            CombatObjectPool.ReleaseEffect(projectileEffectInstance);
+            projectileEffectInstance = null;
         }
     }
 
@@ -86,6 +118,7 @@ public class PlayerProjectile : MonoBehaviour
 
     public void Launch(Vector3 launchDirection, float launchDamage, float launchSpeed, float lifetime, CombatHealth launchOwner)
     {
+        EnsureProjectileComponents();
         direction = CombatPlane.ProjectDirection(launchDirection);
         if (direction.sqrMagnitude <= 0f)
         {
@@ -97,6 +130,7 @@ public class PlayerProjectile : MonoBehaviour
         owner = launchOwner;
         expireTime = Time.time + (projectileConfig != null ? projectileConfig.Lifetime : lifetime);
         hasHit = false;
+        isReleased = false;
 
         transform.position = CombatPlane.WithFixedY(transform.position);
         // Hovl 투사체는 transform.forward 기준으로 움직이므로 루트 forward를 실제 발사 방향에 맞춘다.
@@ -131,13 +165,6 @@ public class PlayerProjectile : MonoBehaviour
         }
 
         ApplyCollisionRadius();
-
-        if (projectileEffectPrefab == null && GetComponent<SpriteRenderer>() == null)
-        {
-            SpriteRenderer renderer = gameObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = CombatVisualFactory.CreateCircleSprite(Color.yellow);
-            renderer.sortingOrder = 10;
-        }
     }
 
     private void ApplyCollisionRadius()
@@ -157,8 +184,8 @@ public class PlayerProjectile : MonoBehaviour
         }
 
         // 발사 순간 총구 위치에 플래시를 한 번 재생한다.
-        GameObject flash = Instantiate(fireFlashEffectPrefab, transform.position, transform.rotation);
-        Destroy(flash, effectCleanupDelay);
+        GameObject flash = CombatObjectPool.GetEffect(fireFlashEffectPrefab, transform.position, transform.rotation);
+        CombatObjectPool.ReleaseEffect(flash, effectCleanupDelay);
     }
 
     private void SpawnProjectileEffect()
@@ -169,7 +196,7 @@ public class PlayerProjectile : MonoBehaviour
         }
 
         // 투사체 이펙트는 본체에 붙여 함께 이동시킨다.
-        projectileEffectInstance = Instantiate(projectileEffectPrefab, transform);
+        projectileEffectInstance = CombatObjectPool.GetEffect(projectileEffectPrefab, transform.position, transform.rotation, transform);
         projectileEffectInstance.transform.localPosition = Vector3.zero;
         projectileEffectInstance.transform.localRotation = Quaternion.identity;
     }
@@ -182,8 +209,8 @@ public class PlayerProjectile : MonoBehaviour
         }
 
         // 충돌 위치에 히트 이펙트를 분리 생성해 투사체가 사라져도 재생되게 한다.
-        GameObject hit = Instantiate(hitEffectPrefab, transform.position, transform.rotation);
-        Destroy(hit, effectCleanupDelay);
+        GameObject hit = CombatObjectPool.GetEffect(hitEffectPrefab, transform.position, transform.rotation);
+        CombatObjectPool.ReleaseEffect(hit, effectCleanupDelay);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -234,7 +261,7 @@ public class PlayerProjectile : MonoBehaviour
         GrantExperienceIfKilled(target);
         ApplyKnockback(target);
         SpawnHitEffect();
-        Destroy(gameObject);
+        ReturnToPool();
     }
 
     private void GrantExperienceIfKilled(CombatHealth target)
@@ -271,4 +298,190 @@ public class PlayerProjectile : MonoBehaviour
         // 무기 설정값만큼 투사체 진행 방향으로 적을 밀어낸다.
         enemy.ApplyKnockback(direction, knockbackForce);
     }
+
+    private void ReturnToPool()
+    {
+        if (isReleased)
+        {
+            return;
+        }
+
+        CombatObjectPool.ReleaseProjectile(this);
+    }
+}
+
+public class CombatObjectPool : MonoBehaviour
+{
+    private static CombatObjectPool instance;
+    private static readonly Queue<PlayerProjectile> projectiles = new Queue<PlayerProjectile>();
+    private static readonly Dictionary<GameObject, Queue<GameObject>> effects = new Dictionary<GameObject, Queue<GameObject>>();
+
+    private Transform projectileRoot;
+    private Transform effectRoot;
+
+    private static CombatObjectPool Instance
+    {
+        get
+        {
+            if (instance != null)
+            {
+                return instance;
+            }
+
+            GameObject poolObject = new GameObject("CombatObjectPool");
+            instance = poolObject.AddComponent<CombatObjectPool>();
+            DontDestroyOnLoad(poolObject);
+            return instance;
+        }
+    }
+
+    private void Awake()
+    {
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
+        DontDestroyOnLoad(gameObject);
+        projectileRoot = CreateRoot("Projectiles");
+        effectRoot = CreateRoot("Effects");
+    }
+
+    public static PlayerProjectile GetProjectile()
+    {
+        PlayerProjectile projectile = projectiles.Count > 0 ? projectiles.Dequeue() : CreateProjectile();
+        projectile.gameObject.SetActive(true);
+        projectile.PrepareForReuse();
+        return projectile;
+    }
+
+    public static void ReleaseProjectile(PlayerProjectile projectile)
+    {
+        if (projectile == null)
+        {
+            return;
+        }
+
+        // 발사체 본체는 제거하지 않고 비활성 큐로 돌려보낸다.
+        projectile.ResetForPool();
+        projectile.transform.SetParent(Instance.projectileRoot, false);
+        projectile.gameObject.SetActive(false);
+        projectiles.Enqueue(projectile);
+    }
+
+    public static GameObject GetEffect(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
+    {
+        if (prefab == null)
+        {
+            return null;
+        }
+
+        Queue<GameObject> queue = GetEffectQueue(prefab);
+        GameObject effect = queue.Count > 0 ? queue.Dequeue() : Instantiate(prefab);
+        CombatPooledEffect pooledEffect = effect.GetComponent<CombatPooledEffect>();
+        if (pooledEffect == null)
+        {
+            pooledEffect = effect.AddComponent<CombatPooledEffect>();
+        }
+
+        pooledEffect.Prefab = prefab;
+        effect.transform.SetParent(parent, true);
+        effect.transform.position = position;
+        effect.transform.rotation = rotation;
+        effect.SetActive(true);
+        RestartParticles(effect);
+        return effect;
+    }
+
+    public static void ReleaseEffect(GameObject effect, float delay = 0f)
+    {
+        if (effect == null)
+        {
+            return;
+        }
+
+        if (delay > 0f)
+        {
+            Instance.StartCoroutine(Instance.ReleaseEffectAfterDelay(effect, delay));
+            return;
+        }
+
+        CombatPooledEffect pooledEffect = effect.GetComponent<CombatPooledEffect>();
+        if (pooledEffect == null || pooledEffect.Prefab == null)
+        {
+            Destroy(effect);
+            return;
+        }
+
+        // 이펙트는 원래 프리팹별 큐에 넣어 재사용한다.
+        StopParticles(effect);
+        effect.transform.SetParent(Instance.effectRoot, false);
+        effect.SetActive(false);
+        GetEffectQueue(pooledEffect.Prefab).Enqueue(effect);
+    }
+
+    private static PlayerProjectile CreateProjectile()
+    {
+        GameObject projectileObject = new GameObject("Combat Projectile");
+        projectileObject.transform.SetParent(Instance.projectileRoot, false);
+        PlayerProjectile projectile = projectileObject.AddComponent<PlayerProjectile>();
+        projectile.gameObject.SetActive(false);
+        return projectile;
+    }
+
+    private static Queue<GameObject> GetEffectQueue(GameObject prefab)
+    {
+        if (!effects.TryGetValue(prefab, out Queue<GameObject> queue))
+        {
+            queue = new Queue<GameObject>();
+            effects[prefab] = queue;
+        }
+
+        return queue;
+    }
+
+    private static void RestartParticles(GameObject effect)
+    {
+        ParticleSystem[] systems = effect.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < systems.Length; i++)
+        {
+            systems[i].Clear(true);
+            systems[i].Play(true);
+        }
+    }
+
+    private static void StopParticles(GameObject effect)
+    {
+        ParticleSystem[] systems = effect.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < systems.Length; i++)
+        {
+            systems[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+    }
+
+    private IEnumerator ReleaseEffectAfterDelay(GameObject effect, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        ReleaseEffect(effect);
+    }
+
+    private Transform CreateRoot(string rootName)
+    {
+        Transform existingRoot = transform.Find(rootName);
+        if (existingRoot != null)
+        {
+            return existingRoot;
+        }
+
+        GameObject rootObject = new GameObject(rootName);
+        rootObject.transform.SetParent(transform, false);
+        return rootObject.transform;
+    }
+}
+
+public class CombatPooledEffect : MonoBehaviour
+{
+    public GameObject Prefab;
 }

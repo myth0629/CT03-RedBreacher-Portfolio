@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b6a649172b8254b66b5c5d2c0331ddef, type: 3}
-  m_Name: Unit_unit_1
+  m_Name: Unit_07
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUnitConfig
-  id: unit_1
-  displayName: "\uD0F1\uD06C1"
-  unitPrefab: {fileID: 6483762977116725696, guid: d5358ed55036949d79e06706787124be, type: 3}
-  maxHealth: 120
-  critChance: 0.1
-  critMultiplier: 1.5
-  attackRange: 6
-  attackDamage: 10
-  attackInterval: 1
-  moveSpeed: 2
-  rotationSpeed: 120
+  id: 07
+  displayName: "\uD0F1\uD06C7"
+  unitPrefab: {fileID: 214164098778057125, guid: 814372d74fd7c714c8a1254aed2b36bf, type: 3}
+  maxHealth: 400
+  critChance: 0.15
+  critMultiplier: 1.7
+  attackRange: 7.3
+  attackDamage: 32
+  attackInterval: 0.75
+  moveSpeed: 2.5
+  rotationSpeed: 145
   fireAngleTolerance: 3
-  projectileConfig: {fileID: 11400000, guid: b3ec73aed18774d2d8ae83671a29b586, type: 2}
+  projectileConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
