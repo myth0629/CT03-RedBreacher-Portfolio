@@ -10,7 +10,6 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private Button shieldRouteButton;
     [SerializeField] private Button pierceDefenseRouteButton;
     [SerializeField] private Button investRouteButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
@@ -31,14 +30,12 @@ public class CoreChargerPanel : MonoBehaviour
         shieldRouteButton?.onClick.AddListener(SelectShieldRoute);
         pierceDefenseRouteButton?.onClick.AddListener(SelectPierceDefenseRoute);
         investRouteButton?.onClick.AddListener(InvestSelectedRoute);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
     private void OnDisable()
     {
         upgradeButton?.onClick.RemoveListener(UpgradeCharger);
-        closeButton?.onClick.RemoveListener(ClosePanel);
         armorRouteButton?.onClick.RemoveListener(SelectArmorRoute);
         shieldRouteButton?.onClick.RemoveListener(SelectShieldRoute);
         pierceDefenseRouteButton?.onClick.RemoveListener(SelectPierceDefenseRoute);
@@ -67,7 +64,6 @@ public class CoreChargerPanel : MonoBehaviour
         armorRouteButton = armor;
         shieldRouteButton = shield;
         pierceDefenseRouteButton = pierceDefense;
-        closeButton = close;
         levelText = level;
         upgradeText = upgradeLabel;
         selectedRouteText = selectedRoute;
@@ -124,11 +120,6 @@ public class CoreChargerPanel : MonoBehaviour
 
         baseCampManager?.InvestCoreRoute(coreCharger.SelectedRouteId);
         Refresh();
-    }
-
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
     }
 
     private void Refresh()

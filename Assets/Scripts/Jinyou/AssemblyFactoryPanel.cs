@@ -10,7 +10,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [SerializeField] private Button mechMenuButton;
     [SerializeField] private Button skillMenuButton;
     [SerializeField] private Button partsMenuButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
@@ -29,14 +28,12 @@ public class AssemblyFactoryPanel : MonoBehaviour
         mechMenuButton?.onClick.AddListener(SelectMechMenu);
         skillMenuButton?.onClick.AddListener(SelectSkillMenu);
         partsMenuButton?.onClick.AddListener(SelectPartsMenu);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
     private void OnDisable()
     {
         upgradeButton?.onClick.RemoveListener(UpgradeFactory);
-        closeButton?.onClick.RemoveListener(ClosePanel);
         weaponMenuButton?.onClick.RemoveListener(SelectWeaponMenu);
         mechMenuButton?.onClick.RemoveListener(SelectMechMenu);
         skillMenuButton?.onClick.RemoveListener(SelectSkillMenu);
@@ -67,7 +64,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
         mechMenuButton = mech;
         skillMenuButton = skill;
         partsMenuButton = parts;
-        closeButton = close;
         levelText = level;
         upgradeText = upgradeLabel;
         selectedMenuText = selectedMenu;
@@ -105,11 +101,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
     {
         baseCampManager?.SelectAssemblyMenu(menuId);
         Refresh();
-    }
-
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
     }
 
     private void Refresh()

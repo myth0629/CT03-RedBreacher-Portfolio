@@ -7,7 +7,6 @@ public class EnergyRefineryPanel : MonoBehaviour
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button collectButton;
     [SerializeField] private Button upgradeButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text storedCreditsText;
     [SerializeField] private TMP_Text productionText;
@@ -23,7 +22,6 @@ public class EnergyRefineryPanel : MonoBehaviour
         ResolveReferences();
         collectButton?.onClick.AddListener(CollectCredits);
         upgradeButton?.onClick.AddListener(UpgradeRefinery);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
@@ -31,7 +29,6 @@ public class EnergyRefineryPanel : MonoBehaviour
     {
         collectButton?.onClick.RemoveListener(CollectCredits);
         upgradeButton?.onClick.RemoveListener(UpgradeRefinery);
-        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void Update()
@@ -52,7 +49,6 @@ public class EnergyRefineryPanel : MonoBehaviour
         baseCampManager = manager;
         collectButton = collect;
         upgradeButton = upgrade;
-        closeButton = close;
         levelText = level;
         storedCreditsText = storedCredits;
         productionText = production;
@@ -70,11 +66,6 @@ public class EnergyRefineryPanel : MonoBehaviour
     {
         baseCampManager?.UpgradeEnergyRefinery();
         Refresh();
-    }
-
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
     }
 
     private void Refresh()
