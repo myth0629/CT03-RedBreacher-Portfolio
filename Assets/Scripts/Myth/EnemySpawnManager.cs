@@ -6,13 +6,21 @@ public class EnemySpawnManager : MonoBehaviour
 {
     [Header("Stage")]
     [SerializeField] private int startStage = 1;
+    [SerializeField] private int roundsPerStage = 5;
 
     [Header("Round")]
     [SerializeField] private bool startOnAwake = true;
     [SerializeField] private int startRound = 1;
     [SerializeField] private int baseEnemyCount = 4;
-    [SerializeField] private int enemyCountIncreasePerRound = 2;
+    [SerializeField] private int enemyCountIncreasePerStage = 3;
+    [SerializeField] private int enemyCountIncreasePerRound = 1;
     [SerializeField] private float timeBetweenRounds = 2f;
+
+    [Header("Enemy Scaling")]
+    [SerializeField] private float healthIncreasePerStage = 0.2f;
+    [SerializeField] private float damageIncreasePerStage = 0.1f;
+    [SerializeField] private float moveSpeedIncreasePerStage = 0.03f;
+    [SerializeField] private float rewardIncreasePerStage = 0.15f;
 
     [Header("Spawn")]
     [SerializeField] private EnemyConfig enemyConfig;
@@ -25,11 +33,14 @@ public class EnemySpawnManager : MonoBehaviour
     private Coroutine roundRoutine;
     private int currentStage;
     private int currentRound;
+    private int currentRoundInStage;
     private bool roundsActive;
     private bool spawningRound;
 
     public int CurrentStage => currentStage;
     public int CurrentRound => currentRound;
+    public int CurrentRoundInStage => currentRoundInStage;
+    public int RoundsPerStage => Mathf.Max(1, roundsPerStage);
     public int AliveEnemyCount => aliveEnemies.Count;
     public bool IsSpawningRound => spawningRound;
 
@@ -37,6 +48,7 @@ public class EnemySpawnManager : MonoBehaviour
     {
         currentStage = Mathf.Max(1, startStage);
         currentRound = Mathf.Max(1, startRound);
+        RefreshStageRoundState();
     }
 
     private void Start()
@@ -78,7 +90,7 @@ public class EnemySpawnManager : MonoBehaviour
             yield return new WaitForSeconds(timeBetweenRounds);
         }
 
-        currentStage = GetStageForRound(currentRound);
+        RefreshStageRoundState();
         int spawnCount = GetEnemyCountForRound(currentRound);
         for (int i = 0; i < spawnCount; i++)
         {
@@ -93,14 +105,29 @@ public class EnemySpawnManager : MonoBehaviour
 
     private int GetEnemyCountForRound(int round)
     {
-        int roundOffset = Mathf.Max(0, round - 1);
-        return Mathf.Max(1, baseEnemyCount + enemyCountIncreasePerRound * roundOffset);
+        int stageOffset = Mathf.Max(0, GetStageForRound(round) - startStage);
+        int roundInStageOffset = Mathf.Max(0, GetRoundInStage(round) - 1);
+        return Mathf.Max(1, baseEnemyCount
+            + enemyCountIncreasePerStage * stageOffset
+            + enemyCountIncreasePerRound * roundInStageOffset);
     }
 
     private int GetStageForRound(int round)
     {
         int roundOffset = Mathf.Max(0, round - startRound);
-        return Mathf.Max(1, startStage + roundOffset);
+        return Mathf.Max(1, startStage + roundOffset / RoundsPerStage);
+    }
+
+    private int GetRoundInStage(int round)
+    {
+        int roundOffset = Mathf.Max(0, round - startRound);
+        return roundOffset % RoundsPerStage + 1;
+    }
+
+    private void RefreshStageRoundState()
+    {
+        currentStage = GetStageForRound(currentRound);
+        currentRoundInStage = GetRoundInStage(currentRound);
     }
 
     private void SpawnEnemy(int index)
@@ -118,7 +145,13 @@ public class EnemySpawnManager : MonoBehaviour
             enemy = enemyObject.AddComponent<EnemyController>();
         }
 
-        enemy.Initialize(enemyConfig);
+        enemy.Initialize(
+            enemyConfig,
+            GetEnemyLevel(),
+            GetStageScale(healthIncreasePerStage),
+            GetStageScale(moveSpeedIncreasePerStage),
+            GetStageScale(damageIncreasePerStage),
+            GetStageScale(rewardIncreasePerStage));
 
         CombatHealth enemyHealth = enemyObject.GetComponent<CombatHealth>();
         if (enemyHealth == null)
@@ -145,6 +178,18 @@ public class EnemySpawnManager : MonoBehaviour
         float angle = (index * 137.5f + currentRound * 29f) * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * spawnRadius;
         return CombatPlane.WithFixedY(center + offset);
+    }
+
+    private int GetEnemyLevel()
+    {
+        // 적 레벨은 현재 스테이지에 맞춰 증가한다.
+        return Mathf.Max(1, currentStage);
+    }
+
+    private float GetStageScale(float increasePerStage)
+    {
+        int stageOffset = Mathf.Max(0, currentStage - startStage);
+        return Mathf.Max(0.01f, 1f + increasePerStage * stageOffset);
     }
 
     private Vector3 GetSpawnCenterPosition()

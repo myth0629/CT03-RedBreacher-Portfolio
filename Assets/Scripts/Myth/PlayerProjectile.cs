@@ -315,6 +315,35 @@ public class PlayerProjectile : MonoBehaviour
 
         // 플레이어 투사체가 적을 처치하면 v1 경험치를 지급한다.
         progression.AddExperience(enemy.ExperienceReward);
+        GrantCurrencyReward(enemy);
+    }
+
+    private void GrantCurrencyReward(EnemyController enemy)
+    {
+        if (enemy == null || owner == null)
+        {
+            return;
+        }
+
+        PlayerCurrencyWallet wallet = owner.GetComponent<PlayerCurrencyWallet>();
+        if (wallet == null && BaseCampManager.Instance != null)
+        {
+            wallet = BaseCampManager.Instance.CurrencyWallet;
+        }
+
+        if (wallet == null)
+        {
+            wallet = FindFirstObjectByType<PlayerCurrencyWallet>();
+        }
+
+        if (wallet == null)
+        {
+            return;
+        }
+
+        // 적 처치 보상은 기본 재화와 희귀 재화를 같은 wallet에 누적한다.
+        wallet.AddCredits(enemy.CreditReward);
+        wallet.AddCoreCrystals(enemy.CoreCrystalReward);
     }
 
     private void ApplyKnockback(CombatHealth target)

@@ -5,6 +5,7 @@ using TopDownAssets.Common.Scripts;
 
 [RequireComponent(typeof(CombatHealth))]
 [RequireComponent(typeof(PlayerProgression))]
+[RequireComponent(typeof(PlayerCurrencyWallet))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Config")]
@@ -50,7 +51,27 @@ public class PlayerController : MonoBehaviour
     public CombatHealth Health => health;
     public PlayerProgression Progression => progression;
     public string DisplayName => unitConfig != null ? unitConfig.DisplayName : displayName;
+    public PlayerUnitConfig UnitConfig => unitConfig;
+    public ProjectileConfig WeaponConfig => ProjectileConfigValue;
     public float AttackRange => AttackRangeValue;
+    public float AttackDamage => AttackDamageValue;
+    public float WeaponAttackDamage => GetWeaponAttackDamage(ProjectileConfigValue);
+    public float TotalAttackDamage => AttackDamageValue + WeaponAttackDamage;
+    public float AttackInterval => AttackIntervalValue;
+    public float MoveSpeed => MoveSpeedValue;
+    public float CritChance => CritChanceValue;
+    public float CritMultiplier => CritMultiplierValue;
+    public float ProjectileSpeed => GetProjectileSpeed(ProjectileConfigValue);
+    public float ProjectileLifetime => GetProjectileLifetime(ProjectileConfigValue);
+    public float KnockbackForce => ProjectileConfigValue != null ? ProjectileConfigValue.KnockbackForce : 0f;
+    public float EstimatedDamagePerSecond
+    {
+        get
+        {
+            float expectedCritMultiplier = 1f + Mathf.Clamp01(CritChanceValue) * (Mathf.Max(1f, CritMultiplierValue) - 1f);
+            return AttackIntervalValue > 0f ? TotalAttackDamage * expectedCritMultiplier / AttackIntervalValue : 0f;
+        }
+    }
 
     private float MaxHealthValue => unitConfig != null ? unitConfig.MaxHealth : maxHealth;
     private float CritChanceValue => unitConfig != null ? unitConfig.CritChance : critChance;

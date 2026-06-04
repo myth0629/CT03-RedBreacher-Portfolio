@@ -19,6 +19,7 @@ public class BaseCampManager : MonoBehaviour
     [Header("Player State")]
     [SerializeField] private int commanderLevel = 1;
     [SerializeField] private int credits = 500;
+    [SerializeField] private PlayerCurrencyWallet currencyWallet;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugPanel = true;
@@ -26,14 +27,19 @@ public class BaseCampManager : MonoBehaviour
 
     [Header("Events")]
     public UnityEvent<int> OnCreditsChanged = new UnityEvent<int>();
+    public UnityEvent<int> OnCoreCrystalsChanged = new UnityEvent<int>();
     public UnityEvent<int> OnCommanderLevelChanged = new UnityEvent<int>();
+
+    private PlayerCurrencyWallet registeredCurrencyWallet;
 
     public StrategyResearchLab ResearchLab => researchLab;
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
     public int CommanderLevel => commanderLevel;
-    public int Credits => credits;
+    public int Credits => CurrencyWallet.Credits;
+    public int CoreCrystals => CurrencyWallet.CoreCrystals;
+    public PlayerCurrencyWallet CurrencyWallet => EnsureCurrencyWallet();
 
     private void Awake()
     {
@@ -44,6 +50,7 @@ public class BaseCampManager : MonoBehaviour
         }
 
         Instance = this;
+        EnsureCurrencyWallet();
         ConnectFacilities();
     }
 
@@ -57,6 +64,13 @@ public class BaseCampManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (registeredCurrencyWallet != null)
+        {
+            registeredCurrencyWallet.OnCreditsChanged.RemoveListener(HandleCreditsChanged);
+            registeredCurrencyWallet.OnCoreCrystalsChanged.RemoveListener(HandleCoreCrystalsChanged);
+            registeredCurrencyWallet = null;
+        }
+
         if (Instance == this)
         {
             Instance = null;
@@ -143,7 +157,12 @@ public class BaseCampManager : MonoBehaviour
 
     public void AddCredits(int amount)
     {
-        SetCredits(credits + Mathf.Max(0, amount));
+        CurrencyWallet.AddCredits(amount);
+    }
+
+    public void AddCoreCrystals(int amount)
+    {
+        CurrencyWallet.AddCoreCrystals(amount);
     }
 
     public void AddCommanderLevel(int amount)
@@ -159,8 +178,7 @@ public class BaseCampManager : MonoBehaviour
 
     private void SetCredits(int value)
     {
-        credits = Mathf.Max(0, value);
-        OnCreditsChanged.Invoke(credits);
+        CurrencyWallet.SetCredits(value);
     }
 
     private void TrySpendAndUpgrade(IBaseCampFacility facility)
@@ -170,7 +188,7 @@ public class BaseCampManager : MonoBehaviour
             return;
         }
 
-        int availableCredits = credits;
+        int availableCredits = Credits;
         int researchLabLevel = researchLab != null ? researchLab.Level : 1;
 
         if (facility.TryStartUpgrade(ref availableCredits, commanderLevel, researchLabLevel))
@@ -190,10 +208,12 @@ public class BaseCampManager : MonoBehaviour
     private void DrawDebugPanel(int windowId)
     {
         GUILayout.Label($"Commander Lv. {commanderLevel}");
-        GUILayout.Label($"Credits: {credits}");
+        GUILayout.Label($"Credits: {Credits}");
+        GUILayout.Label($"Core Crystals: {CoreCrystals}");
 
         if (GUILayout.Button("+ Level")) AddCommanderLevel(1);
         if (GUILayout.Button("+ 1000 Credits")) AddCredits(1000);
+        if (GUILayout.Button("+ 100 Core Crystals")) AddCoreCrystals(100);
         if (GUILayout.Button("Collect Refinery")) CollectRefineryCredits();
         if (GUILayout.Button("Upgrade Research")) UpgradeResearchLab();
         if (GUILayout.Button("Upgrade Refinery")) UpgradeEnergyRefinery();
@@ -201,6 +221,164 @@ public class BaseCampManager : MonoBehaviour
         if (GUILayout.Button("Upgrade Core")) UpgradeCoreCharger();
 
         GUI.DragWindow();
+    }
+
+    private PlayerCurrencyWallet EnsureCurrencyWallet()
+    {
+        if (currencyWallet != null)
+        {
+            RegisterCurrencyWalletEvents();
+            return currencyWallet;
+        }
+
+        currencyWallet = GetComponent<PlayerCurrencyWallet>();
+        if (currencyWallet == null)
+        {
+            currencyWallet = FindFirstObjectByType<PlayerCurrencyWallet>();
+        }
+
+        if (currencyWallet == null)
+        {
+            currencyWallet = gameObject.AddComponent<PlayerCurrencyWallet>();
+        }
+
+        RegisterCurrencyWalletEvents();
+        return currencyWallet;
+    }
+
+    private void RegisterCurrencyWalletEvents()
+    {
+        if (currencyWallet == null)
+        {
+            return;
+        }
+
+        if (registeredCurrencyWallet == currencyWallet)
+        {
+            return;
+        }
+
+        if (registeredCurrencyWallet != null)
+        {
+            registeredCurrencyWallet.OnCreditsChanged.RemoveListener(HandleCreditsChanged);
+            registeredCurrencyWallet.OnCoreCrystalsChanged.RemoveListener(HandleCoreCrystalsChanged);
+        }
+
+        currencyWallet.OnCreditsChanged.RemoveListener(HandleCreditsChanged);
+        currencyWallet.OnCoreCrystalsChanged.RemoveListener(HandleCoreCrystalsChanged);
+        currencyWallet.OnCreditsChanged.AddListener(HandleCreditsChanged);
+        currencyWallet.OnCoreCrystalsChanged.AddListener(HandleCoreCrystalsChanged);
+        registeredCurrencyWallet = currencyWallet;
+        HandleCreditsChanged(currencyWallet.Credits);
+        HandleCoreCrystalsChanged(currencyWallet.CoreCrystals);
+    }
+
+    private void HandleCreditsChanged(int value)
+    {
+        // 기존 기지 UI 이벤트를 유지하면서 실제 값은 wallet이 관리한다.
+        credits = value;
+        OnCreditsChanged.Invoke(value);
+    }
+
+    private void HandleCoreCrystalsChanged(int value)
+    {
+        OnCoreCrystalsChanged.Invoke(value);
+    }
+}
+
+public class PlayerCurrencyWallet : MonoBehaviour
+{
+    private const string CreditsKey = "PlayerCurrencyWallet.Credits";
+    private const string CoreCrystalsKey = "PlayerCurrencyWallet.CoreCrystals";
+
+    [Header("Currency")]
+    [SerializeField] private int credits = 500;
+    [SerializeField] private int coreCrystals;
+    [SerializeField] private bool saveToPlayerPrefs = true;
+
+    [Header("Events")]
+    public UnityEvent<int> OnCreditsChanged = new UnityEvent<int>();
+    public UnityEvent<int> OnCoreCrystalsChanged = new UnityEvent<int>();
+
+    public int Credits => credits;
+    public int CoreCrystals => coreCrystals;
+
+    private void Awake()
+    {
+        Load();
+    }
+
+    public void AddCredits(int amount)
+    {
+        SetCredits(credits + Mathf.Max(0, amount));
+    }
+
+    public bool TrySpendCredits(int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        if (credits < amount)
+        {
+            return false;
+        }
+
+        SetCredits(credits - amount);
+        return true;
+    }
+
+    public void AddCoreCrystals(int amount)
+    {
+        SetCoreCrystals(coreCrystals + Mathf.Max(0, amount));
+    }
+
+    public bool TrySpendCoreCrystals(int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        if (coreCrystals < amount)
+        {
+            return false;
+        }
+
+        SetCoreCrystals(coreCrystals - amount);
+        return true;
+    }
+
+    public void SetCredits(int value)
+    {
+        credits = Mathf.Max(0, value);
+        Save();
+        OnCreditsChanged.Invoke(credits);
+    }
+
+    public void SetCoreCrystals(int value)
+    {
+        coreCrystals = Mathf.Max(0, value);
+        Save();
+        OnCoreCrystalsChanged.Invoke(coreCrystals);
+    }
+
+    private void Load()
+    {
+        if (!saveToPlayerPrefs)
+        {
+            return;
+        }
+
+        credits = Mathf.Max(0, PlayerPrefs.GetInt(CreditsKey, credits));
+        coreCrystals = Mathf.Max(0, PlayerPrefs.GetInt(CoreCrystalsKey, coreCrystals));
+        OnCreditsChanged.Invoke(credits);
+        OnCoreCrystalsChanged.Invoke(coreCrystals);
+    }
+
+    private void Save()
+    {
+        if (!saveToPlayerPrefs)
+        {
+            return;
+        }
+
+        PlayerPrefs.SetInt(CreditsKey, credits);
+        PlayerPrefs.SetInt(CoreCrystalsKey, coreCrystals);
+        PlayerPrefs.Save();
     }
 }
 

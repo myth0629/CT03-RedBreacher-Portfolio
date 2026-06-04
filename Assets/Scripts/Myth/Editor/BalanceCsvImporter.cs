@@ -77,6 +77,7 @@ public static class BalanceCsvImporter
 
             SetString(serializedObject, "id", id);
             SetString(serializedObject, "displayName", Get(row, "displayName"));
+            SetString(serializedObject, "weaponCategory", Get(row, "weaponCategory"));
             SetFloat(serializedObject, "attackDamage", row, "attackDamage");
             SetFloat(serializedObject, "speed", row, "speed");
             SetFloat(serializedObject, "lifetime", row, "lifetime");
@@ -113,6 +114,8 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "contactDamage", row, "contactDamage");
             SetFloat(serializedObject, "contactInterval", row, "contactInterval");
             SetFloat(serializedObject, "experienceReward", row, "experienceReward");
+            SetInt(serializedObject, "creditReward", row, "creditReward");
+            SetInt(serializedObject, "coreCrystalReward", row, "coreCrystalReward");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
@@ -157,7 +160,7 @@ public static class BalanceCsvImporter
     {
         string[] headers =
         {
-            "id", "displayName", "attackDamage", "speed", "lifetime", "collisionRadius", "knockbackForce",
+            "id", "displayName", "weaponCategory", "attackDamage", "speed", "lifetime", "collisionRadius", "knockbackForce",
             "multiMuzzleFireMode", "maxBurstMuzzleCount", "muzzleNamePrefix", "fireFlashEffect",
             "projectileEffect", "hitEffect", "effectCleanupDelay"
         };
@@ -169,6 +172,7 @@ public static class BalanceCsvImporter
             {
                 config.Id,
                 config.DisplayName,
+                config.WeaponCategory,
                 FormatFloat(config.AttackDamage),
                 FormatFloat(config.Speed),
                 FormatFloat(config.Lifetime),
@@ -194,7 +198,7 @@ public static class BalanceCsvImporter
         string[] headers =
         {
             "id", "displayName", "enemyPrefab", "maxHealth", "moveSpeed", "stopDistance", "contactDamage",
-            "contactInterval", "experienceReward"
+            "contactInterval", "experienceReward", "creditReward", "coreCrystalReward"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -210,7 +214,9 @@ public static class BalanceCsvImporter
                 FormatFloat(config.StopDistance),
                 FormatFloat(config.ContactDamage),
                 FormatFloat(config.ContactInterval),
-                FormatFloat(config.ExperienceReward)
+                FormatFloat(config.ExperienceReward),
+                config.CreditReward.ToString(CultureInfo.InvariantCulture),
+                config.CoreCrystalReward.ToString(CultureInfo.InvariantCulture)
             });
         }
 

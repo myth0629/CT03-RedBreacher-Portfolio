@@ -14,12 +14,20 @@ public class EnemyController : MonoBehaviour
     private Rigidbody body;
     private float nextContactTime;
     private Vector3 knockbackVelocity;
+    private int enemyLevel = 1;
+    private float healthMultiplier = 1f;
+    private float moveSpeedMultiplier = 1f;
+    private float contactDamageMultiplier = 1f;
+    private float rewardMultiplier = 1f;
 
-    private float MoveSpeedValue => enemyConfig != null ? enemyConfig.MoveSpeed : moveSpeed;
+    private float MoveSpeedValue => (enemyConfig != null ? enemyConfig.MoveSpeed : moveSpeed) * moveSpeedMultiplier;
     private float StopDistanceValue => enemyConfig != null ? enemyConfig.StopDistance : stopDistance;
-    private float ContactDamageValue => enemyConfig != null ? enemyConfig.ContactDamage : contactDamage;
+    private float ContactDamageValue => (enemyConfig != null ? enemyConfig.ContactDamage : contactDamage) * contactDamageMultiplier;
     private float ContactIntervalValue => enemyConfig != null ? enemyConfig.ContactInterval : contactInterval;
-    public float ExperienceReward => enemyConfig != null ? enemyConfig.ExperienceReward : 10f;
+    public int EnemyLevel => enemyLevel;
+    public float ExperienceReward => (enemyConfig != null ? enemyConfig.ExperienceReward : 10f) * rewardMultiplier;
+    public int CreditReward => Mathf.RoundToInt((enemyConfig != null ? enemyConfig.CreditReward : 10) * rewardMultiplier);
+    public int CoreCrystalReward => Mathf.RoundToInt((enemyConfig != null ? enemyConfig.CoreCrystalReward : 0) * rewardMultiplier);
 
     private void Awake()
     {
@@ -38,10 +46,27 @@ public class EnemyController : MonoBehaviour
 
     public void Initialize(EnemyConfig config)
     {
+        Initialize(config, 1, 1f, 1f, 1f, 1f);
+    }
+
+    public void Initialize(
+        EnemyConfig config,
+        int level,
+        float healthScale,
+        float moveSpeedScale,
+        float contactDamageScale,
+        float rewardScale)
+    {
         if (config != null)
         {
             enemyConfig = config;
         }
+
+        enemyLevel = Mathf.Max(1, level);
+        healthMultiplier = Mathf.Max(0.01f, healthScale);
+        moveSpeedMultiplier = Mathf.Max(0.01f, moveSpeedScale);
+        contactDamageMultiplier = Mathf.Max(0.01f, contactDamageScale);
+        rewardMultiplier = Mathf.Max(0.01f, rewardScale);
 
         CombatHealth health = GetComponent<CombatHealth>();
         if (health == null)
@@ -51,7 +76,7 @@ public class EnemyController : MonoBehaviour
 
         if (enemyConfig != null)
         {
-            health.Initialize(enemyConfig.MaxHealth);
+            health.Initialize(enemyConfig.MaxHealth * healthMultiplier);
         }
     }
 
