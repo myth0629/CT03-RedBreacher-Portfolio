@@ -306,42 +306,87 @@ MonoBehaviour:
     progressType: 0
     title: "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 \uB2EC\uC131"
     description: "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 {0} \uB2EC\uC131"
+    iconSprite: {fileID: 0}
     targetAmount: 5
+    nextTargetAmounts:
+    - 10
+    - 15
+    - 20
+    repeatRequirementAmount: 5
     progressAmountPerEvent: 1
+    rewardCurrency: 0
+    rewardAmount: 100
     currentAmount: 0
     completed: 0
+    completedCount: 0
   - id: enemy_kill
     progressType: 1
     title: "\uC801 \uCC98\uCE58"
     description: "\uC801 {0}\uB9C8\uB9AC \uCC98\uCE58"
+    iconSprite: {fileID: 0}
     targetAmount: 10
+    nextTargetAmounts:
+    - 20
+    - 30
+    - 50
+    repeatRequirementAmount: 10
     progressAmountPerEvent: 1
+    rewardCurrency: 0
+    rewardAmount: 100
     currentAmount: 0
     completed: 0
+    completedCount: 0
   - id: stage_clear
     progressType: 2
     title: "\uC2A4\uD14C\uC774\uC9C0 \uD074\uB9AC\uC5B4"
     description: "\uC2A4\uD14C\uC774\uC9C0 {0}\uD68C \uD074\uB9AC\uC5B4"
+    iconSprite: {fileID: 0}
     targetAmount: 3
+    nextTargetAmounts:
+    - 6
+    - 9
+    - 12
+    repeatRequirementAmount: 3
     progressAmountPerEvent: 1
+    rewardCurrency: 1
+    rewardAmount: 10
     currentAmount: 0
     completed: 0
+    completedCount: 0
   - id: weapon_collect
     progressType: 3
     title: "\uBB34\uAE30 \uC218\uC9D1"
     description: "\uBB34\uAE30 {0}\uAC1C \uC218\uC9D1"
+    iconSprite: {fileID: 0}
     targetAmount: 5
+    nextTargetAmounts:
+    - 10
+    - 15
+    - 20
+    repeatRequirementAmount: 5
     progressAmountPerEvent: 1
+    rewardCurrency: 0
+    rewardAmount: 100
     currentAmount: 0
     completed: 0
+    completedCount: 0
   - id: drone_collect
     progressType: 4
     title: "\uB4DC\uB860 \uC218\uC9D1"
     description: "\uB4DC\uB860 {0}\uAC1C \uC218\uC9D1"
+    iconSprite: {fileID: 0}
     targetAmount: 3
+    nextTargetAmounts:
+    - 6
+    - 9
+    - 12
+    repeatRequirementAmount: 3
     progressAmountPerEvent: 1
+    rewardCurrency: 0
+    rewardAmount: 100
     currentAmount: 0
     completed: 0
+    completedCount: 0
   OnAchievementsChanged:
     m_PersistentCalls:
       m_Calls: []

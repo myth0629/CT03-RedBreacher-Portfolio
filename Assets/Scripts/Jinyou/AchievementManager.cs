@@ -23,22 +23,47 @@ public class AchievementManager : MonoBehaviour
         [SerializeField] private string title;
         [TextArea]
         [SerializeField] private string description;
+        [SerializeField] private Sprite iconSprite;
         [Min(1)]
         [SerializeField] private int targetAmount = 1;
+        [SerializeField] private List<int> nextTargetAmounts = new List<int>();
+        [Min(1)]
+        [SerializeField] private int repeatRequirementAmount = 1;
         [Min(1)]
         [SerializeField] private int progressAmountPerEvent = 1;
+        [SerializeField] private CurrencyType rewardCurrency = CurrencyType.Credits;
+        [Min(0)]
+        [SerializeField] private int rewardAmount;
         [SerializeField] private int currentAmount;
         [SerializeField] private bool completed;
+        [SerializeField] private int completedCount;
 
         public string Id => id;
         public AchievementProgressType ProgressType => progressType;
         public string Title => title;
         public string Description => description;
+        public Sprite IconSprite => iconSprite;
         public int TargetAmount => Mathf.Max(1, targetAmount);
+        public IReadOnlyList<int> NextTargetAmounts => nextTargetAmounts;
+        public int RepeatRequirementAmount => Mathf.Max(1, repeatRequirementAmount);
         public int ProgressAmountPerEvent => Mathf.Max(1, progressAmountPerEvent);
-        public int CurrentAmount => Mathf.Clamp(currentAmount, 0, TargetAmount);
+        public CurrencyType RewardCurrency => rewardCurrency;
+        public int RewardAmount => Mathf.Max(0, rewardAmount);
+        public int CurrentAmount => Mathf.Max(0, currentAmount);
         public bool Completed => completed;
-        public float Progress01 => TargetAmount > 0 ? Mathf.Clamp01((float)CurrentAmount / TargetAmount) : 0f;
+        public int CompletedCount => Mathf.Max(0, completedCount);
+        public int PreviousTargetAmount => CompletedCount == 0
+            ? 0
+            : GetRequiredAmountForCompletion(CompletedCount - 1);
+        public int NextTargetAmount => GetRequiredAmountForCompletion(CompletedCount);
+        public float Progress01
+        {
+            get
+            {
+                int span = Mathf.Max(1, NextTargetAmount - PreviousTargetAmount);
+                return Mathf.Clamp01((float)(CurrentAmount - PreviousTargetAmount) / span);
+            }
+        }
 
         public AchievementEntry(
             string id,
@@ -46,7 +71,10 @@ public class AchievementManager : MonoBehaviour
             string title,
             string description,
             int targetAmount,
-            int progressAmountPerEvent = 1)
+            int progressAmountPerEvent = 1,
+            int repeatRequirementAmount = 1,
+            CurrencyType rewardCurrency = CurrencyType.Credits,
+            int rewardAmount = 0)
         {
             this.id = id;
             this.progressType = progressType;
@@ -54,41 +82,48 @@ public class AchievementManager : MonoBehaviour
             this.description = description;
             this.targetAmount = Mathf.Max(1, targetAmount);
             this.progressAmountPerEvent = Mathf.Max(1, progressAmountPerEvent);
+            this.repeatRequirementAmount = Mathf.Max(1, repeatRequirementAmount);
+            this.rewardCurrency = rewardCurrency;
+            this.rewardAmount = Mathf.Max(0, rewardAmount);
         }
 
-        public bool AddProgress(int amount)
+        public int AddProgress(int amount)
         {
-            if (completed)
+            int positiveAmount = Mathf.Max(0, amount);
+            if (positiveAmount == 0)
             {
-                return false;
+                return 0;
             }
 
-            int nextAmount = Mathf.Clamp(currentAmount + Mathf.Max(0, amount), 0, TargetAmount);
-            if (nextAmount == currentAmount)
+            currentAmount = Mathf.Max(0, currentAmount + positiveAmount);
+            return ConsumeCompletedMilestones();
+        }
+
+        public int SetProgress(int amount)
+        {
+            int nextAmount = Mathf.Max(0, amount);
+            if (nextAmount <= currentAmount)
             {
-                return false;
+                currentAmount = nextAmount;
+                return 0;
             }
 
             currentAmount = nextAmount;
-            completed = currentAmount >= TargetAmount;
-            return true;
+            return ConsumeCompletedMilestones();
         }
 
-        public bool SetProgress(int amount)
+        public void RestoreProgress(int amount, int completedMilestones)
         {
-            int nextAmount = Mathf.Clamp(Mathf.Max(0, amount), 0, TargetAmount);
-            bool changed = nextAmount != currentAmount;
-            currentAmount = nextAmount;
-
-            bool wasCompleted = completed;
-            completed = currentAmount >= TargetAmount;
-            return changed || wasCompleted != completed;
+            currentAmount = Mathf.Max(0, amount);
+            completedCount = Mathf.Max(0, completedMilestones);
+            completed = completedCount > 0;
         }
 
         public void ResetProgress()
         {
             currentAmount = 0;
             completed = false;
+            completedCount = 0;
         }
 
         public void Validate()
@@ -99,14 +134,64 @@ public class AchievementManager : MonoBehaviour
             }
 
             targetAmount = Mathf.Max(1, targetAmount);
+            nextTargetAmounts ??= new List<int>();
+            int previousRequirement = targetAmount;
+            for (int i = 0; i < nextTargetAmounts.Count; i++)
+            {
+                nextTargetAmounts[i] = Mathf.Max(previousRequirement + 1, nextTargetAmounts[i]);
+                previousRequirement = nextTargetAmounts[i];
+            }
+
+            repeatRequirementAmount = Mathf.Max(1, repeatRequirementAmount);
             progressAmountPerEvent = Mathf.Max(1, progressAmountPerEvent);
-            currentAmount = Mathf.Clamp(currentAmount, 0, targetAmount);
-            completed = currentAmount >= targetAmount;
+            rewardAmount = Mathf.Max(0, rewardAmount);
+            currentAmount = Mathf.Max(0, currentAmount);
+            completedCount = Mathf.Max(0, completedCount);
+            completed = completedCount > 0;
+        }
+
+        private int ConsumeCompletedMilestones()
+        {
+            int completionCount = 0;
+            int safety = 0;
+            while (currentAmount >= NextTargetAmount && safety < 1000)
+            {
+                completed = true;
+                completedCount++;
+                completionCount++;
+                safety++;
+            }
+
+            return completionCount;
+        }
+
+        private int GetRequiredAmountForCompletion(int completionIndex)
+        {
+            if (completionIndex <= 0)
+            {
+                return TargetAmount;
+            }
+
+            int nextTargetIndex = completionIndex - 1;
+            if (nextTargetAmounts != null && nextTargetIndex < nextTargetAmounts.Count)
+            {
+                return Mathf.Max(TargetAmount, nextTargetAmounts[nextTargetIndex]);
+            }
+
+            int lastConfiguredTarget = TargetAmount;
+            if (nextTargetAmounts != null && nextTargetAmounts.Count > 0)
+            {
+                lastConfiguredTarget = Mathf.Max(TargetAmount, nextTargetAmounts[nextTargetAmounts.Count - 1]);
+            }
+
+            int repeatIndex = completionIndex - (nextTargetAmounts != null ? nextTargetAmounts.Count : 0);
+            return lastConfiguredTarget + Mathf.Max(0, repeatIndex) * RepeatRequirementAmount;
         }
     }
 
     private const string CurrentKeySuffix = ".Current";
     private const string CompletedKeySuffix = ".Completed";
+    private const string CompletedCountKeySuffix = ".CompletedCount";
 
     public static AchievementManager Instance { get; private set; }
 
@@ -117,11 +202,11 @@ public class AchievementManager : MonoBehaviour
     [Header("Achievements")]
     [SerializeField] private List<AchievementEntry> achievements = new List<AchievementEntry>
     {
-        new AchievementEntry("player_level", AchievementProgressType.PlayerLevel, "플레이어 레벨 달성", "플레이어 레벨 {0} 달성", 5),
-        new AchievementEntry("enemy_kill", AchievementProgressType.EnemyKill, "적 처치", "적 {0}마리 처치", 10),
-        new AchievementEntry("stage_clear", AchievementProgressType.StageClear, "스테이지 클리어", "스테이지 {0}회 클리어", 3),
-        new AchievementEntry("weapon_collect", AchievementProgressType.WeaponCollect, "무기 수집", "무기 {0}개 수집", 5),
-        new AchievementEntry("drone_collect", AchievementProgressType.DroneCollect, "드론 수집", "드론 {0}개 수집", 3)
+        new AchievementEntry("player_level", AchievementProgressType.PlayerLevel, "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 \uB2EC\uC131", "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 {0} \uB2EC\uC131", 5, 1, 5, CurrencyType.Credits, 100),
+        new AchievementEntry("enemy_kill", AchievementProgressType.EnemyKill, "\uC801 \uCC98\uCE58", "\uC801 {0}\uB9C8\uB9AC \uCC98\uCE58", 10, 1, 10, CurrencyType.Credits, 100),
+        new AchievementEntry("stage_clear", AchievementProgressType.StageClear, "\uC2A4\uD14C\uC774\uC9C0 \uD074\uB9AC\uC5B4", "\uC2A4\uD14C\uC774\uC9C0 {0}\uD68C \uD074\uB9AC\uC5B4", 3, 1, 3, CurrencyType.CoreCrystals, 10),
+        new AchievementEntry("weapon_collect", AchievementProgressType.WeaponCollect, "\uBB34\uAE30 \uC218\uC9D1", "\uBB34\uAE30 {0}\uAC1C \uC218\uC9D1", 5, 1, 5, CurrencyType.Credits, 100),
+        new AchievementEntry("drone_collect", AchievementProgressType.DroneCollect, "\uB4DC\uB860 \uC218\uC9D1", "\uB4DC\uB860 {0}\uAC1C \uC218\uC9D1", 3, 1, 3, CurrencyType.Credits, 100)
     };
 
     [Header("Events")]
@@ -190,18 +275,10 @@ public class AchievementManager : MonoBehaviour
                 continue;
             }
 
-            bool wasCompleted = achievement.Completed;
             int amount = Mathf.Max(0, eventCount) * achievement.ProgressAmountPerEvent;
-            if (!achievement.AddProgress(amount))
-            {
-                continue;
-            }
-
-            changed = true;
-            if (!wasCompleted && achievement.Completed)
-            {
-                OnAchievementCompleted.Invoke(achievement);
-            }
+            int completionCount = achievement.AddProgress(amount);
+            changed = changed || amount > 0;
+            RewardCompletedMilestones(achievement, completionCount);
         }
 
         NotifyIfChanged(changed);
@@ -217,20 +294,42 @@ public class AchievementManager : MonoBehaviour
                 continue;
             }
 
-            bool wasCompleted = achievement.Completed;
-            if (!achievement.SetProgress(amount))
-            {
-                continue;
-            }
-
-            changed = true;
-            if (!wasCompleted && achievement.Completed)
-            {
-                OnAchievementCompleted.Invoke(achievement);
-            }
+            int before = achievement.CurrentAmount;
+            int completionCount = achievement.SetProgress(amount);
+            changed = changed || before != achievement.CurrentAmount;
+            RewardCompletedMilestones(achievement, completionCount);
         }
 
         NotifyIfChanged(changed);
+    }
+
+    private void RewardCompletedMilestones(AchievementEntry achievement, int completionCount)
+    {
+        if (achievement == null || completionCount <= 0)
+        {
+            return;
+        }
+
+        PlayerCurrencyWallet wallet = ResolveCurrencyWallet();
+        if (wallet != null && achievement.RewardAmount > 0)
+        {
+            wallet.Add(achievement.RewardCurrency, achievement.RewardAmount * completionCount);
+        }
+
+        for (int i = 0; i < completionCount; i++)
+        {
+            OnAchievementCompleted.Invoke(achievement);
+        }
+    }
+
+    private PlayerCurrencyWallet ResolveCurrencyWallet()
+    {
+        if (BaseCampManager.Instance != null)
+        {
+            return BaseCampManager.Instance.CurrencyWallet;
+        }
+
+        return FindFirstObjectByType<PlayerCurrencyWallet>();
     }
 
     private void NotifyIfChanged(bool changed)
@@ -258,7 +357,9 @@ public class AchievementManager : MonoBehaviour
                 continue;
             }
 
-            achievement.SetProgress(PlayerPrefs.GetInt(GetCurrentKey(achievement), achievement.CurrentAmount));
+            achievement.RestoreProgress(
+                PlayerPrefs.GetInt(GetCurrentKey(achievement), achievement.CurrentAmount),
+                PlayerPrefs.GetInt(GetCompletedCountKey(achievement), achievement.CompletedCount));
         }
     }
 
@@ -278,6 +379,7 @@ public class AchievementManager : MonoBehaviour
 
             PlayerPrefs.SetInt(GetCurrentKey(achievement), achievement.CurrentAmount);
             PlayerPrefs.SetInt(GetCompletedKey(achievement), achievement.Completed ? 1 : 0);
+            PlayerPrefs.SetInt(GetCompletedCountKey(achievement), achievement.CompletedCount);
         }
 
         PlayerPrefs.Save();
@@ -291,6 +393,11 @@ public class AchievementManager : MonoBehaviour
     private string GetCompletedKey(AchievementEntry achievement)
     {
         return saveKeyPrefix + achievement.Id + CompletedKeySuffix;
+    }
+
+    private string GetCompletedCountKey(AchievementEntry achievement)
+    {
+        return saveKeyPrefix + achievement.Id + CompletedCountKeySuffix;
     }
 
     private void OnValidate()

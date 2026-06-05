@@ -70,9 +70,15 @@ public class AchievementPopup : MonoBehaviour
     private void BindItem(GameObject item, AchievementManager.AchievementEntry achievement)
     {
         SetText(item, "AchName_Txt", achievement.Title);
-        SetText(item, "AchDesc_Txt", string.Format(achievement.Description, achievement.TargetAmount));
-        SetText(item, "Progress_Num", $"{achievement.CurrentAmount} / {achievement.TargetAmount}");
-        SetText(item, "Count", achievement.Completed ? "완료" : achievement.CurrentAmount.ToString());
+        SetText(item, "AchDesc_Txt", string.Format(achievement.Description, achievement.NextTargetAmount));
+        SetText(item, "Progress_Num", $"{achievement.CurrentAmount} / {achievement.NextTargetAmount}");
+        SetText(item, "Count", achievement.RewardAmount.ToString());
+
+        Image achievementIcon = FindChildComponent<Image>(item.transform, "Ach_Icon");
+        if (achievementIcon != null && achievement.IconSprite != null)
+        {
+            achievementIcon.sprite = achievement.IconSprite;
+        }
 
         Image progressFill = FindChildComponent<Image>(item.transform, "Progress_Fill");
         if (progressFill != null)
