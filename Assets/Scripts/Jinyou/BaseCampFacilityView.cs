@@ -7,7 +7,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 {
     public enum FacilityType
     {
-        StrategyResearchLab,
+        CommandCenter,
         EnergyRefinery,
         AssemblyFactory,
         CoreCharger,
@@ -134,7 +134,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 
         return facilityType switch
         {
-            FacilityType.StrategyResearchLab => baseCampManager?.ResearchLab?.Level ?? 1,
+            FacilityType.CommandCenter => baseCampManager?.ResearchLab?.Level ?? 1,
             FacilityType.EnergyRefinery => baseCampManager?.EnergyRefinery?.Level ?? 1,
             FacilityType.AssemblyFactory => baseCampManager?.AssemblyFactory?.Level ?? 1,
             FacilityType.CoreCharger => baseCampManager?.CoreCharger?.Level ?? 1,
@@ -150,7 +150,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
     {
         ResolveReferences();
 
-        if (facilityType == FacilityType.StrategyResearchLab
+        if (facilityType == FacilityType.CommandCenter
             || facilityType == FacilityType.Inventory
             || facilityType == FacilityType.WeaponGacha)
         {
@@ -196,7 +196,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 
         switch (facilityType)
         {
-            case FacilityType.StrategyResearchLab:
+            case FacilityType.CommandCenter:
                 if (baseCampManager?.ResearchLab != null)
                 {
                     baseCampManager.ResearchLab.OnLevelChanged.AddListener(HandleLevelChanged);

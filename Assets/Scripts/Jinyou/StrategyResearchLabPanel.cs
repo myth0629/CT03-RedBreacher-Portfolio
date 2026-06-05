@@ -117,7 +117,7 @@ public class StrategyResearchLabPanel : MonoBehaviour
 
         foreach (CommandCenter.FacilityUnlock item in researchLab.FacilityUnlocks)
         {
-            summary += $"{item.displayName}: {(item.unlocked ? "OPEN" : $"Lv.{item.requiredLabLevel}")}\n";
+            summary += $"{item.displayName}: {(item.unlocked ? "잠금해제" : $"Lv.{item.requiredLabLevel} 증가")}\n";
         }
 
         return summary.TrimEnd();
