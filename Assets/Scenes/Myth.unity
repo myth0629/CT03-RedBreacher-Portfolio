@@ -2003,6 +2003,37 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &1658772509
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1658772510}
+  m_Layer: 0
+  m_Name: Enemies
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1658772510
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658772509}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1832893795
 GameObject:
   m_ObjectHideFlags: 0
@@ -2257,7 +2288,12 @@ MonoBehaviour:
   moveSpeedIncreasePerStage: 0.03
   rewardIncreasePerStage: 0.15
   enemyConfig: {fileID: 11400000, guid: 69366f638fefc49aa9cb8a43f38903e4, type: 2}
-  enemyPrefab: {fileID: 65694122745414656, guid: 912a4ab9df6c34b0992e2e89741007c6, type: 3}
+  enemyConfigs:
+  - {fileID: 11400000, guid: e5a2c6204e9c14a4aadfc7bdae285287, type: 2}
+  - {fileID: 11400000, guid: de0859a5aaf4b4fec8c5997a2029b0fc, type: 2}
+  - {fileID: 11400000, guid: b41447d892abd42b489b00e39a5a6d51, type: 2}
+  enemyPrefab: {fileID: 0}
+  enemySpawnParent: {fileID: 1658772510}
   spawnCenter: {fileID: 2078203334}
   spawnRadius: 10
   spawnInterval: 0.25
@@ -2316,7 +2352,7 @@ PrefabInstance:
     - target: {fileID: 2421075610840562408, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
       propertyPath: droneConfig
       value: 
-      objectReference: {fileID: 11400000, guid: b7852272a9c4e4dc592925326a646e6c, type: 2}
+      objectReference: {fileID: 11400000, guid: bd627f069d96e4798a3a6b6fcfa94ab3, type: 2}
     - target: {fileID: 4696198792450951766, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2395,3 +2431,4 @@ SceneRoots:
   - {fileID: 1832893798}
   - {fileID: 326398492}
   - {fileID: 1401141558}
+  - {fileID: 1658772510}

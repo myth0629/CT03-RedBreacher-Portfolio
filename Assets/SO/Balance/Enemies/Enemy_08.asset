@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4d830320b7d549b1ad77c0a9044ec5c, type: 3}
+  m_Name: Enemy_08
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyConfig
+  id: 08
+  displayName: "\uC80108"
+  enemyPrefab: {fileID: 0}
+  maxHealth: 390
+  moveSpeed: 1.55
+  stopDistance: 1.1
+  contactDamage: 47
+  contactInterval: 1
+  experienceReward: 140
+  creditReward: 110
+  coreCrystalReward: 2
+  partDropChance: 0.08

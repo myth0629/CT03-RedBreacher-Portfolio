@@ -35,7 +35,9 @@ public class EnemySpawnManager : MonoBehaviour
 
     [Header("Spawn")]
     [SerializeField] private EnemyConfig enemyConfig;
+    [SerializeField] private List<EnemyConfig> enemyConfigs = new List<EnemyConfig>();
     [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private Transform enemySpawnParent;
     [SerializeField] private Transform spawnCenter;
     [SerializeField] private float spawnRadius = 8f;
     [SerializeField] private float spawnInterval = 0.25f;
@@ -198,9 +200,10 @@ public class EnemySpawnManager : MonoBehaviour
     private void SpawnEnemy(int index)
     {
         Vector3 spawnPosition = GetSpawnPosition(index);
-        GameObject prefab = GetEnemyPrefab();
+        EnemyConfig selectedConfig = GetEnemyConfig();
+        GameObject prefab = GetEnemyPrefab(selectedConfig);
         GameObject enemyObject = prefab != null
-            ? Instantiate(prefab, spawnPosition, Quaternion.identity)
+            ? Instantiate(prefab, spawnPosition, Quaternion.identity, enemySpawnParent)
             : CreateFallbackEnemy(spawnPosition);
 
         // 라운드 적으로 동작하는 데 필요한 전투 컴포넌트를 보강한다.
@@ -211,7 +214,7 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         enemy.Initialize(
-            enemyConfig,
+            selectedConfig,
             GetEnemyLevel(),
             GetStageScale(healthIncreasePerStage),
             GetStageScale(moveSpeedIncreasePerStage),
@@ -227,11 +230,30 @@ public class EnemySpawnManager : MonoBehaviour
         aliveEnemies.Add(enemyHealth);
     }
 
-    private GameObject GetEnemyPrefab()
+    private EnemyConfig GetEnemyConfig()
     {
-        if (enemyConfig != null && enemyConfig.EnemyPrefab != null)
+        if (enemyConfigs != null && enemyConfigs.Count > 0)
         {
-            return enemyConfig.EnemyPrefab;
+            // 등록된 적 SO 중 유효한 항목 하나를 스폰마다 무작위로 선택한다.
+            int startIndex = Random.Range(0, enemyConfigs.Count);
+            for (int i = 0; i < enemyConfigs.Count; i++)
+            {
+                EnemyConfig config = enemyConfigs[(startIndex + i) % enemyConfigs.Count];
+                if (config != null)
+                {
+                    return config;
+                }
+            }
+        }
+
+        return enemyConfig;
+    }
+
+    private GameObject GetEnemyPrefab(EnemyConfig selectedConfig)
+    {
+        if (selectedConfig != null && selectedConfig.EnemyPrefab != null)
+        {
+            return selectedConfig.EnemyPrefab;
         }
 
         return enemyPrefab;
@@ -340,6 +362,11 @@ public class EnemySpawnManager : MonoBehaviour
     private GameObject CreateFallbackEnemy(Vector3 spawnPosition)
     {
         GameObject enemyObject = new GameObject($"Round {currentRound} Enemy");
+        if (enemySpawnParent != null)
+        {
+            enemyObject.transform.SetParent(enemySpawnParent);
+        }
+
         enemyObject.transform.position = CombatPlane.WithFixedY(spawnPosition);
 
         // 프리팹이 없을 때도 라운드 테스트가 가능하도록 임시 표시를 만든다.

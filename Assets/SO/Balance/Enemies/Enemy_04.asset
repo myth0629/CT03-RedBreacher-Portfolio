@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4d830320b7d549b1ad77c0a9044ec5c, type: 3}
+  m_Name: Enemy_04
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyConfig
+  id: 04
+  displayName: "\uC80104"
+  enemyPrefab: {fileID: 0}
+  maxHealth: 95
+  moveSpeed: 1.35
+  stopDistance: 1.1
+  contactDamage: 14
+  contactInterval: 1
+  experienceReward: 33
+  creditReward: 28
+  coreCrystalReward: 0
+  partDropChance: 0.06
