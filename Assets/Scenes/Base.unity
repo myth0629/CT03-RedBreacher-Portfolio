@@ -2423,7 +2423,7 @@ MonoBehaviour:
   closeButton: {fileID: 572925175}
   levelText: {fileID: 807623553}
   bossTicketText: {fileID: 744395767}
-  offlineRewardText: {fileID: 0}
+  offlineRewardText: {fileID: 293827863}
   upgradeText: {fileID: 373052589}
   upgradeConditionText: {fileID: 0}
   upgradeProgressFill: {fileID: 0}
@@ -2519,14 +2519,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aacba3c789de4c28a67f4332340831f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossDungeonPanel
-  baseCampManager: {fileID: 0}
-  bossDungeon: {fileID: 0}
-  enterButton: {fileID: 0}
-  closeButton: {fileID: 0}
-  ticketText: {fileID: 0}
+  baseCampManager: {fileID: 627000003}
+  bossDungeon: {fileID: 1589713090}
+  enterButton: {fileID: 611219736}
+  closeButton: {fileID: 1274336885}
+  ticketText: {fileID: 942622017}
   productionText: {fileID: 0}
   difficultyText: {fileID: 0}
-  entryStateText: {fileID: 0}
+  entryStateText: {fileID: 1552333135}
   ticketProgressFill: {fileID: 0}
 --- !u!1 &510195885
 GameObject:
@@ -8086,19 +8086,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoreChargerPanel
   baseCampManager: {fileID: 627000003}
   upgradeButton: {fileID: 2053975316}
-  firstUnitButton: {fileID: 0}
-  secondUnitButton: {fileID: 0}
-  thirdUnitButton: {fileID: 0}
-  enhanceUnitButton: {fileID: 0}
+  firstUnitButton: {fileID: 510195887}
+  secondUnitButton: {fileID: 1339771087}
+  thirdUnitButton: {fileID: 533623146}
+  enhanceUnitButton: {fileID: 427372489}
   closeButton: {fileID: 1311787546}
   levelText: {fileID: 862934666}
   upgradeText: {fileID: 1698340484}
   upgradeConditionText: {fileID: 1599584107}
   upgradeProgressFill: {fileID: 2053975317}
-  currencyText: {fileID: 0}
-  selectedUnitText: {fileID: 0}
-  unitStateText: {fileID: 0}
-  inventoryPanel: {fileID: 0}
+  currencyText: {fileID: 1629744991}
+  selectedUnitText: {fileID: 1918079375}
+  unitStateText: {fileID: 1953439058}
+  inventoryPanel: {fileID: 1060461964}
   unitInventoryArea: {fileID: 0}
   unitInventoryContentRoot: {fileID: 0}
   inventoryUnitButtonPrefab: {fileID: 0}
@@ -10428,7 +10428,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60f072573dbd47d8a387f81535be07d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossDungeon
-  researchLab: {fileID: 0}
+  researchLab: {fileID: 937930349}
   difficulties:
   - difficultyId: normal
     displayName: Normal Boss
@@ -10457,7 +10457,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f14b54b1a7f24764ba8d01d74a1d0587, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseCampFacilityView
-  facilityType: 4
+  facilityType: 6
   baseCampManager: {fileID: 627000003}
   facilityPanel: {fileID: 478519506}
   facilityButton: {fileID: 1589713092}
@@ -13120,7 +13120,7 @@ MonoBehaviour:
   upgradeProgressFill: {fileID: 0}
   selectedMenuText: {fileID: 1566894815}
   menuStateText: {fileID: 1329945279}
-  inventoryPanel: {fileID: 0}
+  inventoryPanel: {fileID: 1060461964}
   weaponInventoryArea: {fileID: 0}
   weaponInventoryContentRoot: {fileID: 0}
   inventoryWeaponButtonPrefab: {fileID: 0}
