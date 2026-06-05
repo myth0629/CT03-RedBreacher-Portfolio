@@ -5,7 +5,6 @@ using UnityEngine.UI;
 public class BaseCampHud : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
-    [SerializeField] private TMP_Text creditsText;
     [SerializeField] private TMP_Text commanderLevelText;
     [SerializeField] private TMP_Text bossTicketText;
     [SerializeField] private TMP_Text refineryStorageText;
@@ -31,7 +30,6 @@ public class BaseCampHud : MonoBehaviour
         Image refineryFill)
     {
         baseCampManager = manager;
-        creditsText = credits;
         commanderLevelText = commanderLevel;
         bossTicketText = bossTicket;
         refineryStorageText = refineryStorage;
@@ -45,7 +43,6 @@ public class BaseCampHud : MonoBehaviour
 
         if (baseCampManager == null)
         {
-            SetText(creditsText, "--");
             SetText(commanderLevelText, "Commander Lv. --");
             SetText(bossTicketText, "Tickets --/--");
             SetText(refineryStorageText, "--/--");
@@ -53,10 +50,8 @@ public class BaseCampHud : MonoBehaviour
             return;
         }
 
-        StrategyResearchLab researchLab = baseCampManager.ResearchLab;
+        CommandCenter researchLab = baseCampManager.ResearchLab;
         EnergyRefinery refinery = baseCampManager.EnergyRefinery;
-
-        SetText(creditsText, $"{baseCampManager.Credits}");
         SetText(commanderLevelText, $"Commander Lv. {baseCampManager.CommanderLevel}");
 
         if (researchLab != null)

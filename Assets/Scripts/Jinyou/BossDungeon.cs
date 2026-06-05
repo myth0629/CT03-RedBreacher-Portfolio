@@ -14,7 +14,7 @@ public class BossDungeon : MonoBehaviour
         public string rewardSummary;
     }
 
-    [SerializeField] private StrategyResearchLab researchLab;
+    [SerializeField] private CommandCenter researchLab;
     [SerializeField] private List<BossDifficulty> difficulties = new List<BossDifficulty>
     {
         new BossDifficulty { difficultyId = "normal", displayName = "Normal Boss", requiredResearchLabLevel = 1, recommendedPower = 1000, rewardSummary = "Credits / Parts" },
@@ -23,7 +23,7 @@ public class BossDungeon : MonoBehaviour
     };
 
     public IReadOnlyList<BossDifficulty> Difficulties => difficulties;
-    public StrategyResearchLab ResearchLab => researchLab;
+    public CommandCenter ResearchLab => researchLab;
 
     private void Awake()
     {
@@ -86,7 +86,7 @@ public class BossDungeon : MonoBehaviour
     {
         researchLab ??= BaseCampManager.Instance != null
             ? BaseCampManager.Instance.ResearchLab
-            : FindFirstObjectByType<StrategyResearchLab>();
+            : FindFirstObjectByType<CommandCenter>();
     }
 
     private void OnValidate()

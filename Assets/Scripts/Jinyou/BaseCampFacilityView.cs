@@ -11,6 +11,9 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
         EnergyRefinery,
         AssemblyFactory,
         CoreCharger,
+        TraitPointFacility,
+        Inventory,
+        WeaponGacha,
         BossDungeon
     }
 
@@ -135,6 +138,9 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
             FacilityType.EnergyRefinery => baseCampManager?.EnergyRefinery?.Level ?? 1,
             FacilityType.AssemblyFactory => baseCampManager?.AssemblyFactory?.Level ?? 1,
             FacilityType.CoreCharger => baseCampManager?.CoreCharger?.Level ?? 1,
+            FacilityType.TraitPointFacility => 1,
+            FacilityType.Inventory => 1,
+            FacilityType.WeaponGacha => 1,
             FacilityType.BossDungeon => baseCampManager?.ResearchLab?.Level ?? 1,
             _ => 1
         };
@@ -144,12 +150,14 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
     {
         ResolveReferences();
 
-        if (facilityType == FacilityType.StrategyResearchLab)
+        if (facilityType == FacilityType.StrategyResearchLab
+            || facilityType == FacilityType.Inventory
+            || facilityType == FacilityType.WeaponGacha)
         {
             return true;
         }
 
-        StrategyResearchLab researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
+        CommandCenter researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
         if (researchLab == null)
         {
             return true;
@@ -165,6 +173,9 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
             FacilityType.EnergyRefinery => "energy_refinery",
             FacilityType.AssemblyFactory => "assembly_factory",
             FacilityType.CoreCharger => "core_charger",
+            FacilityType.TraitPointFacility => "trait_point_facility",
+            FacilityType.Inventory => "inventory",
+            FacilityType.WeaponGacha => "weapon_gacha",
             FacilityType.BossDungeon => "boss_dungeon",
             _ => string.Empty
         };
@@ -219,6 +230,13 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
                     baseCampManager.CoreCharger.OnUpgradeStarted.AddListener(SyncView);
                     baseCampManager.CoreCharger.OnUpgradeCompleted.AddListener(SyncView);
                 }
+                break;
+            case FacilityType.TraitPointFacility:
+                SubscribeResearchLabUnlockEvents();
+                break;
+            case FacilityType.Inventory:
+                break;
+            case FacilityType.WeaponGacha:
                 break;
             case FacilityType.BossDungeon:
                 SubscribeResearchLabUnlockEvents();

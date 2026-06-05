@@ -7,8 +7,10 @@ public class EnergyRefineryPanel : MonoBehaviour
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button collectButton;
     [SerializeField] private Button upgradeButton;
+    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text storedCreditsText;
+    [SerializeField] private Image refineryStorageFill;
     [SerializeField] private TMP_Text productionText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
@@ -22,6 +24,7 @@ public class EnergyRefineryPanel : MonoBehaviour
         ResolveReferences();
         collectButton?.onClick.AddListener(CollectCredits);
         upgradeButton?.onClick.AddListener(UpgradeRefinery);
+        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
@@ -29,6 +32,7 @@ public class EnergyRefineryPanel : MonoBehaviour
     {
         collectButton?.onClick.RemoveListener(CollectCredits);
         upgradeButton?.onClick.RemoveListener(UpgradeRefinery);
+        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void Update()
@@ -44,13 +48,16 @@ public class EnergyRefineryPanel : MonoBehaviour
         TMP_Text level,
         TMP_Text storedCredits,
         TMP_Text production,
-        TMP_Text upgradeLabel)
+        TMP_Text upgradeLabel,
+        Image refineryFill)
     {
         baseCampManager = manager;
         collectButton = collect;
         upgradeButton = upgrade;
+        closeButton = close;
         levelText = level;
         storedCreditsText = storedCredits;
+        refineryStorageFill = refineryFill;
         productionText = production;
         upgradeText = upgradeLabel;
         Refresh();
@@ -68,6 +75,11 @@ public class EnergyRefineryPanel : MonoBehaviour
         Refresh();
     }
 
+    private void ClosePanel()
+    {
+        gameObject.SetActive(false);
+    }
+
     private void Refresh()
     {
         ResolveReferences();
@@ -83,6 +95,7 @@ public class EnergyRefineryPanel : MonoBehaviour
         SetText(upgradeText, refinery.IsUpgrading
             ? $"Upgrading {refinery.UpgradeRemainingSeconds:0}s"
             : $"Upgrade Cost {refinery.UpgradeCost}");
+        SetFill(refineryStorageFill, 0f);
 
         if (collectButton != null)
         {
@@ -117,6 +130,14 @@ public class EnergyRefineryPanel : MonoBehaviour
         if (target != null)
         {
             target.text = value;
+        }
+    }
+    
+    private static void SetFill(Image target, float value)
+    {
+        if (target != null)
+        {
+            target.fillAmount = Mathf.Clamp01(value);
         }
     }
 }

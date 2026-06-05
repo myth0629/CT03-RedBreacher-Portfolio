@@ -134,9 +134,9 @@ public class PlayerProjectile : MonoBehaviour
         }
 
         damage = launchDamage;
-        speed = projectileConfig != null ? projectileConfig.Speed : launchSpeed;
+        speed = launchSpeed;
         owner = launchOwner;
-        expireTime = Time.time + (projectileConfig != null ? projectileConfig.Lifetime : lifetime);
+        expireTime = Time.time + lifetime;
         hasHit = false;
         isReleased = false;
 
@@ -149,6 +149,13 @@ public class PlayerProjectile : MonoBehaviour
 
         // 투사체 본체는 플레이어 정면 방향으로만 직진한다.
         body.linearVelocity = direction * speed;
+    }
+
+    public void ConfigureRuntimeStats(float runtimeCollisionRadius, float runtimeKnockbackForce)
+    {
+        collisionRadius = Mathf.Max(0f, runtimeCollisionRadius);
+        knockbackForce = Mathf.Max(0f, runtimeKnockbackForce);
+        ApplyCollisionRadius();
     }
 
     private void EnsureProjectileComponents()

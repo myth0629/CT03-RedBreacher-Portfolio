@@ -6,10 +6,12 @@ public class BaseCampManager : MonoBehaviour
     public static BaseCampManager Instance { get; private set; }
 
     [Header("Facilities")]
-    [SerializeField] private StrategyResearchLab researchLab;
+    [SerializeField] private CommandCenter researchLab;
     [SerializeField] private EnergyRefinery energyRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
+    [SerializeField] private TraitPointFacility traitPointFacility;
+    [SerializeField] private InventoryFacility inventory;
     [SerializeField] private bool autoFindFacilities = true;
 
     [Header("Facility Panels")]
@@ -33,10 +35,12 @@ public class BaseCampManager : MonoBehaviour
 
     private PlayerCurrencyWallet registeredCurrencyWallet;
 
-    public StrategyResearchLab ResearchLab => researchLab;
+    public CommandCenter ResearchLab => researchLab;
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
+    public TraitPointFacility TraitPointFacility => ResolveTraitPointFacility();
+    public InventoryFacility Inventory => ResolveInventory();
     public int CommanderLevel => commanderLevel;
     public int Credits => CurrencyWallet.Credits;
     public int CoreCrystals => CurrencyWallet.CoreCrystals;
@@ -87,10 +91,12 @@ public class BaseCampManager : MonoBehaviour
             return;
         }
 
-        researchLab ??= FindFirstObjectByType<StrategyResearchLab>();
+        researchLab ??= FindFirstObjectByType<CommandCenter>();
         energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
+        traitPointFacility ??= FindFirstObjectByType<TraitPointFacility>();
+        inventory ??= FindFirstObjectByType<InventoryFacility>();
     }
 
     public void CollectRefineryCredits()
@@ -146,6 +152,59 @@ public class BaseCampManager : MonoBehaviour
         coreCharger?.TryInvestOption(optionId);
     }
 
+    public void SelectAssemblyWeapon(int weaponIndex)
+    {
+        assemblyFactory?.TrySelectWeapon(weaponIndex);
+    }
+
+    public void SelectAssemblyWeapon(ProjectileConfig weaponConfig)
+    {
+        assemblyFactory?.TrySelectWeapon(weaponConfig);
+    }
+
+    public void EnhanceAssemblyWeapon()
+    {
+        if (assemblyFactory == null)
+        {
+            return;
+        }
+
+        int availableCredits = Credits;
+        if (assemblyFactory.TryEnhanceSelectedWeapon(ref availableCredits))
+        {
+            SetCreditsForFacility(availableCredits);
+        }
+    }
+
+    public void SelectCoreUnit(int unitIndex)
+    {
+        coreCharger?.TrySelectUnit(unitIndex);
+    }
+
+    public void SelectCoreUnit(PlayerUnitConfig unitConfig)
+    {
+        coreCharger?.TrySelectUnit(unitConfig);
+    }
+
+    public void EnhanceCoreUnit()
+    {
+        if (coreCharger == null)
+        {
+            return;
+        }
+
+        int availableCredits = Credits;
+        if (coreCharger.TryEnhanceSelectedUnit(ref availableCredits))
+        {
+            SetCreditsForFacility(availableCredits);
+        }
+    }
+
+    public void InvestTraitPoint(TraitPointFacility.TraitStat stat)
+    {
+        TraitPointFacility?.TryInvest(stat);
+    }
+
     public void UseBossTicket()
     {
         researchLab?.TryUseBossTicket();
@@ -185,6 +244,11 @@ public class BaseCampManager : MonoBehaviour
     public void AddCommanderLevel(int amount)
     {
         SetCommanderLevel(commanderLevel + Mathf.Max(0, amount));
+    }
+
+    public void SetCreditsForFacility(int value)
+    {
+        SetCredits(value);
     }
 
     public void SetCommanderLevel(int value)
@@ -312,6 +376,28 @@ public class BaseCampManager : MonoBehaviour
 
         playerProgression = FindFirstObjectByType<PlayerProgression>();
         return playerProgression;
+    }
+
+    private InventoryFacility ResolveInventory()
+    {
+        if (inventory != null)
+        {
+            return inventory;
+        }
+
+        inventory = FindFirstObjectByType<InventoryFacility>();
+        return inventory;
+    }
+
+    private TraitPointFacility ResolveTraitPointFacility()
+    {
+        if (traitPointFacility != null)
+        {
+            return traitPointFacility;
+        }
+
+        traitPointFacility = FindFirstObjectByType<TraitPointFacility>();
+        return traitPointFacility;
     }
 
     private void RegisterCurrencyWalletEvents()

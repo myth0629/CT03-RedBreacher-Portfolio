@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class StrategyResearchLab : MonoBehaviour, IBaseCampFacility
+public class CommandCenter : MonoBehaviour, IBaseCampFacility
 {
     [Serializable]
     public class FacilityUnlock
@@ -38,6 +38,7 @@ public class StrategyResearchLab : MonoBehaviour, IBaseCampFacility
         new FacilityUnlock { facilityId = "energy_refinery", displayName = "Energy Refinery", requiredLabLevel = 1, unlocked = true },
         new FacilityUnlock { facilityId = "assembly_factory", displayName = "Assembly Factory", requiredLabLevel = 2 },
         new FacilityUnlock { facilityId = "core_charger", displayName = "Core Charger", requiredLabLevel = 3 },
+        new FacilityUnlock { facilityId = "trait_point_facility", displayName = "Trait Point Facility", requiredLabLevel = 1, unlocked = true },
         new FacilityUnlock { facilityId = "boss_dungeon", displayName = "Boss Dungeon", requiredLabLevel = 1, unlocked = true }
     };
 
@@ -280,6 +281,7 @@ public class StrategyResearchLab : MonoBehaviour, IBaseCampFacility
         SetFacilityUnlockRequirement("energy_refinery", "Energy Refinery", 1);
         SetFacilityUnlockRequirement("assembly_factory", "Assembly Factory", 2);
         SetFacilityUnlockRequirement("core_charger", "Core Charger", 3);
+        SetFacilityUnlockRequirement("trait_point_facility", "Trait Point Facility", 1);
         SetFacilityUnlockRequirement("boss_dungeon", "Boss Dungeon", 1);
     }
 

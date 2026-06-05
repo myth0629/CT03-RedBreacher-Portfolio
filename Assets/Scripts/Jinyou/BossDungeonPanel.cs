@@ -73,7 +73,7 @@ public class BossDungeonPanel : MonoBehaviour
     {
         ResolveReferences();
 
-        StrategyResearchLab researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
+        CommandCenter researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
         if (researchLab == null)
         {
             SetText(ticketText, "Tickets --/--");

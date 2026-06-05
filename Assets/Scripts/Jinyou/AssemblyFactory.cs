@@ -5,6 +5,15 @@ using UnityEngine.Events;
 
 public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 {
+    public enum WeaponEnhancementStat
+    {
+        AttackDamage,
+        Speed,
+        Lifetime,
+        CollisionRadius,
+        KnockbackForce
+    }
+
     [Serializable]
     public class AssemblyMenu
     {
@@ -14,13 +23,130 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         public bool unlocked;
     }
 
+    [Serializable]
+    public class WeaponStatIncrease
+    {
+        public WeaponEnhancementStat stat = WeaponEnhancementStat.AttackDamage;
+        public float amount = 5f;
+
+        public void Normalize()
+        {
+            amount = Mathf.Max(0f, amount);
+        }
+    }
+
+    [Serializable]
+    public class WeaponEnhancementLevel
+    {
+        public int cost = 100;
+        public List<WeaponStatIncrease> statIncreases = new List<WeaponStatIncrease>
+        {
+            new WeaponStatIncrease { stat = WeaponEnhancementStat.AttackDamage, amount = 5f }
+        };
+
+        public void Normalize()
+        {
+            cost = Mathf.Max(0, cost);
+            if (statIncreases == null)
+            {
+                statIncreases = new List<WeaponStatIncrease>();
+            }
+
+            foreach (WeaponStatIncrease statIncrease in statIncreases)
+            {
+                statIncrease?.Normalize();
+            }
+        }
+    }
+
+    [Serializable]
+    public class WeaponEnhancement
+    {
+        public ProjectileConfig weaponConfig;
+        public string displayNameOverride;
+        public int enhanceLevel;
+        public List<WeaponEnhancementLevel> enhancementLevels = new List<WeaponEnhancementLevel>
+        {
+            new WeaponEnhancementLevel()
+        };
+
+        public string DisplayName
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(displayNameOverride))
+                {
+                    return displayNameOverride;
+                }
+
+                return weaponConfig != null ? weaponConfig.DisplayName : "Unassigned Weapon";
+            }
+        }
+
+        public int MaxEnhanceLevel => enhancementLevels != null ? enhancementLevels.Count : 0;
+        public int NextEnhanceCost => GetEnhancementLevel(enhanceLevel)?.cost ?? 0;
+        public bool IsMaxLevel => enhanceLevel >= MaxEnhanceLevel;
+
+        public float GetStatBonus(WeaponEnhancementStat stat)
+        {
+            float bonus = 0f;
+            for (int i = 0; i < enhanceLevel; i++)
+            {
+                WeaponEnhancementLevel level = GetEnhancementLevel(i);
+                if (level == null || level.statIncreases == null)
+                {
+                    continue;
+                }
+
+                foreach (WeaponStatIncrease statIncrease in level.statIncreases)
+                {
+                    if (statIncrease != null && statIncrease.stat == stat)
+                    {
+                        bonus += statIncrease.amount;
+                    }
+                }
+            }
+
+            return bonus;
+        }
+
+        public WeaponEnhancementLevel GetEnhancementLevel(int levelIndex)
+        {
+            if (enhancementLevels == null || levelIndex < 0 || levelIndex >= enhancementLevels.Count)
+            {
+                return null;
+            }
+
+            return enhancementLevels[levelIndex];
+        }
+
+        public void Normalize()
+        {
+            enhanceLevel = Mathf.Max(0, enhanceLevel);
+
+            if (enhancementLevels == null)
+            {
+                enhancementLevels = new List<WeaponEnhancementLevel>();
+            }
+
+            foreach (WeaponEnhancementLevel level in enhancementLevels)
+            {
+                level?.Normalize();
+            }
+
+            enhanceLevel = Mathf.Min(enhanceLevel, MaxEnhanceLevel);
+        }
+    }
+
     [Header("Level")]
     [SerializeField] private int level = 1;
     [SerializeField] private int maxLevel = 10;
 
     [Header("Upgrade")]
     [SerializeField] private int upgradeCost = 350;
+    [SerializeField] private List<int> upgradeCostByLevel = new List<int>();
     [SerializeField] private int requiredCommanderLevel = 1;
+    [SerializeField] private List<int> requiredCommanderLevelByLevel = new List<int>();
     [SerializeField] private int requiredResearchLabLevel = 2;
     [SerializeField] private List<int> requiredResearchLabLevelByLevel = new List<int>();
     [SerializeField] private float upgradeDurationSeconds = 10f;
@@ -34,10 +160,16 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         new AssemblyMenu { menuId = "skill", displayName = "Skill Upgrade", requiredFactoryLevel = 2 }
     };
 
+    [Header("Weapon Enhancement")]
+    [SerializeField] private List<WeaponEnhancement> weaponEnhancements = new List<WeaponEnhancement>();
+    [SerializeField] private int selectedWeaponIndex;
+
     [Header("Events")]
     public UnityEvent<int> OnLevelChanged = new UnityEvent<int>();
     public UnityEvent<string> OnMenuUnlocked = new UnityEvent<string>();
     public UnityEvent<string> OnMenuSelected = new UnityEvent<string>();
+    public UnityEvent<ProjectileConfig> OnWeaponSelected = new UnityEvent<ProjectileConfig>();
+    public UnityEvent<ProjectileConfig, int> OnWeaponEnhanced = new UnityEvent<ProjectileConfig, int>();
     public UnityEvent OnUpgradeStarted = new UnityEvent();
     public UnityEvent OnUpgradeCompleted = new UnityEvent();
 
@@ -48,17 +180,24 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     public int Level => level;
     public int MaxLevel => maxLevel;
-    public int UpgradeCost => upgradeCost;
-    public int RequiredCommanderLevel => requiredCommanderLevel;
+    public int UpgradeCost => GetUpgradeCostForCurrentLevel();
+    public int RequiredCommanderLevel => GetRequiredCommanderLevelForCurrentUpgrade();
     public int RequiredResearchLabLevel => GetRequiredResearchLabLevelForCurrentUpgrade();
     public bool IsUpgrading => isUpgrading;
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
     public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
     public string SelectedMenuId => selectedMenuId;
     public IReadOnlyList<AssemblyMenu> Menus => menus;
+    public IReadOnlyList<WeaponEnhancement> WeaponEnhancements => weaponEnhancements;
+    public WeaponEnhancement SelectedWeaponEnhancement => GetWeaponEnhancementAt(selectedWeaponIndex);
+    public ProjectileConfig SelectedWeaponConfig => SelectedWeaponEnhancement?.weaponConfig;
+    public int SelectedWeaponIndex => selectedWeaponIndex;
 
     private void Start()
     {
+        NormalizeUpgradeCosts();
+        NormalizeCommanderRequirements();
+        NormalizeWeaponEnhancements();
         RefreshUnlocks();
     }
 
@@ -85,9 +224,96 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         return true;
     }
 
+    public bool TrySelectWeapon(int index)
+    {
+        if (!IsMenuUnlocked("weapon") || index < 0 || index >= weaponEnhancements.Count)
+        {
+            return false;
+        }
+
+        selectedWeaponIndex = index;
+        OnWeaponSelected.Invoke(SelectedWeaponConfig);
+        return true;
+    }
+
+    public bool TrySelectWeapon(ProjectileConfig weaponConfig)
+    {
+        if (weaponConfig == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < weaponEnhancements.Count; i++)
+        {
+            if (weaponEnhancements[i].weaponConfig == weaponConfig)
+            {
+                return TrySelectWeapon(i);
+            }
+        }
+
+        return false;
+    }
+
+    public bool HasWeaponEnhancement(ProjectileConfig weaponConfig)
+    {
+        return FindWeaponEnhancement(weaponConfig) != null;
+    }
+
+    public bool CanEnhanceSelectedWeapon(int credits)
+    {
+        WeaponEnhancement selectedWeapon = SelectedWeaponEnhancement;
+        return IsMenuUnlocked("weapon")
+            && selectedWeapon != null
+            && !selectedWeapon.IsMaxLevel
+            && credits >= selectedWeapon.NextEnhanceCost;
+    }
+
+    public bool TryEnhanceSelectedWeapon(ref int availableCredits)
+    {
+        if (!CanEnhanceSelectedWeapon(availableCredits))
+        {
+            return false;
+        }
+
+        availableCredits -= SelectedWeaponEnhancement.NextEnhanceCost;
+        EnhanceSelectedWeaponAttackDamage();
+        return true;
+    }
+
+    public void EnhanceSelectedWeaponAttackDamage()
+    {
+        WeaponEnhancement selectedWeapon = SelectedWeaponEnhancement;
+        if (selectedWeapon == null || selectedWeapon.IsMaxLevel)
+        {
+            return;
+        }
+
+        selectedWeapon.enhanceLevel++;
+        OnWeaponEnhanced.Invoke(selectedWeapon.weaponConfig, selectedWeapon.enhanceLevel);
+    }
+
+    public float GetWeaponStatBonus(ProjectileConfig weaponConfig, WeaponEnhancementStat stat)
+    {
+        WeaponEnhancement weaponEnhancement = FindWeaponEnhancement(weaponConfig);
+        return weaponEnhancement != null ? weaponEnhancement.GetStatBonus(stat) : 0f;
+    }
+
+    public static string GetStatDisplayName(WeaponEnhancementStat stat)
+    {
+        return stat switch
+        {
+            WeaponEnhancementStat.AttackDamage => "Attack",
+            WeaponEnhancementStat.Speed => "Speed",
+            WeaponEnhancementStat.Lifetime => "Lifetime",
+            WeaponEnhancementStat.CollisionRadius => "Collision",
+            WeaponEnhancementStat.KnockbackForce => "Knockback",
+            _ => stat.ToString()
+        };
+    }
+
     public bool CanUpgrade(int credits, int commanderLevel)
     {
-        return !isUpgrading && level < maxLevel && credits >= upgradeCost && commanderLevel >= requiredCommanderLevel;
+        return !isUpgrading && level < maxLevel && credits >= UpgradeCost && commanderLevel >= requiredCommanderLevel;
     }
 
     public int GetLevelLimit(int researchLabLevel)
@@ -109,7 +335,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             return false;
         }
 
-        availableCredits -= upgradeCost;
+        availableCredits -= UpgradeCost;
         StartUpgradeTimer();
         return true;
     }
@@ -180,8 +406,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         upgradeRemainingSeconds = 0f;
         currentUpgradeDurationSeconds = 0f;
         level++;
-        upgradeCost = Mathf.RoundToInt(upgradeCost * 1.35f);
-        requiredCommanderLevel++;
         RefreshUnlocks();
         OnLevelChanged.Invoke(level);
         OnUpgradeCompleted.Invoke();
@@ -210,6 +434,22 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         return upgradeDurationSeconds;
     }
 
+    private int GetUpgradeCostForCurrentLevel()
+    {
+        if (level >= maxLevel)
+        {
+            return 0;
+        }
+
+        int index = Mathf.Max(0, level - 1);
+        if (index < upgradeCostByLevel.Count)
+        {
+            return Mathf.Max(0, upgradeCostByLevel[index]);
+        }
+
+        return Mathf.Max(0, upgradeCost);
+    }
+
     private int GetRequiredResearchLabLevelForCurrentUpgrade()
     {
         int index = Mathf.Max(0, level - 1);
@@ -219,6 +459,17 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         }
 
         return Mathf.Max(1, requiredResearchLabLevel);
+    }
+
+    private int GetRequiredCommanderLevelForCurrentUpgrade()
+    {
+        int index = Mathf.Max(0, level - 1);
+        if (index < requiredCommanderLevelByLevel.Count)
+        {
+            return Mathf.Max(1, requiredCommanderLevelByLevel[index]);
+        }
+
+        return Mathf.Max(1, requiredCommanderLevel);
     }
 
     private void NormalizeUpgradeDurations()
@@ -249,15 +500,97 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         }
     }
 
+    private void NormalizeUpgradeCosts()
+    {
+        if (upgradeCostByLevel == null)
+        {
+            upgradeCostByLevel = new List<int>();
+        }
+
+        int targetCount = Mathf.Max(0, maxLevel - 1);
+        while (upgradeCostByLevel.Count < targetCount)
+        {
+            upgradeCostByLevel.Add(upgradeCost);
+        }
+
+        for (int i = 0; i < upgradeCostByLevel.Count; i++)
+        {
+            upgradeCostByLevel[i] = Mathf.Max(0, upgradeCostByLevel[i]);
+        }
+    }
+
+    private void NormalizeCommanderRequirements()
+    {
+        if (requiredCommanderLevelByLevel == null)
+        {
+            requiredCommanderLevelByLevel = new List<int>();
+        }
+
+        int targetCount = Mathf.Max(0, maxLevel - 1);
+        while (requiredCommanderLevelByLevel.Count < targetCount)
+        {
+            requiredCommanderLevelByLevel.Add(requiredCommanderLevel);
+        }
+
+        for (int i = 0; i < requiredCommanderLevelByLevel.Count; i++)
+        {
+            requiredCommanderLevelByLevel[i] = Mathf.Max(1, requiredCommanderLevelByLevel[i]);
+        }
+    }
+
+    private WeaponEnhancement FindWeaponEnhancement(ProjectileConfig weaponConfig)
+    {
+        if (weaponConfig == null)
+        {
+            return null;
+        }
+
+        return weaponEnhancements.Find(item => item.weaponConfig == weaponConfig);
+    }
+
+    private WeaponEnhancement GetWeaponEnhancementAt(int index)
+    {
+        if (index < 0 || index >= weaponEnhancements.Count)
+        {
+            return null;
+        }
+
+        return weaponEnhancements[index];
+    }
+
+    private void NormalizeWeaponEnhancements()
+    {
+        if (weaponEnhancements == null)
+        {
+            weaponEnhancements = new List<WeaponEnhancement>();
+        }
+
+        foreach (WeaponEnhancement weaponEnhancement in weaponEnhancements)
+        {
+            weaponEnhancement?.Normalize();
+        }
+
+        if (weaponEnhancements.Count == 0)
+        {
+            selectedWeaponIndex = 0;
+            return;
+        }
+
+        selectedWeaponIndex = Mathf.Clamp(selectedWeaponIndex, 0, weaponEnhancements.Count - 1);
+    }
+
     private void OnValidate()
     {
         level = Mathf.Max(1, level);
         maxLevel = Mathf.Max(level, maxLevel);
         upgradeCost = Mathf.Max(0, upgradeCost);
+        NormalizeUpgradeCosts();
         requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
+        NormalizeCommanderRequirements();
         requiredResearchLabLevel = Mathf.Max(1, requiredResearchLabLevel);
         NormalizeResearchLabRequirements();
         upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
         NormalizeUpgradeDurations();
+        NormalizeWeaponEnhancements();
     }
 }
