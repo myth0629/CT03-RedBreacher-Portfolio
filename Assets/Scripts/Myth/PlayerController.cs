@@ -73,11 +73,11 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private float MaxHealthValue => Mathf.Max(1f, (unitConfig != null ? unitConfig.MaxHealth : maxHealth) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.MaxHealth));
-    private float CritChanceValue => Mathf.Clamp01((unitConfig != null ? unitConfig.CritChance : critChance) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.CritChance));
-    private float CritMultiplierValue => Mathf.Max(1f, (unitConfig != null ? unitConfig.CritMultiplier : critMultiplier) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.CritMultiplier));
+    private float MaxHealthValue => Mathf.Max(1f, ((unitConfig != null ? unitConfig.MaxHealth : maxHealth) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.MaxHealth)) * (1f + GetTraitStatBonus(TraitPointFacility.TraitStat.MaxHealth)));
+    private float CritChanceValue => Mathf.Clamp01((unitConfig != null ? unitConfig.CritChance : critChance) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.CritChance) + GetTraitStatBonus(TraitPointFacility.TraitStat.CritChance));
+    private float CritMultiplierValue => Mathf.Max(1f, (unitConfig != null ? unitConfig.CritMultiplier : critMultiplier) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.CritMultiplier) + GetTraitStatBonus(TraitPointFacility.TraitStat.CritMultiplier));
     private float AttackRangeValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.AttackRange : attackRange) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.AttackRange));
-    private float AttackDamageValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.AttackDamage : attackDamage) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.AttackDamage));
+    private float AttackDamageValue => Mathf.Max(0f, ((unitConfig != null ? unitConfig.AttackDamage : attackDamage) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.AttackDamage)) * (1f + GetTraitStatBonus(TraitPointFacility.TraitStat.AttackDamage)));
     private float AttackIntervalValue => Mathf.Max(0.01f, (unitConfig != null ? unitConfig.AttackInterval : attackInterval) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.AttackInterval));
     private float MoveSpeedValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.MoveSpeed : moveSpeed) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.MoveSpeed));
     private float RotationSpeedValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.RotationSpeed : rotationSpeed) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.RotationSpeed));
@@ -682,6 +682,17 @@ public class PlayerController : MonoBehaviour
         }
 
         return baseCampManager.CoreCharger.GetUnitStatBonus(unitConfig, stat);
+    }
+
+    private float GetTraitStatBonus(TraitPointFacility.TraitStat stat)
+    {
+        BaseCampManager baseCampManager = BaseCampManager.Instance;
+        if (baseCampManager == null || baseCampManager.TraitPointFacility == null)
+        {
+            return 0f;
+        }
+
+        return baseCampManager.TraitPointFacility.GetBonusValue(stat);
     }
 
     private void SetVehicleMoveInput(float torque, float steering)

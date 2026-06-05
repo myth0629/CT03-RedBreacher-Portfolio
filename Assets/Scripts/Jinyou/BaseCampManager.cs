@@ -10,6 +10,7 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private EnergyRefinery energyRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
+    [SerializeField] private TraitPointFacility traitPointFacility;
     [SerializeField] private InventoryFacility inventory;
     [SerializeField] private bool autoFindFacilities = true;
 
@@ -38,6 +39,7 @@ public class BaseCampManager : MonoBehaviour
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
+    public TraitPointFacility TraitPointFacility => ResolveTraitPointFacility();
     public InventoryFacility Inventory => ResolveInventory();
     public int CommanderLevel => commanderLevel;
     public int Credits => CurrencyWallet.Credits;
@@ -93,6 +95,7 @@ public class BaseCampManager : MonoBehaviour
         energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
+        traitPointFacility ??= FindFirstObjectByType<TraitPointFacility>();
         inventory ??= FindFirstObjectByType<InventoryFacility>();
     }
 
@@ -195,6 +198,11 @@ public class BaseCampManager : MonoBehaviour
         {
             SetCreditsForFacility(availableCredits);
         }
+    }
+
+    public void InvestTraitPoint(TraitPointFacility.TraitStat stat)
+    {
+        TraitPointFacility?.TryInvest(stat);
     }
 
     public void UseBossTicket()
@@ -373,6 +381,17 @@ public class BaseCampManager : MonoBehaviour
 
         inventory = FindFirstObjectByType<InventoryFacility>();
         return inventory;
+    }
+
+    private TraitPointFacility ResolveTraitPointFacility()
+    {
+        if (traitPointFacility != null)
+        {
+            return traitPointFacility;
+        }
+
+        traitPointFacility = FindFirstObjectByType<TraitPointFacility>();
+        return traitPointFacility;
     }
 
     private void RegisterCurrencyWalletEvents()
