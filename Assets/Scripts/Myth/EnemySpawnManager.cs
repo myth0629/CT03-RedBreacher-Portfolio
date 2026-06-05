@@ -42,6 +42,9 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] private Transform spawnBoundsCenter;
     [SerializeField] private Vector2 spawnBoundsSize = new Vector2(24f, 24f);
     [SerializeField] private float spawnBoundsPadding = 1f;
+    [SerializeField] private LayerMask spawnObstacleMask;
+    [SerializeField] private float spawnCollisionRadius = 0.6f;
+    [SerializeField] private int spawnPositionAttempts = 12;
 
     private readonly List<CombatHealth> aliveEnemies = new List<CombatHealth>();
     private Coroutine roundRoutine;
@@ -233,8 +236,25 @@ public class EnemySpawnManager : MonoBehaviour
     private Vector3 GetSpawnPosition(int index)
     {
         Vector3 center = GetSpawnCenterPosition();
-        float angle = (index * 137.5f + currentRound * 29f) * Mathf.Deg2Rad;
-        Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * spawnRadius;
+        int attempts = Mathf.Max(1, spawnPositionAttempts);
+        for (int i = 0; i < attempts; i++)
+        {
+            Vector3 candidate = GetSpawnCandidate(center, index, i);
+            if (IsSpawnPositionValid(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        // 모든 후보가 막혀 있으면 마지막 후보라도 bounds 안쪽으로 제한해서 반환한다.
+        return ClampSpawnPositionToBounds(GetSpawnCandidate(center, index, attempts));
+    }
+
+    private Vector3 GetSpawnCandidate(Vector3 center, int index, int attempt)
+    {
+        float angle = (index * 137.5f + currentRound * 29f + attempt * 57f) * Mathf.Deg2Rad;
+        float radius = Mathf.Max(0f, spawnRadius - attempt * 0.35f);
+        Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
         return ClampSpawnPositionToBounds(center + offset);
     }
 
@@ -264,6 +284,21 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         return CombatPlane.WithFixedY(transform.position);
+    }
+
+    private bool IsSpawnPositionValid(Vector3 position)
+    {
+        if (spawnObstacleMask.value == 0)
+        {
+            return true;
+        }
+
+        // 벽/장애물 콜라이더와 겹치는 위치는 스폰 후보에서 제외한다.
+        return !Physics.CheckSphere(
+            CombatPlane.WithFixedY(position),
+            Mathf.Max(0.01f, spawnCollisionRadius),
+            spawnObstacleMask,
+            QueryTriggerInteraction.Ignore);
     }
 
     private Vector3 ClampSpawnPositionToBounds(Vector3 position)
@@ -415,6 +450,8 @@ public class EnemySpawnManager : MonoBehaviour
         Vector3 center = GetSpawnBoundsCenter();
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireCube(center, new Vector3(spawnBoundsSize.x, 0.1f, spawnBoundsSize.y));
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(center, Mathf.Max(0.01f, spawnCollisionRadius));
     }
 
     private int LoadCurrentRound()

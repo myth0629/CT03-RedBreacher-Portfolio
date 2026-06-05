@@ -142,7 +142,7 @@ GameObject:
   - component: {fileID: 59036635}
   - component: {fileID: 59036634}
   - component: {fileID: 59036633}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -287,7 +287,7 @@ GameObject:
   - component: {fileID: 288729454}
   - component: {fileID: 288729453}
   - component: {fileID: 288729452}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -503,7 +503,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 408213820}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Wall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -688,37 +688,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
---- !u!1 &669327961
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 669327962}
-  m_Layer: 0
-  m_Name: Drone
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &669327962
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 669327961}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2078203334}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &690431513
 GameObject:
   m_ObjectHideFlags: 0
@@ -731,7 +700,7 @@ GameObject:
   - component: {fileID: 690431516}
   - component: {fileID: 690431515}
   - component: {fileID: 690431514}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1018,7 +987,7 @@ GameObject:
   - component: {fileID: 937056500}
   - component: {fileID: 937056499}
   - component: {fileID: 937056498}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3129,7 +3098,7 @@ MonoBehaviour:
   enemyCountIncreasePerStage: 3
   enemyCountIncreasePerRound: 2
   timeBetweenRounds: 2
-  player: {fileID: 0}
+  player: {fileID: 2078203335}
   playerRespawnPoint: {fileID: 0}
   restartDelayOnPlayerDeath: 3
   healthIncreasePerStage: 0.2
@@ -3143,8 +3112,13 @@ MonoBehaviour:
   spawnInterval: 0.25
   clampSpawnToBounds: 1
   spawnBoundsCenter: {fileID: 0}
-  spawnBoundsSize: {x: 24, y: 24}
+  spawnBoundsSize: {x: 30, y: 30}
   spawnBoundsPadding: 1
+  spawnObstacleMask:
+    serializedVersion: 2
+    m_Bits: 128
+  spawnCollisionRadius: 0.6
+  spawnPositionAttempts: 12
 --- !u!4 &2016881338
 Transform:
   m_ObjectHideFlags: 0
@@ -3170,7 +3144,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
   m_PrefabInstance: {fileID: 3007835671500335650}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3007835671500335651}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 476576e4865e143768d3a9fd83b9de3d, type: 3}
@@ -3239,46 +3213,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
-      propertyPath: unitConfig
-      value: 
-      objectReference: {fileID: 11400000, guid: 8a3270d70f9b8495d9fcff64b4b83ab1, type: 2}
-    - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
-      propertyPath: weaponConfig
-      value: 
-      objectReference: {fileID: 11400000, guid: 74fba0a59bdac460b88e300c14c8b741, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 4696198792450951766, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 669327962}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2376926328701285538, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3007835671500335652}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
---- !u!1 &3007835671500335651 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2376926328701285538, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
-  m_PrefabInstance: {fileID: 3007835671500335650}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &3007835671500335652
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3007835671500335651}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 50490d6b2cbaa422bb78a46e2f7fef48, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerDroneController
-  player: {fileID: 2078203335}
-  droneConfig: {fileID: 11400000, guid: 4e51ea7d06fcf4db2b8a8ef6f360292d, type: 2}
-  droneSpawnParent: {fileID: 669327962}
-  spawnOnStart: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
