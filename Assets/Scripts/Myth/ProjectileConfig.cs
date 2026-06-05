@@ -8,6 +8,12 @@ public enum MultiMuzzleFireMode
     FullPowerBurst
 }
 
+public enum WeaponAttackType
+{
+    SingleTarget,
+    Area
+}
+
 [CreateAssetMenu(menuName = "Myth/Combat/Projectile Config")]
 public class ProjectileConfig : ScriptableObject
 {
@@ -18,6 +24,10 @@ public class ProjectileConfig : ScriptableObject
 
     [Header("Combat")]
     [SerializeField] private float attackDamage = 0f;
+    [SerializeField] private WeaponAttackType attackType = WeaponAttackType.SingleTarget;
+    [SerializeField] private float areaRadius = 2f;
+    [SerializeField] private float areaDamageMultiplier = 0.7f;
+    [SerializeField] private int maxAreaTargets = 10;
 
     [Header("Projectile")]
     [SerializeField] private float speed = 10f;
@@ -40,6 +50,10 @@ public class ProjectileConfig : ScriptableObject
     public string DisplayName => displayName;
     public string WeaponCategory => weaponCategory;
     public float AttackDamage => attackDamage;
+    public WeaponAttackType AttackType => attackType;
+    public float AreaRadius => areaRadius;
+    public float AreaDamageMultiplier => areaDamageMultiplier;
+    public int MaxAreaTargets => maxAreaTargets;
     public float Speed => speed;
     public float Lifetime => lifetime;
     public float CollisionRadius => collisionRadius;

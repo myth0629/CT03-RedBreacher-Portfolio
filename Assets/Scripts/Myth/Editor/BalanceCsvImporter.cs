@@ -83,6 +83,10 @@ public static class BalanceCsvImporter
             SetString(serializedObject, "displayName", Get(row, "displayName"));
             SetString(serializedObject, "weaponCategory", Get(row, "weaponCategory"));
             SetFloat(serializedObject, "attackDamage", row, "attackDamage");
+            SetEnum(serializedObject, "attackType", row, "attackType");
+            SetFloat(serializedObject, "areaRadius", row, "areaRadius");
+            SetFloat(serializedObject, "areaDamageMultiplier", row, "areaDamageMultiplier");
+            SetInt(serializedObject, "maxAreaTargets", row, "maxAreaTargets");
             SetFloat(serializedObject, "speed", row, "speed");
             SetFloat(serializedObject, "lifetime", row, "lifetime");
             SetFloat(serializedObject, "collisionRadius", row, "collisionRadius");
@@ -197,7 +201,8 @@ public static class BalanceCsvImporter
     {
         string[] headers =
         {
-            "id", "displayName", "weaponCategory", "attackDamage", "speed", "lifetime", "collisionRadius", "knockbackForce",
+            "id", "displayName", "weaponCategory", "attackDamage", "attackType", "areaRadius", "areaDamageMultiplier",
+            "maxAreaTargets", "speed", "lifetime", "collisionRadius", "knockbackForce",
             "multiMuzzleFireMode", "maxBurstMuzzleCount", "muzzleNamePrefix", "fireFlashEffect",
             "projectileEffect", "hitEffect", "effectCleanupDelay"
         };
@@ -211,6 +216,10 @@ public static class BalanceCsvImporter
                 config.DisplayName,
                 config.WeaponCategory,
                 FormatFloat(config.AttackDamage),
+                config.AttackType.ToString(),
+                FormatFloat(config.AreaRadius),
+                FormatFloat(config.AreaDamageMultiplier),
+                config.MaxAreaTargets.ToString(CultureInfo.InvariantCulture),
                 FormatFloat(config.Speed),
                 FormatFloat(config.Lifetime),
                 FormatFloat(config.CollisionRadius),

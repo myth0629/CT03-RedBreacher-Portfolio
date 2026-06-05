@@ -16,6 +16,10 @@ public class PlayerProjectile : MonoBehaviour
     [Header("Collision")]
     [SerializeField] private float collisionRadius = 0.2f;
     [SerializeField] private float knockbackForce = 2f;
+    [SerializeField] private WeaponAttackType attackType = WeaponAttackType.SingleTarget;
+    [SerializeField] private float areaRadius = 2f;
+    [SerializeField] private float areaDamageMultiplier = 0.7f;
+    [SerializeField] private int maxAreaTargets = 10;
 
     private float damage;
     private float speed;
@@ -113,6 +117,10 @@ public class PlayerProjectile : MonoBehaviour
         effectCleanupDelay = config.EffectCleanupDelay;
         collisionRadius = config.CollisionRadius;
         knockbackForce = config.KnockbackForce;
+        attackType = config.AttackType;
+        areaRadius = config.AreaRadius;
+        areaDamageMultiplier = config.AreaDamageMultiplier;
+        maxAreaTargets = config.MaxAreaTargets;
         ApplyCollisionRadius();
     }
 
@@ -290,13 +298,59 @@ public class PlayerProjectile : MonoBehaviour
             return;
         }
 
-        // 명중한 대상에게 데미지를 주고 충돌 이펙트를 재생한다.
+        // 공격 방식에 따라 단일 대상 또는 충돌 지점 주변에 피해를 적용한다.
         hasHit = true;
-        target.TakeDamage(damage);
-        GrantExperienceIfKilled(target);
-        ApplyKnockback(target);
+        if (attackType == WeaponAttackType.Area)
+        {
+            ApplyAreaDamage(target);
+        }
+        else
+        {
+            ApplyDamageToTarget(target, damage);
+        }
+
         SpawnHitEffect();
         ReturnToPool();
+    }
+
+    private void ApplyAreaDamage(CombatHealth directTarget)
+    {
+        HashSet<CombatHealth> damagedTargets = new HashSet<CombatHealth>();
+        int targetLimit = Mathf.Max(1, maxAreaTargets);
+        float appliedAreaDamage = damage * Mathf.Max(0f, areaDamageMultiplier);
+
+        // 직접 충돌한 적은 물리 탐지 결과와 관계없이 우선 피해를 적용한다.
+        ApplyAreaTarget(directTarget, appliedAreaDamage, damagedTargets);
+
+        Collider[] hits = Physics.OverlapSphere(transform.position, Mathf.Max(0f, areaRadius));
+        for (int i = 0; i < hits.Length && damagedTargets.Count < targetLimit; i++)
+        {
+            CombatHealth target = hits[i].GetComponentInParent<CombatHealth>();
+            ApplyAreaTarget(target, appliedAreaDamage, damagedTargets);
+        }
+    }
+
+    private void ApplyAreaTarget(CombatHealth target, float appliedDamage, HashSet<CombatHealth> damagedTargets)
+    {
+        if (target == null || target == owner || target.IsDead || damagedTargets.Contains(target))
+        {
+            return;
+        }
+
+        if (target.GetComponentInParent<EnemyController>() == null)
+        {
+            return;
+        }
+
+        damagedTargets.Add(target);
+        ApplyDamageToTarget(target, appliedDamage);
+    }
+
+    private void ApplyDamageToTarget(CombatHealth target, float appliedDamage)
+    {
+        target.TakeDamage(appliedDamage);
+        GrantExperienceIfKilled(target);
+        ApplyKnockback(target);
     }
 
     private void GrantExperienceIfKilled(CombatHealth target)

@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 13
   displayName: "\uD3EC\uD0C413"
+  weaponCategory: "\uD3EC\uD0C4"
   attackDamage: 46
+  attackType: 1
+  areaRadius: 1.5
+  areaDamageMultiplier: 0.7
+  maxAreaTargets: 10
   speed: 20
   lifetime: 2
   collisionRadius: 0.2
