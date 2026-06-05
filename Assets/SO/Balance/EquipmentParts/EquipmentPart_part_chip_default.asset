@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d79e3ce1bd1c44e18aec92a530d6ab54, type: 3}
   m_Name: EquipmentPart_part_chip_default
   m_EditorClassIdentifier: Assembly-CSharp::EquipmentPartConfig
-  id: part_default
-  displayName: "\uAE30\uBCF8 \uD30C\uCE20"
-  icon: {fileID: 0}
-  slot: 0
+  id: part_chip_default
+  displayName: "\uD654\uB825 \uCE69"
+  icon: {fileID: 21300000, guid: cd974218385cb4b0cba64f885041fd97, type: 3}
+  slot: 2
   commonMainValue: 0.05
   rareMainValue: 0.1
   epicMainValue: 0.2

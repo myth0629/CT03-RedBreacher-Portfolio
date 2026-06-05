@@ -13,8 +13,13 @@ MonoBehaviour:
   m_Name: Weapon_18
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 18
-  displayName: "\uD3EC\uD0C418"
+  displayName: "\uD30C\uC774\uC5B4\uD504\uB85C\uC2A4\uD2B8"
+  weaponCategory: "\uD3EC\uD0C4"
   attackDamage: 78
+  attackType: 1
+  areaRadius: 1.2
+  areaDamageMultiplier: 0.7
+  maxAreaTargets: 10
   speed: 20
   lifetime: 2
   collisionRadius: 0.2
