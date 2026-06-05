@@ -124,6 +124,14 @@ public class PlayerController : MonoBehaviour
         ApplyHealthStats();
     }
 
+    public void SetWeaponConfig(ProjectileConfig config)
+    {
+        // 로드아웃 UI에서 선택한 무기를 런타임 전투 설정에 즉시 반영한다.
+        weaponConfig = config;
+        nextAttackTime = Time.time;
+        RefreshUnitReferences();
+    }
+
     private void Update()
     {
         CombatPlane.ClampTransform(transform);
