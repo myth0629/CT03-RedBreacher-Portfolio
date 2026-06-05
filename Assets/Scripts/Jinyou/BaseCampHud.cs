@@ -45,10 +45,10 @@ public class BaseCampHud : MonoBehaviour
 
         if (baseCampManager == null)
         {
-            SetText(creditsText, "Credits --");
+            SetText(creditsText, "--");
             SetText(commanderLevelText, "Commander Lv. --");
             SetText(bossTicketText, "Tickets --/--");
-            SetText(refineryStorageText, "Refinery --/--");
+            SetText(refineryStorageText, "--/--");
             SetFill(refineryStorageFill, 0f);
             return;
         }
@@ -56,7 +56,7 @@ public class BaseCampHud : MonoBehaviour
         StrategyResearchLab researchLab = baseCampManager.ResearchLab;
         EnergyRefinery refinery = baseCampManager.EnergyRefinery;
 
-        SetText(creditsText, $"Credits {baseCampManager.Credits}");
+        SetText(creditsText, $"{baseCampManager.Credits}");
         SetText(commanderLevelText, $"Commander Lv. {baseCampManager.CommanderLevel}");
 
         if (researchLab != null)
@@ -70,7 +70,7 @@ public class BaseCampHud : MonoBehaviour
 
         if (refinery != null)
         {
-            SetText(refineryStorageText, $"Refinery {refinery.StoredCredits}/{refinery.StorageCapacity}");
+            SetText(refineryStorageText, $"{refinery.StoredCredits}/{refinery.StorageCapacity}");
             SetFill(refineryStorageFill, refinery.StorageCapacity > 0
                 ? (float)refinery.StoredCredits / refinery.StorageCapacity
                 : 0f);

@@ -7,7 +7,6 @@ public class StrategyResearchLabPanel : MonoBehaviour
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button bossTicketButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text bossTicketText;
     [SerializeField] private TMP_Text offlineRewardText;
@@ -23,14 +22,12 @@ public class StrategyResearchLabPanel : MonoBehaviour
     {
         ResolveReferences();
         upgradeButton?.onClick.AddListener(UpgradeResearchLab);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
     private void OnDisable()
     {
         upgradeButton?.onClick.RemoveListener(UpgradeResearchLab);
-        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void Update()
@@ -42,7 +39,6 @@ public class StrategyResearchLabPanel : MonoBehaviour
         BaseCampManager manager,
         Button upgrade,
         Button bossTicket,
-        Button close,
         TMP_Text level,
         TMP_Text bossTicketLabel,
         TMP_Text offlineReward,
@@ -52,7 +48,6 @@ public class StrategyResearchLabPanel : MonoBehaviour
         baseCampManager = manager;
         upgradeButton = upgrade;
         bossTicketButton = bossTicket;
-        closeButton = close;
         levelText = level;
         bossTicketText = bossTicketLabel;
         offlineRewardText = offlineReward;
@@ -65,11 +60,6 @@ public class StrategyResearchLabPanel : MonoBehaviour
     {
         baseCampManager?.UpgradeResearchLab();
         Refresh();
-    }
-
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
     }
 
     private void Refresh()
