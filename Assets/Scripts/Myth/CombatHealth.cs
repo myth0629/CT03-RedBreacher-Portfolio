@@ -15,6 +15,7 @@ public class CombatHealth : MonoBehaviour
     private float currentHealth;
     private float lastDamageTime = float.NegativeInfinity;
     private bool isDead;
+    private bool deathRewardClaimed;
 
     public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
@@ -36,6 +37,19 @@ public class CombatHealth : MonoBehaviour
         maxHealth = Mathf.Max(1f, newMaxHealth);
         currentHealth = maxHealth;
         isDead = false;
+        deathRewardClaimed = false;
+    }
+
+    public void SetMaxHealth(float newMaxHealth, bool preserveCurrentRatio)
+    {
+        float previousMaxHealth = Mathf.Max(1f, maxHealth);
+        float healthRatio = Mathf.Clamp01(currentHealth / previousMaxHealth);
+        maxHealth = Mathf.Max(1f, newMaxHealth);
+
+        // 장비 교체 시 회복 악용을 막기 위해 현재 체력 비율을 유지한다.
+        currentHealth = preserveCurrentRatio
+            ? maxHealth * healthRatio
+            : Mathf.Min(currentHealth, maxHealth);
     }
 
     public void TakeDamage(float damage)
@@ -52,6 +66,18 @@ public class CombatHealth : MonoBehaviour
         {
             Die();
         }
+    }
+
+    public bool TryClaimDeathReward()
+    {
+        if (!isDead || deathRewardClaimed)
+        {
+            return false;
+        }
+
+        // 같은 적에게 여러 투사체가 겹쳐도 처치 보상은 한 번만 지급한다.
+        deathRewardClaimed = true;
+        return true;
     }
 
     private void ApplyAutoRegen()

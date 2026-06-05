@@ -19,6 +19,7 @@ public class EnemyConfig : ScriptableObject
     [SerializeField] private float experienceReward = 10f;
     [SerializeField] private int creditReward = 10;
     [SerializeField] private int coreCrystalReward;
+    [SerializeField, Range(0f, 1f)] private float partDropChance = 0.05f;
 
     public string Id => id;
     public string DisplayName => displayName;
@@ -31,4 +32,5 @@ public class EnemyConfig : ScriptableObject
     public float ExperienceReward => experienceReward;
     public int CreditReward => creditReward;
     public int CoreCrystalReward => coreCrystalReward;
+    public float PartDropChance => Mathf.Clamp01(partDropChance);
 }

@@ -1,0 +1,199 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+public enum EquipmentPartSlot
+{
+    Armor,
+    Engine,
+    Chip
+}
+
+public enum EquipmentPartRarity
+{
+    Common,
+    Rare,
+    Epic
+}
+
+public enum EquipmentStatType
+{
+    AttackPercent,
+    HealthPercent,
+    AttackSpeedPercent,
+    CritChance,
+    CritDamage
+}
+
+[CreateAssetMenu(menuName = "Myth/Equipment/Part Config")]
+public class EquipmentPartConfig : ScriptableObject
+{
+    [Header("Identity")]
+    [SerializeField] private string id = "part_default";
+    [SerializeField] private string displayName = "기본 파츠";
+    [SerializeField] private Sprite icon;
+    [SerializeField] private EquipmentPartSlot slot;
+
+    [Header("Main Stat")]
+    [SerializeField] private float commonMainValue = 0.05f;
+    [SerializeField] private float rareMainValue = 0.1f;
+    [SerializeField] private float epicMainValue = 0.2f;
+
+    [Header("Sale Price")]
+    [SerializeField] private int commonSalePrice = 50;
+    [SerializeField] private int rareSalePrice = 200;
+    [SerializeField] private int epicSalePrice = 800;
+
+    public string Id => id;
+    public string DisplayName => displayName;
+    public Sprite Icon => icon;
+    public EquipmentPartSlot Slot => slot;
+    public EquipmentStatType MainStatType => GetMainStatType(slot);
+    public float CommonMainValue => commonMainValue;
+    public float RareMainValue => rareMainValue;
+    public float EpicMainValue => epicMainValue;
+    public int CommonSalePrice => commonSalePrice;
+    public int RareSalePrice => rareSalePrice;
+    public int EpicSalePrice => epicSalePrice;
+
+    public float GetMainValue(EquipmentPartRarity rarity)
+    {
+        return rarity switch
+        {
+            EquipmentPartRarity.Rare => Mathf.Max(0f, rareMainValue),
+            EquipmentPartRarity.Epic => Mathf.Max(0f, epicMainValue),
+            _ => Mathf.Max(0f, commonMainValue)
+        };
+    }
+
+    public int GetSalePrice(EquipmentPartRarity rarity)
+    {
+        return rarity switch
+        {
+            EquipmentPartRarity.Rare => Mathf.Max(0, rareSalePrice),
+            EquipmentPartRarity.Epic => Mathf.Max(0, epicSalePrice),
+            _ => Mathf.Max(0, commonSalePrice)
+        };
+    }
+
+    public static EquipmentStatType GetMainStatType(EquipmentPartSlot targetSlot)
+    {
+        return targetSlot switch
+        {
+            EquipmentPartSlot.Armor => EquipmentStatType.HealthPercent,
+            EquipmentPartSlot.Engine => EquipmentStatType.AttackSpeedPercent,
+            _ => EquipmentStatType.AttackPercent
+        };
+    }
+
+    public void ConfigureRuntimeDefaults(
+        string configId,
+        string configDisplayName,
+        EquipmentPartSlot configSlot,
+        float commonValue,
+        float rareValue,
+        float epicValue)
+    {
+        id = configId;
+        displayName = configDisplayName;
+        slot = configSlot;
+        commonMainValue = commonValue;
+        rareMainValue = rareValue;
+        epicMainValue = epicValue;
+        commonSalePrice = 50;
+        rareSalePrice = 200;
+        epicSalePrice = 800;
+    }
+}
+
+[Serializable]
+public class EquipmentSubStat
+{
+    public EquipmentStatType statType;
+    public float value;
+}
+
+[Serializable]
+public class EquipmentPartInstance
+{
+    public string instanceId;
+    public string configId;
+    public EquipmentPartSlot slot;
+    public EquipmentPartRarity rarity;
+    public EquipmentStatType mainStatType;
+    public float mainStatValue;
+    public int salePrice;
+    public List<EquipmentSubStat> subStats = new List<EquipmentSubStat>();
+}
+
+public static class EquipmentPartGenerator
+{
+    private static readonly EquipmentStatType[] SubStatTypes =
+    {
+        EquipmentStatType.AttackPercent,
+        EquipmentStatType.HealthPercent,
+        EquipmentStatType.AttackSpeedPercent,
+        EquipmentStatType.CritChance,
+        EquipmentStatType.CritDamage
+    };
+
+    public static EquipmentPartInstance Create(EquipmentPartConfig config, EquipmentPartRarity rarity)
+    {
+        if (config == null)
+        {
+            return null;
+        }
+
+        EquipmentPartInstance instance = new EquipmentPartInstance
+        {
+            instanceId = Guid.NewGuid().ToString("N"),
+            configId = config.Id,
+            slot = config.Slot,
+            rarity = rarity,
+            mainStatType = config.MainStatType,
+            mainStatValue = config.GetMainValue(rarity),
+            salePrice = config.GetSalePrice(rarity)
+        };
+
+        // 희귀도에 따라 중복 없는 부옵을 확정해 저장한다.
+        int subStatCount = rarity == EquipmentPartRarity.Epic ? 2 : rarity == EquipmentPartRarity.Rare ? 1 : 0;
+        List<EquipmentStatType> candidates = new List<EquipmentStatType>(SubStatTypes);
+        for (int i = 0; i < subStatCount && candidates.Count > 0; i++)
+        {
+            int index = UnityEngine.Random.Range(0, candidates.Count);
+            EquipmentStatType statType = candidates[index];
+            candidates.RemoveAt(index);
+            instance.subStats.Add(new EquipmentSubStat
+            {
+                statType = statType,
+                value = RollSubStatValue(statType, rarity)
+            });
+        }
+
+        return instance;
+    }
+
+    public static EquipmentPartRarity RollRarity()
+    {
+        float roll = UnityEngine.Random.value;
+        if (roll < 0.05f)
+        {
+            return EquipmentPartRarity.Epic;
+        }
+
+        return roll < 0.25f ? EquipmentPartRarity.Rare : EquipmentPartRarity.Common;
+    }
+
+    private static float RollSubStatValue(EquipmentStatType statType, EquipmentPartRarity rarity)
+    {
+        bool epic = rarity == EquipmentPartRarity.Epic;
+        return statType switch
+        {
+            EquipmentStatType.AttackPercent => UnityEngine.Random.Range(epic ? 0.04f : 0.02f, epic ? 0.08f : 0.05f),
+            EquipmentStatType.HealthPercent => UnityEngine.Random.Range(epic ? 0.04f : 0.02f, epic ? 0.08f : 0.05f),
+            EquipmentStatType.AttackSpeedPercent => UnityEngine.Random.Range(epic ? 0.02f : 0.01f, epic ? 0.05f : 0.03f),
+            EquipmentStatType.CritChance => UnityEngine.Random.Range(epic ? 0.01f : 0.005f, epic ? 0.025f : 0.015f),
+            _ => UnityEngine.Random.Range(epic ? 0.05f : 0.03f, epic ? 0.1f : 0.06f)
+        };
+    }
+}

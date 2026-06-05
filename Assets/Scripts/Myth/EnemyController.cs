@@ -28,6 +28,7 @@ public class EnemyController : MonoBehaviour
     public float ExperienceReward => (enemyConfig != null ? enemyConfig.ExperienceReward : 10f) * rewardMultiplier;
     public int CreditReward => Mathf.RoundToInt((enemyConfig != null ? enemyConfig.CreditReward : 10) * rewardMultiplier);
     public int CoreCrystalReward => Mathf.RoundToInt((enemyConfig != null ? enemyConfig.CoreCrystalReward : 0) * rewardMultiplier);
+    public float PartDropChance => enemyConfig != null ? enemyConfig.PartDropChance : 0.05f;
 
     private void Awake()
     {

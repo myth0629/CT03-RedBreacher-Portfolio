@@ -7,6 +7,7 @@ using TopDownAssets.Common.Scripts;
 [RequireComponent(typeof(PlayerProgression))]
 [RequireComponent(typeof(PlayerStatAllocator))]
 [RequireComponent(typeof(PlayerCurrencyWallet))]
+[RequireComponent(typeof(PlayerEquipmentPartLoadout))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Config")]
@@ -41,6 +42,7 @@ public class PlayerController : MonoBehaviour
     private CombatHealth health;
     private PlayerProgression progression;
     private PlayerStatAllocator statAllocator;
+    private PlayerEquipmentPartLoadout equipmentPartLoadout;
     private Vehicle vehicle;
     private Turret turret;
     private CombatHealth currentTarget;
@@ -49,10 +51,12 @@ public class PlayerController : MonoBehaviour
     private Vector3 weaponAimDirection;
     private float appliedMaxHealth;
     private float nextAttackTime;
+    private bool hasAppliedHealthStats;
 
     public CombatHealth Health => health;
     public PlayerProgression Progression => progression;
     public PlayerStatAllocator StatAllocator => statAllocator;
+    public PlayerEquipmentPartLoadout EquipmentPartLoadout => equipmentPartLoadout;
     public string DisplayName => unitConfig != null ? unitConfig.DisplayName : displayName;
     public PlayerUnitConfig UnitConfig => unitConfig;
     public ProjectileConfig WeaponConfig => ProjectileConfigValue;
@@ -60,7 +64,8 @@ public class PlayerController : MonoBehaviour
     public float AttackDamage => AttackDamageValue;
     public float WeaponAttackDamage => GetWeaponAttackDamage(ProjectileConfigValue);
     public float TotalAttackDamage => (AttackDamageValue + WeaponAttackDamage)
-        * (statAllocator != null ? statAllocator.AttackMultiplier : 1f);
+        * (statAllocator != null ? statAllocator.AttackMultiplier : 1f)
+        * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.AttackPercent : 0f));
     public float AttackInterval => AttackIntervalValue;
     public float MoveSpeed => MoveSpeedValue;
     public float CritChance => CritChanceValue;
@@ -78,16 +83,41 @@ public class PlayerController : MonoBehaviour
     }
 
     private float MaxHealthValue => (unitConfig != null ? unitConfig.MaxHealth : maxHealth)
-        * (statAllocator != null ? statAllocator.HealthMultiplier : 1f);
-    private float CritChanceValue => statAllocator != null
-        ? statAllocator.ApplyCritChance(unitConfig != null ? unitConfig.CritChance : critChance)
-        : unitConfig != null ? unitConfig.CritChance : critChance;
-    private float CritMultiplierValue => statAllocator != null
-        ? statAllocator.ApplyCritMultiplier(unitConfig != null ? unitConfig.CritMultiplier : critMultiplier)
-        : unitConfig != null ? unitConfig.CritMultiplier : critMultiplier;
+        * (statAllocator != null ? statAllocator.HealthMultiplier : 1f)
+        * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.HealthPercent : 0f));
+    private float CritChanceValue
+    {
+        get
+        {
+            float baseValue = statAllocator != null
+                ? statAllocator.ApplyCritChance(unitConfig != null ? unitConfig.CritChance : critChance)
+                : unitConfig != null ? unitConfig.CritChance : critChance;
+            float maxValue = statAllocator != null ? statAllocator.MaxCritChance : 1f;
+            return Mathf.Min(maxValue, baseValue + (equipmentPartLoadout != null ? equipmentPartLoadout.CritChanceBonus : 0f));
+        }
+    }
+    private float CritMultiplierValue
+    {
+        get
+        {
+            float baseValue = statAllocator != null
+                ? statAllocator.ApplyCritMultiplier(unitConfig != null ? unitConfig.CritMultiplier : critMultiplier)
+                : unitConfig != null ? unitConfig.CritMultiplier : critMultiplier;
+            float maxValue = statAllocator != null ? statAllocator.MaxCritMultiplier : float.MaxValue;
+            return Mathf.Min(maxValue, baseValue + (equipmentPartLoadout != null ? equipmentPartLoadout.CritDamageBonus : 0f));
+        }
+    }
     private float AttackRangeValue => unitConfig != null ? unitConfig.AttackRange : attackRange;
     private float AttackDamageValue => unitConfig != null ? unitConfig.AttackDamage : attackDamage;
-    private float AttackIntervalValue => unitConfig != null ? unitConfig.AttackInterval : attackInterval;
+    private float AttackIntervalValue
+    {
+        get
+        {
+            float baseInterval = unitConfig != null ? unitConfig.AttackInterval : attackInterval;
+            float attackSpeedPercent = equipmentPartLoadout != null ? equipmentPartLoadout.AttackSpeedPercent : 0f;
+            return Mathf.Max(0.1f, baseInterval / (1f + attackSpeedPercent));
+        }
+    }
     private float MoveSpeedValue => unitConfig != null ? unitConfig.MoveSpeed : moveSpeed;
     private float RotationSpeedValue => unitConfig != null ? unitConfig.RotationSpeed : rotationSpeed;
     private float FireAngleToleranceValue => unitConfig != null ? unitConfig.FireAngleTolerance : fireAngleTolerance;
@@ -113,6 +143,13 @@ public class PlayerController : MonoBehaviour
             statAllocator = gameObject.AddComponent<PlayerStatAllocator>();
         }
 
+        equipmentPartLoadout = GetComponent<PlayerEquipmentPartLoadout>();
+        if (equipmentPartLoadout == null)
+        {
+            equipmentPartLoadout = gameObject.AddComponent<PlayerEquipmentPartLoadout>();
+        }
+
+        equipmentPartLoadout.OnLoadoutChanged.AddListener(HandleEquipmentPartLoadoutChanged);
         ApplyUnitConfig();
         ApplyHealthStats();
         EnsureCombatComponents();
@@ -122,6 +159,11 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         ApplyHealthStats();
+    }
+
+    private void OnDestroy()
+    {
+        equipmentPartLoadout?.OnLoadoutChanged.RemoveListener(HandleEquipmentPartLoadoutChanged);
     }
 
     public void SetWeaponConfig(ProjectileConfig config)
@@ -249,9 +291,21 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 플레이어 SO의 체력 값이 바뀔 때만 CombatHealth를 다시 초기화한다.
+        // 최초 설정만 완전 회복하고 이후 장비 교체는 현재 체력 비율을 보존한다.
         appliedMaxHealth = configuredMaxHealth;
-        health.Initialize(configuredMaxHealth);
+        if (!hasAppliedHealthStats)
+        {
+            hasAppliedHealthStats = true;
+            health.Initialize(configuredMaxHealth);
+            return;
+        }
+
+        health.SetMaxHealth(configuredMaxHealth, true);
+    }
+
+    private void HandleEquipmentPartLoadoutChanged()
+    {
+        ApplyHealthStats();
     }
 
     private void ReplaceUnitPrefab(GameObject unitPrefab)
@@ -510,7 +564,8 @@ public class PlayerController : MonoBehaviour
     {
         // 최종 기본 피해는 기체 공격력과 장착 무기 공격력을 합산한다.
         float damage = (AttackDamageValue + GetWeaponAttackDamage(activeProjectileConfig))
-            * (statAllocator != null ? statAllocator.AttackMultiplier : 1f);
+            * (statAllocator != null ? statAllocator.AttackMultiplier : 1f)
+            * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.AttackPercent : 0f));
         float chance = Mathf.Clamp01(CritChanceValue);
         float multiplier = Mathf.Max(1f, CritMultiplierValue);
 

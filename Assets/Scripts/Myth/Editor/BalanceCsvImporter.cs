@@ -13,11 +13,13 @@ public static class BalanceCsvImporter
     private const string WeaponCsvPath = "Assets/Data/Balance/weapons.csv";
     private const string EnemyCsvPath = "Assets/Data/Balance/enemies.csv";
     private const string DroneCsvPath = "Assets/Data/Balance/drones.csv";
+    private const string EquipmentPartCsvPath = "Assets/Data/Balance/equipment_parts.csv";
 
     private const string UnitOutputPath = "Assets/SO/Balance/Units";
     private const string WeaponOutputPath = "Assets/SO/Balance/Weapons";
     private const string EnemyOutputPath = "Assets/SO/Balance/Enemies";
     private const string DroneOutputPath = "Assets/SO/Balance/Drones";
+    private const string EquipmentPartOutputPath = "Assets/SO/Balance/EquipmentParts";
 
     [MenuItem("Tools/Balance/CSV to SO/All")]
     public static void ImportAll()
@@ -27,6 +29,7 @@ public static class BalanceCsvImporter
         ImportUnits();
         ImportEnemies();
         ImportDrones();
+        ImportEquipmentParts();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("밸런스 CSV 임포트 완료");
@@ -39,6 +42,7 @@ public static class BalanceCsvImporter
         ExportWeapons();
         ExportEnemies();
         ExportDrones();
+        ExportEquipmentParts();
         AssetDatabase.Refresh();
         Debug.Log("밸런스 SO CSV 내보내기 완료");
     }
@@ -124,6 +128,7 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "experienceReward", row, "experienceReward");
             SetInt(serializedObject, "creditReward", row, "creditReward");
             SetInt(serializedObject, "coreCrystalReward", row, "coreCrystalReward");
+            SetFloat(serializedObject, "partDropChance", row, "partDropChance");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
@@ -157,6 +162,35 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "startAngle", row, "startAngle");
             SetFloat(serializedObject, "angleStep", row, "angleStep");
             SetString(serializedObject, "muzzleNamePrefix", Get(row, "muzzleNamePrefix"));
+
+            serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(config);
+        }
+    }
+
+    [MenuItem("Tools/Balance/CSV to SO/Equipment Parts")]
+    public static void ImportEquipmentParts()
+    {
+        EnsureFolder(EquipmentPartOutputPath);
+        foreach (Dictionary<string, string> row in ReadCsv(EquipmentPartCsvPath))
+        {
+            string id = GetRequired(row, "id", EquipmentPartCsvPath);
+            EquipmentPartConfig config = LoadOrCreate<EquipmentPartConfig>(
+                EquipmentPartOutputPath,
+                id,
+                "EquipmentPart");
+            SerializedObject serializedObject = new SerializedObject(config);
+
+            SetString(serializedObject, "id", id);
+            SetString(serializedObject, "displayName", Get(row, "displayName"));
+            SetObject(serializedObject, "icon", GetAsset<Sprite>(row, "icon"));
+            SetEnum(serializedObject, "slot", row, "slot");
+            SetFloat(serializedObject, "commonMainValue", row, "commonMainValue");
+            SetFloat(serializedObject, "rareMainValue", row, "rareMainValue");
+            SetFloat(serializedObject, "epicMainValue", row, "epicMainValue");
+            SetInt(serializedObject, "commonSalePrice", row, "commonSalePrice");
+            SetInt(serializedObject, "rareSalePrice", row, "rareSalePrice");
+            SetInt(serializedObject, "epicSalePrice", row, "epicSalePrice");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
@@ -244,7 +278,7 @@ public static class BalanceCsvImporter
         string[] headers =
         {
             "id", "displayName", "enemyPrefab", "maxHealth", "moveSpeed", "stopDistance", "contactDamage",
-            "contactInterval", "experienceReward", "creditReward", "coreCrystalReward"
+            "contactInterval", "experienceReward", "creditReward", "coreCrystalReward", "partDropChance"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -262,7 +296,8 @@ public static class BalanceCsvImporter
                 FormatFloat(config.ContactInterval),
                 FormatFloat(config.ExperienceReward),
                 config.CreditReward.ToString(CultureInfo.InvariantCulture),
-                config.CoreCrystalReward.ToString(CultureInfo.InvariantCulture)
+                config.CoreCrystalReward.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.PartDropChance)
             });
         }
 
@@ -310,6 +345,37 @@ public static class BalanceCsvImporter
         Debug.Log($"드론 SO CSV 내보내기 완료: {DroneCsvPath}");
     }
 
+    [MenuItem("Tools/Balance/SO to CSV/Equipment Parts")]
+    public static void ExportEquipmentParts()
+    {
+        string[] headers =
+        {
+            "id", "displayName", "icon", "slot", "commonMainValue", "rareMainValue", "epicMainValue",
+            "commonSalePrice", "rareSalePrice", "epicSalePrice"
+        };
+
+        List<string[]> rows = new List<string[]>();
+        foreach (EquipmentPartConfig config in LoadAllAssets<EquipmentPartConfig>(EquipmentPartOutputPath))
+        {
+            rows.Add(new[]
+            {
+                config.Id,
+                config.DisplayName,
+                GetAssetPath(config.Icon),
+                config.Slot.ToString(),
+                FormatFloat(config.CommonMainValue),
+                FormatFloat(config.RareMainValue),
+                FormatFloat(config.EpicMainValue),
+                config.CommonSalePrice.ToString(CultureInfo.InvariantCulture),
+                config.RareSalePrice.ToString(CultureInfo.InvariantCulture),
+                config.EpicSalePrice.ToString(CultureInfo.InvariantCulture)
+            });
+        }
+
+        WriteCsv(EquipmentPartCsvPath, headers, rows);
+        Debug.Log($"장비 파츠 SO CSV 내보내기 완료: {EquipmentPartCsvPath}");
+    }
+
     private static T LoadOrCreate<T>(string outputPath, string id, string prefix) where T : ScriptableObject
     {
         string assetPath = $"{outputPath}/{prefix}_{SanitizeFileName(id)}.asset";
@@ -332,6 +398,7 @@ public static class BalanceCsvImporter
         EnsureFolder(WeaponOutputPath);
         EnsureFolder(EnemyOutputPath);
         EnsureFolder(DroneOutputPath);
+        EnsureFolder(EquipmentPartOutputPath);
     }
 
     private static void EnsureFolder(string path)
@@ -479,6 +546,8 @@ public static class BalanceCsvImporter
                 return enemy.Id;
             case DroneConfig drone:
                 return drone.Id;
+            case EquipmentPartConfig equipmentPart:
+                return equipmentPart.Id;
             default:
                 return asset.name;
         }

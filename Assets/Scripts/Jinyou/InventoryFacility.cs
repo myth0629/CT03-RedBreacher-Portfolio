@@ -4,6 +4,14 @@ using UnityEngine.Events;
 
 public class InventoryFacility : MonoBehaviour
 {
+    private const string EquipmentPartsKey = "InventoryFacility.EquipmentParts";
+
+    [System.Serializable]
+    private class EquipmentPartSaveData
+    {
+        public List<EquipmentPartInstance> parts = new List<EquipmentPartInstance>();
+    }
+
     [System.Serializable]
     public class WeaponStack
     {
@@ -20,12 +28,26 @@ public class InventoryFacility : MonoBehaviour
     [Header("Units")]
     [SerializeField] private List<PlayerUnitConfig> unitConfigs = new List<PlayerUnitConfig>();
 
+    [Header("Equipment Parts")]
+    [SerializeField] private List<EquipmentPartConfig> equipmentPartConfigs = new List<EquipmentPartConfig>();
+    [SerializeField] private List<EquipmentPartInstance> equipmentParts = new List<EquipmentPartInstance>();
+    [SerializeField] private bool saveEquipmentPartsToPlayerPrefs = true;
+
     [Header("Events")]
     public UnityEvent OnInventoryChanged = new UnityEvent();
+    public UnityEvent OnEquipmentPartsChanged = new UnityEvent();
 
     public IReadOnlyList<ProjectileConfig> WeaponConfigs => weaponConfigs;
     public IReadOnlyList<WeaponStack> WeaponStacks => weaponStacks;
     public IReadOnlyList<PlayerUnitConfig> UnitConfigs => unitConfigs;
+    public IReadOnlyList<EquipmentPartConfig> EquipmentPartConfigs => equipmentPartConfigs;
+    public IReadOnlyList<EquipmentPartInstance> EquipmentParts => equipmentParts;
+
+    private void Awake()
+    {
+        EnsureEquipmentPartConfigs();
+        LoadEquipmentParts();
+    }
 
     public bool ContainsWeapon(ProjectileConfig weaponConfig)
     {
@@ -119,10 +141,89 @@ public class InventoryFacility : MonoBehaviour
         return true;
     }
 
+    public bool AddEquipmentPart(EquipmentPartInstance part)
+    {
+        if (part == null)
+        {
+            return false;
+        }
+
+        equipmentParts ??= new List<EquipmentPartInstance>();
+        if (string.IsNullOrWhiteSpace(part.instanceId))
+        {
+            part.instanceId = System.Guid.NewGuid().ToString("N");
+        }
+
+        if (FindEquipmentPart(part.instanceId) != null)
+        {
+            return false;
+        }
+
+        part.subStats ??= new List<EquipmentSubStat>();
+        equipmentParts.Add(part);
+        SaveEquipmentParts();
+        OnEquipmentPartsChanged.Invoke();
+        OnInventoryChanged.Invoke();
+        return true;
+    }
+
+    public EquipmentPartInstance FindEquipmentPart(string instanceId)
+    {
+        if (string.IsNullOrWhiteSpace(instanceId) || equipmentParts == null)
+        {
+            return null;
+        }
+
+        return equipmentParts.Find(part => part != null && part.instanceId == instanceId);
+    }
+
+    public EquipmentPartConfig ResolveEquipmentPartConfig(string configId)
+    {
+        EnsureEquipmentPartConfigs();
+        return equipmentPartConfigs.Find(config => config != null && config.Id == configId);
+    }
+
+    public bool RemoveEquipmentPart(string instanceId, PlayerEquipmentPartLoadout loadout = null)
+    {
+        EquipmentPartInstance part = FindEquipmentPart(instanceId);
+        loadout ??= FindFirstObjectByType<PlayerEquipmentPartLoadout>();
+        if (part == null || (loadout != null && loadout.IsEquipped(instanceId)))
+        {
+            return false;
+        }
+
+        equipmentParts.Remove(part);
+        SaveEquipmentParts();
+        OnEquipmentPartsChanged.Invoke();
+        OnInventoryChanged.Invoke();
+        return true;
+    }
+
+    public bool TrySellEquipmentPart(
+        string instanceId,
+        PlayerEquipmentPartLoadout loadout,
+        ICurrencyWallet wallet)
+    {
+        EquipmentPartInstance part = FindEquipmentPart(instanceId);
+        if (part == null || wallet == null || (loadout != null && loadout.IsEquipped(instanceId)))
+        {
+            return false;
+        }
+
+        if (!RemoveEquipmentPart(instanceId, loadout))
+        {
+            return false;
+        }
+
+        wallet?.Add(CurrencyType.Credits, Mathf.Max(0, part.salePrice));
+        return true;
+    }
+
     private void OnValidate()
     {
         NormalizeWeaponStacks();
         RemoveNullAndDuplicateUnits();
+        EnsureEquipmentPartConfigs(false);
     }
 
     private WeaponStack FindWeaponStack(ProjectileConfig weaponConfig)
@@ -204,5 +305,108 @@ public class InventoryFacility : MonoBehaviour
                 unitConfigs.RemoveAt(i);
             }
         }
+    }
+
+    private void EnsureEquipmentPartConfigs(bool allowRuntimeDefaults = true)
+    {
+        equipmentPartConfigs ??= new List<EquipmentPartConfig>();
+        equipmentPartConfigs.RemoveAll(config => config == null);
+
+#if UNITY_EDITOR
+        if (equipmentPartConfigs.Count == 0)
+        {
+            string[] guids = UnityEditor.AssetDatabase.FindAssets(
+                "t:EquipmentPartConfig",
+                new[] { "Assets/SO/Balance/EquipmentParts" });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[i]);
+                EquipmentPartConfig config = UnityEditor.AssetDatabase.LoadAssetAtPath<EquipmentPartConfig>(path);
+                if (config != null && !equipmentPartConfigs.Contains(config))
+                {
+                    equipmentPartConfigs.Add(config);
+                }
+            }
+        }
+#endif
+
+        if (equipmentPartConfigs.Count > 0 || !allowRuntimeDefaults)
+        {
+            return;
+        }
+
+        // 별도 SO 연결 전에도 드롭 테스트가 가능하도록 기본 3종을 런타임에 보강한다.
+        equipmentPartConfigs.Add(CreateRuntimeConfig("part_armor_default", "전술 장갑", EquipmentPartSlot.Armor, 0.05f, 0.1f, 0.2f));
+        equipmentPartConfigs.Add(CreateRuntimeConfig("part_engine_default", "고속 엔진", EquipmentPartSlot.Engine, 0.03f, 0.06f, 0.12f));
+        equipmentPartConfigs.Add(CreateRuntimeConfig("part_chip_default", "화력 칩", EquipmentPartSlot.Chip, 0.05f, 0.1f, 0.2f));
+    }
+
+    private static EquipmentPartConfig CreateRuntimeConfig(
+        string id,
+        string displayName,
+        EquipmentPartSlot slot,
+        float commonValue,
+        float rareValue,
+        float epicValue)
+    {
+        EquipmentPartConfig config = ScriptableObject.CreateInstance<EquipmentPartConfig>();
+        config.ConfigureRuntimeDefaults(id, displayName, slot, commonValue, rareValue, epicValue);
+        return config;
+    }
+
+    private void LoadEquipmentParts()
+    {
+        equipmentParts ??= new List<EquipmentPartInstance>();
+        if (!saveEquipmentPartsToPlayerPrefs)
+        {
+            NormalizeEquipmentParts();
+            return;
+        }
+
+        string json = PlayerPrefs.GetString(EquipmentPartsKey, string.Empty);
+        if (!string.IsNullOrWhiteSpace(json))
+        {
+            EquipmentPartSaveData saveData = JsonUtility.FromJson<EquipmentPartSaveData>(json);
+            equipmentParts = saveData?.parts ?? new List<EquipmentPartInstance>();
+        }
+
+        NormalizeEquipmentParts();
+    }
+
+    private void NormalizeEquipmentParts()
+    {
+        equipmentParts ??= new List<EquipmentPartInstance>();
+        HashSet<string> instanceIds = new HashSet<string>();
+        for (int i = equipmentParts.Count - 1; i >= 0; i--)
+        {
+            EquipmentPartInstance part = equipmentParts[i];
+            if (part == null)
+            {
+                equipmentParts.RemoveAt(i);
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(part.instanceId) || !instanceIds.Add(part.instanceId))
+            {
+                part.instanceId = System.Guid.NewGuid().ToString("N");
+                instanceIds.Add(part.instanceId);
+            }
+
+            part.mainStatValue = Mathf.Max(0f, part.mainStatValue);
+            part.salePrice = Mathf.Max(0, part.salePrice);
+            part.subStats ??= new List<EquipmentSubStat>();
+        }
+    }
+
+    private void SaveEquipmentParts()
+    {
+        if (!saveEquipmentPartsToPlayerPrefs)
+        {
+            return;
+        }
+
+        EquipmentPartSaveData saveData = new EquipmentPartSaveData { parts = equipmentParts };
+        PlayerPrefs.SetString(EquipmentPartsKey, JsonUtility.ToJson(saveData));
+        PlayerPrefs.Save();
     }
 }

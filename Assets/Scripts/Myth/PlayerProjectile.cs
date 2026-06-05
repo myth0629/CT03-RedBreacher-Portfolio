@@ -362,14 +362,14 @@ public class PlayerProjectile : MonoBehaviour
 
     private void GrantExperienceIfKilled(CombatHealth target)
     {
-        if (target == null || !target.IsDead || owner == null)
+        if (target == null || owner == null)
         {
             return;
         }
 
         PlayerProgression progression = owner.GetComponent<PlayerProgression>();
         EnemyController enemy = target.GetComponentInParent<EnemyController>();
-        if (progression == null || enemy == null)
+        if (progression == null || enemy == null || !target.TryClaimDeathReward())
         {
             return;
         }
@@ -377,6 +377,7 @@ public class PlayerProjectile : MonoBehaviour
         // 플레이어 투사체가 적을 처치하면 v1 경험치를 지급한다.
         progression.AddExperience(enemy.ExperienceReward);
         GrantCurrencyReward(enemy);
+        TryGrantEquipmentPart(enemy);
     }
 
     private void GrantCurrencyReward(EnemyController enemy)
@@ -405,6 +406,30 @@ public class PlayerProjectile : MonoBehaviour
         // 적 처치 보상은 공통 재화 API로 누적한다.
         wallet.Add(CurrencyType.Credits, enemy.CreditReward);
         wallet.Add(CurrencyType.CoreCrystals, enemy.CoreCrystalReward);
+    }
+
+    private void TryGrantEquipmentPart(EnemyController enemy)
+    {
+        if (enemy == null || Random.value >= enemy.PartDropChance)
+        {
+            return;
+        }
+
+        InventoryFacility inventory = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.Inventory
+            : FindFirstObjectByType<InventoryFacility>();
+        if (inventory == null || inventory.EquipmentPartConfigs.Count == 0)
+        {
+            return;
+        }
+
+        // 플레이어와 드론이 공유하는 처치 경로에서 파츠 드롭을 한 번 판정한다.
+        EquipmentPartConfig config = inventory.EquipmentPartConfigs[
+            Random.Range(0, inventory.EquipmentPartConfigs.Count)];
+        EquipmentPartInstance part = EquipmentPartGenerator.Create(
+            config,
+            EquipmentPartGenerator.RollRarity());
+        inventory.AddEquipmentPart(part);
     }
 
     private void ApplyKnockback(CombatHealth target)
