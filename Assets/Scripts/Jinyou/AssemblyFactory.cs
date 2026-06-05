@@ -21,8 +21,10 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     [Header("Upgrade")]
     [SerializeField] private int upgradeCost = 350;
     [SerializeField] private int requiredCommanderLevel = 1;
-    [SerializeField] private int requiredResearchLabLevel = 1;
+    [SerializeField] private int requiredResearchLabLevel = 2;
+    [SerializeField] private List<int> requiredResearchLabLevelByLevel = new List<int>();
     [SerializeField] private float upgradeDurationSeconds = 10f;
+    [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
 
     [Header("Placeholder Menus")]
     [SerializeField] private List<AssemblyMenu> menus = new List<AssemblyMenu>
@@ -42,13 +44,16 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     private string selectedMenuId;
     private bool isUpgrading;
     private float upgradeRemainingSeconds;
+    private float currentUpgradeDurationSeconds;
 
     public int Level => level;
+    public int MaxLevel => maxLevel;
     public int UpgradeCost => upgradeCost;
     public int RequiredCommanderLevel => requiredCommanderLevel;
-    public int RequiredResearchLabLevel => requiredResearchLabLevel;
+    public int RequiredResearchLabLevel => GetRequiredResearchLabLevelForCurrentUpgrade();
     public bool IsUpgrading => isUpgrading;
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
+    public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
     public string SelectedMenuId => selectedMenuId;
     public IReadOnlyList<AssemblyMenu> Menus => menus;
 
@@ -85,9 +90,16 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         return !isUpgrading && level < maxLevel && credits >= upgradeCost && commanderLevel >= requiredCommanderLevel;
     }
 
+    public int GetLevelLimit(int researchLabLevel)
+    {
+        return Mathf.Min(maxLevel, Mathf.Max(1, researchLabLevel) + 2);
+    }
+
     public bool CanStartUpgrade(int availableCredits, int commanderLevel, int researchLabLevel)
     {
-        return CanUpgrade(availableCredits, commanderLevel) && researchLabLevel >= requiredResearchLabLevel;
+        return CanUpgrade(availableCredits, commanderLevel)
+            && researchLabLevel >= RequiredResearchLabLevel
+            && level < GetLevelLimit(researchLabLevel);
     }
 
     public bool TryStartUpgrade(ref int availableCredits, int commanderLevel, int researchLabLevel)
@@ -128,14 +140,16 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     {
         OnUpgradeStarted.Invoke();
 
-        if (upgradeDurationSeconds <= 0f)
+        currentUpgradeDurationSeconds = GetUpgradeDurationForCurrentLevel();
+
+        if (currentUpgradeDurationSeconds <= 0f)
         {
             CompleteUpgrade();
             return;
         }
 
         isUpgrading = true;
-        upgradeRemainingSeconds = upgradeDurationSeconds;
+        upgradeRemainingSeconds = currentUpgradeDurationSeconds;
     }
 
     private void TickUpgrade(float deltaTime)
@@ -164,6 +178,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
         isUpgrading = false;
         upgradeRemainingSeconds = 0f;
+        currentUpgradeDurationSeconds = 0f;
         level++;
         upgradeCost = Mathf.RoundToInt(upgradeCost * 1.35f);
         requiredCommanderLevel++;
@@ -184,6 +199,56 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         }
     }
 
+    private float GetUpgradeDurationForCurrentLevel()
+    {
+        int index = Mathf.Max(0, level - 1);
+        if (index < upgradeDurationSecondsByLevel.Count)
+        {
+            return Mathf.Max(0f, upgradeDurationSecondsByLevel[index]);
+        }
+
+        return upgradeDurationSeconds;
+    }
+
+    private int GetRequiredResearchLabLevelForCurrentUpgrade()
+    {
+        int index = Mathf.Max(0, level - 1);
+        if (index < requiredResearchLabLevelByLevel.Count)
+        {
+            return Mathf.Max(1, requiredResearchLabLevelByLevel[index]);
+        }
+
+        return Mathf.Max(1, requiredResearchLabLevel);
+    }
+
+    private void NormalizeUpgradeDurations()
+    {
+        int targetCount = Mathf.Max(0, maxLevel - 1);
+        while (upgradeDurationSecondsByLevel.Count < targetCount)
+        {
+            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
+        }
+
+        for (int i = 0; i < upgradeDurationSecondsByLevel.Count; i++)
+        {
+            upgradeDurationSecondsByLevel[i] = Mathf.Max(0f, upgradeDurationSecondsByLevel[i]);
+        }
+    }
+
+    private void NormalizeResearchLabRequirements()
+    {
+        int targetCount = Mathf.Max(0, maxLevel - 1);
+        while (requiredResearchLabLevelByLevel.Count < targetCount)
+        {
+            requiredResearchLabLevelByLevel.Add(requiredResearchLabLevel);
+        }
+
+        for (int i = 0; i < requiredResearchLabLevelByLevel.Count; i++)
+        {
+            requiredResearchLabLevelByLevel[i] = Mathf.Max(1, requiredResearchLabLevelByLevel[i]);
+        }
+    }
+
     private void OnValidate()
     {
         level = Mathf.Max(1, level);
@@ -191,6 +256,8 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         upgradeCost = Mathf.Max(0, upgradeCost);
         requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
         requiredResearchLabLevel = Mathf.Max(1, requiredResearchLabLevel);
+        NormalizeResearchLabRequirements();
         upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
+        NormalizeUpgradeDurations();
     }
 }

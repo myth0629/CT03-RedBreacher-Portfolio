@@ -10,13 +10,15 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [SerializeField] private Button mechMenuButton;
     [SerializeField] private Button skillMenuButton;
     [SerializeField] private Button partsMenuButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeConditionText;
+    [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text selectedMenuText;
     [SerializeField] private TMP_Text menuStateText;
 
     private AssemblyFactory assemblyFactory;
+    private float observedUpgradeDuration;
 
     private void OnEnable()
     {
@@ -26,14 +28,12 @@ public class AssemblyFactoryPanel : MonoBehaviour
         mechMenuButton?.onClick.AddListener(SelectMechMenu);
         skillMenuButton?.onClick.AddListener(SelectSkillMenu);
         partsMenuButton?.onClick.AddListener(SelectPartsMenu);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
     private void OnDisable()
     {
         upgradeButton?.onClick.RemoveListener(UpgradeFactory);
-        closeButton?.onClick.RemoveListener(ClosePanel);
         weaponMenuButton?.onClick.RemoveListener(SelectWeaponMenu);
         mechMenuButton?.onClick.RemoveListener(SelectMechMenu);
         skillMenuButton?.onClick.RemoveListener(SelectSkillMenu);
@@ -64,7 +64,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
         mechMenuButton = mech;
         skillMenuButton = skill;
         partsMenuButton = parts;
-        closeButton = close;
         levelText = level;
         upgradeText = upgradeLabel;
         selectedMenuText = selectedMenu;
@@ -104,11 +103,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
         Refresh();
     }
 
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
-    }
-
     private void Refresh()
     {
         ResolveReferences();
@@ -132,7 +126,14 @@ public class AssemblyFactoryPanel : MonoBehaviour
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel);
+            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
+                assemblyFactory,
+                baseCampManager.Credits,
+                baseCampManager.CommanderLevel,
+                researchLabLevel));
         }
+
+        BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, assemblyFactory, ref observedUpgradeDuration);
 
         SetMenuButton(weaponMenuButton, "weapon");
         SetMenuButton(mechMenuButton, "mech");
