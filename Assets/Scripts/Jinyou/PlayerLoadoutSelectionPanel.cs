@@ -19,8 +19,6 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [SerializeField] private DroneConfig[] droneOptions;
 
     [Header("Buttons")]
-    [SerializeField] private Button openWeaponButton;
-    [SerializeField] private Button openDroneButton;
     [SerializeField] private Button closeButton;
     [SerializeField] private Button equipButton;
 
@@ -68,16 +66,12 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void OnEnable()
     {
-        openWeaponButton?.onClick.AddListener(OpenWeapons);
-        openDroneButton?.onClick.AddListener(OpenDrones);
         closeButton?.onClick.AddListener(Close);
         equipButton?.onClick.AddListener(EquipSelected);
     }
 
     private void OnDisable()
     {
-        openWeaponButton?.onClick.RemoveListener(OpenWeapons);
-        openDroneButton?.onClick.RemoveListener(OpenDrones);
         closeButton?.onClick.RemoveListener(Close);
         equipButton?.onClick.RemoveListener(EquipSelected);
     }

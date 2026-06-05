@@ -72,6 +72,36 @@ public class PlayerProgression : MonoBehaviour
         return true;
     }
 
+    public bool TrySpendStatPoints(int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount == 0)
+        {
+            return true;
+        }
+
+        if (statPoints < amount)
+        {
+            return false;
+        }
+
+        statPoints -= amount;
+        Save();
+        return true;
+    }
+
+    public void AddStatPoints(int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount == 0)
+        {
+            return;
+        }
+
+        statPoints += amount;
+        Save();
+    }
+
     private void LevelUp()
     {
         level++;
