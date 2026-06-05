@@ -25632,13 +25632,13 @@ RectTransform:
   - {fileID: 2725752529222125088}
   - {fileID: 7016333533520157193}
   - {fileID: 7774766328315450730}
+  - {fileID: 3717457584065698845}
   - {fileID: 9149987227286520381}
   - {fileID: 1031076947506353445}
   - {fileID: 2445164432817959995}
   - {fileID: 3798905833108697504}
   - {fileID: 613516014533955612}
   - {fileID: 4517695049898385595}
-  - {fileID: 3717457584065698845}
   - {fileID: 6154989887922662516}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -25750,6 +25750,19 @@ MonoBehaviour:
   tankPopupWeaponSpeedText: {fileID: 4247649929231488023}
   tankPopupWeaponLifetimeText: {fileID: 0}
   tankPopupWeaponKnockbackText: {fileID: 3150365741874601915}
+  statUpgradePointText: {fileID: 0}
+  attackUpgradeLevelText: {fileID: 0}
+  healthUpgradeLevelText: {fileID: 0}
+  critChanceUpgradeLevelText: {fileID: 0}
+  critMultiplierUpgradeLevelText: {fileID: 0}
+  attackUpgradeAmountText: {fileID: 0}
+  healthUpgradeAmountText: {fileID: 0}
+  critChanceUpgradeAmountText: {fileID: 0}
+  critMultiplierUpgradeAmountText: {fileID: 0}
+  attackUpgradeButton: {fileID: 0}
+  healthUpgradeButton: {fileID: 0}
+  critChanceUpgradeButton: {fileID: 0}
+  critMultiplierUpgradeButton: {fileID: 0}
   healthSlider: {fileID: 0}
   experienceSlider: {fileID: 0}
   healthFillImage: {fileID: 5383056064117240384}

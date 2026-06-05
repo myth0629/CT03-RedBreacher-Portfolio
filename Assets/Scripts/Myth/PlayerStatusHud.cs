@@ -38,6 +38,21 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupWeaponLifetimeText;
     [SerializeField] private TMP_Text tankPopupWeaponKnockbackText;
 
+    [Header("Stat Upgrade Popup")]
+    [SerializeField] private TMP_Text statUpgradePointText;
+    [SerializeField] private TMP_Text attackUpgradeLevelText;
+    [SerializeField] private TMP_Text healthUpgradeLevelText;
+    [SerializeField] private TMP_Text critChanceUpgradeLevelText;
+    [SerializeField] private TMP_Text critMultiplierUpgradeLevelText;
+    [SerializeField] private TMP_Text attackUpgradeAmountText;
+    [SerializeField] private TMP_Text healthUpgradeAmountText;
+    [SerializeField] private TMP_Text critChanceUpgradeAmountText;
+    [SerializeField] private TMP_Text critMultiplierUpgradeAmountText;
+    [SerializeField] private Button attackUpgradeButton;
+    [SerializeField] private Button healthUpgradeButton;
+    [SerializeField] private Button critChanceUpgradeButton;
+    [SerializeField] private Button critMultiplierUpgradeButton;
+
     [Header("Bars")]
     [SerializeField] private Slider healthSlider;
     [SerializeField] private Slider experienceSlider;
@@ -122,6 +137,7 @@ public class PlayerStatusHud : MonoBehaviour
         }
 
         RefreshTankPopup(health, progression);
+        RefreshStatUpgradePopup(progression);
     }
 
     private void RefreshTankPopup(CombatHealth health, PlayerProgression progression)
@@ -152,6 +168,32 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupWeaponKnockbackText, $"{player.KnockbackForce:0.##}");
     }
 
+    private void RefreshStatUpgradePopup(PlayerProgression progression)
+    {
+        PlayerStatAllocator allocator = player != null ? player.StatAllocator : null;
+        if (allocator == null)
+        {
+            return;
+        }
+
+        // 미투자 상태를 UI에서는 Lv.1로 표시한다.
+        SetText(statUpgradePointText, progression != null ? $"보유 중인 포인트 : {progression.StatPoints}" : "보유 중인 포인트 : 0");
+        SetText(attackUpgradeLevelText, $"Lv.{allocator.AttackDisplayLevel}");
+        SetText(healthUpgradeLevelText, $"Lv.{allocator.HealthDisplayLevel}");
+        SetText(critChanceUpgradeLevelText, $"Lv.{allocator.CritChanceDisplayLevel}");
+        SetText(critMultiplierUpgradeLevelText, $"Lv.{allocator.CritMultiplierDisplayLevel}");
+        SetText(attackUpgradeAmountText, $"공격력 +{allocator.AttackBonusPercent * 100f:0.##}%");
+        SetText(healthUpgradeAmountText, $"최대 체력 +{allocator.HealthBonusPercent * 100f:0.##}%");
+        SetText(critChanceUpgradeAmountText, $"치명타 확률 +{allocator.CritChanceBonus * 100f:0.##}%");
+        SetText(critMultiplierUpgradeAmountText, $"치명타 피해 +{allocator.CritMultiplierBonus * 100f:0.##}%");
+
+        bool hasPoint = progression != null && progression.StatPoints > 0;
+        SetButtonInteractable(attackUpgradeButton, hasPoint && allocator.CanUpgradeAttack);
+        SetButtonInteractable(healthUpgradeButton, hasPoint && allocator.CanUpgradeHealth);
+        SetButtonInteractable(critChanceUpgradeButton, hasPoint && allocator.CanUpgradeCritChance);
+        SetButtonInteractable(critMultiplierUpgradeButton, hasPoint && allocator.CanUpgradeCritMultiplier);
+    }
+
     private static void SetText(TMP_Text target, string value)
     {
         if (target != null)
@@ -175,6 +217,14 @@ public class PlayerStatusHud : MonoBehaviour
         if (target != null)
         {
             target.fillAmount = value;
+        }
+    }
+
+    private static void SetButtonInteractable(Button target, bool interactable)
+    {
+        if (target != null)
+        {
+            target.interactable = interactable;
         }
     }
 

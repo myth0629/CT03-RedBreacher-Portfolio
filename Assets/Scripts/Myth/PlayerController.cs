@@ -5,6 +5,7 @@ using TopDownAssets.Common.Scripts;
 
 [RequireComponent(typeof(CombatHealth))]
 [RequireComponent(typeof(PlayerProgression))]
+[RequireComponent(typeof(PlayerStatAllocator))]
 [RequireComponent(typeof(PlayerCurrencyWallet))]
 public class PlayerController : MonoBehaviour
 {
@@ -39,6 +40,7 @@ public class PlayerController : MonoBehaviour
     private readonly List<Transform> fireMuzzles = new List<Transform>();
     private CombatHealth health;
     private PlayerProgression progression;
+    private PlayerStatAllocator statAllocator;
     private Vehicle vehicle;
     private Turret turret;
     private CombatHealth currentTarget;
@@ -50,13 +52,15 @@ public class PlayerController : MonoBehaviour
 
     public CombatHealth Health => health;
     public PlayerProgression Progression => progression;
+    public PlayerStatAllocator StatAllocator => statAllocator;
     public string DisplayName => unitConfig != null ? unitConfig.DisplayName : displayName;
     public PlayerUnitConfig UnitConfig => unitConfig;
     public ProjectileConfig WeaponConfig => ProjectileConfigValue;
     public float AttackRange => AttackRangeValue;
     public float AttackDamage => AttackDamageValue;
     public float WeaponAttackDamage => GetWeaponAttackDamage(ProjectileConfigValue);
-    public float TotalAttackDamage => AttackDamageValue + WeaponAttackDamage;
+    public float TotalAttackDamage => (AttackDamageValue + WeaponAttackDamage)
+        * (statAllocator != null ? statAllocator.AttackMultiplier : 1f);
     public float AttackInterval => AttackIntervalValue;
     public float MoveSpeed => MoveSpeedValue;
     public float CritChance => CritChanceValue;
@@ -73,9 +77,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private float MaxHealthValue => unitConfig != null ? unitConfig.MaxHealth : maxHealth;
-    private float CritChanceValue => unitConfig != null ? unitConfig.CritChance : critChance;
-    private float CritMultiplierValue => unitConfig != null ? unitConfig.CritMultiplier : critMultiplier;
+    private float MaxHealthValue => (unitConfig != null ? unitConfig.MaxHealth : maxHealth)
+        * (statAllocator != null ? statAllocator.HealthMultiplier : 1f);
+    private float CritChanceValue => statAllocator != null
+        ? statAllocator.ApplyCritChance(unitConfig != null ? unitConfig.CritChance : critChance)
+        : unitConfig != null ? unitConfig.CritChance : critChance;
+    private float CritMultiplierValue => statAllocator != null
+        ? statAllocator.ApplyCritMultiplier(unitConfig != null ? unitConfig.CritMultiplier : critMultiplier)
+        : unitConfig != null ? unitConfig.CritMultiplier : critMultiplier;
     private float AttackRangeValue => unitConfig != null ? unitConfig.AttackRange : attackRange;
     private float AttackDamageValue => unitConfig != null ? unitConfig.AttackDamage : attackDamage;
     private float AttackIntervalValue => unitConfig != null ? unitConfig.AttackInterval : attackInterval;
@@ -96,6 +105,12 @@ public class PlayerController : MonoBehaviour
         if (progression == null)
         {
             progression = gameObject.AddComponent<PlayerProgression>();
+        }
+
+        statAllocator = GetComponent<PlayerStatAllocator>();
+        if (statAllocator == null)
+        {
+            statAllocator = gameObject.AddComponent<PlayerStatAllocator>();
         }
 
         ApplyUnitConfig();
@@ -486,7 +501,8 @@ public class PlayerController : MonoBehaviour
     private float CalculateAttackDamage(ProjectileConfig activeProjectileConfig)
     {
         // 최종 기본 피해는 기체 공격력과 장착 무기 공격력을 합산한다.
-        float damage = AttackDamageValue + GetWeaponAttackDamage(activeProjectileConfig);
+        float damage = (AttackDamageValue + GetWeaponAttackDamage(activeProjectileConfig))
+            * (statAllocator != null ? statAllocator.AttackMultiplier : 1f);
         float chance = Mathf.Clamp01(CritChanceValue);
         float multiplier = Mathf.Max(1f, CritMultiplierValue);
 

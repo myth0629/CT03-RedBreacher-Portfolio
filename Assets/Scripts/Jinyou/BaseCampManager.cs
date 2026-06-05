@@ -263,6 +263,12 @@ public class BaseCampManager : MonoBehaviour
         {
             progression.ResetProgression();
         }
+
+        PlayerStatAllocator statAllocator = FindFirstObjectByType<PlayerStatAllocator>();
+        if (statAllocator != null)
+        {
+            statAllocator.ResetAllocations();
+        }
     }
 
     private void ResetStageProgressDebug()
