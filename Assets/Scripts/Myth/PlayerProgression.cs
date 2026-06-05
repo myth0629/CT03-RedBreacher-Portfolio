@@ -59,6 +59,19 @@ public class PlayerProgression : MonoBehaviour
         Save();
     }
 
+    public bool TrySpendStatPoint()
+    {
+        if (statPoints <= 0)
+        {
+            return false;
+        }
+
+        // 코어 투자에서 사용하는 특성 포인트 차감은 진행도 저장과 함께 처리한다.
+        statPoints--;
+        Save();
+        return true;
+    }
+
     private void LevelUp()
     {
         level++;

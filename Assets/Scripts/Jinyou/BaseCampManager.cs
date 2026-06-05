@@ -20,6 +20,7 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private int commanderLevel = 1;
     [SerializeField] private int credits = 500;
     [SerializeField] private PlayerCurrencyWallet currencyWallet;
+    [SerializeField] private PlayerProgression playerProgression;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugPanel = true;
@@ -40,6 +41,7 @@ public class BaseCampManager : MonoBehaviour
     public int Credits => CurrencyWallet.Credits;
     public int CoreCrystals => CurrencyWallet.CoreCrystals;
     public PlayerCurrencyWallet CurrencyWallet => EnsureCurrencyWallet();
+    public PlayerProgression PlayerProgression => ResolvePlayerProgression();
 
     private void Awake()
     {
@@ -129,6 +131,21 @@ public class BaseCampManager : MonoBehaviour
         coreCharger?.TrySelectRoute(routeId);
     }
 
+    public void SelectCoreOption(string optionId)
+    {
+        coreCharger?.TrySelectOption(optionId);
+    }
+
+    public void InvestCoreRoute(string routeId)
+    {
+        coreCharger?.TryInvestRoute(routeId);
+    }
+
+    public void InvestCoreOption(string optionId)
+    {
+        coreCharger?.TryInvestOption(optionId);
+    }
+
     public void UseBossTicket()
     {
         researchLab?.TryUseBossTicket();
@@ -196,10 +213,12 @@ public class BaseCampManager : MonoBehaviour
             return;
         }
 
-        // 실제 재화 차감은 wallet 인터페이스 한 곳으로 모은다.
-        if (CurrencyWallet.TrySpend(CurrencyType.Credits, facility.UpgradeCost))
+        // 시설은 타이머만 시작하고, 실제 재화 차감은 wallet 한 곳에서 처리한다.
+        int simulatedCredits = availableCredits;
+        if (CurrencyWallet.CanSpend(CurrencyType.Credits, facility.UpgradeCost)
+            && facility.TryStartUpgrade(ref simulatedCredits, commanderLevel, researchLabLevel))
         {
-            facility.Upgrade();
+            CurrencyWallet.TrySpend(CurrencyType.Credits, facility.UpgradeCost);
         }
     }
 
@@ -276,6 +295,17 @@ public class BaseCampManager : MonoBehaviour
 
         RegisterCurrencyWalletEvents();
         return currencyWallet;
+    }
+
+    private PlayerProgression ResolvePlayerProgression()
+    {
+        if (playerProgression != null)
+        {
+            return playerProgression;
+        }
+
+        playerProgression = FindFirstObjectByType<PlayerProgression>();
+        return playerProgression;
     }
 
     private void RegisterCurrencyWalletEvents()
@@ -472,12 +502,15 @@ public class PlayerCurrencyWallet : MonoBehaviour, ICurrencyWallet
 public interface IBaseCampFacility
 {
     int Level { get; }
+    int MaxLevel { get; }
     int UpgradeCost { get; }
     int RequiredCommanderLevel { get; }
     int RequiredResearchLabLevel { get; }
     bool IsUpgrading { get; }
     float UpgradeRemainingSeconds { get; }
+    float CurrentUpgradeDurationSeconds { get; }
     bool CanUpgrade(int credits, int commanderLevel);
+    int GetLevelLimit(int researchLabLevel);
     bool CanStartUpgrade(int credits, int commanderLevel, int researchLabLevel);
     bool TryStartUpgrade(ref int availableCredits, int commanderLevel, int researchLabLevel);
     void Upgrade();
