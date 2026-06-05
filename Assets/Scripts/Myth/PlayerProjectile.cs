@@ -376,6 +376,7 @@ public class PlayerProjectile : MonoBehaviour
 
         // 플레이어 투사체가 적을 처치하면 v1 경험치를 지급한다.
         progression.AddExperience(enemy.ExperienceReward);
+        AchievementManager.ReportEnemyKilled();
         GrantCurrencyReward(enemy);
     }
 

@@ -15,6 +15,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [Header("Source")]
     [SerializeField] private PlayerController player;
     [SerializeField] private PlayerDroneController droneController;
+    [SerializeField] private InventoryFacility inventory;
     [SerializeField] private ProjectileConfig[] weaponOptions;
     [SerializeField] private DroneConfig[] droneOptions;
 
@@ -217,6 +218,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             return;
         }
 
+        if (selectedDrone != null && inventory != null && !inventory.ContainsDrone(selectedDrone))
+        {
+            inventory.AddDrone(selectedDrone);
+        }
+
         droneController?.SetDroneConfig(selectedDrone);
         RebuildDroneList();
         RefreshDroneDetail(selectedDrone);
@@ -268,6 +274,10 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                 ? player.GetComponent<PlayerDroneController>()
                 : FindFirstObjectByType<PlayerDroneController>();
         }
+
+        inventory ??= BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.Inventory
+            : FindFirstObjectByType<InventoryFacility>();
     }
 
     private static void SetText(TMP_Text target, string value)

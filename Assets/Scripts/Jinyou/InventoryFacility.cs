@@ -20,12 +20,16 @@ public class InventoryFacility : MonoBehaviour
     [Header("Units")]
     [SerializeField] private List<PlayerUnitConfig> unitConfigs = new List<PlayerUnitConfig>();
 
+    [Header("Drones")]
+    [SerializeField] private List<DroneConfig> droneConfigs = new List<DroneConfig>();
+
     [Header("Events")]
     public UnityEvent OnInventoryChanged = new UnityEvent();
 
     public IReadOnlyList<ProjectileConfig> WeaponConfigs => weaponConfigs;
     public IReadOnlyList<WeaponStack> WeaponStacks => weaponStacks;
     public IReadOnlyList<PlayerUnitConfig> UnitConfigs => unitConfigs;
+    public IReadOnlyList<DroneConfig> DroneConfigs => droneConfigs;
 
     public bool ContainsWeapon(ProjectileConfig weaponConfig)
     {
@@ -35,6 +39,11 @@ public class InventoryFacility : MonoBehaviour
     public bool ContainsUnit(PlayerUnitConfig unitConfig)
     {
         return unitConfig != null && unitConfigs.Contains(unitConfig);
+    }
+
+    public bool ContainsDrone(DroneConfig droneConfig)
+    {
+        return droneConfig != null && droneConfigs.Contains(droneConfig);
     }
 
     public bool AddWeapon(ProjectileConfig weaponConfig)
@@ -52,6 +61,7 @@ public class InventoryFacility : MonoBehaviour
         WeaponStack stack = GetOrCreateWeaponStack(weaponConfig);
         stack.quantity += quantity;
         SyncWeaponConfigsFromStacks();
+        AchievementManager.ReportWeaponCollected(quantity);
         OnInventoryChanged.Invoke();
         return true;
     }
@@ -64,6 +74,19 @@ public class InventoryFacility : MonoBehaviour
         }
 
         unitConfigs.Add(unitConfig);
+        OnInventoryChanged.Invoke();
+        return true;
+    }
+
+    public bool AddDrone(DroneConfig droneConfig)
+    {
+        if (droneConfig == null || droneConfigs.Contains(droneConfig))
+        {
+            return false;
+        }
+
+        droneConfigs.Add(droneConfig);
+        AchievementManager.ReportDroneCollected();
         OnInventoryChanged.Invoke();
         return true;
     }
@@ -119,10 +142,22 @@ public class InventoryFacility : MonoBehaviour
         return true;
     }
 
+    public bool RemoveDrone(DroneConfig droneConfig)
+    {
+        if (droneConfig == null || !droneConfigs.Remove(droneConfig))
+        {
+            return false;
+        }
+
+        OnInventoryChanged.Invoke();
+        return true;
+    }
+
     private void OnValidate()
     {
         NormalizeWeaponStacks();
         RemoveNullAndDuplicateUnits();
+        RemoveNullAndDuplicateDrones();
     }
 
     private WeaponStack FindWeaponStack(ProjectileConfig weaponConfig)
@@ -202,6 +237,19 @@ public class InventoryFacility : MonoBehaviour
             if (item == null || !seen.Add(item))
             {
                 unitConfigs.RemoveAt(i);
+            }
+        }
+    }
+
+    private void RemoveNullAndDuplicateDrones()
+    {
+        HashSet<DroneConfig> seen = new HashSet<DroneConfig>();
+        for (int i = droneConfigs.Count - 1; i >= 0; i--)
+        {
+            DroneConfig item = droneConfigs[i];
+            if (item == null || !seen.Add(item))
+            {
+                droneConfigs.RemoveAt(i);
             }
         }
     }
