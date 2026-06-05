@@ -14,6 +14,7 @@ public class ProjectileConfig : ScriptableObject
     [Header("Identity")]
     [SerializeField] private string id = "weapon_default";
     [SerializeField] private string displayName = "기본 무기";
+    [SerializeField] private string weaponCategory = "포탄";
 
     [Header("Combat")]
     [SerializeField] private float attackDamage = 0f;
@@ -37,6 +38,7 @@ public class ProjectileConfig : ScriptableObject
 
     public string Id => id;
     public string DisplayName => displayName;
+    public string WeaponCategory => weaponCategory;
     public float AttackDamage => attackDamage;
     public float Speed => speed;
     public float Lifetime => lifetime;

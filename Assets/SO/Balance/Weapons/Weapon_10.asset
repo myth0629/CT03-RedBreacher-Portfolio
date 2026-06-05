@@ -15,7 +15,6 @@ MonoBehaviour:
   id: 10
   displayName: "\uD3EC\uD0C410"
   attackDamage: 33
-  projectilePrefab: {fileID: 0}
   speed: 20
   lifetime: 2
   collisionRadius: 0.2
@@ -23,7 +22,7 @@ MonoBehaviour:
   multiMuzzleFireMode: 2
   maxBurstMuzzleCount: 3
   muzzleNamePrefix: FireMuzzle
-  fireFlashEffectPrefab: {fileID: 0}
-  projectileEffectPrefab: {fileID: 0}
-  hitEffectPrefab: {fileID: 0}
+  fireFlashEffectPrefab: {fileID: 1061512257540118, guid: 51a73670ac42b28429348012d7106c27, type: 3}
+  projectileEffectPrefab: {fileID: 1589245581719068, guid: e865b065887ee5742b7282a5ea6554ee, type: 3}
+  hitEffectPrefab: {fileID: 1943573974307894, guid: 4857609a6c0625349a60bbb4b5fa5ec5, type: 3}
   effectCleanupDelay: 2

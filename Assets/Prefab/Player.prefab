@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 6223792534563652184}
   - component: {fileID: 7644490488002421366}
   - component: {fileID: 1908932380892413804}
+  - component: {fileID: 2421075610840562408}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -125,6 +126,7 @@ Transform:
   m_Children:
   - {fileID: 3151788194371817146}
   - {fileID: 1065801000117078494}
+  - {fileID: 1322240335075145229}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6223792534563652184
@@ -141,6 +143,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatHealth
   maxHealth: 100
   destroyOnDeath: 1
+  enableAutoRegen: 1
+  playerOnlyRegen: 1
+  regenDelayAfterHit: 3
+  regenPercentPerSecond: 0.01
+  regenFlatPerSecond: 0
 --- !u!114 &7644490488002421366
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -153,8 +160,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 476576e4865e143768d3a9fd83b9de3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  unitConfig: {fileID: 11400000, guid: 8a3270d70f9b8495d9fcff64b4b83ab1, type: 2}
-  weaponConfig: {fileID: 11400000, guid: f699ec7c70a6c4eb1a179dbaee2310de, type: 2}
+  unitConfig: {fileID: 11400000, guid: aaa8f364b28444e249d29f0d45528398, type: 2}
+  weaponConfig: {fileID: 11400000, guid: f2f70023aad27461fbc14781bd370d24, type: 2}
   unitRoot: {fileID: 1065801000117078494}
   displayName: "\uD0F1\uD06C\uC774\uB984"
   maxHealth: 100
@@ -192,6 +199,54 @@ MonoBehaviour:
   experienceToNextLevel: 100
   experienceGrowthRate: 1.2
   statPoints: 0
+  saveToPlayerPrefs: 1
+--- !u!114 &2421075610840562408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2376926328701285538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50490d6b2cbaa422bb78a46e2f7fef48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDroneController
+  player: {fileID: 7644490488002421366}
+  droneConfig: {fileID: 11400000, guid: 4e51ea7d06fcf4db2b8a8ef6f360292d, type: 2}
+  droneSpawnParent: {fileID: 1322240335075145229}
+  spawnOnStart: 1
+--- !u!1 &6846552723701228545
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1322240335075145229}
+  m_Layer: 0
+  m_Name: Drone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1322240335075145229
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6846552723701228545}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4696198792450951766}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &8927736348518091184
 GameObject:
   m_ObjectHideFlags: 0

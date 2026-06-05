@@ -17,6 +17,8 @@ public class EnemyConfig : ScriptableObject
     [SerializeField] private float contactDamage = 5f;
     [SerializeField] private float contactInterval = 1f;
     [SerializeField] private float experienceReward = 10f;
+    [SerializeField] private int creditReward = 10;
+    [SerializeField] private int coreCrystalReward;
 
     public string Id => id;
     public string DisplayName => displayName;
@@ -27,4 +29,6 @@ public class EnemyConfig : ScriptableObject
     public float ContactDamage => contactDamage;
     public float ContactInterval => contactInterval;
     public float ExperienceReward => experienceReward;
+    public int CreditReward => creditReward;
+    public int CoreCrystalReward => coreCrystalReward;
 }

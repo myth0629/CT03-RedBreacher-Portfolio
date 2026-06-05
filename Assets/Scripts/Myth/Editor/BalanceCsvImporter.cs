@@ -12,34 +12,38 @@ public static class BalanceCsvImporter
     private const string UnitCsvPath = "Assets/Data/Balance/units.csv";
     private const string WeaponCsvPath = "Assets/Data/Balance/weapons.csv";
     private const string EnemyCsvPath = "Assets/Data/Balance/enemies.csv";
+    private const string DroneCsvPath = "Assets/Data/Balance/drones.csv";
 
     private const string UnitOutputPath = "Assets/SO/Balance/Units";
     private const string WeaponOutputPath = "Assets/SO/Balance/Weapons";
     private const string EnemyOutputPath = "Assets/SO/Balance/Enemies";
+    private const string DroneOutputPath = "Assets/SO/Balance/Drones";
 
-    [MenuItem("Tools/Balance/Import All CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/All")]
     public static void ImportAll()
     {
         EnsureOutputFolders();
         ImportWeapons();
         ImportUnits();
         ImportEnemies();
+        ImportDrones();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("밸런스 CSV 임포트 완료");
     }
 
-    [MenuItem("Tools/Balance/Export All CSV")]
+    [MenuItem("Tools/Balance/SO to CSV/All")]
     public static void ExportAll()
     {
         ExportUnits();
         ExportWeapons();
         ExportEnemies();
+        ExportDrones();
         AssetDatabase.Refresh();
         Debug.Log("밸런스 SO CSV 내보내기 완료");
     }
 
-    [MenuItem("Tools/Balance/Import Units CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/Units")]
     public static void ImportUnits()
     {
         foreach (Dictionary<string, string> row in ReadCsv(UnitCsvPath))
@@ -66,7 +70,7 @@ public static class BalanceCsvImporter
         }
     }
 
-    [MenuItem("Tools/Balance/Import Weapons CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/Weapons")]
     public static void ImportWeapons()
     {
         foreach (Dictionary<string, string> row in ReadCsv(WeaponCsvPath))
@@ -77,6 +81,7 @@ public static class BalanceCsvImporter
 
             SetString(serializedObject, "id", id);
             SetString(serializedObject, "displayName", Get(row, "displayName"));
+            SetString(serializedObject, "weaponCategory", Get(row, "weaponCategory"));
             SetFloat(serializedObject, "attackDamage", row, "attackDamage");
             SetFloat(serializedObject, "speed", row, "speed");
             SetFloat(serializedObject, "lifetime", row, "lifetime");
@@ -95,7 +100,7 @@ public static class BalanceCsvImporter
         }
     }
 
-    [MenuItem("Tools/Balance/Import Enemies CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/Enemies")]
     public static void ImportEnemies()
     {
         foreach (Dictionary<string, string> row in ReadCsv(EnemyCsvPath))
@@ -113,13 +118,48 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "contactDamage", row, "contactDamage");
             SetFloat(serializedObject, "contactInterval", row, "contactInterval");
             SetFloat(serializedObject, "experienceReward", row, "experienceReward");
+            SetInt(serializedObject, "creditReward", row, "creditReward");
+            SetInt(serializedObject, "coreCrystalReward", row, "coreCrystalReward");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
         }
     }
 
-    [MenuItem("Tools/Balance/Export Units CSV")]
+    [MenuItem("Tools/Balance/CSV to SO/Drones")]
+    public static void ImportDrones()
+    {
+        foreach (Dictionary<string, string> row in ReadCsv(DroneCsvPath))
+        {
+            string id = GetRequired(row, "id", DroneCsvPath);
+            DroneConfig config = LoadOrCreate<DroneConfig>(DroneOutputPath, id, "Drone");
+            SerializedObject serializedObject = new SerializedObject(config);
+
+            SetString(serializedObject, "id", id);
+            SetString(serializedObject, "displayName", Get(row, "displayName"));
+            SetObject(serializedObject, "dronePrefab", GetAsset<GameObject>(row, "dronePrefab"));
+            SetObject(serializedObject, "projectileConfig", GetAsset<ProjectileConfig>(row, "projectileConfig"));
+            SetFloat(serializedObject, "attackDamage", row, "attackDamage");
+            SetFloat(serializedObject, "attackRange", row, "attackRange");
+            SetFloat(serializedObject, "attackInterval", row, "attackInterval");
+            SetFloat(serializedObject, "fireAngleTolerance", row, "fireAngleTolerance");
+            SetFloat(serializedObject, "rotationSpeed", row, "rotationSpeed");
+            SetInt(serializedObject, "targetMask", row, "targetMask");
+            SetFloat(serializedObject, "projectileSpeed", row, "projectileSpeed");
+            SetFloat(serializedObject, "projectileLifetime", row, "projectileLifetime");
+            SetInt(serializedObject, "droneCount", row, "droneCount");
+            SetFloat(serializedObject, "followRadius", row, "followRadius");
+            SetFloat(serializedObject, "followSpeed", row, "followSpeed");
+            SetFloat(serializedObject, "startAngle", row, "startAngle");
+            SetFloat(serializedObject, "angleStep", row, "angleStep");
+            SetString(serializedObject, "muzzleNamePrefix", Get(row, "muzzleNamePrefix"));
+
+            serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(config);
+        }
+    }
+
+    [MenuItem("Tools/Balance/SO to CSV/Units")]
     public static void ExportUnits()
     {
         string[] headers =
@@ -152,12 +192,12 @@ public static class BalanceCsvImporter
         Debug.Log($"유닛 SO CSV 내보내기 완료: {UnitCsvPath}");
     }
 
-    [MenuItem("Tools/Balance/Export Weapons CSV")]
+    [MenuItem("Tools/Balance/SO to CSV/Weapons")]
     public static void ExportWeapons()
     {
         string[] headers =
         {
-            "id", "displayName", "attackDamage", "speed", "lifetime", "collisionRadius", "knockbackForce",
+            "id", "displayName", "weaponCategory", "attackDamage", "speed", "lifetime", "collisionRadius", "knockbackForce",
             "multiMuzzleFireMode", "maxBurstMuzzleCount", "muzzleNamePrefix", "fireFlashEffect",
             "projectileEffect", "hitEffect", "effectCleanupDelay"
         };
@@ -169,6 +209,7 @@ public static class BalanceCsvImporter
             {
                 config.Id,
                 config.DisplayName,
+                config.WeaponCategory,
                 FormatFloat(config.AttackDamage),
                 FormatFloat(config.Speed),
                 FormatFloat(config.Lifetime),
@@ -188,13 +229,13 @@ public static class BalanceCsvImporter
         Debug.Log($"무기 SO CSV 내보내기 완료: {WeaponCsvPath}");
     }
 
-    [MenuItem("Tools/Balance/Export Enemies CSV")]
+    [MenuItem("Tools/Balance/SO to CSV/Enemies")]
     public static void ExportEnemies()
     {
         string[] headers =
         {
             "id", "displayName", "enemyPrefab", "maxHealth", "moveSpeed", "stopDistance", "contactDamage",
-            "contactInterval", "experienceReward"
+            "contactInterval", "experienceReward", "creditReward", "coreCrystalReward"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -210,12 +251,54 @@ public static class BalanceCsvImporter
                 FormatFloat(config.StopDistance),
                 FormatFloat(config.ContactDamage),
                 FormatFloat(config.ContactInterval),
-                FormatFloat(config.ExperienceReward)
+                FormatFloat(config.ExperienceReward),
+                config.CreditReward.ToString(CultureInfo.InvariantCulture),
+                config.CoreCrystalReward.ToString(CultureInfo.InvariantCulture)
             });
         }
 
         WriteCsv(EnemyCsvPath, headers, rows);
         Debug.Log($"적 SO CSV 내보내기 완료: {EnemyCsvPath}");
+    }
+
+    [MenuItem("Tools/Balance/SO to CSV/Drones")]
+    public static void ExportDrones()
+    {
+        string[] headers =
+        {
+            "id", "displayName", "dronePrefab", "projectileConfig", "attackDamage", "attackRange", "attackInterval",
+            "fireAngleTolerance", "rotationSpeed", "targetMask", "projectileSpeed", "projectileLifetime",
+            "droneCount", "followRadius", "followSpeed", "startAngle", "angleStep", "muzzleNamePrefix"
+        };
+
+        List<string[]> rows = new List<string[]>();
+        foreach (DroneConfig config in LoadAllAssets<DroneConfig>(DroneOutputPath))
+        {
+            rows.Add(new[]
+            {
+                config.Id,
+                config.DisplayName,
+                GetAssetPath(config.DronePrefab),
+                GetAssetPath(config.ProjectileConfig),
+                FormatFloat(config.AttackDamage),
+                FormatFloat(config.AttackRange),
+                FormatFloat(config.AttackInterval),
+                FormatFloat(config.FireAngleTolerance),
+                FormatFloat(config.RotationSpeed),
+                config.TargetMask.value.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.ProjectileSpeed),
+                FormatFloat(config.ProjectileLifetime),
+                config.DroneCount.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.FollowRadius),
+                FormatFloat(config.FollowSpeed),
+                FormatFloat(config.StartAngle),
+                FormatFloat(config.AngleStep),
+                config.MuzzleNamePrefix
+            });
+        }
+
+        WriteCsv(DroneCsvPath, headers, rows);
+        Debug.Log($"드론 SO CSV 내보내기 완료: {DroneCsvPath}");
     }
 
     private static T LoadOrCreate<T>(string outputPath, string id, string prefix) where T : ScriptableObject
@@ -239,6 +322,7 @@ public static class BalanceCsvImporter
         EnsureFolder(UnitOutputPath);
         EnsureFolder(WeaponOutputPath);
         EnsureFolder(EnemyOutputPath);
+        EnsureFolder(DroneOutputPath);
     }
 
     private static void EnsureFolder(string path)
@@ -384,6 +468,8 @@ public static class BalanceCsvImporter
                 return weapon.Id;
             case EnemyConfig enemy:
                 return enemy.Id;
+            case DroneConfig drone:
+                return drone.Id;
             default:
                 return asset.name;
         }

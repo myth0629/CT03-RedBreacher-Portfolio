@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c529ea981bc074109bb7afba98b3e58f, type: 3}
+  m_Name: Weapon_11
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
+  id: 11
+  displayName: "\uD3EC\uD0C411"
+  attackDamage: 37
+  speed: 20
+  lifetime: 2
+  collisionRadius: 0.2
+  knockbackForce: 2
+  multiMuzzleFireMode: 2
+  maxBurstMuzzleCount: 3
+  muzzleNamePrefix: FireMuzzle
+  fireFlashEffectPrefab: {fileID: 1477807231266488, guid: 87ad75dca7ceef44bafef0a49761f8fb, type: 3}
+  projectileEffectPrefab: {fileID: 1557811069740550, guid: e169186eaec8f4f41936afd7475bf028, type: 3}
+  hitEffectPrefab: {fileID: 1914345040822934, guid: 3a3ebdd477adb6444969752e68f9e55e, type: 3}
+  effectCleanupDelay: 2
