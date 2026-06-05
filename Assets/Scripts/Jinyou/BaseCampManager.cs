@@ -10,6 +10,7 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private EnergyRefinery energyRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
+    [SerializeField] private InventoryFacility inventory;
     [SerializeField] private bool autoFindFacilities = true;
 
     [Header("Facility Panels")]
@@ -37,6 +38,7 @@ public class BaseCampManager : MonoBehaviour
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
+    public InventoryFacility Inventory => ResolveInventory();
     public int CommanderLevel => commanderLevel;
     public int Credits => CurrencyWallet.Credits;
     public int CoreCrystals => CurrencyWallet.CoreCrystals;
@@ -91,6 +93,7 @@ public class BaseCampManager : MonoBehaviour
         energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
+        inventory ??= FindFirstObjectByType<InventoryFacility>();
     }
 
     public void CollectRefineryCredits()
@@ -146,6 +149,54 @@ public class BaseCampManager : MonoBehaviour
         coreCharger?.TryInvestOption(optionId);
     }
 
+    public void SelectAssemblyWeapon(int weaponIndex)
+    {
+        assemblyFactory?.TrySelectWeapon(weaponIndex);
+    }
+
+    public void SelectAssemblyWeapon(ProjectileConfig weaponConfig)
+    {
+        assemblyFactory?.TrySelectWeapon(weaponConfig);
+    }
+
+    public void EnhanceAssemblyWeapon()
+    {
+        if (assemblyFactory == null)
+        {
+            return;
+        }
+
+        int availableCredits = Credits;
+        if (assemblyFactory.TryEnhanceSelectedWeapon(ref availableCredits))
+        {
+            SetCreditsForFacility(availableCredits);
+        }
+    }
+
+    public void SelectCoreUnit(int unitIndex)
+    {
+        coreCharger?.TrySelectUnit(unitIndex);
+    }
+
+    public void SelectCoreUnit(PlayerUnitConfig unitConfig)
+    {
+        coreCharger?.TrySelectUnit(unitConfig);
+    }
+
+    public void EnhanceCoreUnit()
+    {
+        if (coreCharger == null)
+        {
+            return;
+        }
+
+        int availableCredits = Credits;
+        if (coreCharger.TryEnhanceSelectedUnit(ref availableCredits))
+        {
+            SetCreditsForFacility(availableCredits);
+        }
+    }
+
     public void UseBossTicket()
     {
         researchLab?.TryUseBossTicket();
@@ -185,6 +236,11 @@ public class BaseCampManager : MonoBehaviour
     public void AddCommanderLevel(int amount)
     {
         SetCommanderLevel(commanderLevel + Mathf.Max(0, amount));
+    }
+
+    public void SetCreditsForFacility(int value)
+    {
+        SetCredits(value);
     }
 
     public void SetCommanderLevel(int value)
@@ -306,6 +362,17 @@ public class BaseCampManager : MonoBehaviour
 
         playerProgression = FindFirstObjectByType<PlayerProgression>();
         return playerProgression;
+    }
+
+    private InventoryFacility ResolveInventory()
+    {
+        if (inventory != null)
+        {
+            return inventory;
+        }
+
+        inventory = FindFirstObjectByType<InventoryFacility>();
+        return inventory;
     }
 
     private void RegisterCurrencyWalletEvents()

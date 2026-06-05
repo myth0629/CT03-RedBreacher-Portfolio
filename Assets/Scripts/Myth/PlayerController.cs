@@ -109,6 +109,13 @@ public class PlayerController : MonoBehaviour
         ApplyHealthStats();
     }
 
+    public void SetWeaponConfig(ProjectileConfig config)
+    {
+        weaponConfig = config;
+        RefreshFireMuzzles();
+        nextAttackTime = 0f;
+    }
+
     private void Update()
     {
         CombatPlane.ClampTransform(transform);

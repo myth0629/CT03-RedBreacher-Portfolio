@@ -195,6 +195,16 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return false;
     }
 
+    public bool TrySelectRoute(string routeId)
+    {
+        return TrySelectUnit(ParseIndexId(routeId));
+    }
+
+    public bool TrySelectOption(string optionId)
+    {
+        return TrySelectUnit(ParseIndexId(optionId));
+    }
+
     public bool HasUnitEnhancement(PlayerUnitConfig unitConfig)
     {
         return FindUnitEnhancement(unitConfig) != null;
@@ -217,6 +227,42 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
         availableCredits -= SelectedUnitEnhancement.NextEnhanceCost;
         EnhanceSelectedUnit();
+        return true;
+    }
+
+    public bool TryInvestRoute(string routeId)
+    {
+        if (!TrySelectRoute(routeId))
+        {
+            return false;
+        }
+
+        BaseCampManager manager = BaseCampManager.Instance;
+        int availableCredits = manager != null ? manager.Credits : int.MaxValue;
+        if (!TryEnhanceSelectedUnit(ref availableCredits))
+        {
+            return false;
+        }
+
+        manager?.SetCreditsForFacility(availableCredits);
+        return true;
+    }
+
+    public bool TryInvestOption(string optionId)
+    {
+        if (!TrySelectOption(optionId))
+        {
+            return false;
+        }
+
+        BaseCampManager manager = BaseCampManager.Instance;
+        int availableCredits = manager != null ? manager.Credits : int.MaxValue;
+        if (!TryEnhanceSelectedUnit(ref availableCredits))
+        {
+            return false;
+        }
+
+        manager?.SetCreditsForFacility(availableCredits);
         return true;
     }
 
@@ -409,6 +455,36 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
 
         return unitEnhancements[index];
+    }
+
+    private int ParseIndexId(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return selectedUnitIndex;
+        }
+
+        if (int.TryParse(value, out int parsedIndex))
+        {
+            return Mathf.Clamp(parsedIndex, 0, Mathf.Max(0, unitEnhancements.Count - 1));
+        }
+
+        for (int i = 0; i < unitEnhancements.Count; i++)
+        {
+            UnitEnhancement enhancement = unitEnhancements[i];
+            if (enhancement == null)
+            {
+                continue;
+            }
+
+            if (string.Equals(enhancement.DisplayName, value, StringComparison.OrdinalIgnoreCase)
+                || (enhancement.unitConfig != null && string.Equals(enhancement.unitConfig.Id, value, StringComparison.OrdinalIgnoreCase)))
+            {
+                return i;
+            }
+        }
+
+        return selectedUnitIndex;
     }
 
     private void NormalizeUpgradeDurations()
