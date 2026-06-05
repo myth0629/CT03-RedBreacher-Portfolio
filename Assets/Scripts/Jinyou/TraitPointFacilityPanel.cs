@@ -17,7 +17,6 @@ public class TraitPointFacilityPanel : MonoBehaviour
     [SerializeField] private Button critChanceButton;
     [SerializeField] private Button critMultiplierButton;
     [SerializeField] private Button resetButton;
-    [SerializeField] private Button closeButton;
 
     private void OnEnable()
     {
@@ -27,7 +26,6 @@ public class TraitPointFacilityPanel : MonoBehaviour
         critChanceButton?.onClick.AddListener(InvestCritChance);
         critMultiplierButton?.onClick.AddListener(InvestCritMultiplier);
         resetButton?.onClick.AddListener(ResetTraits);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
@@ -38,7 +36,6 @@ public class TraitPointFacilityPanel : MonoBehaviour
         critChanceButton?.onClick.RemoveListener(InvestCritChance);
         critMultiplierButton?.onClick.RemoveListener(InvestCritMultiplier);
         resetButton?.onClick.RemoveListener(ResetTraits);
-        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void Update()

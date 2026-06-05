@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class StrategyResearchLab : MonoBehaviour, IBaseCampFacility
+public class CommandCenter : MonoBehaviour, IBaseCampFacility
 {
     [Serializable]
     public class FacilityUnlock

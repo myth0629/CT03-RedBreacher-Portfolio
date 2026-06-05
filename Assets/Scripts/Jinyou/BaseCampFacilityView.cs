@@ -157,7 +157,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
             return true;
         }
 
-        StrategyResearchLab researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
+        CommandCenter researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
         if (researchLab == null)
         {
             return true;

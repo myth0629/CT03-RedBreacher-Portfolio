@@ -6,7 +6,7 @@ public class BaseCampManager : MonoBehaviour
     public static BaseCampManager Instance { get; private set; }
 
     [Header("Facilities")]
-    [SerializeField] private StrategyResearchLab researchLab;
+    [SerializeField] private CommandCenter researchLab;
     [SerializeField] private EnergyRefinery energyRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
@@ -35,7 +35,7 @@ public class BaseCampManager : MonoBehaviour
 
     private PlayerCurrencyWallet registeredCurrencyWallet;
 
-    public StrategyResearchLab ResearchLab => researchLab;
+    public CommandCenter ResearchLab => researchLab;
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
@@ -91,7 +91,7 @@ public class BaseCampManager : MonoBehaviour
             return;
         }
 
-        researchLab ??= FindFirstObjectByType<StrategyResearchLab>();
+        researchLab ??= FindFirstObjectByType<CommandCenter>();
         energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
