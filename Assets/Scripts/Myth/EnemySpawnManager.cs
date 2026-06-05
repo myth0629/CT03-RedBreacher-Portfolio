@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
@@ -23,6 +24,8 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] private PlayerController player;
     [SerializeField] private Transform playerRespawnPoint;
     [SerializeField] private float restartDelayOnPlayerDeath = 3f;
+    [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private TMP_Text gameOverCountdownText;
 
     [Header("Enemy Scaling")]
     [SerializeField] private float healthIncreasePerStage = 0.2f;
@@ -69,6 +72,7 @@ public class EnemySpawnManager : MonoBehaviour
         fallbackPlayerRespawnPosition = player != null
             ? CombatPlane.WithFixedY(player.transform.position)
             : CombatPlane.WithFixedY(transform.position);
+        SetGameOverPanelActive(false);
         currentStage = Mathf.Max(1, startStage);
         currentRound = LoadCurrentRound();
         RefreshStageRoundState();
@@ -366,6 +370,7 @@ public class EnemySpawnManager : MonoBehaviour
             return;
         }
 
+        SetGameOverPanelActive(true);
         playerDeathRestartRoutine = StartCoroutine(RestartCurrentStageAfterPlayerDeath());
     }
 
@@ -384,7 +389,13 @@ public class EnemySpawnManager : MonoBehaviour
         ClearSpawnedEnemies();
 
         // 사망 연출/확인 시간을 둔 뒤 현재 스테이지를 처음부터 다시 시작한다.
-        yield return new WaitForSeconds(Mathf.Max(0f, restartDelayOnPlayerDeath));
+        float remainingSeconds = Mathf.Max(0f, restartDelayOnPlayerDeath);
+        while (remainingSeconds > 0f)
+        {
+            UpdateGameOverCountdown(remainingSeconds);
+            remainingSeconds -= Time.deltaTime;
+            yield return null;
+        }
 
         RevivePlayer();
         currentRound = GetFirstRoundForStage(stageToRestart);
@@ -406,6 +417,7 @@ public class EnemySpawnManager : MonoBehaviour
         player.transform.position = GetPlayerRespawnPosition();
         player.Health.Initialize(player.Health.MaxHealth);
         CombatPlane.ClampTransform(player.transform);
+        SetGameOverPanelActive(false);
     }
 
     private void ResolvePlayer()
@@ -424,6 +436,28 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         return CombatPlane.WithFixedY(fallbackPlayerRespawnPosition);
+    }
+
+    private void SetGameOverPanelActive(bool isActive)
+    {
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(isActive);
+        }
+
+        if (!isActive && gameOverCountdownText != null)
+        {
+            gameOverCountdownText.text = string.Empty;
+        }
+    }
+
+    private void UpdateGameOverCountdown(float remainingSeconds)
+    {
+        if (gameOverCountdownText != null)
+        {
+            int displaySeconds = Mathf.Max(1, Mathf.CeilToInt(remainingSeconds));
+            gameOverCountdownText.text = $"{displaySeconds}초 뒤 다시 시작합니다.";
+        }
     }
 
     private void ClearSpawnedEnemies()
