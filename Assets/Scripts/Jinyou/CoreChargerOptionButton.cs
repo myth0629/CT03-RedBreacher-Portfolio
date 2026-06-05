@@ -6,7 +6,7 @@ public class CoreChargerOptionButton : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private CoreChargerPanel coreChargerPanel;
-    [SerializeField] private string optionId;
+    [SerializeField] private int unitIndex;
     [SerializeField] private Button optionButton;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text stateText;
@@ -14,18 +14,19 @@ public class CoreChargerOptionButton : MonoBehaviour
     [SerializeField] private Image selectedFrame;
 
     private CoreCharger coreCharger;
-    public string OptionId => optionId;
+
+    public int UnitIndex => unitIndex;
 
     private void OnEnable()
     {
         ResolveReferences();
-        optionButton?.onClick.AddListener(SelectOption);
+        optionButton?.onClick.AddListener(SelectUnit);
         Refresh();
     }
 
     private void OnDisable()
     {
-        optionButton?.onClick.RemoveListener(SelectOption);
+        optionButton?.onClick.RemoveListener(SelectUnit);
     }
 
     private void Update()
@@ -33,38 +34,18 @@ public class CoreChargerOptionButton : MonoBehaviour
         Refresh();
     }
 
-    public void Configure(
-        BaseCampManager manager,
-        CoreChargerPanel panel,
-        string targetOptionId,
-        Button button,
-        TMP_Text title,
-        TMP_Text state)
+    public void Configure(BaseCampManager manager, CoreChargerPanel panel, int targetUnitIndex)
     {
         baseCampManager = manager;
         coreChargerPanel = panel;
-        optionId = targetOptionId;
-        optionButton = button;
-        titleText = title;
-        stateText = state;
+        unitIndex = targetUnitIndex;
         Refresh();
     }
 
-    public void Configure(
-        BaseCampManager manager,
-        CoreChargerPanel panel,
-        string targetOptionId)
-    {
-        baseCampManager = manager;
-        coreChargerPanel = panel;
-        optionId = targetOptionId;
-        Refresh();
-    }
-
-    public void SelectOption()
+    public void SelectUnit()
     {
         ResolveReferences();
-        coreChargerPanel?.SelectOption(optionId);
+        coreChargerPanel?.SelectUnitByIndex(unitIndex);
         Refresh();
     }
 
@@ -72,9 +53,10 @@ public class CoreChargerOptionButton : MonoBehaviour
     {
         ResolveReferences();
 
-        if (coreCharger == null || !coreCharger.TryGetOption(optionId, out CoreCharger.CoreRoute route, out CoreCharger.CoreRouteOption option))
+        CoreCharger.UnitEnhancement unitEnhancement = GetUnitEnhancement();
+        if (unitEnhancement == null)
         {
-            SetText(titleText, string.IsNullOrEmpty(optionId) ? "Option" : optionId);
+            SetText(titleText, $"Unit {unitIndex + 1}");
             SetText(stateText, "Not connected");
             SetInteractable(false);
             SetActive(lockedOverlay, true);
@@ -82,19 +64,24 @@ public class CoreChargerOptionButton : MonoBehaviour
             return;
         }
 
-        bool unlocked = coreCharger.IsOptionUnlocked(route, option);
-        bool selected = option.optionId == coreCharger.SelectedOptionId;
-        int maxPoints = coreCharger.GetOptionMaxPoints(option);
-        float bonus = coreCharger.GetOptionBonus(option);
-        float bonusPerPoint = coreCharger.GetCurrentOptionTierBonusPerPoint(option);
-
-        SetText(titleText, option.displayName);
-        SetText(stateText, unlocked
-            ? $"{option.investedPoints}/{maxPoints} {option.statId} +{bonus:0.##} (+{bonusPerPoint:0.##}/pt)"
-            : $"Locked: route {option.requiredRoutePoints}");
-        SetInteractable(unlocked);
-        SetActive(lockedOverlay, !unlocked);
+        bool selected = unitIndex == coreCharger.SelectedUnitIndex;
+        SetText(titleText, unitEnhancement.DisplayName);
+        SetText(stateText, unitEnhancement.IsMaxLevel
+            ? $"Lv.MAX / Cost --"
+            : $"Lv.{unitEnhancement.enhanceLevel}/{unitEnhancement.MaxEnhanceLevel} / Cost {unitEnhancement.NextEnhanceCost}");
+        SetInteractable(true);
+        SetActive(lockedOverlay, false);
         SetActive(selectedFrame, selected);
+    }
+
+    private CoreCharger.UnitEnhancement GetUnitEnhancement()
+    {
+        if (coreCharger == null || unitIndex < 0 || unitIndex >= coreCharger.UnitEnhancements.Count)
+        {
+            return null;
+        }
+
+        return coreCharger.UnitEnhancements[unitIndex];
     }
 
     private void ResolveReferences()

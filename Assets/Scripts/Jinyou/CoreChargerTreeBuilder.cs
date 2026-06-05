@@ -13,7 +13,6 @@ public class CoreChargerTreeBuilder : MonoBehaviour
 
     private CoreCharger coreCharger;
     private readonly List<GameObject> spawnedObjects = new List<GameObject>();
-    private string builtRouteId;
 
     private void OnEnable()
     {
@@ -25,70 +24,37 @@ public class CoreChargerTreeBuilder : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        ResolveReferences();
-
-        if (coreCharger != null && coreCharger.SelectedRouteId != builtRouteId)
-        {
-            RebuildSelectedRoute();
-        }
-    }
-
     public void RebuildSelectedRoute()
     {
-        ResolveReferences();
-
-        if (coreCharger == null)
-        {
-            Clear();
-            builtRouteId = string.Empty;
-            return;
-        }
-
-        string routeId = string.IsNullOrEmpty(coreCharger.SelectedRouteId)
-            ? "health"
-            : coreCharger.SelectedRouteId;
-        RebuildRoute(routeId);
+        RebuildUnits();
     }
 
     public void RebuildRoute(string routeId)
     {
+        RebuildUnits();
+    }
+
+    public void RebuildUnits()
+    {
         ResolveReferences();
         Clear();
-        builtRouteId = routeId;
 
-        if (contentRoot == null
-            || optionNodePrefab == null
-            || coreCharger == null
-            || !coreCharger.TryGetRoute(routeId, out CoreCharger.CoreRoute route)
-            || route.options == null)
+        if (contentRoot == null || optionNodePrefab == null || coreCharger == null)
         {
             return;
         }
 
-        Dictionary<int, RectTransform> tierRows = new Dictionary<int, RectTransform>();
-        foreach (CoreCharger.CoreRouteOption option in route.options)
+        RectTransform row = GetOrCreateRow();
+        for (int i = 0; i < coreCharger.UnitEnhancements.Count; i++)
         {
-            if (option == null)
-            {
-                continue;
-            }
-
-            RectTransform row = GetOrCreateTierRow(tierRows, Mathf.Max(1, option.tier));
             CoreChargerOptionButton node = Instantiate(optionNodePrefab, row);
-            node.Configure(baseCampManager, coreChargerPanel, option.optionId);
+            node.Configure(baseCampManager, coreChargerPanel, i);
             spawnedObjects.Add(node.gameObject);
         }
     }
 
-    private RectTransform GetOrCreateTierRow(Dictionary<int, RectTransform> tierRows, int tier)
+    private RectTransform GetOrCreateRow()
     {
-        if (tierRows.TryGetValue(tier, out RectTransform existingRow))
-        {
-            return existingRow;
-        }
-
         RectTransform row;
         if (tierRowPrefab != null)
         {
@@ -98,7 +64,7 @@ public class CoreChargerTreeBuilder : MonoBehaviour
         }
         else
         {
-            GameObject rowObject = new GameObject($"Tier {tier}", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            GameObject rowObject = new GameObject("Units", typeof(RectTransform), typeof(HorizontalLayoutGroup));
             row = rowObject.GetComponent<RectTransform>();
             row.SetParent(contentRoot, false);
             HorizontalLayoutGroup layout = rowObject.GetComponent<HorizontalLayoutGroup>();
@@ -109,8 +75,7 @@ public class CoreChargerTreeBuilder : MonoBehaviour
             spawnedObjects.Add(rowObject);
         }
 
-        row.name = $"Tier {tier}";
-        tierRows.Add(tier, row);
+        row.name = "Units";
         return row;
     }
 

@@ -73,15 +73,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private float MaxHealthValue => unitConfig != null ? unitConfig.MaxHealth : maxHealth;
-    private float CritChanceValue => unitConfig != null ? unitConfig.CritChance : critChance;
-    private float CritMultiplierValue => unitConfig != null ? unitConfig.CritMultiplier : critMultiplier;
-    private float AttackRangeValue => unitConfig != null ? unitConfig.AttackRange : attackRange;
-    private float AttackDamageValue => unitConfig != null ? unitConfig.AttackDamage : attackDamage;
-    private float AttackIntervalValue => unitConfig != null ? unitConfig.AttackInterval : attackInterval;
-    private float MoveSpeedValue => unitConfig != null ? unitConfig.MoveSpeed : moveSpeed;
-    private float RotationSpeedValue => unitConfig != null ? unitConfig.RotationSpeed : rotationSpeed;
-    private float FireAngleToleranceValue => unitConfig != null ? unitConfig.FireAngleTolerance : fireAngleTolerance;
+    private float MaxHealthValue => Mathf.Max(1f, (unitConfig != null ? unitConfig.MaxHealth : maxHealth) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.MaxHealth));
+    private float CritChanceValue => Mathf.Clamp01((unitConfig != null ? unitConfig.CritChance : critChance) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.CritChance));
+    private float CritMultiplierValue => Mathf.Max(1f, (unitConfig != null ? unitConfig.CritMultiplier : critMultiplier) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.CritMultiplier));
+    private float AttackRangeValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.AttackRange : attackRange) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.AttackRange));
+    private float AttackDamageValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.AttackDamage : attackDamage) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.AttackDamage));
+    private float AttackIntervalValue => Mathf.Max(0.01f, (unitConfig != null ? unitConfig.AttackInterval : attackInterval) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.AttackInterval));
+    private float MoveSpeedValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.MoveSpeed : moveSpeed) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.MoveSpeed));
+    private float RotationSpeedValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.RotationSpeed : rotationSpeed) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.RotationSpeed));
+    private float FireAngleToleranceValue => Mathf.Max(0f, (unitConfig != null ? unitConfig.FireAngleTolerance : fireAngleTolerance) + GetUnitStatBonus(CoreCharger.UnitEnhancementStat.FireAngleTolerance));
     private ProjectileConfig ProjectileConfigValue => weaponConfig;
 
     private void Awake()
@@ -480,6 +480,7 @@ public class PlayerController : MonoBehaviour
         projectile.transform.position = GetFirePosition(muzzle, direction);
         projectile.Configure(activeProjectileConfig);
         projectile.ConfigureEffects(fireFlashEffectPrefab, projectileEffectPrefab, hitEffectPrefab);
+        projectile.ConfigureRuntimeStats(GetProjectileCollisionRadius(activeProjectileConfig), GetProjectileKnockbackForce(activeProjectileConfig));
         projectile.Launch(direction, damage, GetProjectileSpeed(activeProjectileConfig), GetProjectileLifetime(activeProjectileConfig), health);
     }
 
@@ -501,7 +502,14 @@ public class PlayerController : MonoBehaviour
 
     private float GetWeaponAttackDamage(ProjectileConfig activeProjectileConfig)
     {
-        return activeProjectileConfig != null ? activeProjectileConfig.AttackDamage : 0f;
+        float damage = activeProjectileConfig != null ? activeProjectileConfig.AttackDamage : 0f;
+        BaseCampManager baseCampManager = BaseCampManager.Instance;
+        if (baseCampManager != null && baseCampManager.AssemblyFactory != null)
+        {
+            damage += baseCampManager.AssemblyFactory.GetWeaponStatBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.AttackDamage);
+        }
+
+        return damage;
     }
 
     private Vector3 GetFirePosition(Transform muzzle, Vector3 direction)
@@ -625,12 +633,48 @@ public class PlayerController : MonoBehaviour
 
     private float GetProjectileSpeed(ProjectileConfig activeProjectileConfig)
     {
-        return activeProjectileConfig != null ? activeProjectileConfig.Speed : projectileSpeed;
+        float speed = activeProjectileConfig != null ? activeProjectileConfig.Speed : projectileSpeed;
+        return Mathf.Max(0f, speed + GetWeaponStatBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.Speed));
     }
 
     private float GetProjectileLifetime(ProjectileConfig activeProjectileConfig)
     {
-        return activeProjectileConfig != null ? activeProjectileConfig.Lifetime : projectileLifetime;
+        float lifetime = activeProjectileConfig != null ? activeProjectileConfig.Lifetime : projectileLifetime;
+        return Mathf.Max(0f, lifetime + GetWeaponStatBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.Lifetime));
+    }
+
+    private float GetProjectileCollisionRadius(ProjectileConfig activeProjectileConfig)
+    {
+        float collisionRadius = activeProjectileConfig != null ? activeProjectileConfig.CollisionRadius : 0.2f;
+        return Mathf.Max(0f, collisionRadius + GetWeaponStatBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.CollisionRadius));
+    }
+
+    private float GetProjectileKnockbackForce(ProjectileConfig activeProjectileConfig)
+    {
+        float knockbackForce = activeProjectileConfig != null ? activeProjectileConfig.KnockbackForce : 2f;
+        return Mathf.Max(0f, knockbackForce + GetWeaponStatBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.KnockbackForce));
+    }
+
+    private float GetWeaponStatBonus(ProjectileConfig activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat stat)
+    {
+        BaseCampManager baseCampManager = BaseCampManager.Instance;
+        if (baseCampManager == null || baseCampManager.AssemblyFactory == null)
+        {
+            return 0f;
+        }
+
+        return baseCampManager.AssemblyFactory.GetWeaponStatBonus(activeProjectileConfig, stat);
+    }
+
+    private float GetUnitStatBonus(CoreCharger.UnitEnhancementStat stat)
+    {
+        BaseCampManager baseCampManager = BaseCampManager.Instance;
+        if (baseCampManager == null || baseCampManager.CoreCharger == null)
+        {
+            return 0f;
+        }
+
+        return baseCampManager.CoreCharger.GetUnitStatBonus(unitConfig, stat);
     }
 
     private void SetVehicleMoveInput(float torque, float steering)
