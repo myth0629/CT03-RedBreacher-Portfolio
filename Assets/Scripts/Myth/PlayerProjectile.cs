@@ -229,7 +229,9 @@ public class PlayerProjectile : MonoBehaviour
         for (int i = 0; i < behaviours.Length; i++)
         {
             MonoBehaviour behaviour = behaviours[i];
-            if (behaviour != null && behaviour.GetType().Name == "ProjectileMoveScript")
+            if (behaviour != null
+                && (behaviour.GetType().Name == "ProjectileMoveScript"
+                    || behaviour.GetType().Name == "HS_ProjectileMover"))
             {
                 behaviour.enabled = false;
             }
@@ -238,10 +240,16 @@ public class PlayerProjectile : MonoBehaviour
         Rigidbody[] rigidbodies = effect.GetComponentsInChildren<Rigidbody>(true);
         for (int i = 0; i < rigidbodies.Length; i++)
         {
-            rigidbodies[i].linearVelocity = Vector3.zero;
-            rigidbodies[i].angularVelocity = Vector3.zero;
-            rigidbodies[i].isKinematic = true;
-            rigidbodies[i].useGravity = false;
+            Rigidbody effectBody = rigidbodies[i];
+            if (!effectBody.isKinematic)
+            {
+                // Kinematic Rigidbody에는 속도를 설정할 수 없으므로 동적 바디만 먼저 정지한다.
+                effectBody.linearVelocity = Vector3.zero;
+                effectBody.angularVelocity = Vector3.zero;
+            }
+
+            effectBody.isKinematic = true;
+            effectBody.useGravity = false;
         }
 
         Collider[] colliders = effect.GetComponentsInChildren<Collider>(true);
@@ -410,16 +418,41 @@ public class PlayerProjectile : MonoBehaviour
 
     private void TryGrantEquipmentPart(EnemyController enemy)
     {
-        if (enemy == null || Random.value >= enemy.PartDropChance)
+        if (enemy == null)
         {
             return;
         }
 
         InventoryFacility inventory = BaseCampManager.Instance != null
             ? BaseCampManager.Instance.Inventory
-            : FindFirstObjectByType<InventoryFacility>();
-        if (inventory == null || inventory.EquipmentPartConfigs.Count == 0)
+            : InventoryFacility.FindAny();
+        if (inventory == null)
         {
+            Debug.LogWarning("[파츠 드롭] InventoryFacility를 찾지 못해 드롭을 처리할 수 없습니다.", enemy.gameObject);
+            return;
+        }
+
+        float dropChance = enemy.PartDropChance;
+        float dropRoll = Random.value;
+        bool dropSucceeded = inventory.ForceEquipmentPartDrop || dropRoll < dropChance;
+        if (inventory.LogEquipmentPartDropRolls)
+        {
+            string result = dropSucceeded ? "성공" : "실패";
+            string forced = inventory.ForceEquipmentPartDrop ? " / 강제 드롭" : string.Empty;
+            Debug.Log(
+                $"[파츠 드롭 판정] {result} / 확률 {dropChance * 100f:0.##}% / "
+                + $"롤 {dropRoll * 100f:0.##}%{forced}",
+                enemy.gameObject);
+        }
+
+        if (!dropSucceeded)
+        {
+            return;
+        }
+
+        if (inventory.EquipmentPartConfigs.Count == 0)
+        {
+            Debug.LogWarning("[파츠 드롭] EquipmentPartConfig 목록이 비어 있습니다.", enemy.gameObject);
             return;
         }
 
@@ -429,7 +462,35 @@ public class PlayerProjectile : MonoBehaviour
         EquipmentPartInstance part = EquipmentPartGenerator.Create(
             config,
             EquipmentPartGenerator.RollRarity());
-        inventory.AddEquipmentPart(part);
+        if (inventory.AddEquipmentPart(part))
+        {
+            inventory.PlayEquipmentPartDropVisual(config, part, enemy.transform.position);
+            Debug.Log(
+                $"[파츠 드롭] {config.DisplayName} / {GetEquipmentRarityName(part.rarity)} / "
+                + $"{GetEquipmentSlotName(part.slot)} / 주옵 {part.mainStatValue * 100f:0.##}% / "
+                + $"보유 {inventory.EquipmentParts.Count}개",
+                enemy.gameObject);
+        }
+    }
+
+    private static string GetEquipmentRarityName(EquipmentPartRarity rarity)
+    {
+        return rarity switch
+        {
+            EquipmentPartRarity.Rare => "희귀",
+            EquipmentPartRarity.Epic => "영웅",
+            _ => "일반"
+        };
+    }
+
+    private static string GetEquipmentSlotName(EquipmentPartSlot slot)
+    {
+        return slot switch
+        {
+            EquipmentPartSlot.Armor => "장갑",
+            EquipmentPartSlot.Engine => "엔진",
+            _ => "칩"
+        };
     }
 
     private void ApplyKnockback(CombatHealth target)

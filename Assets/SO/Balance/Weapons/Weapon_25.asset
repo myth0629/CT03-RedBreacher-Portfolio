@@ -14,10 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 20
   displayName: "\uD3EC\uD0C420"
+  weaponCategory: "\uD3EC\uD0C4"
   attackDamage: 100
+  attackType: 0
+  areaRadius: 2
+  areaDamageMultiplier: 0.7
+  maxAreaTargets: 10
   speed: 20
   lifetime: 2
-  collisionRadius: 0.2
+  collisionRadius: 0.4
   knockbackForce: 5
   multiMuzzleFireMode: 2
   maxBurstMuzzleCount: 3

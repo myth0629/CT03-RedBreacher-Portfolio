@@ -96,7 +96,7 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
         traitPointFacility ??= FindFirstObjectByType<TraitPointFacility>();
-        inventory ??= FindFirstObjectByType<InventoryFacility>();
+        inventory ??= InventoryFacility.FindAny();
     }
 
     public void CollectRefineryCredits()
@@ -385,7 +385,7 @@ public class BaseCampManager : MonoBehaviour
             return inventory;
         }
 
-        inventory = FindFirstObjectByType<InventoryFacility>();
+        inventory = InventoryFacility.FindAny();
         return inventory;
     }
 

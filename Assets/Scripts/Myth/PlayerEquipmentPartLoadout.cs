@@ -182,7 +182,7 @@ public class PlayerEquipmentPartLoadout : MonoBehaviour
 
         inventory = BaseCampManager.Instance != null
             ? BaseCampManager.Instance.Inventory
-            : FindFirstObjectByType<InventoryFacility>();
+            : InventoryFacility.FindAny();
     }
 
     private string GetEquippedId(EquipmentPartSlot slot)

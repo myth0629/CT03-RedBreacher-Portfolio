@@ -33,20 +33,57 @@ public class InventoryFacility : MonoBehaviour
     [SerializeField] private List<EquipmentPartInstance> equipmentParts = new List<EquipmentPartInstance>();
     [SerializeField] private bool saveEquipmentPartsToPlayerPrefs = true;
 
+    [Header("Equipment Part Drop Visual")]
+    [SerializeField] private bool playEquipmentPartDropVisual = true;
+    [SerializeField] private Transform equipmentPartCollectTarget;
+    [SerializeField] private float partDropPopDuration = 0.25f;
+    [SerializeField] private float partDropHoldDuration = 0.35f;
+    [SerializeField] private float partDropCollectDuration = 0.45f;
+    [SerializeField] private float partDropPopDistance = 0.8f;
+    [SerializeField] private float partDropVisualSize = 0.7f;
+    [SerializeField] private int partDropSortingOrder = 20;
+
+    [Header("Equipment Part Drop Debug")]
+    [SerializeField] private bool logEquipmentPartDropRolls = true;
+    [SerializeField] private bool forceEquipmentPartDrop;
+
     [Header("Events")]
     public UnityEvent OnInventoryChanged = new UnityEvent();
     public UnityEvent OnEquipmentPartsChanged = new UnityEvent();
 
+    private bool equipmentPartsInitialized;
+
     public IReadOnlyList<ProjectileConfig> WeaponConfigs => weaponConfigs;
     public IReadOnlyList<WeaponStack> WeaponStacks => weaponStacks;
     public IReadOnlyList<PlayerUnitConfig> UnitConfigs => unitConfigs;
-    public IReadOnlyList<EquipmentPartConfig> EquipmentPartConfigs => equipmentPartConfigs;
-    public IReadOnlyList<EquipmentPartInstance> EquipmentParts => equipmentParts;
+    public IReadOnlyList<EquipmentPartConfig> EquipmentPartConfigs
+    {
+        get
+        {
+            EnsureEquipmentPartsInitialized();
+            return equipmentPartConfigs;
+        }
+    }
+    public IReadOnlyList<EquipmentPartInstance> EquipmentParts
+    {
+        get
+        {
+            EnsureEquipmentPartsInitialized();
+            return equipmentParts;
+        }
+    }
+    public bool LogEquipmentPartDropRolls => logEquipmentPartDropRolls;
+    public bool ForceEquipmentPartDrop => forceEquipmentPartDrop;
 
     private void Awake()
     {
-        EnsureEquipmentPartConfigs();
-        LoadEquipmentParts();
+        EnsureEquipmentPartsInitialized();
+    }
+
+    public static InventoryFacility FindAny()
+    {
+        // 기지 UI가 비활성 상태여도 파츠 보상 저장소를 찾을 수 있어야 한다.
+        return FindFirstObjectByType<InventoryFacility>(FindObjectsInactive.Include);
     }
 
     public bool ContainsWeapon(ProjectileConfig weaponConfig)
@@ -143,6 +180,7 @@ public class InventoryFacility : MonoBehaviour
 
     public bool AddEquipmentPart(EquipmentPartInstance part)
     {
+        EnsureEquipmentPartsInitialized();
         if (part == null)
         {
             return false;
@@ -169,6 +207,7 @@ public class InventoryFacility : MonoBehaviour
 
     public EquipmentPartInstance FindEquipmentPart(string instanceId)
     {
+        EnsureEquipmentPartsInitialized();
         if (string.IsNullOrWhiteSpace(instanceId) || equipmentParts == null)
         {
             return null;
@@ -179,8 +218,32 @@ public class InventoryFacility : MonoBehaviour
 
     public EquipmentPartConfig ResolveEquipmentPartConfig(string configId)
     {
-        EnsureEquipmentPartConfigs();
+        EnsureEquipmentPartsInitialized();
         return equipmentPartConfigs.Find(config => config != null && config.Id == configId);
+    }
+
+    public void PlayEquipmentPartDropVisual(
+        EquipmentPartConfig config,
+        EquipmentPartInstance part,
+        Vector3 dropPosition)
+    {
+        if (!playEquipmentPartDropVisual || part == null)
+        {
+            return;
+        }
+
+        // 보상은 즉시 지급하고 드롭 위치에는 수집 피드백만 풀링해서 보여준다.
+        EquipmentPartDropVisual.Play(
+            config != null ? config.Icon : null,
+            part.rarity,
+            dropPosition,
+            equipmentPartCollectTarget,
+            partDropPopDuration,
+            partDropHoldDuration,
+            partDropCollectDuration,
+            partDropPopDistance,
+            partDropVisualSize,
+            partDropSortingOrder);
     }
 
     public bool RemoveEquipmentPart(string instanceId, PlayerEquipmentPartLoadout loadout = null)
@@ -339,6 +402,18 @@ public class InventoryFacility : MonoBehaviour
         equipmentPartConfigs.Add(CreateRuntimeConfig("part_armor_default", "전술 장갑", EquipmentPartSlot.Armor, 0.05f, 0.1f, 0.2f));
         equipmentPartConfigs.Add(CreateRuntimeConfig("part_engine_default", "고속 엔진", EquipmentPartSlot.Engine, 0.03f, 0.06f, 0.12f));
         equipmentPartConfigs.Add(CreateRuntimeConfig("part_chip_default", "화력 칩", EquipmentPartSlot.Chip, 0.05f, 0.1f, 0.2f));
+    }
+
+    private void EnsureEquipmentPartsInitialized()
+    {
+        if (equipmentPartsInitialized)
+        {
+            return;
+        }
+
+        equipmentPartsInitialized = true;
+        EnsureEquipmentPartConfigs();
+        LoadEquipmentParts();
     }
 
     private static EquipmentPartConfig CreateRuntimeConfig(

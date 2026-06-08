@@ -33,6 +33,22 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask targetMask;
     [SerializeField] private Transform firePoint;
 
+    [Header("Auto Reposition")]
+    [SerializeField] private bool enableAutoReposition = true;
+    [SerializeField] private float repositionDetectionRadius = 2.5f;
+    [SerializeField] private int repositionEnemyThreshold = 3;
+    [SerializeField] private float repositionDistance = 1.8f;
+    [SerializeField] private float repositionCooldown = 5f;
+    [SerializeField] private float repositionCheckInterval = 0.5f;
+    [SerializeField] private float repositionSpeedMultiplier = 1.35f;
+    [SerializeField] private float repositionStopDistance = 0.05f;
+    [SerializeField] private LayerMask repositionObstacleMask;
+    [SerializeField] private float repositionCollisionRadius = 0.45f;
+    [SerializeField] private bool clampRepositionToBounds = true;
+    [SerializeField] private Transform repositionBoundsCenter;
+    [SerializeField] private Vector2 repositionBoundsSize = new Vector2(24f, 24f);
+    [SerializeField] private float repositionBoundsPadding = 1f;
+
     [Header("Fallback Effects")]
     [SerializeField] private GameObject fireFlashEffectPrefab;
     [SerializeField] private GameObject projectileEffectPrefab;
@@ -51,7 +67,12 @@ public class PlayerController : MonoBehaviour
     private Vector3 weaponAimDirection;
     private float appliedMaxHealth;
     private float nextAttackTime;
+    private float nextRepositionTime;
+    private float nextRepositionCheckTime;
+    private Vector3 repositionDestination;
+    private Vector3 fallbackRepositionBoundsCenter;
     private bool hasAppliedHealthStats;
+    private bool isRepositioning;
 
     public CombatHealth Health => health;
     public PlayerProgression Progression => progression;
@@ -125,6 +146,7 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        fallbackRepositionBoundsCenter = CombatPlane.WithFixedY(transform.position);
         health = GetComponent<CombatHealth>();
         if (health == null)
         {
@@ -181,6 +203,11 @@ public class PlayerController : MonoBehaviour
 
         if (health != null && health.IsDead)
         {
+            if (isRepositioning)
+            {
+                FinishAutoReposition();
+            }
+
             return;
         }
 
@@ -188,6 +215,11 @@ public class PlayerController : MonoBehaviour
         if (!HasValidCurrentTarget())
         {
             currentTarget = FindClosestTarget();
+        }
+
+        if (HandleAutoReposition())
+        {
+            return;
         }
 
         if (currentTarget == null)
@@ -214,6 +246,200 @@ public class PlayerController : MonoBehaviour
         AimWeaponToward(targetDirection);
 
         if (!IsWeaponFacing(targetDirection) || Time.time < nextAttackTime)
+        {
+            return;
+        }
+
+        float attackIntervalMultiplier = FireForward();
+        nextAttackTime = Time.time + AttackIntervalValue * attackIntervalMultiplier;
+    }
+
+    private bool HandleAutoReposition()
+    {
+        if (!enableAutoReposition)
+        {
+            isRepositioning = false;
+            return false;
+        }
+
+        if (!isRepositioning
+            && Time.time >= nextRepositionTime
+            && Time.time >= nextRepositionCheckTime)
+        {
+            nextRepositionCheckTime = Time.time + Mathf.Max(0.1f, repositionCheckInterval);
+            TryStartAutoReposition();
+        }
+
+        if (!isRepositioning)
+        {
+            return false;
+        }
+
+        Vector3 moveDirection = CombatPlane.Direction(transform.position, repositionDestination);
+        float remainingDistance = Mathf.Sqrt(CombatPlane.DistanceSqr(transform.position, repositionDestination));
+        if (remainingDistance <= Mathf.Max(0.01f, repositionStopDistance) || moveDirection.sqrMagnitude <= 0f)
+        {
+            FinishAutoReposition();
+            return false;
+        }
+
+        RotateToward(moveDirection);
+        float moveDistance = Mathf.Min(
+            MoveSpeedValue * Mathf.Max(0.1f, repositionSpeedMultiplier) * Time.deltaTime,
+            remainingDistance);
+        Vector3 nextPosition = CombatPlane.WithFixedY(transform.position + moveDirection * moveDistance);
+        if (IsRepositionPathBlocked(transform.position, nextPosition))
+        {
+            FinishAutoReposition();
+            return false;
+        }
+
+        transform.position = ClampRepositionPosition(nextPosition);
+        SetVehicleMoveInput(1f, 0f);
+
+        // 자동 재배치 중에도 본체와 별개로 터렛은 기존 타겟을 계속 조준하고 공격한다.
+        TryAimAndAttackCurrentTarget();
+        return true;
+    }
+
+    private void TryStartAutoReposition()
+    {
+        EnemyController[] enemies = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+        Vector3 enemyCenter = Vector3.zero;
+        int nearbyEnemyCount = 0;
+        float detectionRadiusSqr = Mathf.Max(0.01f, repositionDetectionRadius)
+            * Mathf.Max(0.01f, repositionDetectionRadius);
+
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            EnemyController enemy = enemies[i];
+            CombatHealth enemyHealth = enemy != null ? enemy.GetComponent<CombatHealth>() : null;
+            if (enemyHealth == null || enemyHealth.IsDead)
+            {
+                continue;
+            }
+
+            if (CombatPlane.DistanceSqr(transform.position, enemy.transform.position) > detectionRadiusSqr)
+            {
+                continue;
+            }
+
+            enemyCenter += CombatPlane.WithFixedY(enemy.transform.position);
+            nearbyEnemyCount++;
+        }
+
+        if (nearbyEnemyCount < Mathf.Max(1, repositionEnemyThreshold))
+        {
+            return;
+        }
+
+        enemyCenter /= nearbyEnemyCount;
+        Vector3 escapeDirection = CombatPlane.Direction(enemyCenter, transform.position);
+        if (escapeDirection.sqrMagnitude <= 0f)
+        {
+            escapeDirection = CombatPlane.ProjectDirection(-transform.right);
+        }
+
+        if (!TryFindRepositionDestination(escapeDirection, out repositionDestination))
+        {
+            nextRepositionTime = Time.time + 1f;
+            return;
+        }
+
+        isRepositioning = true;
+        nextRepositionTime = Time.time + Mathf.Max(0.1f, repositionCooldown);
+    }
+
+    private bool TryFindRepositionDestination(Vector3 escapeDirection, out Vector3 destination)
+    {
+        float[] angleOffsets = { 0f, 35f, -35f, 70f, -70f, 110f, -110f, 180f };
+        Vector3 startPosition = CombatPlane.WithFixedY(transform.position);
+        for (int i = 0; i < angleOffsets.Length; i++)
+        {
+            Vector3 direction = Quaternion.Euler(0f, angleOffsets[i], 0f) * escapeDirection;
+            Vector3 candidate = ClampRepositionPosition(
+                startPosition + direction * Mathf.Max(0.1f, repositionDistance));
+            if (CombatPlane.DistanceSqr(startPosition, candidate) <= 0.01f
+                || IsRepositionPathBlocked(startPosition, candidate))
+            {
+                continue;
+            }
+
+            destination = candidate;
+            return true;
+        }
+
+        destination = startPosition;
+        return false;
+    }
+
+    private bool IsRepositionPathBlocked(Vector3 from, Vector3 to)
+    {
+        if (repositionObstacleMask.value == 0)
+        {
+            return false;
+        }
+
+        Vector3 direction = CombatPlane.Direction(from, to);
+        float distance = Mathf.Sqrt(CombatPlane.DistanceSqr(from, to));
+        if (direction.sqrMagnitude <= 0f || distance <= 0f)
+        {
+            return false;
+        }
+
+        // 벽을 통과하지 않도록 플레이어 크기 기준으로 이동 경로를 검사한다.
+        return Physics.SphereCast(
+            CombatPlane.WithFixedY(from),
+            Mathf.Max(0.01f, repositionCollisionRadius),
+            direction,
+            out _,
+            distance,
+            repositionObstacleMask,
+            QueryTriggerInteraction.Ignore);
+    }
+
+    private Vector3 ClampRepositionPosition(Vector3 position)
+    {
+        position = CombatPlane.WithFixedY(position);
+        if (!clampRepositionToBounds)
+        {
+            return position;
+        }
+
+        Vector3 center = repositionBoundsCenter != null
+            ? CombatPlane.WithFixedY(repositionBoundsCenter.position)
+            : fallbackRepositionBoundsCenter;
+        Vector2 halfSize = Vector2.Max(
+            Vector2.zero,
+            repositionBoundsSize * 0.5f - Vector2.one * Mathf.Max(0f, repositionBoundsPadding));
+        position.x = Mathf.Clamp(position.x, center.x - halfSize.x, center.x + halfSize.x);
+        position.z = Mathf.Clamp(position.z, center.z - halfSize.y, center.z + halfSize.y);
+        return CombatPlane.WithFixedY(position);
+    }
+
+    private void FinishAutoReposition()
+    {
+        isRepositioning = false;
+        SetVehicleMoveInput(0f, 0f);
+    }
+
+    private void TryAimAndAttackCurrentTarget()
+    {
+        if (!HasValidCurrentTarget())
+        {
+            return;
+        }
+
+        Vector3 targetDirection = CombatPlane.Direction(transform.position, currentTarget.transform.position);
+        if (targetDirection.sqrMagnitude <= 0f)
+        {
+            return;
+        }
+
+        AimWeaponToward(targetDirection);
+        if (!IsTargetInRange(currentTarget)
+            || !IsWeaponFacing(targetDirection)
+            || Time.time < nextAttackTime)
         {
             return;
         }

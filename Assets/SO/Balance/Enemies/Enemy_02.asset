@@ -15,12 +15,12 @@ MonoBehaviour:
   id: 02
   displayName: "\uC80102"
   enemyPrefab: {fileID: 6804874563998169931, guid: 98219930882ab4fffb4413c8c7188901, type: 3}
-  maxHealth: 45
-  moveSpeed: 1.25
+  maxHealth: 40
+  moveSpeed: 0.6
   stopDistance: 1.1
   contactDamage: 7
   contactInterval: 1
   experienceReward: 15
   creditReward: 14
   coreCrystalReward: 0
-  partDropChance: 0.05
+  partDropChance: 0.3
