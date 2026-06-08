@@ -232,7 +232,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하십시오.");
         SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount} 개" : string.Empty);
         SetText(detailStatsText, drone != null
-            ? $"피해량: {drone.AttackDamage:0.##}\n사거리: {drone.AttackRange:0.##}\n발사간격: {drone.AttackInterval:0.##}\n탄속: {drone.ProjectileSpeed:0.##}\nFollow Radius: {drone.FollowRadius:0.##}"
+            ? $"피해량: {drone.AttackDamage:0.##}\n사거리: {drone.AttackRange:0.##}\n발사간격: {drone.AttackInterval:0.##}\n탄속: {drone.ProjectileSpeed:0.##}\n편대 반경: {drone.FollowRadius:0.##}"
             : string.Empty);
     }
 

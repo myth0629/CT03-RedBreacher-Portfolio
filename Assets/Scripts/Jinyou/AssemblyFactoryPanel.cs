@@ -160,8 +160,8 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
         SetText(levelText, $"Lv. {assemblyFactory.Level}");
         SetText(upgradeText, assemblyFactory.IsUpgrading
-            ? $"Upgrading {assemblyFactory.UpgradeRemainingSeconds:0}s"
-            : $"Upgrade Cost {assemblyFactory.UpgradeCost}");
+            ? $"완료까지 {assemblyFactory.UpgradeRemainingSeconds:0}초"
+            : $"업그레이드 ({assemblyFactory.UpgradeCost} 크레딧)");
         SetText(weaponEnhanceText, BuildSelectedWeaponEnhancementText());
         SetText(selectedMenuText, string.IsNullOrEmpty(assemblyFactory.SelectedMenuId) ? "No Menu Selected" : $"Selected: {assemblyFactory.SelectedMenuId}");
         SetText(menuStateText, BuildMenuSummary());
