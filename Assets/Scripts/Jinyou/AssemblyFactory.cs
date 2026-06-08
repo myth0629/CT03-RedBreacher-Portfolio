@@ -5,6 +5,22 @@ using UnityEngine.Events;
 
 public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 {
+    private const string WeaponEnhancementSaveKey = "AssemblyFactory.WeaponEnhancements";
+
+    [Serializable]
+    private class WeaponEnhancementSaveEntry
+    {
+        public string weaponId;
+        public int level;
+    }
+
+    [Serializable]
+    private class WeaponEnhancementSaveData
+    {
+        public string selectedWeaponId;
+        public List<WeaponEnhancementSaveEntry> weapons = new List<WeaponEnhancementSaveEntry>();
+    }
+
     public enum WeaponEnhancementStat
     {
         AttackDamage,
@@ -193,11 +209,12 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     public ProjectileConfig SelectedWeaponConfig => SelectedWeaponEnhancement?.weaponConfig;
     public int SelectedWeaponIndex => selectedWeaponIndex;
 
-    private void Start()
+    private void Awake()
     {
         NormalizeUpgradeCosts();
         NormalizeCommanderRequirements();
         NormalizeWeaponEnhancements();
+        LoadWeaponEnhancements();
         RefreshUnlocks();
     }
 
@@ -232,6 +249,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         }
 
         selectedWeaponIndex = index;
+        SaveWeaponEnhancements();
         OnWeaponSelected.Invoke(SelectedWeaponConfig);
         return true;
     }
@@ -289,6 +307,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         }
 
         selectedWeapon.enhanceLevel++;
+        SaveWeaponEnhancements();
         OnWeaponEnhanced.Invoke(selectedWeapon.weaponConfig, selectedWeapon.enhanceLevel);
     }
 
@@ -577,6 +596,69 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         }
 
         selectedWeaponIndex = Mathf.Clamp(selectedWeaponIndex, 0, weaponEnhancements.Count - 1);
+    }
+
+    private void LoadWeaponEnhancements()
+    {
+        string json = PlayerPrefs.GetString(WeaponEnhancementSaveKey, string.Empty);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            SaveWeaponEnhancements();
+            return;
+        }
+
+        WeaponEnhancementSaveData saveData = JsonUtility.FromJson<WeaponEnhancementSaveData>(json);
+        if (saveData?.weapons != null)
+        {
+            for (int i = 0; i < saveData.weapons.Count; i++)
+            {
+                WeaponEnhancementSaveEntry saved = saveData.weapons[i];
+                WeaponEnhancement enhancement = weaponEnhancements.Find(
+                    item => item?.weaponConfig != null && item.weaponConfig.Id == saved.weaponId);
+                if (enhancement == null)
+                {
+                    continue;
+                }
+
+                enhancement.enhanceLevel = Mathf.Clamp(saved.level, 0, enhancement.MaxEnhanceLevel);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(saveData?.selectedWeaponId))
+        {
+            int savedIndex = weaponEnhancements.FindIndex(
+                item => item?.weaponConfig != null && item.weaponConfig.Id == saveData.selectedWeaponId);
+            if (savedIndex >= 0)
+            {
+                selectedWeaponIndex = savedIndex;
+            }
+        }
+    }
+
+    private void SaveWeaponEnhancements()
+    {
+        WeaponEnhancementSaveData saveData = new WeaponEnhancementSaveData
+        {
+            selectedWeaponId = SelectedWeaponConfig != null ? SelectedWeaponConfig.Id : string.Empty
+        };
+
+        for (int i = 0; i < weaponEnhancements.Count; i++)
+        {
+            WeaponEnhancement enhancement = weaponEnhancements[i];
+            if (enhancement?.weaponConfig == null)
+            {
+                continue;
+            }
+
+            saveData.weapons.Add(new WeaponEnhancementSaveEntry
+            {
+                weaponId = enhancement.weaponConfig.Id,
+                level = enhancement.enhanceLevel
+            });
+        }
+
+        PlayerPrefs.SetString(WeaponEnhancementSaveKey, JsonUtility.ToJson(saveData));
+        PlayerPrefs.Save();
     }
 
     private void OnValidate()

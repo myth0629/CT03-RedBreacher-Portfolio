@@ -309,11 +309,15 @@ public class InventoryPanel : MonoBehaviour
 
     private string BuildWeaponInfoText(ProjectileConfig weapon, string suffix)
     {
-        int quantity = inventory != null ? inventory.GetWeaponQuantity(weapon) : 0;
-        int duplicateCount = inventory != null ? inventory.GetWeaponDuplicateCount(weapon) : 0;
+        int level = inventory != null ? inventory.GetWeaponLevel(weapon) : 0;
+        int duplicateCount = inventory != null ? inventory.GetDuplicateProgress(weapon) : 0;
+        int requiredDuplicates = inventory != null ? inventory.GetRequiredDuplicates(weapon) : 0;
         string muzzlePrefix = string.IsNullOrWhiteSpace(weapon.MuzzleNamePrefix) ? "None" : weapon.MuzzleNamePrefix;
+        string progress = requiredDuplicates > 0
+            ? $"{duplicateCount}/{requiredDuplicates}"
+            : "MAX";
 
-        return $"{weapon.DisplayName} ({weapon.Id}) x{quantity} / Dup {duplicateCount}{suffix}\n"
+        return $"{weapon.DisplayName} ({weapon.Id}) Lv.{level} / Dup {progress}{suffix}\n"
             + $"Damage {FormatNumber(weapon.AttackDamage)} / Speed {FormatNumber(weapon.Speed)} / Life {FormatNumber(weapon.Lifetime)}\n"
             + $"Radius {FormatNumber(weapon.CollisionRadius)} / Knockback {FormatNumber(weapon.KnockbackForce)}\n"
             + $"Muzzle {weapon.MultiMuzzleFireMode} x{weapon.MaxBurstMuzzleCount} / Prefix {muzzlePrefix}\n"

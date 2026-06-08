@@ -10,7 +10,10 @@ public static class PlayerSkillCombat
             return 0f;
         }
 
-        float damage = player.TotalAttackDamage * config.AttackPowerMultiplier + config.FlatDamage;
+        int level = Mathf.Max(1, player.GetSkillLevel(config));
+        float levelMultiplier = 1f + config.DamagePercentPerLevel * (level - 1);
+        float damage = (player.TotalAttackDamage * config.AttackPowerMultiplier + config.FlatDamage)
+            * levelMultiplier;
         if (config.CanCritical && Random.value < Mathf.Clamp01(player.CritChance))
         {
             damage *= Mathf.Max(1f, player.CritMultiplier);

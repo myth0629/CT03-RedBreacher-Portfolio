@@ -29,6 +29,11 @@ public class ProjectileConfig : ScriptableObject
     [SerializeField] private float areaDamageMultiplier = 0.7f;
     [SerializeField] private int maxAreaTargets = 10;
 
+    [Header("Collection Level")]
+    [SerializeField] private int maxLevel = 10;
+    [SerializeField] private float damagePercentPerLevel = 0.1f;
+    [SerializeField] private int maxLevelDuplicateCoreCrystalReward = 1;
+
     [Header("Projectile")]
     [SerializeField] private float speed = 10f;
     [SerializeField] private float lifetime = 2f;
@@ -54,6 +59,9 @@ public class ProjectileConfig : ScriptableObject
     public float AreaRadius => areaRadius;
     public float AreaDamageMultiplier => areaDamageMultiplier;
     public int MaxAreaTargets => maxAreaTargets;
+    public int MaxLevel => Mathf.Max(1, maxLevel);
+    public float DamagePercentPerLevel => Mathf.Max(0f, damagePercentPerLevel);
+    public int MaxLevelDuplicateCoreCrystalReward => Mathf.Max(0, maxLevelDuplicateCoreCrystalReward);
     public float Speed => speed;
     public float Lifetime => lifetime;
     public float CollisionRadius => collisionRadius;

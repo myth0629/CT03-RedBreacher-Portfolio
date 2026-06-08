@@ -12,6 +12,7 @@ public class PlayerAutoSkillController : MonoBehaviour
     private PlayerController player;
 
     public IReadOnlyList<PlayerSkillConfig> EquippedSkills => equippedSkills;
+    public int LoadoutVersion { get; private set; }
 
     public float GetRemainingCooldown(PlayerSkillConfig skill)
     {
@@ -40,6 +41,7 @@ public class PlayerAutoSkillController : MonoBehaviour
         equippedSkills.Clear();
         nextCastTimes.Clear();
         nextSearchTimes.Clear();
+        LoadoutVersion++;
 
         if (skills == null)
         {

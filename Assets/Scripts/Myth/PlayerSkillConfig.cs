@@ -28,6 +28,11 @@ public class PlayerSkillConfig : ScriptableObject
     [SerializeField] private int maxTargets = 20;
     [SerializeField] private float knockbackForce;
 
+    [Header("Collection Level")]
+    [SerializeField] private int maxLevel = 10;
+    [SerializeField] private float damagePercentPerLevel = 0.1f;
+    [SerializeField] private int maxLevelDuplicateCoreCrystalReward = 1;
+
     [Header("Bombardment")]
     [SerializeField] private float impactDelay = 0.5f;
     [SerializeField] private GameObject warningEffectPrefab;
@@ -65,6 +70,9 @@ public class PlayerSkillConfig : ScriptableObject
     public float EffectRadius => Mathf.Max(0f, effectRadius);
     public int MaxTargets => Mathf.Max(1, maxTargets);
     public float KnockbackForce => Mathf.Max(0f, knockbackForce);
+    public int MaxLevel => Mathf.Max(1, maxLevel);
+    public float DamagePercentPerLevel => Mathf.Max(0f, damagePercentPerLevel);
+    public int MaxLevelDuplicateCoreCrystalReward => Mathf.Max(0, maxLevelDuplicateCoreCrystalReward);
     public float ImpactDelay => Mathf.Max(0f, impactDelay);
     public GameObject WarningEffectPrefab => warningEffectPrefab;
     public GameObject ImpactEffectPrefab => impactEffectPrefab;

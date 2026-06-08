@@ -11,12 +11,14 @@ public static class BalanceCsvImporter
 {
     private const string UnitCsvPath = "Assets/Data/Balance/units.csv";
     private const string WeaponCsvPath = "Assets/Data/Balance/weapons.csv";
+    private const string SkillCsvPath = "Assets/Data/Balance/skills.csv";
     private const string EnemyCsvPath = "Assets/Data/Balance/enemies.csv";
     private const string DroneCsvPath = "Assets/Data/Balance/drones.csv";
     private const string EquipmentPartCsvPath = "Assets/Data/Balance/equipment_parts.csv";
 
     private const string UnitOutputPath = "Assets/SO/Balance/Units";
     private const string WeaponOutputPath = "Assets/SO/Balance/Weapons";
+    private const string SkillOutputPath = "Assets/SO/Balance/Skills";
     private const string EnemyOutputPath = "Assets/SO/Balance/Enemies";
     private const string DroneOutputPath = "Assets/SO/Balance/Drones";
     private const string EquipmentPartOutputPath = "Assets/SO/Balance/EquipmentParts";
@@ -26,6 +28,7 @@ public static class BalanceCsvImporter
     {
         EnsureOutputFolders();
         ImportWeapons();
+        ImportSkills();
         ImportUnits();
         ImportEnemies();
         ImportDrones();
@@ -40,6 +43,7 @@ public static class BalanceCsvImporter
     {
         ExportUnits();
         ExportWeapons();
+        ExportSkills();
         ExportEnemies();
         ExportDrones();
         ExportEquipmentParts();
@@ -93,6 +97,9 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "areaRadius", row, "areaRadius");
             SetFloat(serializedObject, "areaDamageMultiplier", row, "areaDamageMultiplier");
             SetInt(serializedObject, "maxAreaTargets", row, "maxAreaTargets");
+            SetInt(serializedObject, "maxLevel", row, "maxLevel");
+            SetFloat(serializedObject, "damagePercentPerLevel", row, "damagePercentPerLevel");
+            SetInt(serializedObject, "maxLevelDuplicateCoreCrystalReward", row, "maxLevelDuplicateCoreCrystalReward");
             SetFloat(serializedObject, "speed", row, "speed");
             SetFloat(serializedObject, "lifetime", row, "lifetime");
             SetFloat(serializedObject, "collisionRadius", row, "collisionRadius");
@@ -104,6 +111,58 @@ public static class BalanceCsvImporter
             SetObject(serializedObject, "projectileEffectPrefab", GetAsset<GameObject>(row, "projectileEffect"));
             SetObject(serializedObject, "hitEffectPrefab", GetAsset<GameObject>(row, "hitEffect"));
             SetFloat(serializedObject, "effectCleanupDelay", row, "effectCleanupDelay");
+
+            serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(config);
+        }
+    }
+
+    [MenuItem("Tools/Balance/CSV to SO/Skills")]
+    public static void ImportSkills()
+    {
+        EnsureFolder(SkillOutputPath);
+        foreach (Dictionary<string, string> row in ReadCsv(SkillCsvPath))
+        {
+            string id = GetRequired(row, "id", SkillCsvPath);
+            PlayerSkillConfig config = LoadOrCreate<PlayerSkillConfig>(SkillOutputPath, id, "Skill");
+            SerializedObject serializedObject = new SerializedObject(config);
+
+            SetString(serializedObject, "id", id);
+            SetString(serializedObject, "displayName", Get(row, "displayName"));
+            SetObject(serializedObject, "icon", GetAsset<Sprite>(row, "icon"));
+            SetEnum(serializedObject, "skillType", row, "skillType");
+            SetFloat(serializedObject, "cooldown", row, "cooldown");
+            SetFloat(serializedObject, "castRange", row, "castRange");
+            SetInt(serializedObject, "minimumEnemyCount", row, "minimumEnemyCount");
+            SetFloat(serializedObject, "attackPowerMultiplier", row, "attackPowerMultiplier");
+            SetFloat(serializedObject, "flatDamage", row, "flatDamage");
+            SetBool(serializedObject, "canCritical", row, "canCritical");
+            SetFloat(serializedObject, "effectRadius", row, "effectRadius");
+            SetInt(serializedObject, "maxTargets", row, "maxTargets");
+            SetFloat(serializedObject, "knockbackForce", row, "knockbackForce");
+            SetInt(serializedObject, "maxLevel", row, "maxLevel");
+            SetFloat(serializedObject, "damagePercentPerLevel", row, "damagePercentPerLevel");
+            SetInt(serializedObject, "maxLevelDuplicateCoreCrystalReward", row, "maxLevelDuplicateCoreCrystalReward");
+            SetFloat(serializedObject, "impactDelay", row, "impactDelay");
+            SetObject(serializedObject, "warningEffectPrefab", GetAsset<GameObject>(row, "warningEffect"));
+            SetObject(serializedObject, "impactEffectPrefab", GetAsset<GameObject>(row, "impactEffect"));
+            SetFloat(serializedObject, "effectCleanupDelay", row, "effectCleanupDelay");
+            SetObject(serializedObject, "_airplanePrefab", GetAsset<GameObject>(row, "airplanePrefab"));
+            SetFloat(serializedObject, "_airplaneSpeed", row, "airplaneSpeed");
+            SetFloat(serializedObject, "_airplaneSpawnOffset", row, "airplaneSpawnOffset");
+            SetFloat(serializedObject, "_airplaneHeight", row, "airplaneHeight");
+            SetObject(serializedObject, "_bombProjectilePrefab", GetAsset<GameObject>(row, "bombProjectilePrefab"));
+            SetFloat(serializedObject, "_bombEffectScale", row, "bombEffectScale");
+            SetInt(serializedObject, "_bombCount", row, "bombCount");
+            SetFloat(serializedObject, "_bombInterval", row, "bombInterval");
+            SetObject(serializedObject, "turretPrefab", GetAsset<GameObject>(row, "turretPrefab"));
+            SetObject(serializedObject, "turretProjectileConfig", GetAsset<ProjectileConfig>(row, "turretProjectileConfig"));
+            SetFloat(serializedObject, "turretDuration", row, "turretDuration");
+            SetFloat(serializedObject, "turretAttackInterval", row, "turretAttackInterval");
+            SetFloat(serializedObject, "turretAttackRange", row, "turretAttackRange");
+            SetFloat(serializedObject, "turretRotationSpeed", row, "turretRotationSpeed");
+            SetFloat(serializedObject, "turretPlacementDistance", row, "turretPlacementDistance");
+            SetString(serializedObject, "turretFirePointName", Get(row, "turretFirePointName"));
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
@@ -241,7 +300,8 @@ public static class BalanceCsvImporter
         string[] headers =
         {
             "id", "displayName", "weaponCategory", "attackDamage", "attackType", "areaRadius", "areaDamageMultiplier",
-            "maxAreaTargets", "speed", "lifetime", "collisionRadius", "knockbackForce",
+            "maxAreaTargets", "maxLevel", "damagePercentPerLevel", "maxLevelDuplicateCoreCrystalReward",
+            "speed", "lifetime", "collisionRadius", "knockbackForce",
             "multiMuzzleFireMode", "maxBurstMuzzleCount", "muzzleNamePrefix", "fireFlashEffect",
             "projectileEffect", "hitEffect", "effectCleanupDelay"
         };
@@ -259,6 +319,9 @@ public static class BalanceCsvImporter
                 FormatFloat(config.AreaRadius),
                 FormatFloat(config.AreaDamageMultiplier),
                 config.MaxAreaTargets.ToString(CultureInfo.InvariantCulture),
+                config.MaxLevel.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.DamagePercentPerLevel),
+                config.MaxLevelDuplicateCoreCrystalReward.ToString(CultureInfo.InvariantCulture),
                 FormatFloat(config.Speed),
                 FormatFloat(config.Lifetime),
                 FormatFloat(config.CollisionRadius),
@@ -275,6 +338,69 @@ public static class BalanceCsvImporter
 
         WriteCsv(WeaponCsvPath, headers, rows);
         Debug.Log($"무기 SO CSV 내보내기 완료: {WeaponCsvPath}");
+    }
+
+    [MenuItem("Tools/Balance/SO to CSV/Skills")]
+    public static void ExportSkills()
+    {
+        string[] headers =
+        {
+            "id", "displayName", "icon", "skillType", "cooldown", "castRange", "minimumEnemyCount",
+            "attackPowerMultiplier", "flatDamage", "canCritical", "effectRadius", "maxTargets", "knockbackForce",
+            "maxLevel", "damagePercentPerLevel", "maxLevelDuplicateCoreCrystalReward",
+            "impactDelay", "warningEffect", "impactEffect", "effectCleanupDelay",
+            "airplanePrefab", "airplaneSpeed", "airplaneSpawnOffset", "airplaneHeight",
+            "bombProjectilePrefab", "bombEffectScale", "bombCount", "bombInterval",
+            "turretPrefab", "turretProjectileConfig", "turretDuration", "turretAttackInterval",
+            "turretAttackRange", "turretRotationSpeed", "turretPlacementDistance", "turretFirePointName"
+        };
+
+        List<string[]> rows = new List<string[]>();
+        foreach (PlayerSkillConfig config in LoadAllAssets<PlayerSkillConfig>(SkillOutputPath))
+        {
+            rows.Add(new[]
+            {
+                config.Id,
+                config.DisplayName,
+                GetAssetPath(config.Icon),
+                config.SkillType.ToString(),
+                FormatFloat(config.Cooldown),
+                FormatFloat(config.CastRange),
+                config.MinimumEnemyCount.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.AttackPowerMultiplier),
+                FormatFloat(config.FlatDamage),
+                config.CanCritical.ToString(),
+                FormatFloat(config.EffectRadius),
+                config.MaxTargets.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.KnockbackForce),
+                config.MaxLevel.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.DamagePercentPerLevel),
+                config.MaxLevelDuplicateCoreCrystalReward.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.ImpactDelay),
+                GetAssetPath(config.WarningEffectPrefab),
+                GetAssetPath(config.ImpactEffectPrefab),
+                FormatFloat(config.EffectCleanupDelay),
+                GetAssetPath(config.AirplanePrefab),
+                FormatFloat(config.AirplaneSpeed),
+                FormatFloat(config.AirplaneSpawnOffset),
+                FormatFloat(config.AirplaneHeight),
+                GetAssetPath(config.BombProjectilePrefab),
+                FormatFloat(config.BombEffectScale),
+                config.BombCount.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.BombInterval),
+                GetAssetPath(config.TurretPrefab),
+                GetAssetPath(config.TurretProjectileConfig),
+                FormatFloat(config.TurretDuration),
+                FormatFloat(config.TurretAttackInterval),
+                FormatFloat(config.TurretAttackRange),
+                FormatFloat(config.TurretRotationSpeed),
+                FormatFloat(config.TurretPlacementDistance),
+                config.TurretFirePointName
+            });
+        }
+
+        WriteCsv(SkillCsvPath, headers, rows);
+        Debug.Log($"스킬 SO CSV 내보내기 완료: {SkillCsvPath}");
     }
 
     [MenuItem("Tools/Balance/SO to CSV/Enemies")]
@@ -401,6 +527,7 @@ public static class BalanceCsvImporter
         EnsureFolder("Assets/SO/Balance");
         EnsureFolder(UnitOutputPath);
         EnsureFolder(WeaponOutputPath);
+        EnsureFolder(SkillOutputPath);
         EnsureFolder(EnemyOutputPath);
         EnsureFolder(DroneOutputPath);
         EnsureFolder(EquipmentPartOutputPath);
@@ -547,6 +674,8 @@ public static class BalanceCsvImporter
                 return unit.Id;
             case ProjectileConfig weapon:
                 return weapon.Id;
+            case PlayerSkillConfig skill:
+                return skill.Id;
             case EnemyConfig enemy:
                 return enemy.Id;
             case DroneConfig drone:
@@ -680,6 +809,22 @@ public static class BalanceCsvImporter
         if (property != null)
         {
             property.intValue = parsed;
+        }
+    }
+
+    private static void SetBool(SerializedObject serializedObject, string propertyName, Dictionary<string, string> row, string key)
+    {
+        string value = Get(row, key);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        bool parsed = value == "1" || bool.TryParse(value, out bool boolValue) && boolValue;
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property != null)
+        {
+            property.boolValue = parsed;
         }
     }
 

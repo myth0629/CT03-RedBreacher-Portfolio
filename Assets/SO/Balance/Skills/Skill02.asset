@@ -22,7 +22,7 @@ MonoBehaviour:
   attackPowerMultiplier: 2
   flatDamage: 0
   canCritical: 1
-  effectRadius: 5
+  effectRadius: 3
   maxTargets: 20
   knockbackForce: 0
   impactDelay: 1
@@ -35,7 +35,7 @@ MonoBehaviour:
   _airplaneHeight: 6
   _bombProjectilePrefab: {fileID: 1574669681271168, guid: 0aeba0c9771dc004ea7022b341e963fc, type: 3}
   _bombEffectScale: 2
-  _bombCount: 3
+  _bombCount: 2
   _bombInterval: 0.15
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 0}

@@ -38,6 +38,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private LoadoutMode currentMode;
     private ProjectileConfig selectedWeapon;
     private DroneConfig selectedDrone;
+    private InventoryFacility inventory;
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -126,7 +127,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         for (int i = 0; i < weaponOptions.Length; i++)
         {
             ProjectileConfig weapon = weaponOptions[i];
-            if (weapon == null)
+            if (weapon == null || (inventory != null && !inventory.ContainsWeapon(weapon)))
             {
                 continue;
             }
@@ -140,7 +141,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             option.Bind(
                 weapon.DisplayName,
                 weapon.WeaponCategory,
-                $"Damage {weapon.AttackDamage:0.##} / Speed {weapon.Speed:0.##}",
+                $"Lv.{GetWeaponLevel(weapon)} / Damage {weapon.AttackDamage:0.##} / Speed {weapon.Speed:0.##}",
                 weapon == selectedWeapon,
                 () => SelectWeapon(weapon));
         }
@@ -228,7 +229,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetText(detailCategoryText, weapon != null ? weapon.WeaponCategory : string.Empty);
         SetText(detailDescriptionText, weapon != null ? weapon.Id : string.Empty);
         SetText(detailStatsText, weapon != null
-            ? $"Damage: {weapon.AttackDamage:0.##}\nSpeed: {weapon.Speed:0.##}\nLifetime: {weapon.Lifetime:0.##}\nKnockback: {weapon.KnockbackForce:0.##}\nMuzzle: {weapon.MultiMuzzleFireMode}"
+            ? $"Level: {GetWeaponLevel(weapon)}\nDamage: {weapon.AttackDamage:0.##}\nSpeed: {weapon.Speed:0.##}\nLifetime: {weapon.Lifetime:0.##}\nKnockback: {weapon.KnockbackForce:0.##}\nMuzzle: {weapon.MultiMuzzleFireMode}"
             : string.Empty);
     }
 
@@ -268,6 +269,15 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                 ? player.GetComponent<PlayerDroneController>()
                 : FindFirstObjectByType<PlayerDroneController>();
         }
+
+        inventory ??= BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.Inventory
+            : InventoryFacility.FindAny();
+    }
+
+    private int GetWeaponLevel(ProjectileConfig weapon)
+    {
+        return inventory != null ? Mathf.Max(1, inventory.GetWeaponLevel(weapon)) : 1;
     }
 
     private static void SetText(TMP_Text target, string value)

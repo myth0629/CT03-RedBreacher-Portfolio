@@ -7,6 +7,7 @@ public class PlayerSkillCooldownSlot : MonoBehaviour
     [SerializeField] private Image _iconImage;
     [SerializeField] private Image _cooldownOverlay;
     [SerializeField] private TMP_Text _cooldownText;
+    [SerializeField] private TMP_Text _levelText;
 
     private PlayerAutoSkillController _skillController;
     private PlayerSkillConfig _skillConfig;
@@ -30,6 +31,13 @@ public class PlayerSkillCooldownSlot : MonoBehaviour
             _iconImage.enabled = skill.Icon != null;
         }
 
+        if (_levelText != null)
+        {
+            PlayerController player = FindFirstObjectByType<PlayerController>();
+            int level = player != null ? player.GetSkillLevel(skill) : 1;
+            _levelText.text = $"Lv.{Mathf.Max(1, level)}";
+        }
+
         UpdateCooldownVisuals();
     }
 
@@ -47,6 +55,11 @@ public class PlayerSkillCooldownSlot : MonoBehaviour
 
         float remaining = _skillController.GetRemainingCooldown(_skillConfig);
         float progress = _skillController.GetCooldownProgress01(_skillConfig);
+        if (_levelText != null)
+        {
+            PlayerController player = _skillController.GetComponent<PlayerController>();
+            _levelText.text = $"Lv.{Mathf.Max(1, player != null ? player.GetSkillLevel(_skillConfig) : 1)}";
+        }
 
         if (_cooldownOverlay != null)
         {

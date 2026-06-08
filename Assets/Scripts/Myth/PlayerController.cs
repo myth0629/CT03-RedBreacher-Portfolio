@@ -10,6 +10,16 @@ using TopDownAssets.Common.Scripts;
 [RequireComponent(typeof(PlayerEquipmentPartLoadout))]
 public class PlayerController : MonoBehaviour
 {
+    private const string EquippedWeaponIdKey = "PlayerController.EquippedWeaponId";
+    private const string EquippedSkillIdsKey = "PlayerController.EquippedSkillIds";
+    private const int SkillSlotCount = 3;
+
+    [System.Serializable]
+    private class SkillLoadoutSaveData
+    {
+        public List<string> skillIds = new List<string>();
+    }
+
     [Header("Config")]
     [SerializeField] private PlayerUnitConfig unitConfig;
     [SerializeField, FormerlySerializedAs("projectileConfig")] private ProjectileConfig weaponConfig;
@@ -64,6 +74,8 @@ public class PlayerController : MonoBehaviour
     private PlayerStatAllocator statAllocator;
     private PlayerEquipmentPartLoadout equipmentPartLoadout;
     private PlayerAutoSkillController autoSkillController;
+    private InventoryFacility inventory;
+    private AssemblyFactory assemblyFactory;
     private Vehicle vehicle;
     private Turret turret;
     private CombatHealth currentTarget;
@@ -84,6 +96,7 @@ public class PlayerController : MonoBehaviour
     public PlayerStatAllocator StatAllocator => statAllocator;
     public PlayerEquipmentPartLoadout EquipmentPartLoadout => equipmentPartLoadout;
     public PlayerAutoSkillController AutoSkillController => autoSkillController;
+    public InventoryFacility Inventory => inventory;
     public string DisplayName => unitConfig != null ? unitConfig.DisplayName : displayName;
     public PlayerUnitConfig UnitConfig => unitConfig;
     public ProjectileConfig WeaponConfig => ProjectileConfigValue;
@@ -99,7 +112,8 @@ public class PlayerController : MonoBehaviour
     public float CritMultiplier => CritMultiplierValue;
     public float ProjectileSpeed => GetProjectileSpeed(ProjectileConfigValue);
     public float ProjectileLifetime => GetProjectileLifetime(ProjectileConfigValue);
-    public float KnockbackForce => ProjectileConfigValue != null ? ProjectileConfigValue.KnockbackForce : 0f;
+    public int WeaponLevel => inventory != null ? inventory.GetWeaponLevel(ProjectileConfigValue) : ProjectileConfigValue != null ? 1 : 0;
+    public float KnockbackForce => GetProjectileKnockback(ProjectileConfigValue);
     public float EstimatedDamagePerSecond
     {
         get
@@ -186,6 +200,8 @@ public class PlayerController : MonoBehaviour
         }
 
         equipmentPartLoadout.OnLoadoutChanged.AddListener(HandleEquipmentPartLoadoutChanged);
+        ResolveCollectionSystems();
+        InitializeCollectionLoadout();
         EnsureAutoSkillController();
         ApplyUnitConfig();
         ApplyHealthStats();
@@ -205,10 +221,67 @@ public class PlayerController : MonoBehaviour
 
     public void SetWeaponConfig(ProjectileConfig config)
     {
+        if (config != null && inventory != null && !inventory.ContainsWeapon(config))
+        {
+            return;
+        }
+
         // 로드아웃 UI에서 선택한 무기를 런타임 전투 설정에 즉시 반영한다.
         weaponConfig = config;
+        PlayerPrefs.SetString(EquippedWeaponIdKey, config != null ? config.Id : string.Empty);
+        PlayerPrefs.Save();
         nextAttackTime = Time.time;
         RefreshUnitReferences();
+    }
+
+    public bool EquipSkill(int slotIndex, PlayerSkillConfig config)
+    {
+        if (slotIndex < 0 || slotIndex >= SkillSlotCount
+            || config == null
+            || inventory == null
+            || !inventory.ContainsSkill(config))
+        {
+            return false;
+        }
+
+        EnsureSkillSlotCount();
+        for (int i = 0; i < autoSkills.Count; i++)
+        {
+            if (i != slotIndex && autoSkills[i] == config)
+            {
+                autoSkills[i] = null;
+            }
+        }
+
+        autoSkills[slotIndex] = config;
+        SaveSkillLoadout();
+        autoSkillController?.Initialize(this, autoSkills);
+        return true;
+    }
+
+    public bool UnequipSkill(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= SkillSlotCount)
+        {
+            return false;
+        }
+
+        EnsureSkillSlotCount();
+        autoSkills[slotIndex] = null;
+        SaveSkillLoadout();
+        autoSkillController?.Initialize(this, autoSkills);
+        return true;
+    }
+
+    public PlayerSkillConfig GetEquippedSkill(int slotIndex)
+    {
+        EnsureSkillSlotCount();
+        return slotIndex >= 0 && slotIndex < autoSkills.Count ? autoSkills[slotIndex] : null;
+    }
+
+    public int GetSkillLevel(PlayerSkillConfig config)
+    {
+        return inventory != null ? inventory.GetSkillLevel(config) : config != null ? 1 : 0;
     }
 
     private void EnsureAutoSkillController()
@@ -221,6 +294,124 @@ public class PlayerController : MonoBehaviour
 
         // PlayerController에 연결한 스킬 SO 목록을 자동 시전기에 전달한다.
         autoSkillController.Initialize(this, autoSkills);
+    }
+
+    private void ResolveCollectionSystems()
+    {
+        inventory = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.Inventory
+            : InventoryFacility.FindAny();
+        assemblyFactory = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.AssemblyFactory
+            : FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
+    }
+
+    private void InitializeCollectionLoadout()
+    {
+        EnsureSkillSlotCount();
+        if (inventory == null)
+        {
+            return;
+        }
+
+        inventory.RegisterInitialWeapon(weaponConfig);
+        inventory.RegisterInitialSkills(autoSkills);
+
+        string savedWeaponId = PlayerPrefs.GetString(EquippedWeaponIdKey, string.Empty);
+        ProjectileConfig savedWeapon = FindWeaponById(savedWeaponId);
+        if (savedWeapon != null && inventory.ContainsWeapon(savedWeapon))
+        {
+            weaponConfig = savedWeapon;
+        }
+        else if (weaponConfig != null)
+        {
+            PlayerPrefs.SetString(EquippedWeaponIdKey, weaponConfig.Id);
+        }
+
+        string skillJson = PlayerPrefs.GetString(EquippedSkillIdsKey, string.Empty);
+        if (!string.IsNullOrWhiteSpace(skillJson))
+        {
+            SkillLoadoutSaveData saveData = JsonUtility.FromJson<SkillLoadoutSaveData>(skillJson);
+            for (int i = 0; i < SkillSlotCount; i++)
+            {
+                string skillId = saveData?.skillIds != null && i < saveData.skillIds.Count
+                    ? saveData.skillIds[i]
+                    : string.Empty;
+                PlayerSkillConfig savedSkill = FindSkillById(skillId);
+                autoSkills[i] = savedSkill != null && inventory.ContainsSkill(savedSkill) ? savedSkill : null;
+            }
+        }
+        else
+        {
+            SaveSkillLoadout();
+        }
+
+        PlayerPrefs.Save();
+    }
+
+    private void EnsureSkillSlotCount()
+    {
+        autoSkills ??= new List<PlayerSkillConfig>();
+        while (autoSkills.Count < SkillSlotCount)
+        {
+            autoSkills.Add(null);
+        }
+
+        if (autoSkills.Count > SkillSlotCount)
+        {
+            autoSkills.RemoveRange(SkillSlotCount, autoSkills.Count - SkillSlotCount);
+        }
+    }
+
+    private void SaveSkillLoadout()
+    {
+        EnsureSkillSlotCount();
+        SkillLoadoutSaveData saveData = new SkillLoadoutSaveData();
+        for (int i = 0; i < SkillSlotCount; i++)
+        {
+            saveData.skillIds.Add(autoSkills[i] != null ? autoSkills[i].Id : string.Empty);
+        }
+
+        PlayerPrefs.SetString(EquippedSkillIdsKey, JsonUtility.ToJson(saveData));
+        PlayerPrefs.Save();
+    }
+
+    private ProjectileConfig FindWeaponById(string configId)
+    {
+        if (inventory == null || string.IsNullOrWhiteSpace(configId))
+        {
+            return null;
+        }
+
+        for (int i = 0; i < inventory.WeaponConfigs.Count; i++)
+        {
+            ProjectileConfig config = inventory.WeaponConfigs[i];
+            if (config != null && config.Id == configId)
+            {
+                return config;
+            }
+        }
+
+        return null;
+    }
+
+    private PlayerSkillConfig FindSkillById(string configId)
+    {
+        if (inventory == null || string.IsNullOrWhiteSpace(configId))
+        {
+            return null;
+        }
+
+        for (int i = 0; i < inventory.SkillConfigs.Count; i++)
+        {
+            PlayerSkillConfig config = inventory.SkillConfigs[i];
+            if (config != null && config.Id == configId)
+            {
+                return config;
+            }
+        }
+
+        return null;
     }
 
     private void Update()
@@ -816,6 +1007,9 @@ public class PlayerController : MonoBehaviour
         PlayerProjectile projectile = CreateProjectile();
         projectile.transform.position = GetFirePosition(muzzle, direction);
         projectile.Configure(activeProjectileConfig);
+        projectile.ConfigureRuntimeStats(
+            GetProjectileCollisionRadius(activeProjectileConfig),
+            GetProjectileKnockback(activeProjectileConfig));
         projectile.ConfigureEffects(fireFlashEffectPrefab, projectileEffectPrefab, hitEffectPrefab);
         projectile.Launch(direction, damage, GetProjectileSpeed(activeProjectileConfig), GetProjectileLifetime(activeProjectileConfig), health);
     }
@@ -840,7 +1034,15 @@ public class PlayerController : MonoBehaviour
 
     private float GetWeaponAttackDamage(ProjectileConfig activeProjectileConfig)
     {
-        return activeProjectileConfig != null ? activeProjectileConfig.AttackDamage : 0f;
+        if (activeProjectileConfig == null)
+        {
+            return 0f;
+        }
+
+        int level = inventory != null ? Mathf.Max(1, inventory.GetWeaponLevel(activeProjectileConfig)) : 1;
+        float levelMultiplier = 1f + activeProjectileConfig.DamagePercentPerLevel * (level - 1);
+        return activeProjectileConfig.AttackDamage * levelMultiplier
+            + GetAssemblyBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.AttackDamage);
     }
 
     private Vector3 GetFirePosition(Transform muzzle, Vector3 direction)
@@ -964,12 +1166,43 @@ public class PlayerController : MonoBehaviour
 
     private float GetProjectileSpeed(ProjectileConfig activeProjectileConfig)
     {
-        return activeProjectileConfig != null ? activeProjectileConfig.Speed : projectileSpeed;
+        return activeProjectileConfig != null
+            ? activeProjectileConfig.Speed
+                + GetAssemblyBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.Speed)
+            : projectileSpeed;
     }
 
     private float GetProjectileLifetime(ProjectileConfig activeProjectileConfig)
     {
-        return activeProjectileConfig != null ? activeProjectileConfig.Lifetime : projectileLifetime;
+        return activeProjectileConfig != null
+            ? activeProjectileConfig.Lifetime
+                + GetAssemblyBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.Lifetime)
+            : projectileLifetime;
+    }
+
+    private float GetProjectileCollisionRadius(ProjectileConfig activeProjectileConfig)
+    {
+        return activeProjectileConfig != null
+            ? activeProjectileConfig.CollisionRadius
+                + GetAssemblyBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.CollisionRadius)
+            : 0.2f;
+    }
+
+    private float GetProjectileKnockback(ProjectileConfig activeProjectileConfig)
+    {
+        return activeProjectileConfig != null
+            ? activeProjectileConfig.KnockbackForce
+                + GetAssemblyBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.KnockbackForce)
+            : 0f;
+    }
+
+    private float GetAssemblyBonus(
+        ProjectileConfig activeProjectileConfig,
+        AssemblyFactory.WeaponEnhancementStat stat)
+    {
+        return assemblyFactory != null && activeProjectileConfig != null
+            ? assemblyFactory.GetWeaponStatBonus(activeProjectileConfig, stat)
+            : 0f;
     }
 
     private void SetVehicleMoveInput(float torque, float steering)

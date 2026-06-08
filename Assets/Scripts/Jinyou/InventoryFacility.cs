@@ -5,11 +5,27 @@ using UnityEngine.Events;
 public class InventoryFacility : MonoBehaviour
 {
     private const string EquipmentPartsKey = "InventoryFacility.EquipmentParts";
+    private const string CollectionProgressKey = "InventoryFacility.CollectionProgress";
 
     [System.Serializable]
     private class EquipmentPartSaveData
     {
         public List<EquipmentPartInstance> parts = new List<EquipmentPartInstance>();
+    }
+
+    [System.Serializable]
+    public class CollectionProgress
+    {
+        public string configId;
+        [Min(1)] public int level = 1;
+        [Min(0)] public int duplicateProgress;
+    }
+
+    [System.Serializable]
+    private class CollectionProgressSaveData
+    {
+        public List<CollectionProgress> weapons = new List<CollectionProgress>();
+        public List<CollectionProgress> skills = new List<CollectionProgress>();
     }
 
     [System.Serializable]
@@ -24,6 +40,9 @@ public class InventoryFacility : MonoBehaviour
     [Header("Weapons")]
     [SerializeField] private List<ProjectileConfig> weaponConfigs = new List<ProjectileConfig>();
     [SerializeField] private List<WeaponStack> weaponStacks = new List<WeaponStack>();
+
+    [Header("Skills")]
+    [SerializeField] private List<PlayerSkillConfig> skillConfigs = new List<PlayerSkillConfig>();
 
     [Header("Units")]
     [SerializeField] private List<PlayerUnitConfig> unitConfigs = new List<PlayerUnitConfig>();
@@ -48,12 +67,34 @@ public class InventoryFacility : MonoBehaviour
 
     [Header("Events")]
     public UnityEvent OnInventoryChanged = new UnityEvent();
+    public UnityEvent OnCollectionProgressChanged = new UnityEvent();
+    public UnityEvent<string, int> OnWeaponLevelChanged = new UnityEvent<string, int>();
+    public UnityEvent<string, int> OnSkillLevelChanged = new UnityEvent<string, int>();
     public UnityEvent OnEquipmentPartsChanged = new UnityEvent();
 
     private bool equipmentPartsInitialized;
+    private bool collectionProgressInitialized;
+    private List<CollectionProgress> weaponProgress = new List<CollectionProgress>();
+    private List<CollectionProgress> skillProgress = new List<CollectionProgress>();
+    private readonly List<PlayerSkillConfig> ownedSkillConfigs = new List<PlayerSkillConfig>();
 
-    public IReadOnlyList<ProjectileConfig> WeaponConfigs => weaponConfigs;
+    public IReadOnlyList<ProjectileConfig> WeaponConfigs
+    {
+        get
+        {
+            EnsureCollectionProgressInitialized();
+            return weaponConfigs;
+        }
+    }
     public IReadOnlyList<WeaponStack> WeaponStacks => weaponStacks;
+    public IReadOnlyList<PlayerSkillConfig> SkillConfigs
+    {
+        get
+        {
+            EnsureCollectionProgressInitialized();
+            return ownedSkillConfigs;
+        }
+    }
     public IReadOnlyList<PlayerUnitConfig> UnitConfigs => unitConfigs;
     public IReadOnlyList<EquipmentPartConfig> EquipmentPartConfigs
     {
@@ -75,6 +116,7 @@ public class InventoryFacility : MonoBehaviour
 
     private void Awake()
     {
+        EnsureCollectionProgressInitialized();
         EnsureEquipmentPartsInitialized();
     }
 
@@ -86,7 +128,14 @@ public class InventoryFacility : MonoBehaviour
 
     public bool ContainsWeapon(ProjectileConfig weaponConfig)
     {
-        return weaponConfig != null && weaponConfigs.Contains(weaponConfig);
+        EnsureCollectionProgressInitialized();
+        return weaponConfig != null && FindProgress(weaponProgress, weaponConfig.Id) != null;
+    }
+
+    public bool ContainsSkill(PlayerSkillConfig skillConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        return skillConfig != null && FindProgress(skillProgress, skillConfig.Id) != null;
     }
 
     public bool ContainsUnit(PlayerUnitConfig unitConfig)
@@ -101,16 +150,157 @@ public class InventoryFacility : MonoBehaviour
 
     public bool AddWeapon(ProjectileConfig weaponConfig, int quantity)
     {
+        EnsureCollectionProgressInitialized();
         if (weaponConfig == null || quantity <= 0)
         {
             return false;
         }
 
-        WeaponStack stack = GetOrCreateWeaponStack(weaponConfig);
-        stack.quantity += quantity;
-        SyncWeaponConfigsFromStacks();
-        OnInventoryChanged.Invoke();
+        RegisterWeaponConfig(weaponConfig);
+        int previousLevel = GetWeaponLevel(weaponConfig);
+        AddCopies(
+            weaponProgress,
+            weaponConfig.Id,
+            quantity,
+            weaponConfig.MaxLevel,
+            weaponConfig.MaxLevelDuplicateCoreCrystalReward);
+        int currentLevel = GetWeaponLevel(weaponConfig);
+        SaveCollectionProgress();
+        NotifyCollectionChanged();
+        if (currentLevel != previousLevel)
+        {
+            OnWeaponLevelChanged.Invoke(weaponConfig.Id, currentLevel);
+        }
         return true;
+    }
+
+    public bool AddSkill(PlayerSkillConfig skillConfig, int quantity = 1)
+    {
+        EnsureCollectionProgressInitialized();
+        if (skillConfig == null || quantity <= 0)
+        {
+            return false;
+        }
+
+        RegisterSkillConfig(skillConfig);
+        int previousLevel = GetSkillLevel(skillConfig);
+        AddCopies(
+            skillProgress,
+            skillConfig.Id,
+            quantity,
+            skillConfig.MaxLevel,
+            skillConfig.MaxLevelDuplicateCoreCrystalReward);
+        int currentLevel = GetSkillLevel(skillConfig);
+        SyncSkillConfigsFromProgress();
+        SaveCollectionProgress();
+        NotifyCollectionChanged();
+        if (currentLevel != previousLevel)
+        {
+            OnSkillLevelChanged.Invoke(skillConfig.Id, currentLevel);
+        }
+        return true;
+    }
+
+    public void RegisterInitialWeapon(ProjectileConfig weaponConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        if (weaponConfig == null)
+        {
+            return;
+        }
+
+        RegisterWeaponConfig(weaponConfig);
+        if (FindProgress(weaponProgress, weaponConfig.Id) == null)
+        {
+            weaponProgress.Add(CreateProgress(weaponConfig.Id));
+            SaveCollectionProgress();
+            NotifyCollectionChanged();
+        }
+    }
+
+    public void RegisterInitialSkills(IReadOnlyList<PlayerSkillConfig> skills)
+    {
+        EnsureCollectionProgressInitialized();
+        if (skills == null)
+        {
+            return;
+        }
+
+        bool changed = false;
+        for (int i = 0; i < skills.Count; i++)
+        {
+            PlayerSkillConfig skill = skills[i];
+            if (skill == null)
+            {
+                continue;
+            }
+
+            RegisterSkillConfig(skill);
+            if (FindProgress(skillProgress, skill.Id) == null)
+            {
+                skillProgress.Add(CreateProgress(skill.Id));
+                changed = true;
+            }
+        }
+
+        SyncSkillConfigsFromProgress();
+        if (changed)
+        {
+            SaveCollectionProgress();
+            NotifyCollectionChanged();
+        }
+    }
+
+    public int GetWeaponLevel(ProjectileConfig weaponConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        if (weaponConfig == null)
+        {
+            return 0;
+        }
+
+        int level = GetLevel(weaponProgress, weaponConfig.Id);
+        return level > 0 ? Mathf.Min(level, weaponConfig.MaxLevel) : 0;
+    }
+
+    public int GetSkillLevel(PlayerSkillConfig skillConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        if (skillConfig == null)
+        {
+            return 0;
+        }
+
+        int level = GetLevel(skillProgress, skillConfig.Id);
+        return level > 0 ? Mathf.Min(level, skillConfig.MaxLevel) : 0;
+    }
+
+    public int GetDuplicateProgress(ProjectileConfig weaponConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        return weaponConfig != null && GetWeaponLevel(weaponConfig) < weaponConfig.MaxLevel
+            ? GetDuplicateProgress(weaponProgress, weaponConfig.Id)
+            : 0;
+    }
+
+    public int GetDuplicateProgress(PlayerSkillConfig skillConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        return skillConfig != null && GetSkillLevel(skillConfig) < skillConfig.MaxLevel
+            ? GetDuplicateProgress(skillProgress, skillConfig.Id)
+            : 0;
+    }
+
+    public int GetRequiredDuplicates(ProjectileConfig weaponConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        return weaponConfig != null ? GetRequiredDuplicates(GetWeaponLevel(weaponConfig), weaponConfig.MaxLevel) : 0;
+    }
+
+    public int GetRequiredDuplicates(PlayerSkillConfig skillConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        return skillConfig != null ? GetRequiredDuplicates(GetSkillLevel(skillConfig), skillConfig.MaxLevel) : 0;
     }
 
     public bool AddUnit(PlayerUnitConfig unitConfig)
@@ -132,37 +322,41 @@ public class InventoryFacility : MonoBehaviour
 
     public bool RemoveWeapon(ProjectileConfig weaponConfig, int quantity)
     {
+        EnsureCollectionProgressInitialized();
         if (weaponConfig == null || quantity <= 0)
         {
             return false;
         }
 
-        WeaponStack stack = FindWeaponStack(weaponConfig);
-        if (stack == null)
+        int ownedCopies = GetWeaponQuantity(weaponConfig);
+        if (ownedCopies <= 0 || quantity < ownedCopies)
         {
             return false;
         }
 
-        stack.quantity -= quantity;
-        if (stack.quantity <= 0)
-        {
-            weaponStacks.Remove(stack);
-        }
-
-        SyncWeaponConfigsFromStacks();
-        OnInventoryChanged.Invoke();
+        // 레벨 일부를 역산하지 않고 전체 보유 제거만 지원한다.
+        weaponProgress.RemoveAll(progress => progress != null && progress.configId == weaponConfig.Id);
+        weaponConfigs.Remove(weaponConfig);
+        weaponStacks.RemoveAll(stack => stack != null && stack.weaponConfig == weaponConfig);
+        SaveCollectionProgress();
+        NotifyCollectionChanged();
         return true;
     }
 
     public int GetWeaponQuantity(ProjectileConfig weaponConfig)
     {
-        WeaponStack stack = FindWeaponStack(weaponConfig);
-        return stack != null ? Mathf.Max(0, stack.quantity) : 0;
+        int level = GetWeaponLevel(weaponConfig);
+        if (level <= 0)
+        {
+            return 0;
+        }
+
+        return 1 + (level - 1) * level / 2 + GetDuplicateProgress(weaponConfig);
     }
 
     public int GetWeaponDuplicateCount(ProjectileConfig weaponConfig)
     {
-        return Mathf.Max(0, GetWeaponQuantity(weaponConfig) - 1);
+        return GetDuplicateProgress(weaponConfig);
     }
 
     public bool RemoveUnit(PlayerUnitConfig unitConfig)
@@ -285,6 +479,25 @@ public class InventoryFacility : MonoBehaviour
         NormalizeWeaponStacks();
         RemoveNullAndDuplicateUnits();
         EnsureEquipmentPartConfigs(false);
+        skillConfigs ??= new List<PlayerSkillConfig>();
+        skillConfigs.RemoveAll(config => config == null);
+#if UNITY_EDITOR
+        if (skillConfigs.Count == 0)
+        {
+            string[] guids = UnityEditor.AssetDatabase.FindAssets(
+                "t:PlayerSkillConfig",
+                new[] { "Assets/SO/Balance/Skills" });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[i]);
+                PlayerSkillConfig config = UnityEditor.AssetDatabase.LoadAssetAtPath<PlayerSkillConfig>(path);
+                if (config != null && !skillConfigs.Contains(config))
+                {
+                    skillConfigs.Add(config);
+                }
+            }
+        }
+#endif
     }
 
     private WeaponStack FindWeaponStack(ProjectileConfig weaponConfig)
@@ -353,6 +566,219 @@ public class InventoryFacility : MonoBehaviour
                 weaponConfigs.RemoveAt(i);
             }
         }
+    }
+
+    private void EnsureCollectionProgressInitialized()
+    {
+        if (collectionProgressInitialized)
+        {
+            return;
+        }
+
+        collectionProgressInitialized = true;
+        NormalizeWeaponStacks();
+        skillConfigs ??= new List<PlayerSkillConfig>();
+        skillConfigs.RemoveAll(config => config == null);
+
+        string json = PlayerPrefs.GetString(CollectionProgressKey, string.Empty);
+        if (!string.IsNullOrWhiteSpace(json))
+        {
+            CollectionProgressSaveData saveData = JsonUtility.FromJson<CollectionProgressSaveData>(json);
+            weaponProgress = saveData?.weapons ?? new List<CollectionProgress>();
+            skillProgress = saveData?.skills ?? new List<CollectionProgress>();
+            NormalizeCollectionProgress();
+            SyncWeaponConfigsFromProgress();
+            SyncSkillConfigsFromProgress();
+            return;
+        }
+
+        // 기존 Inspector 수량은 최초 보유와 중복 진행도로 한 번만 이관한다.
+        weaponProgress = new List<CollectionProgress>();
+        skillProgress = new List<CollectionProgress>();
+        for (int i = 0; i < weaponStacks.Count; i++)
+        {
+            WeaponStack stack = weaponStacks[i];
+            if (stack?.weaponConfig == null)
+            {
+                continue;
+            }
+
+            AddCopies(
+                weaponProgress,
+                stack.weaponConfig.Id,
+                Mathf.Max(1, stack.quantity),
+                stack.weaponConfig.MaxLevel,
+                0);
+        }
+
+        SaveCollectionProgress();
+        SyncWeaponConfigsFromProgress();
+        SyncSkillConfigsFromProgress();
+    }
+
+    private void AddCopies(
+        List<CollectionProgress> progressList,
+        string configId,
+        int quantity,
+        int maxLevel,
+        int maxLevelReward)
+    {
+        CollectionProgress progress = FindProgress(progressList, configId);
+        int remainingCopies = quantity;
+        if (progress == null)
+        {
+            progress = CreateProgress(configId);
+            progressList.Add(progress);
+            remainingCopies--;
+        }
+
+        while (remainingCopies > 0)
+        {
+            if (progress.level >= maxLevel)
+            {
+                GrantMaxLevelDuplicateReward(maxLevelReward, remainingCopies);
+                break;
+            }
+
+            progress.duplicateProgress++;
+            remainingCopies--;
+            int required = Mathf.Max(1, progress.level);
+            if (progress.duplicateProgress >= required)
+            {
+                progress.duplicateProgress -= required;
+                progress.level++;
+            }
+        }
+    }
+
+    private void GrantMaxLevelDuplicateReward(int rewardPerCopy, int copyCount)
+    {
+        int reward = Mathf.Max(0, rewardPerCopy) * Mathf.Max(0, copyCount);
+        if (reward <= 0)
+        {
+            return;
+        }
+
+        PlayerCurrencyWallet wallet = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.CurrencyWallet
+            : FindFirstObjectByType<PlayerCurrencyWallet>(FindObjectsInactive.Include);
+        wallet?.AddCoreCrystals(reward);
+    }
+
+    private void RegisterWeaponConfig(ProjectileConfig weaponConfig)
+    {
+        if (!weaponConfigs.Contains(weaponConfig))
+        {
+            weaponConfigs.Add(weaponConfig);
+        }
+    }
+
+    private void RegisterSkillConfig(PlayerSkillConfig skillConfig)
+    {
+        if (!skillConfigs.Contains(skillConfig))
+        {
+            skillConfigs.Add(skillConfig);
+        }
+    }
+
+    private void SyncWeaponConfigsFromProgress()
+    {
+        weaponConfigs.RemoveAll(config => config == null);
+        for (int i = weaponConfigs.Count - 1; i >= 0; i--)
+        {
+            if (FindProgress(weaponProgress, weaponConfigs[i].Id) == null)
+            {
+                weaponConfigs.RemoveAt(i);
+            }
+        }
+    }
+
+    private void SyncSkillConfigsFromProgress()
+    {
+        ownedSkillConfigs.Clear();
+        for (int i = 0; i < skillConfigs.Count; i++)
+        {
+            PlayerSkillConfig config = skillConfigs[i];
+            if (config != null
+                && FindProgress(skillProgress, config.Id) != null
+                && !ownedSkillConfigs.Contains(config))
+            {
+                ownedSkillConfigs.Add(config);
+            }
+        }
+    }
+
+    private void NormalizeCollectionProgress()
+    {
+        NormalizeProgressList(weaponProgress);
+        NormalizeProgressList(skillProgress);
+    }
+
+    private static void NormalizeProgressList(List<CollectionProgress> progressList)
+    {
+        progressList ??= new List<CollectionProgress>();
+        HashSet<string> ids = new HashSet<string>();
+        for (int i = progressList.Count - 1; i >= 0; i--)
+        {
+            CollectionProgress progress = progressList[i];
+            if (progress == null || string.IsNullOrWhiteSpace(progress.configId) || !ids.Add(progress.configId))
+            {
+                progressList.RemoveAt(i);
+                continue;
+            }
+
+            progress.level = Mathf.Max(1, progress.level);
+            progress.duplicateProgress = Mathf.Max(0, progress.duplicateProgress);
+        }
+    }
+
+    private static CollectionProgress CreateProgress(string configId)
+    {
+        return new CollectionProgress
+        {
+            configId = configId,
+            level = 1,
+            duplicateProgress = 0
+        };
+    }
+
+    private static CollectionProgress FindProgress(List<CollectionProgress> progressList, string configId)
+    {
+        return progressList?.Find(item => item != null && item.configId == configId);
+    }
+
+    private static int GetLevel(List<CollectionProgress> progressList, string configId)
+    {
+        CollectionProgress progress = FindProgress(progressList, configId);
+        return progress != null ? Mathf.Max(1, progress.level) : 0;
+    }
+
+    private static int GetDuplicateProgress(List<CollectionProgress> progressList, string configId)
+    {
+        CollectionProgress progress = FindProgress(progressList, configId);
+        return progress != null ? Mathf.Max(0, progress.duplicateProgress) : 0;
+    }
+
+    private static int GetRequiredDuplicates(int level, int maxLevel)
+    {
+        return level > 0 && level < maxLevel ? level : 0;
+    }
+
+    private void SaveCollectionProgress()
+    {
+        CollectionProgressSaveData saveData = new CollectionProgressSaveData
+        {
+            weapons = weaponProgress,
+            skills = skillProgress
+        };
+        PlayerPrefs.SetString(CollectionProgressKey, JsonUtility.ToJson(saveData));
+        PlayerPrefs.Save();
+    }
+
+    private void NotifyCollectionChanged()
+    {
+        OnCollectionProgressChanged.Invoke();
+        OnInventoryChanged.Invoke();
     }
 
     private void RemoveNullAndDuplicateUnits()

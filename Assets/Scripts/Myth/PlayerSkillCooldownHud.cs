@@ -9,6 +9,7 @@ public class PlayerSkillCooldownHud : MonoBehaviour
     private PlayerController _player;
     private PlayerAutoSkillController _skillController;
     private readonly List<PlayerSkillCooldownSlot> _activeSlots = new List<PlayerSkillCooldownSlot>();
+    private int _observedLoadoutVersion = -1;
 
     private void Awake()
     {
@@ -38,8 +39,8 @@ public class PlayerSkillCooldownHud : MonoBehaviour
             return;
         }
 
-        // 스킬 장착 목록이 바뀔 경우를 위해 슬롯 수와 스킬 수를 체크하여 리빌드
-        if (_activeSlots.Count != _skillController.EquippedSkills.Count)
+        // 같은 슬롯 수로 스킬을 교체한 경우에도 HUD를 다시 구성한다.
+        if (_observedLoadoutVersion != _skillController.LoadoutVersion)
         {
             RebuildSlots();
         }
@@ -74,6 +75,7 @@ public class PlayerSkillCooldownHud : MonoBehaviour
             return;
         }
 
+        _observedLoadoutVersion = _skillController.LoadoutVersion;
         IReadOnlyList<PlayerSkillConfig> skills = _skillController.EquippedSkills;
         for (int i = 0; i < skills.Count; i++)
         {
