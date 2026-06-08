@@ -825,8 +825,9 @@ MonoBehaviour:
   energyRefinery: {fileID: 733164109}
   assemblyFactory: {fileID: 733164108}
   coreCharger: {fileID: 733164107}
-  traitPointFacility: {fileID: 0}
+  traitPointFacility: {fileID: 1938238888}
   inventory: {fileID: 733164106}
+  dailyMissionManager: {fileID: 820922200}
   autoFindFacilities: 1
   facilityPanels:
   - {fileID: 733164105}
@@ -836,9 +837,22 @@ MonoBehaviour:
   - {fileID: 0}
   closePanelsOnStart: 1
   commanderLevel: 100
+  syncCommanderLevelFromPlayerProgression: 1
   credits: 50000
   currencyWallet: {fileID: 0}
   playerProgression: {fileID: 0}
+  useUnifiedSave: 1
+  autoSaveUnifiedState: 1
+  unifiedSaveKey: Jinyou.SaveData
+  enableAutomation: 1
+  autoCollectUnlockResearchLabLevel: 2
+  autoUpgradeUnlockResearchLabLevel: 4
+  autoCollectIntervalSeconds: 5
+  autoUpgradeIntervalSeconds: 10
+  autoUpgradeResearchLab: 1
+  autoUpgradeEnergyRefinery: 1
+  autoUpgradeAssemblyFactory: 1
+  autoUpgradeCoreCharger: 1
   showDebugPanel: 0
   debugPanelRect:
     serializedVersion: 2
@@ -855,6 +869,9 @@ MonoBehaviour:
   OnCommanderLevelChanged:
     m_PersistentCalls:
       m_Calls: []
+  OnOfflineRewardsClaimed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &735975115
 Transform:
   m_ObjectHideFlags: 0
@@ -864,6 +881,124 @@ Transform:
   m_GameObject: {fileID: 735975113}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &820922199
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 820922201}
+  - component: {fileID: 820922200}
+  m_Layer: 0
+  m_Name: DailyMissionManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &820922200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820922199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d9f14434e94c24bb57ddf9af57fdf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DailyMissionManager
+  resetByLocalDate: 1
+  missions:
+  - id: collect_credits
+    missionType: 0
+    title: Credit Recovery
+    description: Collect 1000 refinery credits
+    targetAmount: 1000
+    rewardCurrency: 0
+    rewardAmount: 200
+    currentAmount: 0
+    rewardClaimed: 0
+  - id: upgrade_facility
+    missionType: 1
+    title: Base Expansion
+    description: Start 1 facility upgrade
+    targetAmount: 1
+    rewardCurrency: 0
+    rewardAmount: 300
+    currentAmount: 0
+    rewardClaimed: 0
+  - id: enhance_weapon
+    missionType: 2
+    title: Weapon Tuning
+    description: Enhance a weapon 1 time
+    targetAmount: 1
+    rewardCurrency: 0
+    rewardAmount: 200
+    currentAmount: 0
+    rewardClaimed: 0
+  - id: enhance_unit
+    missionType: 3
+    title: Core Calibration
+    description: Enhance a unit 1 time
+    targetAmount: 1
+    rewardCurrency: 0
+    rewardAmount: 200
+    currentAmount: 0
+    rewardClaimed: 0
+  - id: use_boss_ticket
+    missionType: 4
+    title: Boss Recon
+    description: Use 1 boss ticket
+    targetAmount: 1
+    rewardCurrency: 1
+    rewardAmount: 5
+    currentAmount: 0
+    rewardClaimed: 0
+  - id: draw_weapon
+    missionType: 5
+    title: Supply Draw
+    description: Draw weapons 1 time
+    targetAmount: 1
+    rewardCurrency: 0
+    rewardAmount: 150
+    currentAmount: 0
+    rewardClaimed: 0
+  - id: claim_offline
+    missionType: 6
+    title: Return Bonus
+    description: Claim offline rewards 1 time
+    targetAmount: 1
+    rewardCurrency: 0
+    rewardAmount: 150
+    currentAmount: 0
+    rewardClaimed: 0
+  OnDailyMissionsChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDailyMissionCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDailyMissionRewardClaimed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &820922201
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820922199}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -949,12 +1084,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1938238888 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3313349365809766852, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+  m_PrefabInstance: {fileID: 733164104}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9de7ff06792a4a0c88c3fd8d16f858d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TraitPointFacility
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 432881804}
-  - {fileID: 735975115}
   - {fileID: 1622342918}
   - {fileID: 136990589}
+  - {fileID: 735975115}
+  - {fileID: 820922201}
   - {fileID: 733164104}

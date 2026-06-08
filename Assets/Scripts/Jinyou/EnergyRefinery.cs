@@ -87,6 +87,34 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
         return amount;
     }
 
+    public JinyouEnergyRefinerySaveData CaptureState()
+    {
+        return new JinyouEnergyRefinerySaveData
+        {
+            level = level,
+            storedCredits = storedCredits,
+            isUpgrading = isUpgrading,
+            upgradeRemainingSeconds = upgradeRemainingSeconds,
+            currentUpgradeDurationSeconds = currentUpgradeDurationSeconds
+        };
+    }
+
+    public void RestoreState(JinyouEnergyRefinerySaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        level = Mathf.Clamp(data.level, 1, maxLevel);
+        storedCredits = Mathf.Clamp(data.storedCredits, 0, StorageCapacity);
+        isUpgrading = data.isUpgrading;
+        upgradeRemainingSeconds = Mathf.Max(0f, data.upgradeRemainingSeconds);
+        currentUpgradeDurationSeconds = Mathf.Max(0f, data.currentUpgradeDurationSeconds);
+        OnLevelChanged.Invoke(level);
+        OnCreditsChanged.Invoke(storedCredits);
+    }
+
     public bool CanUpgrade(int credits, int commanderLevel)
     {
         return !isUpgrading && level < maxLevel && credits >= UpgradeCost && commanderLevel >= requiredCommanderLevel;

@@ -98,7 +98,15 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
     private void EnhanceWeapon()
     {
-        baseCampManager?.EnhanceAssemblyWeapon();
+        if (assemblyFactory != null && assemblyFactory.SelectedMenuId == "weapon")
+        {
+            baseCampManager?.EnhanceAssemblyWeapon();
+        }
+        else
+        {
+            baseCampManager?.DevelopSelectedAssemblyMenu();
+        }
+
         Refresh();
     }
 
@@ -162,7 +170,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         SetText(upgradeText, assemblyFactory.IsUpgrading
             ? $"Upgrading {assemblyFactory.UpgradeRemainingSeconds:0}s"
             : $"Upgrade Cost {assemblyFactory.UpgradeCost}");
-        SetText(weaponEnhanceText, BuildSelectedWeaponEnhancementText());
+        SetText(weaponEnhanceText, BuildSelectedActionText());
         SetText(selectedMenuText, string.IsNullOrEmpty(assemblyFactory.SelectedMenuId) ? "No Menu Selected" : $"Selected: {assemblyFactory.SelectedMenuId}");
         SetText(menuStateText, BuildMenuSummary());
         SetText(inventoryWeaponListText, BuildInventoryWeaponListText());
@@ -191,7 +199,9 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
         if (weaponEnhanceButton != null && baseCampManager != null)
         {
-            weaponEnhanceButton.interactable = assemblyFactory.CanEnhanceSelectedWeapon(baseCampManager.Credits);
+            weaponEnhanceButton.interactable = assemblyFactory.SelectedMenuId == "weapon"
+                ? assemblyFactory.CanEnhanceSelectedWeapon(baseCampManager.Credits)
+                : assemblyFactory.CanDevelopSelectedMenu(baseCampManager.Credits);
         }
     }
 
@@ -201,7 +211,13 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
         foreach (AssemblyFactory.AssemblyMenu menu in assemblyFactory.Menus)
         {
-            summary += $"{menu.displayName}: {(menu.unlocked ? "OPEN" : $"Lv.{menu.requiredFactoryLevel}")}\n";
+            if (menu == null)
+            {
+                continue;
+            }
+
+            string state = menu.unlocked ? "OPEN" : $"Factory Lv.{menu.requiredFactoryLevel}";
+            summary += $"{menu.displayName}: {state} / Dev Lv.{menu.developmentLevel}/{menu.MaxDevelopmentLevel} / Power +{menu.PowerBonus * 100f:0.#}%\n";
         }
 
         foreach (AssemblyFactory.WeaponEnhancement weaponEnhancement in assemblyFactory.WeaponEnhancements)
@@ -215,6 +231,37 @@ public class AssemblyFactoryPanel : MonoBehaviour
         }
 
         return summary.TrimEnd();
+    }
+
+    private string BuildSelectedActionText()
+    {
+        if (assemblyFactory.SelectedMenuId == "weapon")
+        {
+            return BuildSelectedWeaponEnhancementText();
+        }
+
+        return BuildSelectedMenuDevelopmentText();
+    }
+
+    private string BuildSelectedMenuDevelopmentText()
+    {
+        AssemblyFactory.AssemblyMenu selectedMenu = assemblyFactory.SelectedMenu;
+        if (selectedMenu == null)
+        {
+            return "Select Assembly Menu";
+        }
+
+        if (!selectedMenu.unlocked)
+        {
+            return $"{selectedMenu.displayName} locked until Factory Lv.{selectedMenu.requiredFactoryLevel}";
+        }
+
+        if (selectedMenu.IsMaxDevelopmentLevel)
+        {
+            return $"{selectedMenu.displayName} Dev Lv.MAX / Power +{selectedMenu.PowerBonus * 100f:0.#}%";
+        }
+
+        return $"{selectedMenu.displayName} Dev Lv.{selectedMenu.developmentLevel}/{selectedMenu.MaxDevelopmentLevel} / Cost {selectedMenu.NextDevelopmentCost} / Next Power +{selectedMenu.powerBonusPerLevel * 100f:0.#}%";
     }
 
     private string BuildInventoryWeaponListText()
