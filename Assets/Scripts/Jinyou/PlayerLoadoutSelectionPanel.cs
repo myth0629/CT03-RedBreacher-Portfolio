@@ -30,7 +30,6 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [Header("Detail")]
     [SerializeField] private TMP_Text detailNameText;
     [SerializeField] private TMP_Text detailCategoryText;
-    [SerializeField] private TMP_Text detailDescriptionText;
     [SerializeField] private TMP_Text detailStatsText;
 
     private readonly List<PlayerLoadoutOptionButton> spawnedOptions = new List<PlayerLoadoutOptionButton>();
@@ -222,8 +221,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private void RefreshWeaponDetail(ProjectileConfig weapon)
     {
         SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하십시오.");
-        SetText(detailCategoryText, weapon != null ? weapon.WeaponCategory : string.Empty);
-        SetText(detailDescriptionText, weapon != null ? weapon.Id : string.Empty);
+        SetText(detailCategoryText, weapon != null ? $"종류: {weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
             ? $"피해량: {weapon.AttackDamage:0.##}\n발사간격: {weapon.Speed:0.##}\n탄 수명: {weapon.Lifetime:0.##}\n저지력: {weapon.KnockbackForce:0.##}\n"
             : string.Empty);
@@ -232,8 +230,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private void RefreshDroneDetail(DroneConfig drone)
     {
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하십시오.");
-        SetText(detailCategoryText, drone != null ? $"{drone.DroneCount} unit(s)" : string.Empty);
-        SetText(detailDescriptionText, drone != null ? drone.Id : string.Empty);
+        SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount} 개" : string.Empty);
         SetText(detailStatsText, drone != null
             ? $"피해량: {drone.AttackDamage:0.##}\n사거리: {drone.AttackRange:0.##}\n발사간격: {drone.AttackInterval:0.##}\n탄속: {drone.ProjectileSpeed:0.##}\nFollow Radius: {drone.FollowRadius:0.##}"
             : string.Empty);

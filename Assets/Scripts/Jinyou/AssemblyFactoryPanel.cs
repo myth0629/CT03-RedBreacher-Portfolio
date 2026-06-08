@@ -170,7 +170,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
         if (upgradeButton != null && baseCampManager != null)
         {
-            int researchLabLevel = baseCampManager.ResearchLab != null ? baseCampManager.ResearchLab.Level : 1;
+            int researchLabLevel = baseCampManager.CommandCenter != null ? baseCampManager.CommandCenter.Level : 1;
             upgradeButton.interactable = assemblyFactory.CanStartUpgrade(
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,

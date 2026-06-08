@@ -85,7 +85,7 @@ public class BossDungeon : MonoBehaviour
     private void ResolveReferences()
     {
         cmdCenter ??= BaseCampManager.Instance != null
-            ? BaseCampManager.Instance.ResearchLab
+            ? BaseCampManager.Instance.CommandCenter
             : FindFirstObjectByType<CommandCenter>();
     }
 

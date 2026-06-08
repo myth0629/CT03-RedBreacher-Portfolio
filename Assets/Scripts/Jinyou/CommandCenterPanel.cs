@@ -126,7 +126,7 @@ public class CommandCenterPanel : MonoBehaviour
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
-        cmdCenter = baseCampManager != null ? baseCampManager.ResearchLab : null;
+        cmdCenter = baseCampManager != null ? baseCampManager.CommandCenter : null;
     }
 
     private static void SetText(TMP_Text target, string value)

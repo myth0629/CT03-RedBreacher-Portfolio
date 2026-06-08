@@ -85,7 +85,7 @@ public class BossDungeonPanel : MonoBehaviour
     {
         ResolveReferences();
 
-        CommandCenter researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
+        CommandCenter researchLab = baseCampManager != null ? baseCampManager.CommandCenter : null;
         if (researchLab == null)
         {
             UpdateFacilityVisual();

@@ -50,7 +50,7 @@ public class BaseCampHud : MonoBehaviour
             return;
         }
 
-        CommandCenter researchLab = baseCampManager.ResearchLab;
+        CommandCenter researchLab = baseCampManager.CommandCenter;
         EnergyRefinery refinery = baseCampManager.EnergyRefinery;
         SetText(commanderLevelText, $"Commander Lv. {baseCampManager.CommanderLevel}");
 
