@@ -13,6 +13,27 @@ public class PlayerAutoSkillController : MonoBehaviour
 
     public IReadOnlyList<PlayerSkillConfig> EquippedSkills => equippedSkills;
 
+    public float GetRemainingCooldown(PlayerSkillConfig skill)
+    {
+        if (skill == null || !nextCastTimes.TryGetValue(skill, out float nextCastTime))
+        {
+            return 0f;
+        }
+
+        return Mathf.Max(0f, nextCastTime - Time.time);
+    }
+
+    public float GetCooldownProgress01(PlayerSkillConfig skill)
+    {
+        if (skill == null || skill.Cooldown <= 0f)
+        {
+            return 0f;
+        }
+
+        float remaining = GetRemainingCooldown(skill);
+        return Mathf.Clamp01(remaining / skill.Cooldown);
+    }
+
     public void Initialize(PlayerController owner, IReadOnlyList<PlayerSkillConfig> skills)
     {
         player = owner;

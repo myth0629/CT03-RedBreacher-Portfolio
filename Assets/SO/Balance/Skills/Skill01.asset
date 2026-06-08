@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
   id: 01
   displayName: "\uD130\uB81B"
-  icon: {fileID: 21300000, guid: 3b38ee72f688d4c01aa7b4859503b9d2, type: 3}
+  icon: {fileID: 21300000, guid: 2600cbe45253d534cb314c2cb5502840, type: 3}
   skillType: 1
   cooldown: 10
   castRange: 8
@@ -29,6 +29,14 @@ MonoBehaviour:
   warningEffectPrefab: {fileID: 0}
   impactEffectPrefab: {fileID: 0}
   effectCleanupDelay: 2
+  _airplanePrefab: {fileID: 0}
+  _airplaneSpeed: 15
+  _airplaneSpawnOffset: 15
+  _airplaneHeight: 6
+  _bombProjectilePrefab: {fileID: 0}
+  _bombEffectScale: 1
+  _bombCount: 1
+  _bombInterval: 0.15
   turretPrefab: {fileID: 214164098778057125, guid: 2e8cee64f5e8b9140af5805bee03240f, type: 3}
   turretProjectileConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
   turretDuration: 8
