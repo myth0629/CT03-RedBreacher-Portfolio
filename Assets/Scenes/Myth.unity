@@ -1732,7 +1732,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3f2c90a1f6048e4ba2d6df32fdb8b9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseCampManager
-  researchLab: {fileID: 0}
+  commandCenter: {fileID: 0}
   energyRefinery: {fileID: 0}
   assemblyFactory: {fileID: 0}
   coreCharger: {fileID: 0}
@@ -2505,6 +2505,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6223792534563652184, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
+      propertyPath: damageNumberFont
+      value: 
+      objectReference: {fileID: 11400000, guid: 99d460ef43f55ae41b2fe57f6d43e8a8, type: 2}
     - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
       propertyPath: unitConfig
       value: 
@@ -2527,6 +2531,10 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: ade7c23ee0ef94de58b64675613a20d6, type: 2}
     - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
       propertyPath: 'autoSkills.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: f37875bbd6023431e90ef1a693f06d5b, type: 2}
+    - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
+      propertyPath: 'autoSkills.Array.data[2]'
       value: 
       objectReference: {fileID: 11400000, guid: f37875bbd6023431e90ef1a693f06d5b, type: 2}
     m_RemovedComponents: []

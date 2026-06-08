@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class CombatHealth : MonoBehaviour
@@ -11,6 +14,20 @@ public class CombatHealth : MonoBehaviour
     [SerializeField] private float regenDelayAfterHit = 3f;
     [SerializeField] private float regenPercentPerSecond = 0.01f;
     [SerializeField] private float regenFlatPerSecond;
+
+    [Header("Damage Number")]
+    [SerializeField] private bool showDamageNumber = true;
+    [SerializeField] private TMP_FontAsset damageNumberFont;
+    [SerializeField] private Color enemyDamageColor = Color.white;
+    [SerializeField] private Color playerDamageColor = new Color(1f, 0.35f, 0.35f);
+    [SerializeField] private Color criticalDamageColor = new Color(1f, 0.85f, 0.1f);
+    [SerializeField] private float damageNumberFontSize = 4f;
+    [SerializeField] private float criticalSizeMultiplier = 1.35f;
+    [SerializeField] private float damageNumberDuration = 0.8f;
+    [SerializeField] private float damageNumberRiseDistance = 0.8f;
+    [SerializeField] private float damageNumberRandomSpread = 0.25f;
+    [SerializeField] private Vector3 damageNumberOffset = new Vector3(0f, 0.8f, 0f);
+    [SerializeField] private int damageNumberSortingOrder = 50;
 
     private float currentHealth;
     private float lastDamageTime = float.NegativeInfinity;
@@ -52,7 +69,7 @@ public class CombatHealth : MonoBehaviour
             : Mathf.Min(currentHealth, maxHealth);
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage, bool isCritical = false)
     {
         if (isDead || damage <= 0f)
         {
@@ -61,11 +78,38 @@ public class CombatHealth : MonoBehaviour
 
         // 체력 감소 후 사망 여부를 즉시 판정한다.
         lastDamageTime = Time.time;
+        float appliedDamage = Mathf.Min(currentHealth, damage);
         currentHealth = Mathf.Max(0f, currentHealth - damage);
+        ShowDamageNumber(appliedDamage, isCritical);
         if (currentHealth <= 0f)
         {
             Die();
         }
+    }
+
+    private void ShowDamageNumber(float damage, bool isCritical)
+    {
+        if (!showDamageNumber || damage <= 0f)
+        {
+            return;
+        }
+
+        bool isPlayer = GetComponent<PlayerController>() != null;
+        Color color = isCritical
+            ? criticalDamageColor
+            : isPlayer ? playerDamageColor : enemyDamageColor;
+        DamageNumberVisual.Play(
+            damage,
+            isCritical,
+            transform.position + damageNumberOffset,
+            damageNumberFont,
+            color,
+            damageNumberFontSize,
+            criticalSizeMultiplier,
+            damageNumberDuration,
+            damageNumberRiseDistance,
+            damageNumberRandomSpread,
+            damageNumberSortingOrder);
     }
 
     public bool TryClaimDeathReward()
@@ -121,5 +165,152 @@ public class CombatHealth : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+}
+
+public class DamageNumberVisual : MonoBehaviour
+{
+    private static readonly Queue<DamageNumberVisual> Pool = new Queue<DamageNumberVisual>();
+    private static Transform poolRoot;
+
+    private TextMeshPro text;
+    private Coroutine animationRoutine;
+
+    public static void Play(
+        float damage,
+        bool isCritical,
+        Vector3 position,
+        TMP_FontAsset font,
+        Color color,
+        float fontSize,
+        float criticalSizeMultiplier,
+        float duration,
+        float riseDistance,
+        float randomSpread,
+        int sortingOrder)
+    {
+        DamageNumberVisual visual = Get();
+        visual.Begin(
+            damage,
+            isCritical,
+            position,
+            font,
+            color,
+            fontSize,
+            criticalSizeMultiplier,
+            duration,
+            riseDistance,
+            randomSpread,
+            sortingOrder);
+    }
+
+    private static DamageNumberVisual Get()
+    {
+        EnsurePoolRoot();
+        DamageNumberVisual visual = Pool.Count > 0 ? Pool.Dequeue() : Create();
+        visual.transform.SetParent(poolRoot, false);
+        visual.gameObject.SetActive(true);
+        return visual;
+    }
+
+    private static DamageNumberVisual Create()
+    {
+        GameObject visualObject = new GameObject("Damage Number");
+        visualObject.transform.SetParent(poolRoot, false);
+        DamageNumberVisual visual = visualObject.AddComponent<DamageNumberVisual>();
+        visual.text = visualObject.AddComponent<TextMeshPro>();
+        visual.text.alignment = TextAlignmentOptions.Center;
+        visual.text.textWrappingMode = TextWrappingModes.NoWrap;
+        visualObject.SetActive(false);
+        return visual;
+    }
+
+    private static void EnsurePoolRoot()
+    {
+        if (poolRoot != null)
+        {
+            return;
+        }
+
+        GameObject rootObject = new GameObject("DamageNumberPool");
+        DontDestroyOnLoad(rootObject);
+        poolRoot = rootObject.transform;
+    }
+
+    private void Begin(
+        float damage,
+        bool isCritical,
+        Vector3 position,
+        TMP_FontAsset font,
+        Color color,
+        float fontSize,
+        float criticalSizeMultiplier,
+        float duration,
+        float riseDistance,
+        float randomSpread,
+        int sortingOrder)
+    {
+        StopAnimation();
+        text ??= GetComponent<TextMeshPro>();
+        text.font = font != null ? font : TMP_Settings.defaultFontAsset;
+        text.text = Mathf.Max(1, Mathf.RoundToInt(damage)).ToString();
+        text.color = color;
+        text.fontSize = Mathf.Max(0.1f, fontSize)
+            * (isCritical ? Mathf.Max(1f, criticalSizeMultiplier) : 1f);
+        text.renderer.sortingOrder = sortingOrder;
+
+        Vector2 spread = Random.insideUnitCircle * Mathf.Max(0f, randomSpread);
+        transform.position = position + new Vector3(spread.x, 0f, spread.y);
+        FaceCamera();
+        transform.localScale = Vector3.one;
+        animationRoutine = StartCoroutine(Animate(
+            Mathf.Max(0.05f, duration),
+            Mathf.Max(0f, riseDistance)));
+    }
+
+    private IEnumerator Animate(float duration, float riseDistance)
+    {
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = startPosition + Vector3.up * riseDistance;
+        Color startColor = text.color;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+            transform.position = Vector3.Lerp(startPosition, endPosition, progress);
+            FaceCamera();
+            text.color = new Color(startColor.r, startColor.g, startColor.b, 1f - progress);
+            yield return null;
+        }
+
+        Release();
+    }
+
+    private void FaceCamera()
+    {
+        Camera activeCamera = Camera.main;
+        if (activeCamera != null)
+        {
+            transform.rotation = activeCamera.transform.rotation;
+        }
+    }
+
+    private void StopAnimation()
+    {
+        if (animationRoutine != null)
+        {
+            StopCoroutine(animationRoutine);
+            animationRoutine = null;
+        }
+    }
+
+    private void Release()
+    {
+        StopAnimation();
+        gameObject.SetActive(false);
+        transform.SetParent(poolRoot, false);
+        Pool.Enqueue(this);
     }
 }

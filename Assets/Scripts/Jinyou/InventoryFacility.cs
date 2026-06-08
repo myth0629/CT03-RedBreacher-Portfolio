@@ -160,10 +160,8 @@ public class InventoryFacility : MonoBehaviour
         int previousLevel = GetWeaponLevel(weaponConfig);
         AddCopies(
             weaponProgress,
-            weaponConfig.Id,
-            quantity,
-            weaponConfig.MaxLevel,
-            weaponConfig.MaxLevelDuplicateCoreCrystalReward);
+            weaponConfig,
+            quantity);
         int currentLevel = GetWeaponLevel(weaponConfig);
         SaveCollectionProgress();
         NotifyCollectionChanged();
@@ -186,10 +184,8 @@ public class InventoryFacility : MonoBehaviour
         int previousLevel = GetSkillLevel(skillConfig);
         AddCopies(
             skillProgress,
-            skillConfig.Id,
-            quantity,
-            skillConfig.MaxLevel,
-            skillConfig.MaxLevelDuplicateCoreCrystalReward);
+            skillConfig,
+            quantity);
         int currentLevel = GetSkillLevel(skillConfig);
         SyncSkillConfigsFromProgress();
         SaveCollectionProgress();
@@ -605,10 +601,9 @@ public class InventoryFacility : MonoBehaviour
 
             AddCopies(
                 weaponProgress,
-                stack.weaponConfig.Id,
+                stack.weaponConfig,
                 Mathf.Max(1, stack.quantity),
-                stack.weaponConfig.MaxLevel,
-                0);
+                false);
         }
 
         SaveCollectionProgress();
@@ -618,36 +613,30 @@ public class InventoryFacility : MonoBehaviour
 
     private void AddCopies(
         List<CollectionProgress> progressList,
-        string configId,
+        IDuplicateLevelConfig config,
         int quantity,
-        int maxLevel,
-        int maxLevelReward)
+        bool grantMaxLevelReward = true)
     {
-        CollectionProgress progress = FindProgress(progressList, configId);
+        CollectionProgress progress = FindProgress(progressList, config.Id);
         int remainingCopies = quantity;
         if (progress == null)
         {
-            progress = CreateProgress(configId);
+            progress = CreateProgress(config.Id);
             progressList.Add(progress);
             remainingCopies--;
         }
 
-        while (remainingCopies > 0)
+        // 공통 계산기가 레벨 진행 후 최대 레벨 초과 중복 수량을 반환한다.
+        int maxLevelDuplicates = DuplicateLevelProgression.AddDuplicates(
+            config,
+            ref progress.level,
+            ref progress.duplicateProgress,
+            remainingCopies);
+        if (grantMaxLevelReward)
         {
-            if (progress.level >= maxLevel)
-            {
-                GrantMaxLevelDuplicateReward(maxLevelReward, remainingCopies);
-                break;
-            }
-
-            progress.duplicateProgress++;
-            remainingCopies--;
-            int required = Mathf.Max(1, progress.level);
-            if (progress.duplicateProgress >= required)
-            {
-                progress.duplicateProgress -= required;
-                progress.level++;
-            }
+            GrantMaxLevelDuplicateReward(
+                config.MaxLevelDuplicateCoreCrystalReward,
+                maxLevelDuplicates);
         }
     }
 
@@ -761,7 +750,7 @@ public class InventoryFacility : MonoBehaviour
 
     private static int GetRequiredDuplicates(int level, int maxLevel)
     {
-        return level > 0 && level < maxLevel ? level : 0;
+        return DuplicateLevelProgression.GetRequiredDuplicates(level, maxLevel);
     }
 
     private void SaveCollectionProgress()

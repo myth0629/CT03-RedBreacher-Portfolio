@@ -135,7 +135,7 @@ public class BombardmentSkill : MonoBehaviour
         if (_owner != null && _owner.Health != null && !_owner.Health.IsDead)
         {
             // 폭격 시점의 최종 플레이어 공격력 / 폭격 횟수를 1발당 데미지로 분할 적용
-            float damage = PlayerSkillCombat.CalculateDamage(_owner, _config);
+            float damage = PlayerSkillCombat.CalculateDamage(_owner, _config, out bool isCritical);
             float damagePerBomb = damage / Mathf.Max(1, _config.BombCount);
 
             PlayerSkillCombat.ApplyAreaDamage(
@@ -144,7 +144,8 @@ public class BombardmentSkill : MonoBehaviour
                 _config.EffectRadius,
                 damagePerBomb,
                 _config.MaxTargets,
-                _config.KnockbackForce);
+                _config.KnockbackForce,
+                isCritical);
 
             if (_config.ImpactEffectPrefab != null)
             {

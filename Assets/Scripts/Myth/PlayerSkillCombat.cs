@@ -5,16 +5,28 @@ public static class PlayerSkillCombat
 {
     public static float CalculateDamage(PlayerController player, PlayerSkillConfig config)
     {
+        return CalculateDamage(player, config, out _);
+    }
+
+    public static float CalculateDamage(
+        PlayerController player,
+        PlayerSkillConfig config,
+        out bool isCritical)
+    {
+        isCritical = false;
         if (player == null || config == null)
         {
             return 0f;
         }
 
         int level = Mathf.Max(1, player.GetSkillLevel(config));
-        float levelMultiplier = 1f + config.DamagePercentPerLevel * (level - 1);
+        float levelMultiplier = DuplicateLevelProgression.GetLevelMultiplier(
+            level,
+            config.DamagePercentPerLevel);
         float damage = (player.TotalAttackDamage * config.AttackPowerMultiplier + config.FlatDamage)
             * levelMultiplier;
-        if (config.CanCritical && Random.value < Mathf.Clamp01(player.CritChance))
+        isCritical = config.CanCritical && Random.value < Mathf.Clamp01(player.CritChance);
+        if (isCritical)
         {
             damage *= Mathf.Max(1f, player.CritMultiplier);
         }
@@ -107,7 +119,8 @@ public static class PlayerSkillCombat
         float radius,
         float damage,
         int maxTargets,
-        float knockbackForce)
+        float knockbackForce,
+        bool isCritical = false)
     {
         List<CombatHealth> targets = FindEnemies(center, radius);
         targets.Sort((left, right) =>
@@ -125,7 +138,7 @@ public static class PlayerSkillCombat
                 continue;
             }
 
-            target.TakeDamage(damage);
+            target.TakeDamage(damage, isCritical);
             if (knockbackForce > 0f)
             {
                 Vector3 knockbackDirection = CombatPlane.Direction(center, target.transform.position);

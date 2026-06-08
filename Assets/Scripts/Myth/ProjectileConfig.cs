@@ -1,5 +1,60 @@
 using UnityEngine;
 
+public interface IDuplicateLevelConfig
+{
+    string Id { get; }
+    int MaxLevel { get; }
+    int MaxLevelDuplicateCoreCrystalReward { get; }
+}
+
+public static class DuplicateLevelProgression
+{
+    public static int AddDuplicates(
+        IDuplicateLevelConfig config,
+        ref int level,
+        ref int duplicateProgress,
+        int quantity)
+    {
+        if (config == null || quantity <= 0)
+        {
+            return 0;
+        }
+
+        level = Mathf.Clamp(level, 1, config.MaxLevel);
+        duplicateProgress = Mathf.Max(0, duplicateProgress);
+        int remainingCopies = quantity;
+
+        while (remainingCopies > 0 && level < config.MaxLevel)
+        {
+            duplicateProgress++;
+            remainingCopies--;
+
+            if (duplicateProgress >= GetRequiredDuplicates(level, config.MaxLevel))
+            {
+                duplicateProgress -= level;
+                level++;
+            }
+        }
+
+        if (level >= config.MaxLevel)
+        {
+            duplicateProgress = 0;
+        }
+
+        return remainingCopies;
+    }
+
+    public static int GetRequiredDuplicates(int level, int maxLevel)
+    {
+        return level > 0 && level < Mathf.Max(1, maxLevel) ? level : 0;
+    }
+
+    public static float GetLevelMultiplier(int level, float percentPerLevel)
+    {
+        return 1f + Mathf.Max(0f, percentPerLevel) * (Mathf.Max(1, level) - 1);
+    }
+}
+
 public enum MultiMuzzleFireMode
 {
     Single,
@@ -15,7 +70,7 @@ public enum WeaponAttackType
 }
 
 [CreateAssetMenu(menuName = "Myth/Combat/Projectile Config")]
-public class ProjectileConfig : ScriptableObject
+public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
 {
     [Header("Identity")]
     [SerializeField] private string id = "weapon_default";

@@ -28,6 +28,7 @@ public class PlayerProjectile : MonoBehaviour
     private CombatHealth owner;
     private Rigidbody body;
     private bool hasHit;
+    private bool isCritical;
     private GameObject projectileEffectInstance;
     private bool isReleased;
     private int _wallLayer;
@@ -66,6 +67,7 @@ public class PlayerProjectile : MonoBehaviour
         expireTime = 0f;
         owner = null;
         direction = Vector3.zero;
+        isCritical = false;
 
         if (body != null)
         {
@@ -126,7 +128,13 @@ public class PlayerProjectile : MonoBehaviour
         ApplyCollisionRadius();
     }
 
-    public void Launch(Vector3 launchDirection, float launchDamage, float launchSpeed, float lifetime, CombatHealth launchOwner)
+    public void Launch(
+        Vector3 launchDirection,
+        float launchDamage,
+        float launchSpeed,
+        float lifetime,
+        CombatHealth launchOwner,
+        bool launchCritical = false)
     {
         EnsureProjectileComponents();
         direction = CombatPlane.ProjectDirection(launchDirection);
@@ -138,6 +146,7 @@ public class PlayerProjectile : MonoBehaviour
         damage = launchDamage;
         speed = launchSpeed;
         owner = launchOwner;
+        isCritical = launchCritical;
         expireTime = Time.time + lifetime;
         hasHit = false;
         isReleased = false;
@@ -402,7 +411,7 @@ public class PlayerProjectile : MonoBehaviour
 
     private void ApplyDamageToTarget(CombatHealth target, float appliedDamage)
     {
-        target.TakeDamage(appliedDamage);
+        target.TakeDamage(appliedDamage, isCritical);
         PlayerController player = owner != null ? owner.GetComponent<PlayerController>() : null;
         CombatRewardService.GrantIfKilled(player, target);
         ApplyKnockback(target);
