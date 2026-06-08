@@ -6,7 +6,7 @@ public class BaseCampManager : MonoBehaviour
     public static BaseCampManager Instance { get; private set; }
 
     [Header("Facilities")]
-    [SerializeField] private CommandCenter researchLab;
+    [SerializeField] private CommandCenter commandCenter;
     [SerializeField] private EnergyRefinery energyRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
@@ -35,7 +35,7 @@ public class BaseCampManager : MonoBehaviour
 
     private PlayerCurrencyWallet registeredCurrencyWallet;
 
-    public CommandCenter ResearchLab => researchLab;
+    public CommandCenter CommandCenter => commandCenter;
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
@@ -91,7 +91,7 @@ public class BaseCampManager : MonoBehaviour
             return;
         }
 
-        researchLab ??= FindFirstObjectByType<CommandCenter>();
+        commandCenter ??= FindFirstObjectByType<CommandCenter>();
         energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
@@ -109,7 +109,7 @@ public class BaseCampManager : MonoBehaviour
 
     public void UpgradeResearchLab()
     {
-        TrySpendAndUpgrade(researchLab);
+        TrySpendAndUpgrade(commandCenter);
     }
 
     public void UpgradeEnergyRefinery()
@@ -207,7 +207,7 @@ public class BaseCampManager : MonoBehaviour
 
     public void UseBossTicket()
     {
-        researchLab?.TryUseBossTicket();
+        commandCenter?.TryUseBossTicket();
     }
 
     public void OpenPanel(GameObject panel)
@@ -270,7 +270,7 @@ public class BaseCampManager : MonoBehaviour
         }
 
         int availableCredits = Credits;
-        int researchLabLevel = researchLab != null ? researchLab.Level : 1;
+        int researchLabLevel = commandCenter != null ? commandCenter.Level : 1;
 
         if (!facility.CanStartUpgrade(availableCredits, commanderLevel, researchLabLevel))
         {

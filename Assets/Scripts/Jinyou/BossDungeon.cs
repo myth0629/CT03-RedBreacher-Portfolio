@@ -14,7 +14,7 @@ public class BossDungeon : MonoBehaviour
         public string rewardSummary;
     }
 
-    [SerializeField] private CommandCenter researchLab;
+    [SerializeField] private CommandCenter cmdCenter;
     [SerializeField] private List<BossDifficulty> difficulties = new List<BossDifficulty>
     {
         new BossDifficulty { difficultyId = "normal", displayName = "Normal Boss", requiredResearchLabLevel = 1, recommendedPower = 1000, rewardSummary = "Credits / Parts" },
@@ -23,7 +23,7 @@ public class BossDungeon : MonoBehaviour
     };
 
     public IReadOnlyList<BossDifficulty> Difficulties => difficulties;
-    public CommandCenter ResearchLab => researchLab;
+    public CommandCenter CmdCenter => cmdCenter;
 
     private void Awake()
     {
@@ -39,15 +39,15 @@ public class BossDungeon : MonoBehaviour
             return false;
         }
 
-        int researchLevel = researchLab != null ? researchLab.Level : 1;
+        int researchLevel = cmdCenter != null ? cmdCenter.Level : 1;
         return researchLevel >= difficulty.requiredResearchLabLevel;
     }
 
     public bool CanEnter(BossDifficulty difficulty)
     {
         ResolveReferences();
-        return researchLab != null
-            && researchLab.BossTickets > 0
+        return cmdCenter != null
+            && cmdCenter.BossTickets > 0
             && IsDifficultyUnlocked(difficulty);
     }
 
@@ -58,7 +58,7 @@ public class BossDungeon : MonoBehaviour
             return false;
         }
 
-        return researchLab.TryUseBossTicket();
+        return cmdCenter.TryUseBossTicket();
     }
 
     public BossDifficulty GetHighestUnlockedDifficulty()
@@ -84,8 +84,8 @@ public class BossDungeon : MonoBehaviour
 
     private void ResolveReferences()
     {
-        researchLab ??= BaseCampManager.Instance != null
-            ? BaseCampManager.Instance.ResearchLab
+        cmdCenter ??= BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.CommandCenter
             : FindFirstObjectByType<CommandCenter>();
     }
 

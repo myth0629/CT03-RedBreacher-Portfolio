@@ -7,7 +7,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 {
     public enum FacilityType
     {
-        StrategyResearchLab,
+        CommandCenter,
         EnergyRefinery,
         AssemblyFactory,
         CoreCharger,
@@ -42,6 +42,14 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
         ResolveReferences();
         SubscribeFacilityEvents();
         facilityButton?.onClick.AddListener(SelectFacility);
+        SyncView();
+    }
+
+    // 이미지 레벨별 출력 초기화 순서 재정렬
+    private void Start()
+    {
+        ResolveReferences();
+        SubscribeFacilityEvents();
         SyncView();
     }
 
@@ -134,14 +142,14 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 
         return facilityType switch
         {
-            FacilityType.StrategyResearchLab => baseCampManager?.ResearchLab?.Level ?? 1,
+            FacilityType.CommandCenter => baseCampManager?.CommandCenter?.Level ?? 1,
             FacilityType.EnergyRefinery => baseCampManager?.EnergyRefinery?.Level ?? 1,
             FacilityType.AssemblyFactory => baseCampManager?.AssemblyFactory?.Level ?? 1,
             FacilityType.CoreCharger => baseCampManager?.CoreCharger?.Level ?? 1,
             FacilityType.TraitPointFacility => 1,
             FacilityType.Inventory => 1,
             FacilityType.WeaponGacha => 1,
-            FacilityType.BossDungeon => baseCampManager?.ResearchLab?.Level ?? 1,
+            FacilityType.BossDungeon => baseCampManager?.CommandCenter?.Level ?? 1,
             _ => 1
         };
     }
@@ -150,14 +158,14 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
     {
         ResolveReferences();
 
-        if (facilityType == FacilityType.StrategyResearchLab
+        if (facilityType == FacilityType.CommandCenter
             || facilityType == FacilityType.Inventory
             || facilityType == FacilityType.WeaponGacha)
         {
             return true;
         }
 
-        CommandCenter researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
+        CommandCenter researchLab = baseCampManager != null ? baseCampManager.CommandCenter : null;
         if (researchLab == null)
         {
             return true;
@@ -196,12 +204,12 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 
         switch (facilityType)
         {
-            case FacilityType.StrategyResearchLab:
-                if (baseCampManager?.ResearchLab != null)
+            case FacilityType.CommandCenter:
+                if (baseCampManager?.CommandCenter != null)
                 {
-                    baseCampManager.ResearchLab.OnLevelChanged.AddListener(HandleLevelChanged);
-                    baseCampManager.ResearchLab.OnUpgradeStarted.AddListener(SyncView);
-                    baseCampManager.ResearchLab.OnUpgradeCompleted.AddListener(SyncView);
+                    baseCampManager.CommandCenter.OnLevelChanged.AddListener(HandleLevelChanged);
+                    baseCampManager.CommandCenter.OnUpgradeStarted.AddListener(SyncView);
+                    baseCampManager.CommandCenter.OnUpgradeCompleted.AddListener(SyncView);
                 }
                 break;
             case FacilityType.EnergyRefinery:
@@ -251,11 +259,11 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
             return;
         }
 
-        if (baseCampManager.ResearchLab != null)
+        if (baseCampManager.CommandCenter != null)
         {
-            baseCampManager.ResearchLab.OnLevelChanged.RemoveListener(HandleLevelChanged);
-            baseCampManager.ResearchLab.OnUpgradeStarted.RemoveListener(SyncView);
-            baseCampManager.ResearchLab.OnUpgradeCompleted.RemoveListener(SyncView);
+            baseCampManager.CommandCenter.OnLevelChanged.RemoveListener(HandleLevelChanged);
+            baseCampManager.CommandCenter.OnUpgradeStarted.RemoveListener(SyncView);
+            baseCampManager.CommandCenter.OnUpgradeCompleted.RemoveListener(SyncView);
         }
 
         if (baseCampManager.EnergyRefinery != null)
@@ -282,13 +290,13 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 
     private void SubscribeResearchLabUnlockEvents()
     {
-        if (baseCampManager?.ResearchLab == null)
+        if (baseCampManager?.CommandCenter == null)
         {
             return;
         }
 
-        baseCampManager.ResearchLab.OnLevelChanged.AddListener(HandleLevelChanged);
-        baseCampManager.ResearchLab.OnUpgradeCompleted.AddListener(SyncView);
+        baseCampManager.CommandCenter.OnLevelChanged.AddListener(HandleLevelChanged);
+        baseCampManager.CommandCenter.OnUpgradeCompleted.AddListener(SyncView);
     }
 
     private void HandleLevelChanged(int level)
@@ -299,8 +307,52 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
-        facilityImage ??= GetComponent<Image>();
+        baseCampManager?.ConnectFacilities();
+        facilityImage ??= ResolveFacilityImage();
         facilityButton ??= GetComponent<Button>() ?? GetComponentInChildren<Button>();
+    }
+
+    // 매니저를 통해 찾았지만 참고가 비어있는 경우를 대비해 ConnectFacilities()를 한 번 호출
+    private Image ResolveFacilityImage()
+    {
+        Image directImage = GetComponent<Image>();
+        Image[] childImages = GetComponentsInChildren<Image>(true);
+
+        foreach (Image image in childImages)
+        {
+            if (image != null && ContainsLevelSprite(image.sprite))
+            {
+                return image;
+            }
+        }
+
+        foreach (Image image in childImages)
+        {
+            if (image != null && image != directImage && image.sprite != null)
+            {
+                return image;
+            }
+        }
+
+        return directImage != null ? directImage : childImages.Length > 0 ? childImages[0] : null;
+    }
+
+    private bool ContainsLevelSprite(Sprite sprite)
+    {
+        if (sprite == null || levelSprites == null)
+        {
+            return false;
+        }
+
+        foreach (Sprite levelSprite in levelSprites)
+        {
+            if (sprite == levelSprite)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

@@ -2,35 +2,35 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class StrategyResearchLabPanel : MonoBehaviour
+public class CommandCenterPanel : MonoBehaviour
 {
+    [Header("Panels")]
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button upgradeButton;
-    [SerializeField] private Button bossTicketButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
-    [SerializeField] private TMP_Text bossTicketText;
     [SerializeField] private TMP_Text offlineRewardText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text unlockText;
+    
+    [Header("Visual")]
+    [SerializeField] private Image facilityImage;
+    [SerializeField] private Sprite[] levelSprites;
 
-    private CommandCenter researchLab;
+    private CommandCenter cmdCenter;
     private float observedUpgradeDuration;
 
     private void OnEnable()
     {
         ResolveReferences();
         upgradeButton?.onClick.AddListener(UpgradeResearchLab);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
     private void OnDisable()
     {
         upgradeButton?.onClick.RemoveListener(UpgradeResearchLab);
-        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void Update()
@@ -41,23 +41,21 @@ public class StrategyResearchLabPanel : MonoBehaviour
     public void Configure(
         BaseCampManager manager,
         Button upgrade,
-        Button bossTicket,
-        Button close,
         TMP_Text level,
-        TMP_Text bossTicketLabel,
         TMP_Text offlineReward,
         TMP_Text upgradeLabel,
-        TMP_Text unlock)
+        TMP_Text unlock,
+        Image targetImage,
+        Sprite[] sprites)
     {
         baseCampManager = manager;
         upgradeButton = upgrade;
-        bossTicketButton = bossTicket;
-        closeButton = close;
         levelText = level;
-        bossTicketText = bossTicketLabel;
         offlineRewardText = offlineReward;
         upgradeText = upgradeLabel;
         unlockText = unlock;
+        facilityImage = targetImage;
+        levelSprites = sprites;
         Refresh();
     }
 
@@ -67,57 +65,59 @@ public class StrategyResearchLabPanel : MonoBehaviour
         Refresh();
     }
 
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
-    }
-
     private void Refresh()
     {
         ResolveReferences();
 
-        if (researchLab == null)
+        if (cmdCenter == null)
         {
             return;
         }
 
-        SetText(levelText, $"Lv. {researchLab.Level}");
-        SetText(bossTicketText, $"{researchLab.BossTickets}/{researchLab.BossTicketCapacity}");
-        SetText(offlineRewardText, $"{researchLab.BossTicketsProducedPerDay}/day");
-        SetText(upgradeText, researchLab.IsUpgrading
-            ? $"Upgrading {researchLab.UpgradeRemainingSeconds:0}s"
-            : $"Upgrade Cost {researchLab.UpgradeCost}");
+        SetText(levelText, $"Lv. {cmdCenter.Level}");
+        UpdateFacilityVisual();
+        SetText(offlineRewardText, $"* 1일당 {cmdCenter.BossTicketsProducedPerDay}티켓 지급 *");
+        SetText(upgradeText, cmdCenter.IsUpgrading
+            ? $"완료까지 {cmdCenter.UpgradeRemainingSeconds:0}초"
+            : $"업그레이드 ({cmdCenter.UpgradeCost} 크레딧)");
         SetText(unlockText, BuildUnlockSummary());
 
         if (upgradeButton != null && baseCampManager != null)
         {
-            int researchLabLevel = researchLab.Level;
-            upgradeButton.interactable = researchLab.CanStartUpgrade(
+            int researchLabLevel = cmdCenter.Level;
+            upgradeButton.interactable = cmdCenter.CanStartUpgrade(
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel);
             SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
-                researchLab,
+                cmdCenter,
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel));
         }
 
-        BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, researchLab, ref observedUpgradeDuration);
+        BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, cmdCenter, ref observedUpgradeDuration);
+    }
 
-        if (bossTicketButton != null)
+    private void UpdateFacilityVisual()
+    {
+        if (facilityImage == null || levelSprites == null || levelSprites.Length == 0 || cmdCenter == null)
         {
-            bossTicketButton.interactable = false;
+            return;
         }
+
+        int index = Mathf.Clamp(cmdCenter.Level - 1, 0, levelSprites.Length - 1);
+        facilityImage.sprite = levelSprites[index];
+        facilityImage.color = Color.white;
     }
 
     private string BuildUnlockSummary()
     {
         string summary = string.Empty;
 
-        foreach (CommandCenter.FacilityUnlock item in researchLab.FacilityUnlocks)
+        foreach (CommandCenter.FacilityUnlock item in cmdCenter.FacilityUnlocks)
         {
-            summary += $"{item.displayName}: {(item.unlocked ? "OPEN" : $"Lv.{item.requiredLabLevel}")}\n";
+            summary += $"{item.displayName}: {(item.unlocked ? "잠금해제" : $"Lv.{item.requiredLabLevel} 증가")}\n";
         }
 
         return summary.TrimEnd();
@@ -126,7 +126,7 @@ public class StrategyResearchLabPanel : MonoBehaviour
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
-        researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
+        cmdCenter = baseCampManager != null ? baseCampManager.CommandCenter : null;
     }
 
     private static void SetText(TMP_Text target, string value)

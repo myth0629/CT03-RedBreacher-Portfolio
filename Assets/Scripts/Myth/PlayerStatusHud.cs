@@ -52,6 +52,11 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private Button healthUpgradeButton;
     [SerializeField] private Button critChanceUpgradeButton;
     [SerializeField] private Button critMultiplierUpgradeButton;
+    [SerializeField] private TMP_Text stattankPopupHealthText;
+    [SerializeField] private TMP_Text stattankPopupDpsText;
+    [SerializeField] private TMP_Text stattankPopupMoveSpeedText;
+    [SerializeField] private TMP_Text stattankPopupCritChanceText;
+    [SerializeField] private TMP_Text stattankPopupCritMultiplierText;
 
     [Header("Bars")]
     [SerializeField] private Slider healthSlider;
@@ -166,6 +171,11 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupWeaponSpeedText, $"{player.ProjectileSpeed:0.##}");
         SetText(tankPopupWeaponLifetimeText, $"{player.ProjectileLifetime:0.##}");
         SetText(tankPopupWeaponKnockbackText, $"{player.KnockbackForce:0.##}");
+        SetText(stattankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
+        SetText(stattankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
+        SetText(stattankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
+        SetText(stattankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
+        SetText(stattankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
     }
 
     private void RefreshStatUpgradePopup(PlayerProgression progression)

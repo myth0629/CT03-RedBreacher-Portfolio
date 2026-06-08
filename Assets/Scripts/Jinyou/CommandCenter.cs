@@ -35,11 +35,11 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
     [Header("Facility Unlocks")]
     [SerializeField] private List<FacilityUnlock> facilityUnlocks = new List<FacilityUnlock>
     {
-        new FacilityUnlock { facilityId = "energy_refinery", displayName = "Energy Refinery", requiredLabLevel = 1, unlocked = true },
-        new FacilityUnlock { facilityId = "assembly_factory", displayName = "Assembly Factory", requiredLabLevel = 2 },
-        new FacilityUnlock { facilityId = "core_charger", displayName = "Core Charger", requiredLabLevel = 3 },
-        new FacilityUnlock { facilityId = "trait_point_facility", displayName = "Trait Point Facility", requiredLabLevel = 1, unlocked = true },
-        new FacilityUnlock { facilityId = "boss_dungeon", displayName = "Boss Dungeon", requiredLabLevel = 1, unlocked = true }
+        new FacilityUnlock { facilityId = "energy_refinery", displayName = "에너지 정제소", requiredLabLevel = 1, unlocked = true },
+        new FacilityUnlock { facilityId = "assembly_factory", displayName = "조립 공장", requiredLabLevel = 2 },
+        new FacilityUnlock { facilityId = "core_charger", displayName = "코어 충전소", requiredLabLevel = 3 },
+        new FacilityUnlock { facilityId = "trait_point_facility", displayName = "스텟 강화소", requiredLabLevel = 1, unlocked = true },
+        new FacilityUnlock { facilityId = "boss_dungeon", displayName = "관제탑", requiredLabLevel = 1, unlocked = true }
     };
 
     [Header("Events")]
@@ -278,11 +278,11 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
 
     private void NormalizeFacilityUnlocks()
     {
-        SetFacilityUnlockRequirement("energy_refinery", "Energy Refinery", 1);
-        SetFacilityUnlockRequirement("assembly_factory", "Assembly Factory", 2);
-        SetFacilityUnlockRequirement("core_charger", "Core Charger", 3);
-        SetFacilityUnlockRequirement("trait_point_facility", "Trait Point Facility", 1);
-        SetFacilityUnlockRequirement("boss_dungeon", "Boss Dungeon", 1);
+        SetFacilityUnlockRequirement("energy_refinery", "에너지 정제소", 1);
+        SetFacilityUnlockRequirement("assembly_factory", "조립 공장", 2);
+        SetFacilityUnlockRequirement("core_charger", "코어 충전소", 3);
+        SetFacilityUnlockRequirement("trait_point_facility", "스텟 강화소", 1);
+        SetFacilityUnlockRequirement("boss_dungeon", "관제탑", 1);
     }
 
     private float GetUpgradeDurationForCurrentLevel()

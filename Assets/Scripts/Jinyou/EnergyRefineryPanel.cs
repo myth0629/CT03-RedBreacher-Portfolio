@@ -4,10 +4,10 @@ using UnityEngine.UI;
 
 public class EnergyRefineryPanel : MonoBehaviour
 {
+    [Header("Panels")]
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button collectButton;
     [SerializeField] private Button upgradeButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text storedCreditsText;
     [SerializeField] private Image refineryStorageFill;
@@ -15,6 +15,10 @@ public class EnergyRefineryPanel : MonoBehaviour
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
+    
+    [Header("Visual")]
+    [SerializeField] private Image facilityImage;
+    [SerializeField] private Sprite[] levelSprites;
 
     private EnergyRefinery refinery;
     private float observedUpgradeDuration;
@@ -24,7 +28,6 @@ public class EnergyRefineryPanel : MonoBehaviour
         ResolveReferences();
         collectButton?.onClick.AddListener(CollectCredits);
         upgradeButton?.onClick.AddListener(UpgradeRefinery);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
@@ -32,7 +35,6 @@ public class EnergyRefineryPanel : MonoBehaviour
     {
         collectButton?.onClick.RemoveListener(CollectCredits);
         upgradeButton?.onClick.RemoveListener(UpgradeRefinery);
-        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void Update()
@@ -44,22 +46,24 @@ public class EnergyRefineryPanel : MonoBehaviour
         BaseCampManager manager,
         Button collect,
         Button upgrade,
-        Button close,
         TMP_Text level,
         TMP_Text storedCredits,
         TMP_Text production,
         TMP_Text upgradeLabel,
-        Image refineryFill)
+        Image refineryFill,
+        Image targetImage,
+        Sprite[] sprites)
     {
         baseCampManager = manager;
         collectButton = collect;
         upgradeButton = upgrade;
-        closeButton = close;
         levelText = level;
         storedCreditsText = storedCredits;
         refineryStorageFill = refineryFill;
         productionText = production;
         upgradeText = upgradeLabel;
+        facilityImage = targetImage;
+        levelSprites = sprites;
         Refresh();
     }
 
@@ -75,11 +79,6 @@ public class EnergyRefineryPanel : MonoBehaviour
         Refresh();
     }
 
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
-    }
-
     private void Refresh()
     {
         ResolveReferences();
@@ -89,13 +88,16 @@ public class EnergyRefineryPanel : MonoBehaviour
             return;
         }
 
+        UpdateFacilityVisual();
         SetText(levelText, $"Lv. {refinery.Level}");
         SetText(storedCreditsText, $"{refinery.StoredCredits}/{refinery.StorageCapacity}");
-        SetText(productionText, $"{refinery.CreditsPerMinute:0}/min");
+        SetText(productionText, $"( 1분당 {refinery.CreditsPerMinute:0}개 수집 )");
         SetText(upgradeText, refinery.IsUpgrading
-            ? $"Upgrading {refinery.UpgradeRemainingSeconds:0}s"
-            : $"Upgrade Cost {refinery.UpgradeCost}");
-        SetFill(refineryStorageFill, 0f);
+            ? $"완료까지 {refinery.UpgradeRemainingSeconds:0}초"
+            : $"업그레이드 ({refinery.UpgradeCost} 크레딧)");
+        SetFill(refineryStorageFill, refinery.StorageCapacity > 0
+            ? (float)refinery.StoredCredits / refinery.StorageCapacity
+            : 0f);
 
         if (collectButton != null)
         {
@@ -104,7 +106,7 @@ public class EnergyRefineryPanel : MonoBehaviour
 
         if (upgradeButton != null && baseCampManager != null)
         {
-            int researchLabLevel = baseCampManager.ResearchLab != null ? baseCampManager.ResearchLab.Level : 1;
+            int researchLabLevel = baseCampManager.CommandCenter != null ? baseCampManager.CommandCenter.Level : 1;
             upgradeButton.interactable = refinery.CanStartUpgrade(
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
@@ -117,6 +119,18 @@ public class EnergyRefineryPanel : MonoBehaviour
         }
 
         BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, refinery, ref observedUpgradeDuration);
+    }
+    
+    private void UpdateFacilityVisual()
+    {
+        if (facilityImage == null || levelSprites == null || levelSprites.Length == 0 || refinery == null)
+        {
+            return;
+        }
+
+        int index = Mathf.Clamp(refinery.Level - 1, 0, levelSprites.Length - 1);
+        facilityImage.sprite = levelSprites[index];
+        facilityImage.color = Color.white;
     }
 
     private void ResolveReferences()

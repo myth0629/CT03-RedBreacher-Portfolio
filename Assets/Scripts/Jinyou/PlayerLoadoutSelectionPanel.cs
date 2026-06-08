@@ -19,7 +19,6 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [SerializeField] private DroneConfig[] droneOptions;
 
     [Header("Buttons")]
-    [SerializeField] private Button closeButton;
     [SerializeField] private Button equipButton;
 
     [Header("Panel")]
@@ -31,7 +30,6 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [Header("Detail")]
     [SerializeField] private TMP_Text detailNameText;
     [SerializeField] private TMP_Text detailCategoryText;
-    [SerializeField] private TMP_Text detailDescriptionText;
     [SerializeField] private TMP_Text detailStatsText;
 
     private readonly List<PlayerLoadoutOptionButton> spawnedOptions = new List<PlayerLoadoutOptionButton>();
@@ -67,13 +65,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void OnEnable()
     {
-        closeButton?.onClick.AddListener(Close);
         equipButton?.onClick.AddListener(EquipSelected);
     }
 
     private void OnDisable()
     {
-        closeButton?.onClick.RemoveListener(Close);
         equipButton?.onClick.RemoveListener(EquipSelected);
     }
 
@@ -81,7 +77,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     {
         currentMode = LoadoutMode.Weapon;
         selectedWeapon = player != null ? player.WeaponConfig : null;
-        OpenPanel("Primary Weapon");
+        OpenPanel("주무장");
         RebuildWeaponList();
         RefreshWeaponDetail(selectedWeapon);
     }
@@ -90,7 +86,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     {
         currentMode = LoadoutMode.Drone;
         selectedDrone = droneController != null ? droneController.DroneConfig : null;
-        OpenPanel("Drone");
+        OpenPanel("드론");
         RebuildDroneList();
         RefreshDroneDetail(selectedDrone);
     }
@@ -172,8 +168,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
             option.Bind(
                 drone.DisplayName,
-                $"{drone.DroneCount} unit(s)",
-                $"Damage {drone.AttackDamage:0.##} / Range {drone.AttackRange:0.##}",
+                $"{drone.DroneCount} 개",
+                $"피해량 {drone.AttackDamage:0.##} / 발사간격 {drone.AttackRange:0.##}",
                 drone == selectedDrone,
                 () => SelectDrone(drone));
         }
@@ -225,9 +221,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void RefreshWeaponDetail(ProjectileConfig weapon)
     {
-        SetText(detailNameText, weapon != null ? weapon.DisplayName : "No weapon selected");
-        SetText(detailCategoryText, weapon != null ? weapon.WeaponCategory : string.Empty);
-        SetText(detailDescriptionText, weapon != null ? weapon.Id : string.Empty);
+        SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하십시오.");
+        SetText(detailCategoryText, weapon != null ? $"종류: {weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
             ? $"Level: {GetWeaponLevel(weapon)}\nDamage: {weapon.AttackDamage:0.##}\nSpeed: {weapon.Speed:0.##}\nLifetime: {weapon.Lifetime:0.##}\nKnockback: {weapon.KnockbackForce:0.##}\nMuzzle: {weapon.MultiMuzzleFireMode}"
             : string.Empty);
@@ -235,11 +230,10 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void RefreshDroneDetail(DroneConfig drone)
     {
-        SetText(detailNameText, drone != null ? drone.DisplayName : "No drone selected");
-        SetText(detailCategoryText, drone != null ? $"{drone.DroneCount} unit(s)" : string.Empty);
-        SetText(detailDescriptionText, drone != null ? drone.Id : string.Empty);
+        SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하십시오.");
+        SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount} 개" : string.Empty);
         SetText(detailStatsText, drone != null
-            ? $"Damage: {drone.AttackDamage:0.##}\nRange: {drone.AttackRange:0.##}\nInterval: {drone.AttackInterval:0.##}\nProjectile Speed: {drone.ProjectileSpeed:0.##}\nFollow Radius: {drone.FollowRadius:0.##}"
+            ? $"피해량: {drone.AttackDamage:0.##}\n사거리: {drone.AttackRange:0.##}\n발사간격: {drone.AttackInterval:0.##}\n탄속: {drone.ProjectileSpeed:0.##}\n편대 반경: {drone.FollowRadius:0.##}"
             : string.Empty);
     }
 

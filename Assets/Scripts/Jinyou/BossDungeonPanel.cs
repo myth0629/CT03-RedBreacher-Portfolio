@@ -4,30 +4,47 @@ using UnityEngine.UI;
 
 public class BossDungeonPanel : MonoBehaviour
 {
+    [Header("Panels")]
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private BossDungeon bossDungeon;
     [SerializeField] private Button enterButton;
-    [SerializeField] private Button closeButton;
+    [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text ticketText;
     [SerializeField] private TMP_Text productionText;
     [SerializeField] private TMP_Text difficultyText;
     [SerializeField] private TMP_Text entryStateText;
     [SerializeField] private Image ticketProgressFill;
 
+    [Header("Visual")]
+    [SerializeField] private Image facilityImage;
+    [SerializeField] private Sprite levelSprite;
+
+    
     private string entryStateMessage = "Entry placeholder only";
 
+    public void Configure(
+        BaseCampManager manager,
+        TMP_Text level,
+        Image targetImage,
+        Sprite sprite)
+    {
+        baseCampManager = manager;
+        levelText = level;
+        facilityImage = targetImage;
+        levelSprite = sprite;
+        Refresh();
+    }
+    
     private void OnEnable()
     {
         ResolveReferences();
         enterButton?.onClick.AddListener(TryEnterBossDungeon);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
     private void OnDisable()
     {
         enterButton?.onClick.RemoveListener(TryEnterBossDungeon);
-        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void Update()
@@ -64,32 +81,32 @@ public class BossDungeonPanel : MonoBehaviour
         Refresh();
     }
 
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
-    }
-
     private void Refresh()
     {
         ResolveReferences();
 
-        CommandCenter researchLab = baseCampManager != null ? baseCampManager.ResearchLab : null;
+        CommandCenter researchLab = baseCampManager != null ? baseCampManager.CommandCenter : null;
         if (researchLab == null)
         {
-            SetText(ticketText, "Tickets --/--");
-            SetText(productionText, "Production --/day");
-            SetText(difficultyText, "Research Lab not connected");
+            UpdateFacilityVisual();
+            SetText(ticketText, "티켓 수: --/--");
+            SetText(productionText, "1일당 티켓 지급없음");
+            SetText(difficultyText, "사령부가 건설되어 있지 않습니다.");
             SetText(entryStateText, "Entry disabled");
             SetFill(ticketProgressFill, 0f);
             SetEnterButton(false);
             return;
         }
 
-        SetText(ticketText, $"Tickets {researchLab.BossTickets}/{researchLab.BossTicketCapacity}");
-        SetText(productionText, $"{researchLab.BossTicketsProducedPerDay}/day");
+        UpdateFacilityVisual();
+        SetText(levelText, $"Lv. {researchLab.Level}");
+        SetText(ticketText, $"티켓 수: {researchLab.BossTickets}/{researchLab.BossTicketCapacity}");
+        SetText(productionText, $"* 1일당 {researchLab.BossTicketsProducedPerDay}티켓 지급 *");
         SetText(difficultyText, BuildDifficultySummary());
         SetText(entryStateText, entryStateMessage);
-        SetFill(ticketProgressFill, researchLab.BossTicketProductionProgress);
+        SetFill(ticketProgressFill, researchLab.BossTicketCapacity > 0
+            ? (float)researchLab.BossTickets / researchLab.BossTicketCapacity
+            : 0f);
         SetEnterButton(bossDungeon != null && bossDungeon.CanEnter(bossDungeon.GetHighestUnlockedDifficulty()));
     }
 
@@ -112,6 +129,17 @@ public class BossDungeonPanel : MonoBehaviour
         return summary.TrimEnd();
     }
 
+    private void UpdateFacilityVisual()
+    {
+        if (facilityImage == null || levelSprite == null || bossDungeon == null)
+        {
+            return;
+        }
+        
+        facilityImage.sprite = levelSprite;
+        facilityImage.color = Color.white;
+    }
+    
     private void SetEnterButton(bool interactable)
     {
         if (enterButton != null)
