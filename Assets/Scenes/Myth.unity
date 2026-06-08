@@ -1634,7 +1634,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 60.000004
+    FieldOfView: 60
     OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -1914,6 +1914,7 @@ GameObject:
   - component: {fileID: 1573384851}
   - component: {fileID: 1573384854}
   - component: {fileID: 1573384855}
+  - component: {fileID: 1573384856}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1962,7 +1963,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60.000004
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -2071,6 +2072,24 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &1573384856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1573384850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f146eac559b9045ee84634ea1373893b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainGameCameraZoom
+  minFieldOfView: 45
+  maxFieldOfView: 80
+  mouseWheelSensitivity: 0.1
+  pinchSensitivity: 0.08
+  ignoreInputOverUi: 1
+  zoomSmoothTime: 0.12
 --- !u!1 &1658772509
 GameObject:
   m_ObjectHideFlags: 0
@@ -2468,7 +2487,7 @@ PrefabInstance:
     - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
       propertyPath: unitConfig
       value: 
-      objectReference: {fileID: 11400000, guid: e28a933543b9d40508a43f36876752b7, type: 2}
+      objectReference: {fileID: 11400000, guid: 6f73a84cde5eb4e63bca255f36534195, type: 2}
     - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
       propertyPath: displayName
       value: Player
@@ -2476,7 +2495,7 @@ PrefabInstance:
     - target: {fileID: 7644490488002421366, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
       propertyPath: weaponConfig
       value: 
-      objectReference: {fileID: 11400000, guid: 5410af9470a294451afeff07869cf317, type: 2}
+      objectReference: {fileID: 11400000, guid: 7eb1b98301c03438e9df49bfd1f36277, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
