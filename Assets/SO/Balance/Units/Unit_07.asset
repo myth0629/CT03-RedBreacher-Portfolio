@@ -21,7 +21,8 @@ MonoBehaviour:
   attackRange: 7.3
   attackDamage: 32
   attackInterval: 0.75
-  moveSpeed: 2.5
+  moveSpeed: 3.2
   rotationSpeed: 145
   fireAngleTolerance: 3
-  projectileConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
+  repositionDistance: 3.5
+  repositionCooldown: 3.5

@@ -142,6 +142,12 @@ public class PlayerController : MonoBehaviour
     private float MoveSpeedValue => unitConfig != null ? unitConfig.MoveSpeed : moveSpeed;
     private float RotationSpeedValue => unitConfig != null ? unitConfig.RotationSpeed : rotationSpeed;
     private float FireAngleToleranceValue => unitConfig != null ? unitConfig.FireAngleTolerance : fireAngleTolerance;
+    private float RepositionDistanceValue => unitConfig != null
+        ? unitConfig.RepositionDistance
+        : repositionDistance;
+    private float RepositionCooldownValue => unitConfig != null
+        ? unitConfig.RepositionCooldown
+        : repositionCooldown;
     private ProjectileConfig ProjectileConfigValue => weaponConfig;
 
     private void Awake()
@@ -347,7 +353,7 @@ public class PlayerController : MonoBehaviour
         }
 
         isRepositioning = true;
-        nextRepositionTime = Time.time + Mathf.Max(0.1f, repositionCooldown);
+        nextRepositionTime = Time.time + Mathf.Max(0.1f, RepositionCooldownValue);
     }
 
     private bool TryFindRepositionDestination(Vector3 escapeDirection, out Vector3 destination)
@@ -358,7 +364,7 @@ public class PlayerController : MonoBehaviour
         {
             Vector3 direction = Quaternion.Euler(0f, angleOffsets[i], 0f) * escapeDirection;
             Vector3 candidate = ClampRepositionPosition(
-                startPosition + direction * Mathf.Max(0.1f, repositionDistance));
+                startPosition + direction * Mathf.Max(0.1f, RepositionDistanceValue));
             if (CombatPlane.DistanceSqr(startPosition, candidate) <= 0.01f
                 || IsRepositionPathBlocked(startPosition, candidate))
             {

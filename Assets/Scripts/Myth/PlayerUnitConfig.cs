@@ -21,6 +21,10 @@ public class PlayerUnitConfig : ScriptableObject
     [SerializeField] private float rotationSpeed = 540f;
     [SerializeField] private float fireAngleTolerance = 3f;
 
+    [Header("Auto Reposition")]
+    [SerializeField] private float repositionDistance = 1.8f;
+    [SerializeField] private float repositionCooldown = 5f;
+
     public string Id => id;
     public string DisplayName => displayName;
     public GameObject UnitPrefab => unitPrefab;
@@ -33,4 +37,6 @@ public class PlayerUnitConfig : ScriptableObject
     public float MoveSpeed => moveSpeed;
     public float RotationSpeed => rotationSpeed;
     public float FireAngleTolerance => fireAngleTolerance;
+    public float RepositionDistance => repositionDistance;
+    public float RepositionCooldown => repositionCooldown;
 }

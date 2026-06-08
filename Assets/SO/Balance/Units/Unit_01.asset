@@ -24,4 +24,5 @@ MonoBehaviour:
   moveSpeed: 2
   rotationSpeed: 120
   fireAngleTolerance: 3
-  projectileConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
+  repositionDistance: 2
+  repositionCooldown: 5

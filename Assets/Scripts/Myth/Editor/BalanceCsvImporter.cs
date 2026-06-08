@@ -68,6 +68,8 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "moveSpeed", row, "moveSpeed");
             SetFloat(serializedObject, "rotationSpeed", row, "rotationSpeed");
             SetFloat(serializedObject, "fireAngleTolerance", row, "fireAngleTolerance");
+            SetFloat(serializedObject, "repositionDistance", row, "repositionDistance");
+            SetFloat(serializedObject, "repositionCooldown", row, "repositionCooldown");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
@@ -203,7 +205,8 @@ public static class BalanceCsvImporter
         string[] headers =
         {
             "id", "displayName", "unitPrefab", "maxHealth", "critChance", "critMultiplier", "attackRange",
-            "attackDamage", "attackInterval", "moveSpeed", "rotationSpeed", "fireAngleTolerance"
+            "attackDamage", "attackInterval", "moveSpeed", "rotationSpeed", "fireAngleTolerance",
+            "repositionDistance", "repositionCooldown"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -222,7 +225,9 @@ public static class BalanceCsvImporter
                 FormatFloat(config.AttackInterval),
                 FormatFloat(config.MoveSpeed),
                 FormatFloat(config.RotationSpeed),
-                FormatFloat(config.FireAngleTolerance)
+                FormatFloat(config.FireAngleTolerance),
+                FormatFloat(config.RepositionDistance),
+                FormatFloat(config.RepositionCooldown)
             });
         }
 

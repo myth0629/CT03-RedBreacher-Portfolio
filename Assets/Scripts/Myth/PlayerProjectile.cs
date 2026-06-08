@@ -435,16 +435,6 @@ public class PlayerProjectile : MonoBehaviour
         float dropChance = enemy.PartDropChance;
         float dropRoll = Random.value;
         bool dropSucceeded = inventory.ForceEquipmentPartDrop || dropRoll < dropChance;
-        if (inventory.LogEquipmentPartDropRolls)
-        {
-            string result = dropSucceeded ? "성공" : "실패";
-            string forced = inventory.ForceEquipmentPartDrop ? " / 강제 드롭" : string.Empty;
-            Debug.Log(
-                $"[파츠 드롭 판정] {result} / 확률 {dropChance * 100f:0.##}% / "
-                + $"롤 {dropRoll * 100f:0.##}%{forced}",
-                enemy.gameObject);
-        }
-
         if (!dropSucceeded)
         {
             return;

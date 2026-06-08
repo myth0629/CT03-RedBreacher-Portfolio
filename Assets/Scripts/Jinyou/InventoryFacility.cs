@@ -44,7 +44,6 @@ public class InventoryFacility : MonoBehaviour
     [SerializeField] private int partDropSortingOrder = 20;
 
     [Header("Equipment Part Drop Debug")]
-    [SerializeField] private bool logEquipmentPartDropRolls = true;
     [SerializeField] private bool forceEquipmentPartDrop;
 
     [Header("Events")]
@@ -72,7 +71,6 @@ public class InventoryFacility : MonoBehaviour
             return equipmentParts;
         }
     }
-    public bool LogEquipmentPartDropRolls => logEquipmentPartDropRolls;
     public bool ForceEquipmentPartDrop => forceEquipmentPartDrop;
 
     private void Awake()
