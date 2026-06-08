@@ -11,6 +11,10 @@ public class AutoTurretSkill : MonoBehaviour
     private float expireTime;
     private float nextAttackTime;
     private float nextTargetSearchTime;
+    private Vector3 _originalScale;
+    private float _spawnTime;
+    private bool _isExpiring;
+    private const float _popDuration = 0.3f;
 
     public static bool Spawn(
         PlayerController player,
@@ -58,6 +62,11 @@ public class AutoTurretSkill : MonoBehaviour
         {
             firePoint = transform;
         }
+
+        _originalScale = transform.localScale;
+        transform.localScale = Vector3.zero;
+        _spawnTime = Time.time;
+        _isExpiring = false;
     }
 
     private void Update()
@@ -70,6 +79,32 @@ public class AutoTurretSkill : MonoBehaviour
             || Time.time >= expireTime)
         {
             Destroy(gameObject);
+            return;
+        }
+
+        // 1. 팝인 / 팝아웃 스케일 애니메이션 처리
+        float elapsed = Time.time - _spawnTime;
+        float timeLeft = expireTime - Time.time;
+
+        if (timeLeft <= _popDuration)
+        {
+            _isExpiring = true;
+            float progress = Mathf.Clamp01(timeLeft / _popDuration);
+            transform.localScale = Vector3.Lerp(Vector3.zero, _originalScale, progress);
+        }
+        else if (elapsed < _popDuration)
+        {
+            float progress = Mathf.Clamp01(elapsed / _popDuration);
+            transform.localScale = Vector3.Lerp(Vector3.zero, _originalScale, progress);
+        }
+        else if (!_isExpiring)
+        {
+            transform.localScale = _originalScale;
+        }
+
+        // 사라지는 중(팝아웃)에는 타겟 추적 및 공격을 중단함
+        if (_isExpiring)
+        {
             return;
         }
 

@@ -64,9 +64,25 @@ public class PlayerDroneUnit : MonoBehaviour
 
     private Vector3 GetSlotPosition()
     {
-        float centeredOffset = slotIndex - (slotCount - 1) * 0.5f;
-        float angle = (config.StartAngle + centeredOffset * config.AngleStep) * Mathf.Deg2Rad;
-        Vector3 offset = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle)) * config.FollowRadius;
+        float angleDegrees;
+        if (slotCount == 1)
+        {
+            // 드론이 1개일 때는 플레이어의 바로 뒤(180도)에 배치
+            angleDegrees = 180f;
+        }
+        else
+        {
+            // 드론이 2개 이상일 때는 플레이어의 좌측 양옆(90도)부터 우측 양옆(270도)까지 뒤쪽 반원에 걸쳐 고르게 분배
+            float progress = (float)slotIndex / (slotCount - 1);
+            angleDegrees = Mathf.Lerp(90f, 270f, progress);
+        }
+
+        // 플레이어의 몸체 회전 각도(Y Rotation)를 반영하여 플레이어 기준의 로컬 방향으로 회전시킴
+        float playerYAngle = player.transform.eulerAngles.y;
+        float finalAngle = (playerYAngle + angleDegrees) * Mathf.Deg2Rad;
+
+        // X/Z 평면 기준 오프셋 계산 (Z는 정면, X는 오른쪽)
+        Vector3 offset = new Vector3(Mathf.Sin(finalAngle), 0f, Mathf.Cos(finalAngle)) * config.FollowRadius;
         return CombatPlane.WithFixedY(player.transform.position + offset);
     }
 
