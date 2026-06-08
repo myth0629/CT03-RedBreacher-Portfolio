@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9948735bb66634f4aaa563da18aeac04, type: 3}
+  m_Name: Skill01
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
+  id: 01
+  displayName: "\uD130\uB81B"
+  icon: {fileID: 21300000, guid: 3b38ee72f688d4c01aa7b4859503b9d2, type: 3}
+  skillType: 1
+  cooldown: 10
+  castRange: 8
+  minimumEnemyCount: 1
+  attackPowerMultiplier: 2
+  flatDamage: 0
+  canCritical: 0
+  effectRadius: 3
+  maxTargets: 20
+  knockbackForce: 0
+  impactDelay: 0.5
+  warningEffectPrefab: {fileID: 0}
+  impactEffectPrefab: {fileID: 0}
+  effectCleanupDelay: 2
+  turretPrefab: {fileID: 214164098778057125, guid: 2e8cee64f5e8b9140af5805bee03240f, type: 3}
+  turretProjectileConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
+  turretDuration: 8
+  turretAttackInterval: 0.05
+  turretAttackRange: 6
+  turretRotationSpeed: 240
+  turretPlacementDistance: 1.5
+  turretFirePointName: FirePoint

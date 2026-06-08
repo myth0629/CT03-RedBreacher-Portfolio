@@ -54,11 +54,16 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject projectileEffectPrefab;
     [SerializeField] private GameObject hitEffectPrefab;
 
+    [Header("Auto Skills")]
+    [SerializeField] private List<PlayerSkillConfig> autoSkills = new List<PlayerSkillConfig>();
+
     private readonly List<Transform> fireMuzzles = new List<Transform>();
     private CombatHealth health;
     private PlayerProgression progression;
+    private Rigidbody _rigidbody;
     private PlayerStatAllocator statAllocator;
     private PlayerEquipmentPartLoadout equipmentPartLoadout;
+    private PlayerAutoSkillController autoSkillController;
     private Vehicle vehicle;
     private Turret turret;
     private CombatHealth currentTarget;
@@ -78,6 +83,7 @@ public class PlayerController : MonoBehaviour
     public PlayerProgression Progression => progression;
     public PlayerStatAllocator StatAllocator => statAllocator;
     public PlayerEquipmentPartLoadout EquipmentPartLoadout => equipmentPartLoadout;
+    public PlayerAutoSkillController AutoSkillController => autoSkillController;
     public string DisplayName => unitConfig != null ? unitConfig.DisplayName : displayName;
     public PlayerUnitConfig UnitConfig => unitConfig;
     public ProjectileConfig WeaponConfig => ProjectileConfigValue;
@@ -165,6 +171,8 @@ public class PlayerController : MonoBehaviour
             progression = gameObject.AddComponent<PlayerProgression>();
         }
 
+        _rigidbody = GetComponent<Rigidbody>();
+
         statAllocator = GetComponent<PlayerStatAllocator>();
         if (statAllocator == null)
         {
@@ -178,6 +186,7 @@ public class PlayerController : MonoBehaviour
         }
 
         equipmentPartLoadout.OnLoadoutChanged.AddListener(HandleEquipmentPartLoadoutChanged);
+        EnsureAutoSkillController();
         ApplyUnitConfig();
         ApplyHealthStats();
         EnsureCombatComponents();
@@ -200,6 +209,18 @@ public class PlayerController : MonoBehaviour
         weaponConfig = config;
         nextAttackTime = Time.time;
         RefreshUnitReferences();
+    }
+
+    private void EnsureAutoSkillController()
+    {
+        autoSkillController = GetComponent<PlayerAutoSkillController>();
+        if (autoSkillController == null)
+        {
+            autoSkillController = gameObject.AddComponent<PlayerAutoSkillController>();
+        }
+
+        // PlayerController에 연결한 스킬 SO 목록을 자동 시전기에 전달한다.
+        autoSkillController.Initialize(this, autoSkills);
     }
 
     private void Update()
@@ -465,15 +486,14 @@ public class PlayerController : MonoBehaviour
         CombatPlane.ClampTransform(transform);
 
         // 테스트 씬에서도 바로 동작하도록 필수 3D 물리 컴포넌트를 보강한다.
-        Rigidbody body = GetComponent<Rigidbody>();
-        if (body == null)
+        if (_rigidbody == null)
         {
-            body = gameObject.AddComponent<Rigidbody>();
+            _rigidbody = gameObject.AddComponent<Rigidbody>();
         }
 
-        body.useGravity = false;
-        body.isKinematic = true;
-        body.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
+        _rigidbody.useGravity = false;
+        _rigidbody.isKinematic = true;
+        _rigidbody.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
 
         if (GetComponent<Collider>() == null)
         {
@@ -696,7 +716,15 @@ public class PlayerController : MonoBehaviour
         float moveDistance = Mathf.Min(MoveSpeedValue * Time.deltaTime, remainingMoveDistance);
 
         // 사거리 경계까지만 이동해 타겟을 지나치지 않게 한다.
-        transform.position = CombatPlane.WithFixedY(transform.position + direction * moveDistance);
+        Vector3 nextPosition = CombatPlane.WithFixedY(transform.position + direction * moveDistance);
+        if (_rigidbody != null)
+        {
+            _rigidbody.MovePosition(nextPosition);
+        }
+        else
+        {
+            transform.position = nextPosition;
+        }
         SetVehicleMoveInput(moveDistance > 0f ? 1f : 0f, 0f);
     }
 

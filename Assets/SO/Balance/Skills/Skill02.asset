@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9948735bb66634f4aaa563da18aeac04, type: 3}
+  m_Name: Skill02
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
+  id: 02
+  displayName: "\uD3ED\uACA9"
+  icon: {fileID: 21300000, guid: 5b57cf761f4006e44b59cb81368cc627, type: 3}
+  skillType: 0
+  cooldown: 15
+  castRange: 8
+  minimumEnemyCount: 1
+  attackPowerMultiplier: 2
+  flatDamage: 0
+  canCritical: 1
+  effectRadius: 5
+  maxTargets: 20
+  knockbackForce: 0
+  impactDelay: 1
+  warningEffectPrefab: {fileID: 9179389450710726649, guid: 0309f63716c8a4a4e84bead042662d12, type: 3}
+  impactEffectPrefab: {fileID: 1320533090949476, guid: f20077a0be0f3fa4495d97be6faa09bc, type: 3}
+  effectCleanupDelay: 2
+  _airplanePrefab: {fileID: 214164098778057125, guid: c46e1c58e42cd8c4eb694e0dfc5b64e6, type: 3}
+  _airplaneSpeed: 25
+  _airplaneSpawnOffset: 15
+  _airplaneHeight: 6
+  _bombProjectilePrefab: {fileID: 1574669681271168, guid: 0aeba0c9771dc004ea7022b341e963fc, type: 3}
+  _bombEffectScale: 2
+  _bombCount: 3
+  _bombInterval: 0.15
+  turretPrefab: {fileID: 0}
+  turretProjectileConfig: {fileID: 0}
+  turretDuration: 8
+  turretAttackInterval: 0.8
+  turretAttackRange: 6
+  turretRotationSpeed: 360
+  turretPlacementDistance: 1.5
+  turretFirePointName: FirePoint

@@ -30,11 +30,13 @@ public class PlayerProjectile : MonoBehaviour
     private bool hasHit;
     private GameObject projectileEffectInstance;
     private bool isReleased;
+    private int _wallLayer;
 
     private void Awake()
     {
         Configure(projectileConfig);
         EnsureProjectileComponents();
+        _wallLayer = LayerMask.NameToLayer("Wall");
     }
 
     private void Update()
@@ -273,11 +275,21 @@ public class PlayerProjectile : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (IsWall(other.gameObject))
+        {
+            HitWall();
+            return;
+        }
         TryHit(other.GetComponentInParent<CombatHealth>());
     }
 
     private void OnCollisionEnter(Collision collision)
     {
+        if (IsWall(collision.gameObject))
+        {
+            HitWall();
+            return;
+        }
         TryHit(collision.collider.GetComponentInParent<CombatHealth>());
     }
 
@@ -292,6 +304,12 @@ public class PlayerProjectile : MonoBehaviour
         Collider[] hits = Physics.OverlapSphere(transform.position, collisionRadius);
         for (int i = 0; i < hits.Length; i++)
         {
+            if (IsWall(hits[i].gameObject))
+            {
+                HitWall();
+                return;
+            }
+
             CombatHealth target = hits[i].GetComponentInParent<CombatHealth>();
             if (target == null || target == owner)
             {
@@ -304,6 +322,27 @@ public class PlayerProjectile : MonoBehaviour
                 return;
             }
         }
+    }
+
+    private bool IsWall(GameObject obj)
+    {
+        if (obj == null || _wallLayer == -1)
+        {
+            return false;
+        }
+        return obj.layer == _wallLayer;
+    }
+
+    private void HitWall()
+    {
+        if (hasHit)
+        {
+            return;
+        }
+
+        hasHit = true;
+        SpawnHitEffect();
+        ReturnToPool();
     }
 
     private void TryHit(CombatHealth target)
@@ -364,123 +403,9 @@ public class PlayerProjectile : MonoBehaviour
     private void ApplyDamageToTarget(CombatHealth target, float appliedDamage)
     {
         target.TakeDamage(appliedDamage);
-        GrantExperienceIfKilled(target);
+        PlayerController player = owner != null ? owner.GetComponent<PlayerController>() : null;
+        CombatRewardService.GrantIfKilled(player, target);
         ApplyKnockback(target);
-    }
-
-    private void GrantExperienceIfKilled(CombatHealth target)
-    {
-        if (target == null || owner == null)
-        {
-            return;
-        }
-
-        PlayerProgression progression = owner.GetComponent<PlayerProgression>();
-        EnemyController enemy = target.GetComponentInParent<EnemyController>();
-        if (progression == null || enemy == null || !target.TryClaimDeathReward())
-        {
-            return;
-        }
-
-        // 플레이어 투사체가 적을 처치하면 v1 경험치를 지급한다.
-        progression.AddExperience(enemy.ExperienceReward);
-        GrantCurrencyReward(enemy);
-        TryGrantEquipmentPart(enemy);
-    }
-
-    private void GrantCurrencyReward(EnemyController enemy)
-    {
-        if (enemy == null || owner == null)
-        {
-            return;
-        }
-
-        PlayerCurrencyWallet wallet = owner.GetComponent<PlayerCurrencyWallet>();
-        if (wallet == null && BaseCampManager.Instance != null)
-        {
-            wallet = BaseCampManager.Instance.CurrencyWallet;
-        }
-
-        if (wallet == null)
-        {
-            wallet = FindFirstObjectByType<PlayerCurrencyWallet>();
-        }
-
-        if (wallet == null)
-        {
-            return;
-        }
-
-        // 적 처치 보상은 공통 재화 API로 누적한다.
-        wallet.Add(CurrencyType.Credits, enemy.CreditReward);
-        wallet.Add(CurrencyType.CoreCrystals, enemy.CoreCrystalReward);
-    }
-
-    private void TryGrantEquipmentPart(EnemyController enemy)
-    {
-        if (enemy == null)
-        {
-            return;
-        }
-
-        InventoryFacility inventory = BaseCampManager.Instance != null
-            ? BaseCampManager.Instance.Inventory
-            : InventoryFacility.FindAny();
-        if (inventory == null)
-        {
-            Debug.LogWarning("[파츠 드롭] InventoryFacility를 찾지 못해 드롭을 처리할 수 없습니다.", enemy.gameObject);
-            return;
-        }
-
-        float dropChance = enemy.PartDropChance;
-        float dropRoll = Random.value;
-        bool dropSucceeded = inventory.ForceEquipmentPartDrop || dropRoll < dropChance;
-        if (!dropSucceeded)
-        {
-            return;
-        }
-
-        if (inventory.EquipmentPartConfigs.Count == 0)
-        {
-            Debug.LogWarning("[파츠 드롭] EquipmentPartConfig 목록이 비어 있습니다.", enemy.gameObject);
-            return;
-        }
-
-        // 플레이어와 드론이 공유하는 처치 경로에서 파츠 드롭을 한 번 판정한다.
-        EquipmentPartConfig config = inventory.EquipmentPartConfigs[
-            Random.Range(0, inventory.EquipmentPartConfigs.Count)];
-        EquipmentPartInstance part = EquipmentPartGenerator.Create(
-            config,
-            EquipmentPartGenerator.RollRarity());
-        if (inventory.AddEquipmentPart(part))
-        {
-            inventory.PlayEquipmentPartDropVisual(config, part, enemy.transform.position);
-            Debug.Log(
-                $"[파츠 드롭] {config.DisplayName} / {GetEquipmentRarityName(part.rarity)} / "
-                + $"{GetEquipmentSlotName(part.slot)} / 주옵 {part.mainStatValue * 100f:0.##}% / "
-                + $"보유 {inventory.EquipmentParts.Count}개",
-                enemy.gameObject);
-        }
-    }
-
-    private static string GetEquipmentRarityName(EquipmentPartRarity rarity)
-    {
-        return rarity switch
-        {
-            EquipmentPartRarity.Rare => "희귀",
-            EquipmentPartRarity.Epic => "영웅",
-            _ => "일반"
-        };
-    }
-
-    private static string GetEquipmentSlotName(EquipmentPartSlot slot)
-    {
-        return slot switch
-        {
-            EquipmentPartSlot.Armor => "장갑",
-            EquipmentPartSlot.Engine => "엔진",
-            _ => "칩"
-        };
     }
 
     private void ApplyKnockback(CombatHealth target)
