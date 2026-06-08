@@ -265,6 +265,49 @@ public class AchievementManager : MonoBehaviour
         OnAchievementsChanged.Invoke();
     }
 
+    public JinyouAchievementSaveData CaptureState()
+    {
+        JinyouAchievementSaveData data = new JinyouAchievementSaveData();
+        foreach (AchievementEntry achievement in achievements)
+        {
+            if (achievement == null)
+            {
+                continue;
+            }
+
+            data.entries.Add(new JinyouAchievementEntrySaveData
+            {
+                id = achievement.Id,
+                currentAmount = achievement.CurrentAmount,
+                completedCount = achievement.CompletedCount
+            });
+        }
+
+        return data;
+    }
+
+    public void RestoreState(JinyouAchievementSaveData data)
+    {
+        if (data?.entries == null)
+        {
+            return;
+        }
+
+        foreach (JinyouAchievementEntrySaveData entryData in data.entries)
+        {
+            if (entryData == null || string.IsNullOrWhiteSpace(entryData.id))
+            {
+                continue;
+            }
+
+            AchievementEntry achievement = achievements.Find(item => item != null && item.Id == entryData.id);
+            achievement?.RestoreProgress(entryData.currentAmount, entryData.completedCount);
+        }
+
+        Save();
+        OnAchievementsChanged.Invoke();
+    }
+
     public void AddProgress(AchievementProgressType progressType, int eventCount = 1)
     {
         bool changed = false;

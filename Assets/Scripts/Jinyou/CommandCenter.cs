@@ -164,6 +164,79 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         return true;
     }
 
+    public int ProduceBossTicketsOffline(float elapsedSeconds)
+    {
+        if (elapsedSeconds <= 0f || bossTickets >= bossTicketCapacity)
+        {
+            return 0;
+        }
+
+        int beforeTickets = bossTickets;
+        float chargeSeconds = BossTicketChargeSeconds;
+        if (chargeSeconds <= 0f)
+        {
+            bossTickets = bossTicketCapacity;
+            bossTicketProductionSeconds = 0f;
+        }
+        else
+        {
+            bossTicketProductionSeconds += elapsedSeconds;
+            while (bossTicketProductionSeconds >= chargeSeconds && bossTickets < bossTicketCapacity)
+            {
+                bossTicketProductionSeconds -= chargeSeconds;
+                bossTickets++;
+            }
+
+            if (bossTickets >= bossTicketCapacity)
+            {
+                bossTicketProductionSeconds = 0f;
+            }
+        }
+
+        int addedTickets = bossTickets - beforeTickets;
+        if (addedTickets > 0)
+        {
+            OnBossTicketsChanged.Invoke(bossTickets);
+        }
+
+        return addedTickets;
+    }
+
+    public JinyouCommandCenterSaveData CaptureState()
+    {
+        return new JinyouCommandCenterSaveData
+        {
+            level = level,
+            upgradeCost = upgradeCost,
+            bossTickets = bossTickets,
+            bossTicketCapacity = bossTicketCapacity,
+            bossTicketProductionSeconds = bossTicketProductionSeconds,
+            isUpgrading = isUpgrading,
+            upgradeRemainingSeconds = upgradeRemainingSeconds,
+            currentUpgradeDurationSeconds = currentUpgradeDurationSeconds
+        };
+    }
+
+    public void RestoreState(JinyouCommandCenterSaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        level = Mathf.Clamp(data.level, 1, maxLevel);
+        upgradeCost = Mathf.Max(0, data.upgradeCost);
+        bossTicketCapacity = Mathf.Max(0, data.bossTicketCapacity);
+        bossTickets = Mathf.Clamp(data.bossTickets, 0, bossTicketCapacity);
+        bossTicketProductionSeconds = Mathf.Max(0f, data.bossTicketProductionSeconds);
+        isUpgrading = data.isUpgrading;
+        upgradeRemainingSeconds = Mathf.Max(0f, data.upgradeRemainingSeconds);
+        currentUpgradeDurationSeconds = Mathf.Max(0f, data.currentUpgradeDurationSeconds);
+        RefreshUnlocks();
+        OnLevelChanged.Invoke(level);
+        OnBossTicketsChanged.Invoke(bossTickets);
+    }
+
     public void CompleteUpgradeImmediately()
     {
         Upgrade();

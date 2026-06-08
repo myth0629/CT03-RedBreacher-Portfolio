@@ -72,6 +72,7 @@ public class BossDungeonPanel : MonoBehaviour
         if (bossDungeon.TryEnter(difficulty))
         {
             entryStateMessage = $"{difficulty.displayName} ticket consumed";
+            DailyMissionManager.ReportBossTicketUsed();
         }
         else
         {
