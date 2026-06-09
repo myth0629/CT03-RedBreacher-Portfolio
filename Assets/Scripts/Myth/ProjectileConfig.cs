@@ -75,6 +75,7 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     [Header("Identity")]
     [SerializeField] private string id = "weapon_default";
     [SerializeField] private string displayName = "기본 무기";
+    [SerializeField] private Sprite icon;
     [SerializeField] private string weaponCategory = "포탄";
 
     [Header("Combat")]
@@ -108,6 +109,7 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
 
     public string Id => id;
     public string DisplayName => displayName;
+    public Sprite Icon => icon;
     public string WeaponCategory => weaponCategory;
     public float AttackDamage => attackDamage;
     public WeaponAttackType AttackType => attackType;

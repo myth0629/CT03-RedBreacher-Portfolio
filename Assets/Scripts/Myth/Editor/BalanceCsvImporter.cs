@@ -15,6 +15,8 @@ public static class BalanceCsvImporter
     private const string EnemyCsvPath = "Assets/Data/Balance/enemies.csv";
     private const string DroneCsvPath = "Assets/Data/Balance/drones.csv";
     private const string EquipmentPartCsvPath = "Assets/Data/Balance/equipment_parts.csv";
+    private const string GachaWeaponCsvPath = "Assets/Data/Balance/gacha_weapons.csv";
+    private const string GachaSkillCsvPath = "Assets/Data/Balance/gacha_skills.csv";
 
     private const string UnitOutputPath = "Assets/SO/Balance/Units";
     private const string WeaponOutputPath = "Assets/SO/Balance/Weapons";
@@ -22,6 +24,7 @@ public static class BalanceCsvImporter
     private const string EnemyOutputPath = "Assets/SO/Balance/Enemies";
     private const string DroneOutputPath = "Assets/SO/Balance/Drones";
     private const string EquipmentPartOutputPath = "Assets/SO/Balance/EquipmentParts";
+    private const string GachaOutputPath = "Assets/SO/Balance/Gacha";
 
     [MenuItem("Tools/Balance/CSV to SO/All")]
     public static void ImportAll()
@@ -33,6 +36,8 @@ public static class BalanceCsvImporter
         ImportEnemies();
         ImportDrones();
         ImportEquipmentParts();
+        ImportGachaWeapons();
+        ImportGachaSkills();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("밸런스 CSV 임포트 완료");
@@ -47,6 +52,8 @@ public static class BalanceCsvImporter
         ExportEnemies();
         ExportDrones();
         ExportEquipmentParts();
+        ExportGachaWeapons();
+        ExportGachaSkills();
         AssetDatabase.Refresh();
         Debug.Log("밸런스 SO CSV 내보내기 완료");
     }
@@ -91,6 +98,7 @@ public static class BalanceCsvImporter
 
             SetString(serializedObject, "id", id);
             SetString(serializedObject, "displayName", Get(row, "displayName"));
+            SetObject(serializedObject, "icon", GetAsset<Sprite>(row, "icon"));
             SetString(serializedObject, "weaponCategory", Get(row, "weaponCategory"));
             SetFloat(serializedObject, "attackDamage", row, "attackDamage");
             SetEnum(serializedObject, "attackType", row, "attackType");
@@ -258,6 +266,18 @@ public static class BalanceCsvImporter
         }
     }
 
+    [MenuItem("Tools/Balance/CSV to SO/Gacha Weapons")]
+    public static void ImportGachaWeapons()
+    {
+        ImportGachaPool(GachaCategory.Weapon, GachaWeaponCsvPath);
+    }
+
+    [MenuItem("Tools/Balance/CSV to SO/Gacha Skills")]
+    public static void ImportGachaSkills()
+    {
+        ImportGachaPool(GachaCategory.Skill, GachaSkillCsvPath);
+    }
+
     [MenuItem("Tools/Balance/SO to CSV/Units")]
     public static void ExportUnits()
     {
@@ -299,7 +319,7 @@ public static class BalanceCsvImporter
     {
         string[] headers =
         {
-            "id", "displayName", "weaponCategory", "attackDamage", "attackType", "areaRadius", "areaDamageMultiplier",
+            "id", "displayName", "icon", "weaponCategory", "attackDamage", "attackType", "areaRadius", "areaDamageMultiplier",
             "maxAreaTargets", "maxLevel", "damagePercentPerLevel", "maxLevelDuplicateCoreCrystalReward",
             "speed", "lifetime", "collisionRadius", "knockbackForce",
             "multiMuzzleFireMode", "maxBurstMuzzleCount", "muzzleNamePrefix", "fireFlashEffect",
@@ -313,6 +333,7 @@ public static class BalanceCsvImporter
             {
                 config.Id,
                 config.DisplayName,
+                GetAssetPath(config.Icon),
                 config.WeaponCategory,
                 FormatFloat(config.AttackDamage),
                 config.AttackType.ToString(),
@@ -507,6 +528,174 @@ public static class BalanceCsvImporter
         Debug.Log($"장비 파츠 SO CSV 내보내기 완료: {EquipmentPartCsvPath}");
     }
 
+    [MenuItem("Tools/Balance/SO to CSV/Gacha Weapons")]
+    public static void ExportGachaWeapons()
+    {
+        GachaPoolConfig pool = LoadGachaPool(GachaCategory.Weapon);
+        if (pool == null)
+        {
+            Debug.LogWarning("무기 뽑기 풀 SO가 없어 CSV 내보내기를 취소합니다.");
+            return;
+        }
+
+        List<string[]> rows = new List<string[]>();
+        foreach (WeaponGachaFacility.WeaponGachaEntry entry in pool.WeaponEntries)
+        {
+            if (entry?.weaponConfig == null)
+            {
+                continue;
+            }
+
+            rows.Add(new[]
+            {
+                entry.weaponConfig.Id,
+                FormatFloat(entry.weight),
+                entry.enabled.ToString()
+            });
+        }
+
+        WriteCsv(GachaWeaponCsvPath, new[] { "configId", "weight", "enabled" }, rows);
+        Debug.Log($"무기 뽑기 SO CSV 내보내기 완료: {GachaWeaponCsvPath}");
+    }
+
+    [MenuItem("Tools/Balance/SO to CSV/Gacha Skills")]
+    public static void ExportGachaSkills()
+    {
+        GachaPoolConfig pool = LoadGachaPool(GachaCategory.Skill);
+        if (pool == null)
+        {
+            Debug.LogWarning("스킬 뽑기 풀 SO가 없어 CSV 내보내기를 취소합니다.");
+            return;
+        }
+
+        List<string[]> rows = new List<string[]>();
+        foreach (WeaponGachaFacility.SkillGachaEntry entry in pool.SkillEntries)
+        {
+            if (entry?.skillConfig == null)
+            {
+                continue;
+            }
+
+            rows.Add(new[]
+            {
+                entry.skillConfig.Id,
+                FormatFloat(entry.weight),
+                entry.enabled.ToString()
+            });
+        }
+
+        WriteCsv(GachaSkillCsvPath, new[] { "configId", "weight", "enabled" }, rows);
+        Debug.Log($"스킬 뽑기 SO CSV 내보내기 완료: {GachaSkillCsvPath}");
+    }
+
+    private static void ImportGachaPool(GachaCategory category, string csvPath)
+    {
+        EnsureFolder(GachaOutputPath);
+        GachaPoolConfig pool = LoadOrCreate<GachaPoolConfig>(
+            GachaOutputPath,
+            category == GachaCategory.Weapon ? "Weapons" : "Skills",
+            "GachaPool");
+        SerializedObject serializedObject = new SerializedObject(pool);
+        SerializedProperty categoryProperty = serializedObject.FindProperty("category");
+        if (categoryProperty != null)
+        {
+            categoryProperty.enumValueIndex = (int)category;
+        }
+
+        SerializedProperty entriesProperty = serializedObject.FindProperty(
+            category == GachaCategory.Weapon ? "weaponEntries" : "skillEntries");
+        if (entriesProperty == null)
+        {
+            return;
+        }
+
+        entriesProperty.ClearArray();
+        HashSet<string> importedIds = new HashSet<string>();
+        foreach (Dictionary<string, string> row in ReadCsv(csvPath))
+        {
+            string configId = Get(row, "configId");
+            if (string.IsNullOrWhiteSpace(configId))
+            {
+                Debug.LogWarning($"{csvPath}: configId가 비어 있어 행을 제외합니다.");
+                continue;
+            }
+
+            if (importedIds.Contains(configId))
+            {
+                Debug.LogWarning($"{csvPath}: 중복 configId를 제외합니다. {configId}");
+                continue;
+            }
+
+            if (!float.TryParse(
+                    Get(row, "weight"),
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out float weight)
+                || weight <= 0f)
+            {
+                Debug.LogWarning($"{csvPath}: 가중치가 0 이하이거나 잘못되어 제외합니다. {configId}");
+                continue;
+            }
+
+            UnityEngine.Object config = category == GachaCategory.Weapon
+                ? FindWeaponById(configId)
+                : FindSkillById(configId);
+            if (config == null)
+            {
+                Debug.LogWarning($"{csvPath}: Config ID를 찾지 못해 제외합니다. {configId}");
+                continue;
+            }
+
+            importedIds.Add(configId);
+            int index = entriesProperty.arraySize;
+            entriesProperty.InsertArrayElementAtIndex(index);
+            SerializedProperty entry = entriesProperty.GetArrayElementAtIndex(index);
+            entry.FindPropertyRelative(
+                    category == GachaCategory.Weapon ? "weaponConfig" : "skillConfig")
+                .objectReferenceValue = config;
+            entry.FindPropertyRelative("weight").floatValue = weight;
+            entry.FindPropertyRelative("enabled").boolValue = ParseBool(Get(row, "enabled"), true);
+        }
+
+        serializedObject.ApplyModifiedProperties();
+        EditorUtility.SetDirty(pool);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"뽑기 CSV SO 가져오기 완료: {csvPath}");
+    }
+
+    private static ProjectileConfig FindWeaponById(string configId)
+    {
+        foreach (ProjectileConfig config in LoadAllAssets<ProjectileConfig>(WeaponOutputPath))
+        {
+            if (config.Id == configId)
+            {
+                return config;
+            }
+        }
+
+        return null;
+    }
+
+    private static PlayerSkillConfig FindSkillById(string configId)
+    {
+        foreach (PlayerSkillConfig config in LoadAllAssets<PlayerSkillConfig>(SkillOutputPath))
+        {
+            if (config.Id == configId)
+            {
+                return config;
+            }
+        }
+
+        return null;
+    }
+
+    private static GachaPoolConfig LoadGachaPool(GachaCategory category)
+    {
+        string id = category == GachaCategory.Weapon ? "Weapons" : "Skills";
+        return AssetDatabase.LoadAssetAtPath<GachaPoolConfig>(
+            $"{GachaOutputPath}/GachaPool_{id}.asset");
+    }
+
     private static T LoadOrCreate<T>(string outputPath, string id, string prefix) where T : ScriptableObject
     {
         string assetPath = $"{outputPath}/{prefix}_{SanitizeFileName(id)}.asset";
@@ -531,6 +720,7 @@ public static class BalanceCsvImporter
         EnsureFolder(EnemyOutputPath);
         EnsureFolder(DroneOutputPath);
         EnsureFolder(EquipmentPartOutputPath);
+        EnsureFolder(GachaOutputPath);
     }
 
     private static void EnsureFolder(string path)
@@ -820,12 +1010,32 @@ public static class BalanceCsvImporter
             return;
         }
 
-        bool parsed = value == "1" || bool.TryParse(value, out bool boolValue) && boolValue;
+        bool parsed = ParseBool(value, false);
         SerializedProperty property = serializedObject.FindProperty(propertyName);
         if (property != null)
         {
             property.boolValue = parsed;
         }
+    }
+
+    private static bool ParseBool(string value, bool defaultValue)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return defaultValue;
+        }
+
+        if (value == "1")
+        {
+            return true;
+        }
+
+        if (value == "0")
+        {
+            return false;
+        }
+
+        return bool.TryParse(value, out bool parsed) ? parsed : defaultValue;
     }
 
     private static void SetEnum(SerializedObject serializedObject, string propertyName, Dictionary<string, string> row, string key)

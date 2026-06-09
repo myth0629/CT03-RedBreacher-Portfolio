@@ -78,9 +78,9 @@ public class CombatHealth : MonoBehaviour
 
         // 체력 감소 후 사망 여부를 즉시 판정한다.
         lastDamageTime = Time.time;
-        float appliedDamage = Mathf.Min(currentHealth, damage);
         currentHealth = Mathf.Max(0f, currentHealth - damage);
-        ShowDamageNumber(appliedDamage, isCritical);
+        // 막타도 남은 체력이 아닌 공격이 계산한 원래 피해량을 표시한다.
+        ShowDamageNumber(damage, isCritical);
         if (currentHealth <= 0f)
         {
             Die();
