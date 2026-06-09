@@ -14,6 +14,7 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text creditsText;
     [SerializeField] private TMP_Text coreCrystalsText;
     [SerializeField] private TMP_Text stageText;
+    [SerializeField] private TMP_Text roundText;
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text healthText;
@@ -67,6 +68,7 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private Slider experienceSlider;
     [SerializeField] private Image healthFillImage;
     [SerializeField] private Image experienceFillImage;
+    [SerializeField] private Image roundProgressFillImage;
 
     private void Awake()
     {
@@ -100,9 +102,16 @@ public class PlayerStatusHud : MonoBehaviour
 
         if (spawnManager != null)
         {
-            string stageValue = $"스테이지 {spawnManager.CurrentStage}  {spawnManager.CurrentRoundInStage}/{spawnManager.RoundsPerStage}";
+            string stageValue = $"스테이지 {spawnManager.CurrentStage}";
+            string roundValue = $"{spawnManager.CurrentRoundInStage}/{spawnManager.RoundsPerStage}";
+            float roundProgress = spawnManager.RoundsPerStage > 0
+                ? Mathf.Clamp01((float)spawnManager.CurrentRoundInStage / spawnManager.RoundsPerStage)
+                : 0f;
+
             SetText(stageText, stageValue);
+            SetText(roundText, roundValue);
             SetText(tankPopupStageText, stageValue);
+            SetFill(roundProgressFillImage, roundProgress);
         }
 
         if (currencyWallet == null)
