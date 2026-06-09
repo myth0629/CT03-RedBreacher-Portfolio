@@ -71,12 +71,12 @@ public class BossDungeonPanel : MonoBehaviour
 
         if (bossDungeon.TryEnter(difficulty))
         {
-            entryStateMessage = $"{difficulty.displayName} ticket consumed";
+            entryStateMessage = $"{difficulty.displayName} 보스 소환";
             DailyMissionManager.ReportBossTicketUsed();
         }
         else
         {
-            entryStateMessage = "Need a boss ticket";
+            entryStateMessage = "보스 설정 또는 티켓을 확인하세요.";
         }
 
         Refresh();

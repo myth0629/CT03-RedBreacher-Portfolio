@@ -434,6 +434,37 @@ public class InventoryFacility : MonoBehaviour
         return true;
     }
 
+    public bool AcquireEquipmentPart(
+        EquipmentPartInstance part,
+        PlayerEquipmentPartLoadout loadout,
+        PlayerCurrencyWallet wallet,
+        out int autoSaleCredits)
+    {
+        autoSaleCredits = 0;
+        if (part == null)
+        {
+            return false;
+        }
+
+        EquipmentPartInstance equippedPart = loadout != null
+            ? loadout.GetEquippedPart(part.slot)
+            : null;
+        if (equippedPart == null || part.rarity >= equippedPart.rarity)
+        {
+            return AddEquipmentPart(part);
+        }
+
+        if (wallet == null)
+        {
+            return AddEquipmentPart(part);
+        }
+
+        // 같은 슬롯의 장착 파츠보다 낮은 등급은 보관하지 않고 즉시 판매한다.
+        autoSaleCredits = Mathf.Max(0, part.salePrice);
+        wallet.AddCredits(autoSaleCredits);
+        return true;
+    }
+
     public EquipmentPartInstance FindEquipmentPart(string instanceId)
     {
         EnsureEquipmentPartsInitialized();
