@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class PlayerStatusHud : MonoBehaviour
@@ -57,6 +58,9 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text stattankPopupMoveSpeedText;
     [SerializeField] private TMP_Text stattankPopupCritChanceText;
     [SerializeField] private TMP_Text stattankPopupCritMultiplierText;
+    
+    [Header("GameQuit Popup")]
+    [SerializeField] private GameObject gameQuitPopup;
 
     [Header("Bars")]
     [SerializeField] private Slider healthSlider;
@@ -143,6 +147,29 @@ public class PlayerStatusHud : MonoBehaviour
 
         RefreshTankPopup(health, progression);
         RefreshStatUpgradePopup(progression);
+
+        if (gameQuitPopup != null)
+        {
+            if (WasGameQuitPopupRequested() && !gameQuitPopup.activeSelf)
+            {
+                gameQuitPopup.SetActive(true);
+            }
+        }
+    }
+
+    // PC버전의 ESC키나 스마트폰 버전의 백버튼을 누르면 게임종료 팝업창을 활성화
+    private bool WasGameQuitPopupRequested()
+    {
+        return Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+    }
+
+    public void GameQuit()
+    {
+        Application.Quit();
+        
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
     }
 
     private void RefreshTankPopup(CombatHealth health, PlayerProgression progression)
