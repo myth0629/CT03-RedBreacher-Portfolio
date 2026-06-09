@@ -61,6 +61,7 @@ public class WeaponGachaPanel : MonoBehaviour
         }
 
         baseCampManager.SetCreditsForFacility(availableCredits);
+        DailyMissionManager.ReportWeaponGachaDrawn(count);
         SetText(resultText, BuildResultText());
         Refresh();
     }

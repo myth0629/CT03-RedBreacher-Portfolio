@@ -37,6 +37,51 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         public string displayName;
         public int requiredFactoryLevel = 1;
         public bool unlocked;
+        public int developmentLevel;
+        public int maxDevelopmentLevel = 5;
+        public int developmentCost = 150;
+        public List<int> developmentCostByLevel = new List<int>();
+        public float powerBonusPerLevel = 0.02f;
+
+        public int MaxDevelopmentLevel => Mathf.Max(1, maxDevelopmentLevel);
+        public bool IsMaxDevelopmentLevel => developmentLevel >= MaxDevelopmentLevel;
+        public int NextDevelopmentCost => GetDevelopmentCost(developmentLevel);
+        public float PowerBonus => Mathf.Max(0, developmentLevel) * Mathf.Max(0f, powerBonusPerLevel);
+
+        public int GetDevelopmentCost(int levelIndex)
+        {
+            if (levelIndex < 0 || levelIndex >= MaxDevelopmentLevel)
+            {
+                return 0;
+            }
+
+            if (developmentCostByLevel != null && levelIndex < developmentCostByLevel.Count)
+            {
+                return Mathf.Max(0, developmentCostByLevel[levelIndex]);
+            }
+
+            return Mathf.Max(0, developmentCost);
+        }
+
+        public void Normalize()
+        {
+            requiredFactoryLevel = Mathf.Max(1, requiredFactoryLevel);
+            maxDevelopmentLevel = Mathf.Max(1, maxDevelopmentLevel);
+            developmentLevel = Mathf.Clamp(developmentLevel, 0, maxDevelopmentLevel);
+            developmentCost = Mathf.Max(0, developmentCost);
+            powerBonusPerLevel = Mathf.Max(0f, powerBonusPerLevel);
+            developmentCostByLevel ??= new List<int>();
+
+            while (developmentCostByLevel.Count < maxDevelopmentLevel)
+            {
+                developmentCostByLevel.Add(developmentCost);
+            }
+
+            for (int i = 0; i < developmentCostByLevel.Count; i++)
+            {
+                developmentCostByLevel[i] = Mathf.Max(0, developmentCostByLevel[i]);
+            }
+        }
     }
 
     [Serializable]
@@ -168,12 +213,13 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     [SerializeField] private float upgradeDurationSeconds = 10f;
     [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
 
-    [Header("Placeholder Menus")]
+    [Header("Assembly Menus")]
     [SerializeField] private List<AssemblyMenu> menus = new List<AssemblyMenu>
     {
-        new AssemblyMenu { menuId = "weapon", displayName = "Weapon Upgrade", requiredFactoryLevel = 1, unlocked = true },
-        new AssemblyMenu { menuId = "mech", displayName = "Mech Upgrade", requiredFactoryLevel = 1, unlocked = true },
-        new AssemblyMenu { menuId = "skill", displayName = "Skill Upgrade", requiredFactoryLevel = 2 }
+        new AssemblyMenu { menuId = "weapon", displayName = "Weapon Upgrade", requiredFactoryLevel = 1, unlocked = true, developmentCost = 150, powerBonusPerLevel = 0.01f },
+        new AssemblyMenu { menuId = "mech", displayName = "Mech Upgrade", requiredFactoryLevel = 1, unlocked = true, developmentCost = 200, powerBonusPerLevel = 0.03f },
+        new AssemblyMenu { menuId = "skill", displayName = "Skill Upgrade", requiredFactoryLevel = 2, developmentCost = 250, powerBonusPerLevel = 0.025f },
+        new AssemblyMenu { menuId = "parts", displayName = "Parts Crafting", requiredFactoryLevel = 3, developmentCost = 300, powerBonusPerLevel = 0.02f }
     };
 
     [Header("Weapon Enhancement")]
@@ -203,6 +249,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
     public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
     public string SelectedMenuId => selectedMenuId;
+    public AssemblyMenu SelectedMenu => GetMenu(selectedMenuId);
     public IReadOnlyList<AssemblyMenu> Menus => menus;
     public IReadOnlyList<WeaponEnhancement> WeaponEnhancements => weaponEnhancements;
     public WeaponEnhancement SelectedWeaponEnhancement => GetWeaponEnhancementAt(selectedWeaponIndex);
@@ -213,6 +260,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     {
         NormalizeUpgradeCosts();
         NormalizeCommanderRequirements();
+        NormalizeMenus();
         NormalizeWeaponEnhancements();
         LoadWeaponEnhancements();
         RefreshUnlocks();
@@ -225,7 +273,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     public bool IsMenuUnlocked(string menuId)
     {
-        AssemblyMenu menu = menus.Find(item => item.menuId == menuId);
+        AssemblyMenu menu = GetMenu(menuId);
         return menu != null && menu.unlocked;
     }
 
@@ -239,6 +287,49 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         selectedMenuId = menuId;
         OnMenuSelected.Invoke(menuId);
         return true;
+    }
+
+    public bool CanDevelopSelectedMenu(int credits)
+    {
+        AssemblyMenu selectedMenu = SelectedMenu;
+        return selectedMenu != null
+            && selectedMenu.unlocked
+            && !selectedMenu.IsMaxDevelopmentLevel
+            && credits >= selectedMenu.NextDevelopmentCost;
+    }
+
+    public bool TryDevelopSelectedMenu(ref int availableCredits)
+    {
+        if (!CanDevelopSelectedMenu(availableCredits))
+        {
+            return false;
+        }
+
+        AssemblyMenu selectedMenu = SelectedMenu;
+        availableCredits -= selectedMenu.NextDevelopmentCost;
+        selectedMenu.developmentLevel++;
+        OnMenuSelected.Invoke(selectedMenu.menuId);
+        return true;
+    }
+
+    public float GetMenuPowerBonus(string menuId)
+    {
+        AssemblyMenu menu = GetMenu(menuId);
+        return menu != null ? menu.PowerBonus : 0f;
+    }
+
+    public float GetTotalMenuPowerBonus()
+    {
+        float totalBonus = 0f;
+        foreach (AssemblyMenu menu in menus)
+        {
+            if (menu != null && menu.unlocked)
+            {
+                totalBonus += menu.PowerBonus;
+            }
+        }
+
+        return totalBonus;
     }
 
     public bool TrySelectWeapon(int index)
@@ -275,6 +366,95 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     public bool HasWeaponEnhancement(ProjectileConfig weaponConfig)
     {
         return FindWeaponEnhancement(weaponConfig) != null;
+    }
+
+    public JinyouAssemblyFactorySaveData CaptureState()
+    {
+        JinyouAssemblyFactorySaveData data = new JinyouAssemblyFactorySaveData
+        {
+            level = level,
+            selectedMenuId = selectedMenuId,
+            selectedWeaponIndex = selectedWeaponIndex,
+            isUpgrading = isUpgrading,
+            upgradeRemainingSeconds = upgradeRemainingSeconds,
+            currentUpgradeDurationSeconds = currentUpgradeDurationSeconds
+        };
+
+        foreach (AssemblyMenu menu in menus)
+        {
+            if (menu == null)
+            {
+                continue;
+            }
+
+            data.menus.Add(new JinyouMenuSaveData
+            {
+                menuId = menu.menuId,
+                developmentLevel = menu.developmentLevel,
+                unlocked = menu.unlocked
+            });
+        }
+
+        foreach (WeaponEnhancement weaponEnhancement in weaponEnhancements)
+        {
+            data.weaponEnhanceLevels.Add(weaponEnhancement != null ? weaponEnhancement.enhanceLevel : 0);
+        }
+
+        return data;
+    }
+
+    public void RestoreState(JinyouAssemblyFactorySaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        level = Mathf.Clamp(data.level, 1, maxLevel);
+        selectedMenuId = data.selectedMenuId;
+        selectedWeaponIndex = data.selectedWeaponIndex;
+        isUpgrading = data.isUpgrading;
+        upgradeRemainingSeconds = Mathf.Max(0f, data.upgradeRemainingSeconds);
+        currentUpgradeDurationSeconds = Mathf.Max(0f, data.currentUpgradeDurationSeconds);
+
+        if (data.menus != null)
+        {
+            foreach (JinyouMenuSaveData menuData in data.menus)
+            {
+                if (menuData == null)
+                {
+                    continue;
+                }
+
+                AssemblyMenu menu = GetMenu(menuData.menuId);
+                if (menu == null)
+                {
+                    continue;
+                }
+
+                menu.developmentLevel = menuData.developmentLevel;
+                menu.unlocked = menuData.unlocked;
+                menu.Normalize();
+            }
+        }
+
+        if (data.weaponEnhanceLevels != null)
+        {
+            int count = Mathf.Min(data.weaponEnhanceLevels.Count, weaponEnhancements.Count);
+            for (int i = 0; i < count; i++)
+            {
+                if (weaponEnhancements[i] != null)
+                {
+                    weaponEnhancements[i].enhanceLevel = data.weaponEnhanceLevels[i];
+                    weaponEnhancements[i].Normalize();
+                }
+            }
+        }
+
+        NormalizeMenus();
+        NormalizeWeaponEnhancements();
+        RefreshUnlocks();
+        OnLevelChanged.Invoke(level);
     }
 
     public bool CanEnhanceSelectedWeapon(int credits)
@@ -434,12 +614,28 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     {
         foreach (AssemblyMenu menu in menus)
         {
+            menu?.Normalize();
+            if (menu == null)
+            {
+                continue;
+            }
+
             if (!menu.unlocked && level >= menu.requiredFactoryLevel)
             {
                 menu.unlocked = true;
                 OnMenuUnlocked.Invoke(menu.menuId);
             }
         }
+    }
+
+    private AssemblyMenu GetMenu(string menuId)
+    {
+        if (string.IsNullOrWhiteSpace(menuId) || menus == null)
+        {
+            return null;
+        }
+
+        return menus.Find(item => item != null && string.Equals(item.menuId, menuId, StringComparison.OrdinalIgnoreCase));
     }
 
     private float GetUpgradeDurationForCurrentLevel()
@@ -554,6 +750,15 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         for (int i = 0; i < requiredCommanderLevelByLevel.Count; i++)
         {
             requiredCommanderLevelByLevel[i] = Mathf.Max(1, requiredCommanderLevelByLevel[i]);
+        }
+    }
+
+    private void NormalizeMenus()
+    {
+        menus ??= new List<AssemblyMenu>();
+        foreach (AssemblyMenu menu in menus)
+        {
+            menu?.Normalize();
         }
     }
 
@@ -673,6 +878,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         NormalizeResearchLabRequirements();
         upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
         NormalizeUpgradeDurations();
+        NormalizeMenus();
         NormalizeWeaponEnhancements();
     }
 }

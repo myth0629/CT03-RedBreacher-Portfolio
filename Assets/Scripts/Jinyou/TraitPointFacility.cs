@@ -94,6 +94,32 @@ public class TraitPointFacility : MonoBehaviour
         OnTraitsChanged.Invoke();
     }
 
+    public JinyouTraitPointSaveData CaptureState()
+    {
+        return new JinyouTraitPointSaveData
+        {
+            attackDamagePoints = attackDamagePoints,
+            maxHealthPoints = maxHealthPoints,
+            critChancePoints = critChancePoints,
+            critMultiplierPoints = critMultiplierPoints
+        };
+    }
+
+    public void RestoreState(JinyouTraitPointSaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        attackDamagePoints = Mathf.Max(0, data.attackDamagePoints);
+        maxHealthPoints = Mathf.Max(0, data.maxHealthPoints);
+        critChancePoints = Mathf.Max(0, data.critChancePoints);
+        critMultiplierPoints = Mathf.Max(0, data.critMultiplierPoints);
+        Save();
+        OnTraitsChanged.Invoke();
+    }
+
     public int GetAllocatedPoints(TraitStat stat)
     {
         return stat switch

@@ -210,6 +210,55 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return FindUnitEnhancement(unitConfig) != null;
     }
 
+    public JinyouCoreChargerSaveData CaptureState()
+    {
+        JinyouCoreChargerSaveData data = new JinyouCoreChargerSaveData
+        {
+            level = level,
+            selectedUnitIndex = selectedUnitIndex,
+            isUpgrading = isUpgrading,
+            upgradeRemainingSeconds = upgradeRemainingSeconds,
+            currentUpgradeDurationSeconds = currentUpgradeDurationSeconds
+        };
+
+        foreach (UnitEnhancement unitEnhancement in unitEnhancements)
+        {
+            data.unitEnhanceLevels.Add(unitEnhancement != null ? unitEnhancement.enhanceLevel : 0);
+        }
+
+        return data;
+    }
+
+    public void RestoreState(JinyouCoreChargerSaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        level = Mathf.Clamp(data.level, 1, maxLevel);
+        selectedUnitIndex = data.selectedUnitIndex;
+        isUpgrading = data.isUpgrading;
+        upgradeRemainingSeconds = Mathf.Max(0f, data.upgradeRemainingSeconds);
+        currentUpgradeDurationSeconds = Mathf.Max(0f, data.currentUpgradeDurationSeconds);
+
+        if (data.unitEnhanceLevels != null)
+        {
+            int count = Mathf.Min(data.unitEnhanceLevels.Count, unitEnhancements.Count);
+            for (int i = 0; i < count; i++)
+            {
+                if (unitEnhancements[i] != null)
+                {
+                    unitEnhancements[i].enhanceLevel = data.unitEnhanceLevels[i];
+                    unitEnhancements[i].Normalize();
+                }
+            }
+        }
+
+        NormalizeConfiguredValues();
+        OnLevelChanged.Invoke(level);
+    }
+
     public bool CanEnhanceSelectedUnit(int credits)
     {
         UnitEnhancement selectedUnit = SelectedUnitEnhancement;

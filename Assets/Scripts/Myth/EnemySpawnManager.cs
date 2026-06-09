@@ -58,6 +58,7 @@ public class EnemySpawnManager : MonoBehaviour
     private int currentStage;
     private int currentRound;
     private int currentRoundInStage;
+    private int lastReportedStageClearRound;
     private bool roundsActive;
     private bool spawningRound;
 
@@ -95,6 +96,7 @@ public class EnemySpawnManager : MonoBehaviour
 
         if (roundsActive && !spawningRound && roundRoutine == null && aliveEnemies.Count == 0)
         {
+            ReportStageClearIfNeeded();
             roundRoutine = StartCoroutine(RoundRoutine());
         }
     }
@@ -195,6 +197,23 @@ public class EnemySpawnManager : MonoBehaviour
     {
         currentStage = GetStageForRound(currentRound);
         currentRoundInStage = GetRoundInStage(currentRound);
+    }
+
+    private void ReportStageClearIfNeeded()
+    {
+        int clearedRound = currentRound - 1;
+        if (clearedRound < startRound || clearedRound == lastReportedStageClearRound)
+        {
+            return;
+        }
+
+        if (GetRoundInStage(clearedRound) != RoundsPerStage)
+        {
+            return;
+        }
+
+        lastReportedStageClearRound = clearedRound;
+        AchievementManager.ReportStageCleared();
     }
 
     private void SpawnEnemy(int index)
