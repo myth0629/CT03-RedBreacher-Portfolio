@@ -29,10 +29,12 @@ public class AssemblyFactoryPanel : MonoBehaviour
     private AssemblyFactory assemblyFactory;
     private PlayerLoadoutSelectionPanel loadoutSelectionTemplate;
     private GameObject independentLoadoutPanelObject;
+    private float observedUpgradeDuration;
 
     private void OnEnable()
     {
         ResolveReferences();
+        upgradeButton?.onClick.AddListener(UpgradeFactory);
         weaponMenuButton?.onClick.AddListener(OpenWeaponSelection);
         mechMenuButton?.onClick.AddListener(OpenDroneSelection);
         weaponEnhanceButton?.onClick.AddListener(EnhanceSelected);
@@ -42,6 +44,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
     private void OnDisable()
     {
+        upgradeButton?.onClick.RemoveListener(UpgradeFactory);
         weaponMenuButton?.onClick.RemoveListener(OpenWeaponSelection);
         mechMenuButton?.onClick.RemoveListener(OpenDroneSelection);
         weaponEnhanceButton?.onClick.RemoveListener(EnhanceSelected);
@@ -143,6 +146,12 @@ public class AssemblyFactoryPanel : MonoBehaviour
         Refresh();
     }
 
+    private void UpgradeFactory()
+    {
+        baseCampManager?.UpgradeAssemblyFactory();
+        Refresh();
+    }
+
     private void ClosePanel()
     {
         gameObject.SetActive(false);
@@ -157,14 +166,25 @@ public class AssemblyFactoryPanel : MonoBehaviour
         }
 
         bool droneMode = assemblyFactory.SelectedMenuId == "drone";
-        SetText(levelText, "Assembly Factory");
+        SetText(levelText,
+            $"Factory Lv.{assemblyFactory.Level} / Weapon Cap {assemblyFactory.CurrentWeaponEnhanceLevelCap} / Drone Cap {assemblyFactory.CurrentDroneEnhanceLevelCap}");
         SetText(upgradeText, droneMode
             ? BuildSelectedDroneHeader()
             : BuildSelectedWeaponHeader());
         SetText(selectedMenuText, droneMode ? "Selected Drone SO" : "Selected Weapon SO");
         SetText(weaponEnhanceText, droneMode ? BuildDroneText() : BuildWeaponText());
         SetText(menuStateText, BuildSummary());
-        SetText(upgradeConditionText, string.Empty);
+        if (baseCampManager != null)
+        {
+            int researchLabLevel = baseCampManager.CommandCenter != null
+                ? baseCampManager.CommandCenter.Level
+                : 1;
+            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
+                assemblyFactory,
+                baseCampManager.Credits,
+                baseCampManager.CommanderLevel,
+                researchLabLevel));
+        }
 
         SetButtonLabel(weaponMenuButton, assemblyFactory.SelectedWeaponConfig != null
             ? $"Weapon: {assemblyFactory.SelectedWeaponConfig.DisplayName}"
@@ -175,15 +195,35 @@ public class AssemblyFactoryPanel : MonoBehaviour
         SetButtonLabel(weaponEnhanceButton, droneMode
             ? BuildDroneEnhanceButtonText()
             : BuildWeaponEnhanceButtonText());
+        SetButtonLabel(upgradeButton, assemblyFactory.IsUpgrading
+            ? $"Upgrading {assemblyFactory.UpgradeRemainingSeconds:0}s"
+            : assemblyFactory.Level >= assemblyFactory.MaxLevel
+                ? "Factory MAX"
+                : $"Upgrade Factory ({assemblyFactory.UpgradeCost})");
 
         SetActive(weaponMenuButton != null ? weaponMenuButton.gameObject : null, true);
         SetActive(mechMenuButton != null ? mechMenuButton.gameObject : null, true);
         SetActive(weaponEnhanceButton != null ? weaponEnhanceButton.gameObject : null, true);
-        SetActive(upgradeButton != null ? upgradeButton.gameObject : null, false);
+        SetActive(upgradeButton != null ? upgradeButton.gameObject : null, true);
         SetActive(skillMenuButton != null ? skillMenuButton.gameObject : null, false);
         SetActive(partsMenuButton != null ? partsMenuButton.gameObject : null, false);
-        SetActive(upgradeProgressFill != null ? upgradeProgressFill.gameObject : null, false);
         SetActive(weaponInventoryArea, false);
+
+        if (upgradeButton != null && baseCampManager != null)
+        {
+            int researchLabLevel = baseCampManager.CommandCenter != null
+                ? baseCampManager.CommandCenter.Level
+                : 1;
+            upgradeButton.interactable = assemblyFactory.CanStartUpgrade(
+                baseCampManager.Credits,
+                baseCampManager.CommanderLevel,
+                researchLabLevel);
+        }
+
+        BaseCampUpgradeStatus.SetUpgradeProgress(
+            upgradeProgressFill,
+            assemblyFactory,
+            ref observedUpgradeDuration);
 
         if (weaponEnhanceButton != null && baseCampManager != null)
         {

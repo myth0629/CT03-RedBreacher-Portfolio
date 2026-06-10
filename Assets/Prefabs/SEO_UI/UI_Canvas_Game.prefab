@@ -19787,6 +19787,7 @@ MonoBehaviour:
   - weaponConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
     displayNameOverride: 
     enhanceLevel: 0
+    baseMaxEnhanceLevel: 10
     enhancementLevels:
     - cost: 0
       statIncreases:
@@ -19830,11 +19831,13 @@ MonoBehaviour:
         amount: 6
   selectedWeaponIndex: 0
   defaultWeaponMaxEnhanceLevel: 10
+  weaponMaxLevelIncreasePerFactoryLevel: 5
   defaultWeaponEnhanceCost: 100
   defaultWeaponAttackIncrease: 5
   droneEnhancements: []
   selectedDroneIndex: 0
   defaultDroneMaxEnhanceLevel: 10
+  droneMaxLevelIncreasePerFactoryLevel: 5
   defaultDroneEnhanceCost: 100
   defaultDroneAttackIncrease: 2
   OnLevelChanged:
