@@ -75,6 +75,7 @@ public class PlayerController : MonoBehaviour
     private PlayerEquipmentPartLoadout equipmentPartLoadout;
     private PlayerAutoSkillController autoSkillController;
     private PlayerBossDodgeController bossDodgeController;
+    private PlayerDebugModeController debugModeController;
     private InventoryFacility inventory;
     private AssemblyFactory assemblyFactory;
     private Vehicle vehicle;
@@ -104,10 +105,7 @@ public class PlayerController : MonoBehaviour
     public float AttackRange => AttackRangeValue;
     public float AttackDamage => AttackDamageValue;
     public float WeaponAttackDamage => GetWeaponAttackDamage(ProjectileConfigValue);
-    public float TotalAttackDamage => (AttackDamageValue + WeaponAttackDamage)
-        * (statAllocator != null ? statAllocator.AttackMultiplier : 1f)
-        * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.AttackPercent : 0f))
-        * (bossDodgeController != null ? bossDodgeController.AttackDamageMultiplier : 1f);
+    public float TotalAttackDamage => GetTotalAttackDamage(ProjectileConfigValue);
     public float AttackInterval => AttackIntervalValue;
     public float MoveSpeed => MoveSpeedValue;
     public float CritChance => CritChanceValue;
@@ -210,6 +208,7 @@ public class PlayerController : MonoBehaviour
         EnsureCombatComponents();
         RefreshUnitReferences();
         bossDodgeController = PlayerBossDodgeController.Ensure(this);
+        debugModeController = PlayerDebugModeController.Ensure(this);
 
         // 장착된 기체의 전체 스프라이트에 바닥 그림자를 적용한다.
         SpriteShapeShadow.Ensure(gameObject);
@@ -1045,10 +1044,8 @@ public class PlayerController : MonoBehaviour
 
     private float CalculateAttackDamage(ProjectileConfig activeProjectileConfig, out bool isCritical)
     {
-        // 최종 기본 피해는 기체 공격력과 장착 무기 공격력을 합산한다.
-        float damage = (AttackDamageValue + GetWeaponAttackDamage(activeProjectileConfig))
-            * (statAllocator != null ? statAllocator.AttackMultiplier : 1f)
-            * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.AttackPercent : 0f));
+        // 일반 공격과 스킬이 동일한 최종 공격력 계산을 사용한다.
+        float damage = GetTotalAttackDamage(activeProjectileConfig);
         float chance = Mathf.Clamp01(CritChanceValue);
         float multiplier = Mathf.Max(1f, CritMultiplierValue);
 
@@ -1060,6 +1057,15 @@ public class PlayerController : MonoBehaviour
         }
 
         return damage;
+    }
+
+    private float GetTotalAttackDamage(ProjectileConfig activeProjectileConfig)
+    {
+        // 기체, 무기, 스탯, 장비, 퍼펙트 회피 보정을 한 곳에서 합산한다.
+        return (AttackDamageValue + GetWeaponAttackDamage(activeProjectileConfig))
+            * (statAllocator != null ? statAllocator.AttackMultiplier : 1f)
+            * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.AttackPercent : 0f))
+            * (bossDodgeController != null ? bossDodgeController.AttackDamageMultiplier : 1f);
     }
 
     private float GetWeaponAttackDamage(ProjectileConfig activeProjectileConfig)

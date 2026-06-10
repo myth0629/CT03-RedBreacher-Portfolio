@@ -9,15 +9,15 @@ public class WeaponGachaPanel : MonoBehaviour
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private WeaponGachaFacility weaponGacha;
 
-    [Header("Category Tabs")]
-    [SerializeField] private Button weaponTabButton;
-    [SerializeField] private Button skillTabButton;
-    [SerializeField] private GameObject weaponTabSelected;
-    [SerializeField] private GameObject skillTabSelected;
+    [Header("Weapon Draw Commands")]
+    [SerializeField] private Button weaponDrawOnceButton;
+    [SerializeField] private Button weaponDrawMultiButton;
 
-    [Header("Commands")]
-    [SerializeField] private Button drawOnceButton;
-    [SerializeField] private Button drawMultiButton;
+    [Header("Skill Draw Commands")]
+    [SerializeField] private Button skillDrawOnceButton;
+    [SerializeField] private Button skillDrawMultiButton;
+
+    [Header("Panel Commands")]
     [SerializeField] private Button closeButton;
 
     [Header("Labels")]
@@ -30,6 +30,9 @@ public class WeaponGachaPanel : MonoBehaviour
     [SerializeField] private Transform resultSlotRoot;
     [SerializeField] private GachaResultSlot resultSlotPrefab;
 
+    [Header("Result Panels")]
+    [SerializeField] private GameObject _resultPanel;
+
     private readonly List<GachaResultSlot> resultSlots = new List<GachaResultSlot>();
     private GachaCategory selectedCategory = GachaCategory.Weapon;
     private bool isDrawing;
@@ -37,20 +40,20 @@ public class WeaponGachaPanel : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
-        weaponTabButton?.onClick.AddListener(SelectWeaponTab);
-        skillTabButton?.onClick.AddListener(SelectSkillTab);
-        drawOnceButton?.onClick.AddListener(DrawOnce);
-        drawMultiButton?.onClick.AddListener(DrawMulti);
+        weaponDrawOnceButton?.onClick.AddListener(DrawWeaponOnce);
+        weaponDrawMultiButton?.onClick.AddListener(DrawWeaponMulti);
+        skillDrawOnceButton?.onClick.AddListener(DrawSkillOnce);
+        skillDrawMultiButton?.onClick.AddListener(DrawSkillMulti);
         closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
     private void OnDisable()
     {
-        weaponTabButton?.onClick.RemoveListener(SelectWeaponTab);
-        skillTabButton?.onClick.RemoveListener(SelectSkillTab);
-        drawOnceButton?.onClick.RemoveListener(DrawOnce);
-        drawMultiButton?.onClick.RemoveListener(DrawMulti);
+        weaponDrawOnceButton?.onClick.RemoveListener(DrawWeaponOnce);
+        weaponDrawMultiButton?.onClick.RemoveListener(DrawWeaponMulti);
+        skillDrawOnceButton?.onClick.RemoveListener(DrawSkillOnce);
+        skillDrawMultiButton?.onClick.RemoveListener(DrawSkillMulti);
         closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
@@ -59,36 +62,29 @@ public class WeaponGachaPanel : MonoBehaviour
         Refresh();
     }
 
-    public void SelectWeaponTab()
+    public void DrawWeaponOnce()
     {
-        SelectCategory(GachaCategory.Weapon);
+        Draw(GachaCategory.Weapon, 1);
     }
 
-    public void SelectSkillTab()
-    {
-        SelectCategory(GachaCategory.Skill);
-    }
-
-    private void SelectCategory(GachaCategory category)
-    {
-        selectedCategory = category;
-        ClearResultSlots();
-        SetText(resultText, string.Empty);
-        Refresh();
-    }
-
-    private void DrawOnce()
-    {
-        Draw(1);
-    }
-
-    private void DrawMulti()
+    public void DrawWeaponMulti()
     {
         ResolveReferences();
-        Draw(weaponGacha != null ? weaponGacha.MultiDrawCount : 10);
+        Draw(GachaCategory.Weapon, weaponGacha != null ? weaponGacha.MultiDrawCount : 10);
     }
 
-    private void Draw(int count)
+    public void DrawSkillOnce()
+    {
+        Draw(GachaCategory.Skill, 1);
+    }
+
+    public void DrawSkillMulti()
+    {
+        ResolveReferences();
+        Draw(GachaCategory.Skill, weaponGacha != null ? weaponGacha.MultiDrawCount : 10);
+    }
+
+    private void Draw(GachaCategory category, int count)
     {
         ResolveReferences();
         if (isDrawing || weaponGacha == null)
@@ -97,7 +93,9 @@ public class WeaponGachaPanel : MonoBehaviour
         }
 
         isDrawing = true;
-        bool succeeded = weaponGacha.TryDraw(selectedCategory, count);
+        // 각 버튼이 자신의 뽑기 종류를 직접 지정해 탭 상태와 섞이지 않게 한다.
+        selectedCategory = category;
+        bool succeeded = weaponGacha.TryDraw(category, count);
         if (succeeded)
         {
             DailyMissionManager.ReportWeaponGachaDrawn(count);
@@ -128,14 +126,27 @@ public class WeaponGachaPanel : MonoBehaviour
                 : "뽑기 시설이 연결되지 않았습니다.");
         SetText(tableText, BuildTableText());
 
-        SetButton(drawOnceButton, connected && !isDrawing && weaponGacha.CanDraw(selectedCategory, 1));
-        SetButton(drawMultiButton, connected && !isDrawing && weaponGacha.CanDraw(selectedCategory, multiCount));
-        weaponTabSelected?.SetActive(selectedCategory == GachaCategory.Weapon);
-        skillTabSelected?.SetActive(selectedCategory == GachaCategory.Skill);
+        SetButton(
+            weaponDrawOnceButton,
+            connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Weapon, 1));
+        SetButton(
+            weaponDrawMultiButton,
+            connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Weapon, multiCount));
+        SetButton(
+            skillDrawOnceButton,
+            connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Skill, 1));
+        SetButton(
+            skillDrawMultiButton,
+            connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Skill, multiCount));
     }
 
     private void ShowResults(IReadOnlyList<GachaDrawResult> results)
     {
+        if (_resultPanel != null)
+        {
+            _resultPanel.SetActive(true);
+        }
+
         int resultCount = Mathf.Min(10, results != null ? results.Count : 0);
         if (resultSlotRoot != null && resultSlotPrefab != null)
         {
@@ -155,6 +166,15 @@ public class WeaponGachaPanel : MonoBehaviour
         }
 
         SetText(resultText, BuildResultText(results));
+    }
+
+    private void SelectCategory(GachaCategory category)
+    {
+        selectedCategory = category;
+        ClearResultSlots();
+        SetText(resultText, string.Empty);
+        CloseResultPanel();
+        Refresh();
     }
 
     private void EnsureResultSlotCount(int count)
@@ -271,7 +291,16 @@ public class WeaponGachaPanel : MonoBehaviour
 
     private void ClosePanel()
     {
+        CloseResultPanel();
         gameObject.SetActive(false);
+    }
+
+    public void CloseResultPanel()
+    {
+        if (_resultPanel != null)
+        {
+            _resultPanel.SetActive(false);
+        }
     }
 
     private void ResolveReferences()

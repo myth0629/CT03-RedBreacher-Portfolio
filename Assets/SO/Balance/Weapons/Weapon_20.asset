@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Weapon_20
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 20
-  displayName: "\uD3EC\uD0C420"
+  displayName: "\uD654\uC5FC\uD0C4"
   icon: {fileID: 0}
-  weaponCategory: "\uD3EC\uD0C4"
   attackDamage: 100
   attackType: 1
   areaRadius: 2
   areaDamageMultiplier: 0.7
   maxAreaTargets: 10
+  maxPierceTargets: 3
   maxLevel: 10
   damagePercentPerLevel: 0.1
   maxLevelDuplicateCoreCrystalReward: 1

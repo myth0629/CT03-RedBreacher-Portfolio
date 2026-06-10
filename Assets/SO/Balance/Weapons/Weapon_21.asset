@@ -13,8 +13,17 @@ MonoBehaviour:
   m_Name: Weapon_21
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 21
-  displayName: "\uD3EC\uD0C421"
+  displayName: "\uD30C\uC774\uC5B4\uC0F7"
+  icon: {fileID: 0}
   attackDamage: 100
+  attackType: 2
+  areaRadius: 2
+  areaDamageMultiplier: 0.7
+  maxAreaTargets: 10
+  maxPierceTargets: 4
+  maxLevel: 10
+  damagePercentPerLevel: 0.1
+  maxLevelDuplicateCoreCrystalReward: 1
   speed: 20
   lifetime: 2
   collisionRadius: 0.2

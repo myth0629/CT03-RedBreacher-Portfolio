@@ -99,12 +99,12 @@ public static class BalanceCsvImporter
             SetString(serializedObject, "id", id);
             SetString(serializedObject, "displayName", Get(row, "displayName"));
             SetObject(serializedObject, "icon", GetAsset<Sprite>(row, "icon"));
-            SetString(serializedObject, "weaponCategory", Get(row, "weaponCategory"));
             SetFloat(serializedObject, "attackDamage", row, "attackDamage");
             SetEnum(serializedObject, "attackType", row, "attackType");
             SetFloat(serializedObject, "areaRadius", row, "areaRadius");
             SetFloat(serializedObject, "areaDamageMultiplier", row, "areaDamageMultiplier");
             SetInt(serializedObject, "maxAreaTargets", row, "maxAreaTargets");
+            SetInt(serializedObject, "maxPierceTargets", row, "maxPierceTargets");
             SetInt(serializedObject, "maxLevel", row, "maxLevel");
             SetFloat(serializedObject, "damagePercentPerLevel", row, "damagePercentPerLevel");
             SetInt(serializedObject, "maxLevelDuplicateCoreCrystalReward", row, "maxLevelDuplicateCoreCrystalReward");
@@ -322,8 +322,8 @@ public static class BalanceCsvImporter
     {
         string[] headers =
         {
-            "id", "displayName", "icon", "weaponCategory", "attackDamage", "attackType", "areaRadius", "areaDamageMultiplier",
-            "maxAreaTargets", "maxLevel", "damagePercentPerLevel", "maxLevelDuplicateCoreCrystalReward",
+            "id", "displayName", "icon", "attackDamage", "attackType", "areaRadius", "areaDamageMultiplier",
+            "maxAreaTargets", "maxPierceTargets", "maxLevel", "damagePercentPerLevel", "maxLevelDuplicateCoreCrystalReward",
             "speed", "lifetime", "collisionRadius", "knockbackForce",
             "multiMuzzleFireMode", "maxBurstMuzzleCount", "muzzleNamePrefix", "fireFlashEffect",
             "projectileEffect", "hitEffect", "effectCleanupDelay"
@@ -337,12 +337,12 @@ public static class BalanceCsvImporter
                 config.Id,
                 config.DisplayName,
                 GetAssetPath(config.Icon),
-                config.WeaponCategory,
                 FormatFloat(config.AttackDamage),
                 config.AttackType.ToString(),
                 FormatFloat(config.AreaRadius),
                 FormatFloat(config.AreaDamageMultiplier),
                 config.MaxAreaTargets.ToString(CultureInfo.InvariantCulture),
+                config.MaxPierceTargets.ToString(CultureInfo.InvariantCulture),
                 config.MaxLevel.ToString(CultureInfo.InvariantCulture),
                 FormatFloat(config.DamagePercentPerLevel),
                 config.MaxLevelDuplicateCoreCrystalReward.ToString(CultureInfo.InvariantCulture),

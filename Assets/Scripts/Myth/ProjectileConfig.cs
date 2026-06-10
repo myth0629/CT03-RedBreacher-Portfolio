@@ -66,7 +66,8 @@ public enum MultiMuzzleFireMode
 public enum WeaponAttackType
 {
     SingleTarget,
-    Area
+    Area,
+    Piercing
 }
 
 [CreateAssetMenu(menuName = "Myth/Combat/Projectile Config")]
@@ -76,7 +77,6 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private string id = "weapon_default";
     [SerializeField] private string displayName = "기본 무기";
     [SerializeField] private Sprite icon;
-    [SerializeField] private string weaponCategory = "포탄";
 
     [Header("Combat")]
     [SerializeField] private float attackDamage = 0f;
@@ -84,6 +84,7 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float areaRadius = 2f;
     [SerializeField] private float areaDamageMultiplier = 0.7f;
     [SerializeField] private int maxAreaTargets = 10;
+    [SerializeField] private int maxPierceTargets = 3;
 
     [Header("Collection Level")]
     [SerializeField] private int maxLevel = 10;
@@ -110,12 +111,18 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     public string Id => id;
     public string DisplayName => displayName;
     public Sprite Icon => icon;
-    public string WeaponCategory => weaponCategory;
+    public string WeaponCategory => attackType switch
+    {
+        WeaponAttackType.Area => "폭발탄",
+        WeaponAttackType.Piercing => "관통탄",
+        _ => "일반탄"
+    };
     public float AttackDamage => attackDamage;
     public WeaponAttackType AttackType => attackType;
     public float AreaRadius => areaRadius;
     public float AreaDamageMultiplier => areaDamageMultiplier;
     public int MaxAreaTargets => maxAreaTargets;
+    public int MaxPierceTargets => Mathf.Max(1, maxPierceTargets);
     public int MaxLevel => Mathf.Max(1, maxLevel);
     public float DamagePercentPerLevel => Mathf.Max(0f, damagePercentPerLevel);
     public int MaxLevelDuplicateCoreCrystalReward => Mathf.Max(0, maxLevelDuplicateCoreCrystalReward);

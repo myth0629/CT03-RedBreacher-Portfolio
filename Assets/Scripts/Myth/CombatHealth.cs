@@ -32,13 +32,15 @@ public class CombatHealth : MonoBehaviour
     private float currentHealth;
     private float lastDamageTime = float.NegativeInfinity;
     private float invulnerableUntil;
+    private bool debugInvulnerable;
     private bool isDead;
     private bool deathRewardClaimed;
 
     public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
     public bool IsDead => isDead;
-    public bool IsInvulnerable => Time.time < invulnerableUntil;
+    public bool IsInvulnerable => debugInvulnerable || Time.time < invulnerableUntil;
+    public bool IsDebugInvulnerable => debugInvulnerable;
     public event System.Action<float> OnDamageBlockedByInvulnerability;
 
     private void Awake()
@@ -80,7 +82,12 @@ public class CombatHealth : MonoBehaviour
             return;
         }
 
-        if (IsInvulnerable)
+        if (debugInvulnerable)
+        {
+            return;
+        }
+
+        if (Time.time < invulnerableUntil)
         {
             OnDamageBlockedByInvulnerability?.Invoke(damage);
             return;
@@ -101,6 +108,12 @@ public class CombatHealth : MonoBehaviour
     {
         // 회피 중 연속 피격을 막기 위해 기존 무적 시간보다 길 때만 갱신한다.
         invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + Mathf.Max(0f, duration));
+    }
+
+    public void SetDebugInvulnerable(bool enabled)
+    {
+        // 디버그 무적은 회피 무적 이벤트와 분리해 퍼펙트 회피가 오발동하지 않게 한다.
+        debugInvulnerable = enabled;
     }
 
     private void ShowDamageNumber(float damage, bool isCritical)

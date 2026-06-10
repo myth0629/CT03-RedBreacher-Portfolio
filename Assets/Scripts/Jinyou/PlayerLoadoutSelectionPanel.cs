@@ -6,6 +6,9 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class PlayerLoadoutSelectionPanel : MonoBehaviour
 {
+    private const string SelectedWeaponKey = "PlayerLoadout.SelectedWeapon";
+    private const string SelectedDroneKey = "PlayerLoadout.SelectedDrone";
+
     private enum LoadoutMode
     {
         Weapon,
@@ -61,6 +64,73 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         {
             selectionRoot.SetActive(false);
         }
+    }
+
+    private void Start()
+    {
+        ResolveSources();
+        LoadEquippedLoadout();
+    }
+
+    private void LoadEquippedLoadout()
+    {
+        string savedWeaponId = PlayerPrefs.GetString(SelectedWeaponKey, string.Empty);
+        if (!string.IsNullOrEmpty(savedWeaponId))
+        {
+            ProjectileConfig weapon = FindWeaponById(savedWeaponId);
+            if (weapon != null && (inventory == null || inventory.ContainsWeapon(weapon)))
+            {
+                selectedWeapon = weapon;
+                player?.SetWeaponConfig(weapon);
+            }
+        }
+
+        string savedDroneId = PlayerPrefs.GetString(SelectedDroneKey, string.Empty);
+        if (!string.IsNullOrEmpty(savedDroneId))
+        {
+            DroneConfig drone = FindDroneById(savedDroneId);
+            if (drone != null)
+            {
+                selectedDrone = drone;
+                droneController?.SetDroneConfig(drone);
+            }
+        }
+    }
+
+    private ProjectileConfig FindWeaponById(string id)
+    {
+        if (weaponOptions == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < weaponOptions.Length; i++)
+        {
+            if (weaponOptions[i] != null && weaponOptions[i].Id == id)
+            {
+                return weaponOptions[i];
+            }
+        }
+
+        return null;
+    }
+
+    private DroneConfig FindDroneById(string id)
+    {
+        if (droneOptions == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < droneOptions.Length; i++)
+        {
+            if (droneOptions[i] != null && droneOptions[i].Id == id)
+            {
+                return droneOptions[i];
+            }
+        }
+
+        return null;
     }
 
     private void OnEnable()
@@ -209,12 +279,22 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         if (currentMode == LoadoutMode.Weapon)
         {
             player?.SetWeaponConfig(selectedWeapon);
+            if (selectedWeapon != null)
+            {
+                PlayerPrefs.SetString(SelectedWeaponKey, selectedWeapon.Id);
+                PlayerPrefs.Save();
+            }
             RebuildWeaponList();
             RefreshWeaponDetail(selectedWeapon);
             return;
         }
 
         droneController?.SetDroneConfig(selectedDrone);
+        if (selectedDrone != null)
+        {
+            PlayerPrefs.SetString(SelectedDroneKey, selectedDrone.Id);
+            PlayerPrefs.Save();
+        }
         RebuildDroneList();
         RefreshDroneDetail(selectedDrone);
     }

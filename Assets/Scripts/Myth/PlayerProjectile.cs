@@ -20,7 +20,9 @@ public class PlayerProjectile : MonoBehaviour
     [SerializeField] private float areaRadius = 2f;
     [SerializeField] private float areaDamageMultiplier = 0.7f;
     [SerializeField] private int maxAreaTargets = 10;
+    [SerializeField] private int maxPierceTargets = 3;
 
+    private readonly HashSet<CombatHealth> piercedTargets = new HashSet<CombatHealth>();
     private float damage;
     private float speed;
     private float expireTime;
@@ -61,6 +63,7 @@ public class PlayerProjectile : MonoBehaviour
     {
         isReleased = false;
         hasHit = false;
+        piercedTargets.Clear();
     }
 
     public void ResetForPool()
@@ -73,6 +76,7 @@ public class PlayerProjectile : MonoBehaviour
         owner = null;
         direction = Vector3.zero;
         isCritical = false;
+        piercedTargets.Clear();
 
         if (body != null)
         {
@@ -130,6 +134,7 @@ public class PlayerProjectile : MonoBehaviour
         areaRadius = config.AreaRadius;
         areaDamageMultiplier = config.AreaDamageMultiplier;
         maxAreaTargets = config.MaxAreaTargets;
+        maxPierceTargets = config.MaxPierceTargets;
         ApplyCollisionRadius();
     }
 
@@ -155,6 +160,7 @@ public class PlayerProjectile : MonoBehaviour
         expireTime = Time.time + lifetime;
         hasHit = false;
         isReleased = false;
+        piercedTargets.Clear();
 
         transform.position = CombatPlane.WithFixedY(transform.position);
         // Hovl 투사체는 transform.forward 기준으로 움직이므로 루트 forward를 실제 발사 방향에 맞춘다.
@@ -361,19 +367,37 @@ public class PlayerProjectile : MonoBehaviour
 
     private void TryHit(CombatHealth target)
     {
-        if (hasHit || target == null || target == owner || target.IsDead)
+        if (hasHit
+            || target == null
+            || target == owner
+            || target.IsDead
+            || piercedTargets.Contains(target))
         {
             return;
         }
 
         // 공격 방식에 따라 단일 대상 또는 충돌 지점 주변에 피해를 적용한다.
-        hasHit = true;
         if (attackType == WeaponAttackType.Area)
         {
+            hasHit = true;
             ApplyAreaDamage(target);
+        }
+        else if (attackType == WeaponAttackType.Piercing)
+        {
+            // 같은 적은 한 번만 타격하고 설정한 관통 수까지 투사체를 유지한다.
+            piercedTargets.Add(target);
+            ApplyDamageToTarget(target, damage);
+            SpawnHitEffect();
+            if (piercedTargets.Count >= Mathf.Max(1, maxPierceTargets))
+            {
+                hasHit = true;
+                ReturnToPool();
+            }
+            return;
         }
         else
         {
+            hasHit = true;
             ApplyDamageToTarget(target, damage);
         }
 
