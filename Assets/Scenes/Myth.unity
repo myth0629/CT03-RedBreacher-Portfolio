@@ -2582,6 +2582,15 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 128
+  perfectDodgeAttackBonus: 0.2
+  perfectDodgeBuffDuration: 2
+  perfectDodgeFont: {fileID: 11400000, guid: d9b454495b7d24a7a933eb61bdfa0607, type: 2}
+  perfectDodgeMessage: PERFECT DODGE!!
+  perfectDodgeTextColor: {r: 0.35, g: 1, b: 1, a: 1}
+  perfectDodgeTextSize: 3.5
+  perfectDodgeFeedbackDuration: 0.6
+  perfectDodgeTextOffset: {x: 0, y: 1.2, z: 0}
+  perfectDodgeFlashColor: {r: 0.45, g: 1, b: 1, a: 1}
   dodgeUiRoot: {fileID: 761006678}
   cooldownOverlay: {fileID: 1245187897}
   cooldownText: {fileID: 843517333}

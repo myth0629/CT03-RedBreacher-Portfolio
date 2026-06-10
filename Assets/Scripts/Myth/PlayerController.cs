@@ -106,7 +106,8 @@ public class PlayerController : MonoBehaviour
     public float WeaponAttackDamage => GetWeaponAttackDamage(ProjectileConfigValue);
     public float TotalAttackDamage => (AttackDamageValue + WeaponAttackDamage)
         * (statAllocator != null ? statAllocator.AttackMultiplier : 1f)
-        * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.AttackPercent : 0f));
+        * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.AttackPercent : 0f))
+        * (bossDodgeController != null ? bossDodgeController.AttackDamageMultiplier : 1f);
     public float AttackInterval => AttackIntervalValue;
     public float MoveSpeed => MoveSpeedValue;
     public float CritChance => CritChanceValue;

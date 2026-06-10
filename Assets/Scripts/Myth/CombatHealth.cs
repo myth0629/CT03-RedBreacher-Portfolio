@@ -39,6 +39,7 @@ public class CombatHealth : MonoBehaviour
     public float CurrentHealth => currentHealth;
     public bool IsDead => isDead;
     public bool IsInvulnerable => Time.time < invulnerableUntil;
+    public event System.Action<float> OnDamageBlockedByInvulnerability;
 
     private void Awake()
     {
@@ -74,8 +75,14 @@ public class CombatHealth : MonoBehaviour
 
     public void TakeDamage(float damage, bool isCritical = false)
     {
-        if (isDead || IsInvulnerable || damage <= 0f)
+        if (isDead || damage <= 0f)
         {
+            return;
+        }
+
+        if (IsInvulnerable)
+        {
+            OnDamageBlockedByInvulnerability?.Invoke(damage);
             return;
         }
 

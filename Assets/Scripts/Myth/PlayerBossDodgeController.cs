@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -18,6 +19,19 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     [SerializeField] private float wallClearance = 0.05f;
     [SerializeField] private LayerMask obstacleMask;
 
+    [Header("퍼펙트 회피 보상")]
+    [SerializeField, Range(0f, 2f)] private float perfectDodgeAttackBonus = 0.2f;
+    [SerializeField] private float perfectDodgeBuffDuration = 3f;
+
+    [Header("퍼펙트 회피 피드백")]
+    [SerializeField] private TMP_FontAsset perfectDodgeFont;
+    [SerializeField] private string perfectDodgeMessage = "PERFECT DODGE";
+    [SerializeField] private Color perfectDodgeTextColor = new Color(0.35f, 1f, 1f, 1f);
+    [SerializeField] private float perfectDodgeTextSize = 3.5f;
+    [SerializeField] private float perfectDodgeFeedbackDuration = 0.6f;
+    [SerializeField] private Vector3 perfectDodgeTextOffset = new Vector3(0f, 1.2f, 0f);
+    [SerializeField] private Color perfectDodgeFlashColor = new Color(0.45f, 1f, 1f, 1f);
+
     [Header("회피 쿨타임 UI")]
     [SerializeField] private GameObject dodgeUiRoot;
     [SerializeField] private Image cooldownOverlay;
@@ -33,11 +47,21 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     private Vector3 dodgeDestination;
     private float dodgeElapsed;
     private float nextDodgeTime;
+    private float perfectDodgeWindowUntil;
+    private float attackBuffUntil;
     private int activeTouchId = -1;
     private bool isDragging;
+    private bool perfectDodgeTriggered;
+    private GameObject activeFeedbackText;
+    private SpriteRenderer[] flashingRenderers;
+    private Color[] originalRendererColors;
 
     public bool IsDodging { get; private set; }
     public float CooldownRemaining => Mathf.Max(0f, nextDodgeTime - Time.time);
+    public bool IsAttackBuffActive => Time.time < attackBuffUntil;
+    public float AttackDamageMultiplier => IsAttackBuffActive
+        ? 1f + Mathf.Max(0f, perfectDodgeAttackBonus)
+        : 1f;
 
     public static PlayerBossDodgeController Ensure(PlayerController owner)
     {
@@ -63,6 +87,25 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        health ??= GetComponent<CombatHealth>();
+        if (health != null)
+        {
+            health.OnDamageBlockedByInvulnerability += HandleDamageBlocked;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (health != null)
+        {
+            health.OnDamageBlockedByInvulnerability -= HandleDamageBlocked;
+        }
+
+        CleanupPerfectDodgeFeedback();
+    }
+
     private void Update()
     {
         ResolveReferences();
@@ -70,6 +113,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         {
             CancelDrag();
             IsDodging = false;
+            attackBuffUntil = 0f;
             RefreshCooldownUi(false);
             return;
         }
@@ -208,7 +252,10 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         dodgeElapsed = 0f;
         IsDodging = true;
         nextDodgeTime = Time.time + Mathf.Max(0f, dodgeCooldown);
-        health?.SetTemporaryInvulnerability(invulnerabilityDuration);
+        float invulnerability = Mathf.Max(0f, invulnerabilityDuration);
+        perfectDodgeWindowUntil = Time.time + invulnerability;
+        perfectDodgeTriggered = false;
+        health?.SetTemporaryInvulnerability(invulnerability);
     }
 
     private void UpdateDodge()
@@ -280,6 +327,151 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     {
         isDragging = false;
         activeTouchId = -1;
+    }
+
+    private void HandleDamageBlocked(float blockedDamage)
+    {
+        if (blockedDamage <= 0f
+            || perfectDodgeTriggered
+            || Time.time > perfectDodgeWindowUntil
+            || bossEncounterManager == null
+            || !bossEncounterManager.IsEncounterActive)
+        {
+            return;
+        }
+
+        // 실제 공격을 회피했을 때만 공격력 버프를 부여하고 중첩 없이 시간을 갱신한다.
+        perfectDodgeTriggered = true;
+        attackBuffUntil = Time.time + Mathf.Max(0f, perfectDodgeBuffDuration);
+        StartCoroutine(PlayPerfectDodgeFeedback());
+    }
+
+    private IEnumerator PlayPerfectDodgeFeedback()
+    {
+        CleanupPerfectDodgeFeedback();
+        CreatePerfectDodgeText();
+        CacheFlashRenderers();
+
+        float duration = Mathf.Max(0.1f, perfectDodgeFeedbackDuration);
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+            UpdatePerfectDodgeText(progress);
+            UpdateFlash(progress);
+            yield return null;
+        }
+
+        CleanupPerfectDodgeFeedback();
+    }
+
+    private void CreatePerfectDodgeText()
+    {
+        activeFeedbackText = new GameObject("Perfect Dodge Feedback");
+        TextMeshPro feedbackText = activeFeedbackText.AddComponent<TextMeshPro>();
+        feedbackText.font = perfectDodgeFont != null ? perfectDodgeFont : TMP_Settings.defaultFontAsset;
+        feedbackText.text = perfectDodgeMessage;
+        feedbackText.color = perfectDodgeTextColor;
+        feedbackText.fontSize = Mathf.Max(0.1f, perfectDodgeTextSize);
+        feedbackText.alignment = TextAlignmentOptions.Center;
+        feedbackText.renderer.sortingOrder = 100;
+    }
+
+    private void CacheFlashRenderers()
+    {
+        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        List<SpriteRenderer> validRenderers = new List<SpriteRenderer>();
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null && renderers[i].gameObject.name != "__SpriteShapeShadow")
+            {
+                validRenderers.Add(renderers[i]);
+            }
+        }
+
+        flashingRenderers = validRenderers.ToArray();
+        originalRendererColors = new Color[flashingRenderers.Length];
+        for (int i = 0; i < flashingRenderers.Length; i++)
+        {
+            originalRendererColors[i] = flashingRenderers[i].color;
+        }
+    }
+
+    private void UpdatePerfectDodgeText(float progress)
+    {
+        if (activeFeedbackText == null)
+        {
+            return;
+        }
+
+        activeFeedbackText.transform.position = transform.position
+            + perfectDodgeTextOffset
+            + Vector3.up * (progress * 0.35f);
+        mainCamera ??= Camera.main;
+        if (mainCamera != null)
+        {
+            activeFeedbackText.transform.rotation = mainCamera.transform.rotation;
+        }
+
+        TextMeshPro feedbackText = activeFeedbackText.GetComponent<TextMeshPro>();
+        if (feedbackText != null)
+        {
+            float alpha = 1f - Mathf.Clamp01((progress - 0.55f) / 0.45f);
+            feedbackText.color = new Color(
+                perfectDodgeTextColor.r,
+                perfectDodgeTextColor.g,
+                perfectDodgeTextColor.b,
+                alpha);
+        }
+    }
+
+    private void UpdateFlash(float progress)
+    {
+        if (flashingRenderers == null || originalRendererColors == null)
+        {
+            return;
+        }
+
+        float flashAmount = Mathf.Sin(progress * Mathf.PI * 4f);
+        flashAmount = Mathf.Max(0f, flashAmount);
+        for (int i = 0; i < flashingRenderers.Length; i++)
+        {
+            if (flashingRenderers[i] == null)
+            {
+                continue;
+            }
+
+            Color original = originalRendererColors[i];
+            Color flash = new Color(
+                perfectDodgeFlashColor.r,
+                perfectDodgeFlashColor.g,
+                perfectDodgeFlashColor.b,
+                original.a);
+            flashingRenderers[i].color = Color.Lerp(original, flash, flashAmount);
+        }
+    }
+
+    private void CleanupPerfectDodgeFeedback()
+    {
+        if (flashingRenderers != null && originalRendererColors != null)
+        {
+            for (int i = 0; i < flashingRenderers.Length; i++)
+            {
+                if (flashingRenderers[i] != null && i < originalRendererColors.Length)
+                {
+                    flashingRenderers[i].color = originalRendererColors[i];
+                }
+            }
+        }
+
+        flashingRenderers = null;
+        originalRendererColors = null;
+        if (activeFeedbackText != null)
+        {
+            Destroy(activeFeedbackText);
+            activeFeedbackText = null;
+        }
     }
 
     private void RefreshCooldownUi(bool encounterActive)
