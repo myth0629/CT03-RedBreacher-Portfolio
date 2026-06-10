@@ -25,6 +25,9 @@ MonoBehaviour:
   effectRadius: 3
   maxTargets: 20
   knockbackForce: 0
+  maxLevel: 10
+  damagePercentPerLevel: 0.1
+  maxLevelDuplicateCoreCrystalReward: 1
   impactDelay: 1
   warningEffectPrefab: {fileID: 9179389450710726649, guid: 0309f63716c8a4a4e84bead042662d12, type: 3}
   impactEffectPrefab: {fileID: 1320533090949476, guid: f20077a0be0f3fa4495d97be6faa09bc, type: 3}
@@ -37,6 +40,9 @@ MonoBehaviour:
   _bombEffectScale: 2
   _bombCount: 2
   _bombInterval: 0.15
+  _screenShakeDuration: 0.4
+  _screenShakeStrength: 1
+  _screenShakeFrequency: 2
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 0}
   turretDuration: 8

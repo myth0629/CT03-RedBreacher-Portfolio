@@ -55,6 +55,7 @@ public class EnemySpawnManager : MonoBehaviour
     private Coroutine roundRoutine;
     private Coroutine playerDeathRestartRoutine;
     private Vector3 fallbackPlayerRespawnPosition;
+    private Vector3 fallbackSpawnBoundsCenter;
     private int currentStage;
     private int currentRound;
     private int currentRoundInStage;
@@ -81,6 +82,11 @@ public class EnemySpawnManager : MonoBehaviour
         fallbackPlayerRespawnPosition = player != null
             ? CombatPlane.WithFixedY(player.transform.position)
             : CombatPlane.WithFixedY(transform.position);
+        fallbackSpawnBoundsCenter = spawnBoundsCenter != null
+            ? CombatPlane.WithFixedY(spawnBoundsCenter.position)
+            : spawnCenter != null
+                ? CombatPlane.WithFixedY(spawnCenter.position)
+                : CombatPlane.WithFixedY(transform.position);
         SetGameOverPanelActive(false);
         currentStage = Mathf.Max(1, startStage);
         currentRound = LoadCurrentRound();
@@ -422,6 +428,12 @@ public class EnemySpawnManager : MonoBehaviour
         if (spawnBoundsCenter != null)
         {
             return CombatPlane.WithFixedY(spawnBoundsCenter.position);
+        }
+
+        if (Application.isPlaying)
+        {
+            // 플레이어가 움직여도 아레나 스폰 경계 중심은 시작 위치에 고정한다.
+            return fallbackSpawnBoundsCenter;
         }
 
         if (spawnCenter != null)

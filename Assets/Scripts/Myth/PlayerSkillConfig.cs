@@ -46,6 +46,9 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float _bombEffectScale = 1f;
     [SerializeField] private int _bombCount = 1;
     [SerializeField] private float _bombInterval = 0.15f;
+    [SerializeField] private float _screenShakeDuration = 0.22f;
+    [SerializeField] private float _screenShakeStrength = 0.4f;
+    [SerializeField] private float _screenShakeFrequency = 1.5f;
 
     [Header("Auto Turret")]
     [SerializeField] private GameObject turretPrefab;
@@ -85,6 +88,9 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float BombEffectScale => Mathf.Max(0.01f, _bombEffectScale);
     public int BombCount => Mathf.Max(1, _bombCount);
     public float BombInterval => Mathf.Max(0f, _bombInterval);
+    public float ScreenShakeDuration => Mathf.Max(0f, _screenShakeDuration);
+    public float ScreenShakeStrength => Mathf.Max(0f, _screenShakeStrength);
+    public float ScreenShakeFrequency => Mathf.Max(0.01f, _screenShakeFrequency);
     public GameObject TurretPrefab => turretPrefab;
     public ProjectileConfig TurretProjectileConfig => turretProjectileConfig;
     public float TurretDuration => Mathf.Max(0.1f, turretDuration);

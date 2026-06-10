@@ -163,6 +163,9 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "_bombEffectScale", row, "bombEffectScale");
             SetInt(serializedObject, "_bombCount", row, "bombCount");
             SetFloat(serializedObject, "_bombInterval", row, "bombInterval");
+            SetFloat(serializedObject, "_screenShakeDuration", row, "screenShakeDuration");
+            SetFloat(serializedObject, "_screenShakeStrength", row, "screenShakeStrength");
+            SetFloat(serializedObject, "_screenShakeFrequency", row, "screenShakeFrequency");
             SetObject(serializedObject, "turretPrefab", GetAsset<GameObject>(row, "turretPrefab"));
             SetObject(serializedObject, "turretProjectileConfig", GetAsset<ProjectileConfig>(row, "turretProjectileConfig"));
             SetFloat(serializedObject, "turretDuration", row, "turretDuration");
@@ -372,6 +375,7 @@ public static class BalanceCsvImporter
             "impactDelay", "warningEffect", "impactEffect", "effectCleanupDelay",
             "airplanePrefab", "airplaneSpeed", "airplaneSpawnOffset", "airplaneHeight",
             "bombProjectilePrefab", "bombEffectScale", "bombCount", "bombInterval",
+            "screenShakeDuration", "screenShakeStrength", "screenShakeFrequency",
             "turretPrefab", "turretProjectileConfig", "turretDuration", "turretAttackInterval",
             "turretAttackRange", "turretRotationSpeed", "turretPlacementDistance", "turretFirePointName"
         };
@@ -409,6 +413,9 @@ public static class BalanceCsvImporter
                 FormatFloat(config.BombEffectScale),
                 config.BombCount.ToString(CultureInfo.InvariantCulture),
                 FormatFloat(config.BombInterval),
+                FormatFloat(config.ScreenShakeDuration),
+                FormatFloat(config.ScreenShakeStrength),
+                FormatFloat(config.ScreenShakeFrequency),
                 GetAssetPath(config.TurretPrefab),
                 GetAssetPath(config.TurretProjectileConfig),
                 FormatFloat(config.TurretDuration),

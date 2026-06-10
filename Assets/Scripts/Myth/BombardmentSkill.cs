@@ -132,6 +132,11 @@ public class BombardmentSkill : MonoBehaviour
         yield return new WaitForSeconds(fallDuration);
 
         // 2. 폭격 데미지 및 폭발 이펙트 생성
+        CombatCameraShake.Play(
+            _config.ScreenShakeDuration,
+            _config.ScreenShakeStrength,
+            _config.ScreenShakeFrequency);
+
         if (_owner != null && _owner.Health != null && !_owner.Health.IsDead)
         {
             // 폭격 시점의 최종 플레이어 공격력 / 폭격 횟수를 1발당 데미지로 분할 적용
