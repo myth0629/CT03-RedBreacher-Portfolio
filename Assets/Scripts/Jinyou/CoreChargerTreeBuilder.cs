@@ -45,7 +45,7 @@ public class CoreChargerTreeBuilder : MonoBehaviour
         }
 
         RectTransform row = GetOrCreateRow();
-        for (int i = 0; i < coreCharger.UnitEnhancements.Count; i++)
+        for (int i = 0; i < coreCharger.ConversionStages.Count; i++)
         {
             CoreChargerOptionButton node = Instantiate(optionNodePrefab, row);
             node.Configure(baseCampManager, coreChargerPanel, i);

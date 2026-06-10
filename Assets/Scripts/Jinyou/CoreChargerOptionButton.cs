@@ -53,8 +53,8 @@ public class CoreChargerOptionButton : MonoBehaviour
     {
         ResolveReferences();
 
-        CoreCharger.UnitEnhancement unitEnhancement = GetUnitEnhancement();
-        if (unitEnhancement == null)
+        CoreCharger.UnitConversionStage stage = GetConversionStage();
+        if (stage == null)
         {
             SetText(titleText, $"Unit {unitIndex + 1}");
             SetText(stateText, "Not connected");
@@ -65,23 +65,23 @@ public class CoreChargerOptionButton : MonoBehaviour
         }
 
         bool selected = unitIndex == coreCharger.SelectedUnitIndex;
-        SetText(titleText, unitEnhancement.DisplayName);
-        SetText(stateText, unitEnhancement.IsMaxLevel
-            ? $"Lv.MAX / Cost --"
-            : $"Lv.{unitEnhancement.enhanceLevel}/{unitEnhancement.MaxEnhanceLevel} / Cost {unitEnhancement.NextEnhanceCost}");
+        SetText(titleText, stage.DisplayName);
+        SetText(stateText, coreCharger.IsConversionCompleted(unitIndex)
+            ? "Completed"
+            : $"Player Lv.{stage.requiredPlayerLevel}");
         SetInteractable(true);
         SetActive(lockedOverlay, false);
         SetActive(selectedFrame, selected);
     }
 
-    private CoreCharger.UnitEnhancement GetUnitEnhancement()
+    private CoreCharger.UnitConversionStage GetConversionStage()
     {
-        if (coreCharger == null || unitIndex < 0 || unitIndex >= coreCharger.UnitEnhancements.Count)
+        if (coreCharger == null || unitIndex < 0 || unitIndex >= coreCharger.ConversionStages.Count)
         {
             return null;
         }
 
-        return coreCharger.UnitEnhancements[unitIndex];
+        return coreCharger.ConversionStages[unitIndex];
     }
 
     private void ResolveReferences()

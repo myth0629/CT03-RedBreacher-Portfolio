@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -37,6 +38,9 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private ProjectileConfig selectedWeapon;
     private DroneConfig selectedDrone;
     private InventoryFacility inventory;
+    private AssemblyFactory assemblyFactory;
+    private Action<ProjectileConfig> weaponSelectionCallback;
+    private Action<DroneConfig> droneSelectionCallback;
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -46,7 +50,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             weaponOptions = LoadAssetsInEditor<ProjectileConfig>("Assets/SO/Balance/Weapons");
         }
 
-        if (droneOptions == null || droneOptions.Length == 0)
+        if (droneOptions == null || droneOptions.Length <= 1)
         {
             droneOptions = LoadAssetsInEditor<DroneConfig>("Assets/SO/Balance/Drones");
         }
@@ -56,73 +60,88 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private void Awake()
     {
         ResolveSources();
-
-        if (selectionRoot != null)
-        {
-            selectionRoot.SetActive(false);
-        }
+        selectionRoot?.SetActive(false);
     }
 
     private void OnEnable()
     {
-        equipButton?.onClick.AddListener(EquipSelected);
+        equipButton?.onClick.AddListener(ConfirmSelected);
     }
 
     private void OnDisable()
     {
-        equipButton?.onClick.RemoveListener(EquipSelected);
+        equipButton?.onClick.RemoveListener(ConfirmSelected);
     }
 
     public void OpenWeapons()
     {
+        ResolveSources();
+        weaponSelectionCallback = null;
+        droneSelectionCallback = null;
         currentMode = LoadoutMode.Weapon;
         selectedWeapon = player != null ? player.WeaponConfig : null;
-        OpenPanel("주무장");
+        OpenPanel("Weapon Loadout");
         RebuildWeaponList();
         RefreshWeaponDetail(selectedWeapon);
     }
 
     public void OpenDrones()
     {
+        ResolveSources();
+        weaponSelectionCallback = null;
+        droneSelectionCallback = null;
         currentMode = LoadoutMode.Drone;
         selectedDrone = droneController != null ? droneController.DroneConfig : null;
-        OpenPanel("드론");
+        OpenPanel("Drone Loadout");
+        RebuildDroneList();
+        RefreshDroneDetail(selectedDrone);
+    }
+
+    public void OpenWeaponsForSelection(Action<ProjectileConfig> onSelected)
+    {
+        ResolveSources();
+        weaponSelectionCallback = onSelected;
+        droneSelectionCallback = null;
+        currentMode = LoadoutMode.Weapon;
+        selectedWeapon = assemblyFactory != null ? assemblyFactory.SelectedWeaponConfig : null;
+        OpenPanel("Select Weapon To Enhance");
+        RebuildWeaponList();
+        RefreshWeaponDetail(selectedWeapon);
+    }
+
+    public void OpenDronesForSelection(Action<DroneConfig> onSelected)
+    {
+        ResolveSources();
+        droneSelectionCallback = onSelected;
+        weaponSelectionCallback = null;
+        currentMode = LoadoutMode.Drone;
+        selectedDrone = assemblyFactory != null ? assemblyFactory.SelectedDroneConfig : null;
+        OpenPanel("Select Drone To Enhance");
         RebuildDroneList();
         RefreshDroneDetail(selectedDrone);
     }
 
     public void Close()
     {
-        if (selectionRoot != null)
-        {
-            selectionRoot.SetActive(false);
-        }
+        selectionRoot?.SetActive(false);
     }
 
     private void OpenPanel(string title)
     {
-        ResolveSources();
-
-        if (selectionRoot != null)
-        {
-            selectionRoot.SetActive(true);
-        }
-
+        selectionRoot?.SetActive(true);
         SetText(titleText, title);
     }
 
     private void RebuildWeaponList()
     {
         ClearOptions();
-
         if (weaponOptions == null)
         {
             return;
         }
 
-        for (int i = 0; i < weaponOptions.Length; i++)
+        foreach (ProjectileConfig weapon in weaponOptions)
         {
-            ProjectileConfig weapon = weaponOptions[i];
             if (weapon == null || (inventory != null && !inventory.ContainsWeapon(weapon)))
             {
                 continue;
@@ -135,9 +154,9 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             }
 
             option.Bind(
-                weapon.DisplayName,
+                $"{weapon.DisplayName}  Factory Lv.{GetFactoryWeaponLevel(weapon)}",
                 weapon.WeaponCategory,
-                $"Lv.{GetWeaponLevel(weapon)} / Damage {weapon.AttackDamage:0.##} / Speed {weapon.Speed:0.##}",
+                $"Factory Lv.{GetFactoryWeaponLevel(weapon)} / Damage {GetEnhancedWeaponDamage(weapon):0.##}",
                 weapon == selectedWeapon,
                 () => SelectWeapon(weapon));
         }
@@ -146,15 +165,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private void RebuildDroneList()
     {
         ClearOptions();
-
         if (droneOptions == null)
         {
             return;
         }
 
-        for (int i = 0; i < droneOptions.Length; i++)
+        foreach (DroneConfig drone in droneOptions)
         {
-            DroneConfig drone = droneOptions[i];
             if (drone == null)
             {
                 continue;
@@ -167,9 +184,9 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             }
 
             option.Bind(
-                drone.DisplayName,
-                $"{drone.DroneCount} 개",
-                $"피해량 {drone.AttackDamage:0.##} / 발사간격 {drone.AttackRange:0.##}",
+                $"{drone.DisplayName}  Factory Lv.{GetFactoryDroneLevel(drone)}",
+                $"Count {drone.DroneCount}",
+                $"Factory Lv.{GetFactoryDroneLevel(drone)} / Damage {GetEnhancedDroneDamage(drone):0.##}",
                 drone == selectedDrone,
                 () => SelectDrone(drone));
         }
@@ -202,15 +219,32 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         RebuildDroneList();
     }
 
-    private void EquipSelected()
+    private void ConfirmSelected()
     {
         ResolveSources();
-
         if (currentMode == LoadoutMode.Weapon)
         {
+            if (weaponSelectionCallback != null)
+            {
+                Action<ProjectileConfig> callback = weaponSelectionCallback;
+                weaponSelectionCallback = null;
+                callback.Invoke(selectedWeapon);
+                Close();
+                return;
+            }
+
             player?.SetWeaponConfig(selectedWeapon);
             RebuildWeaponList();
             RefreshWeaponDetail(selectedWeapon);
+            return;
+        }
+
+        if (droneSelectionCallback != null)
+        {
+            Action<DroneConfig> callback = droneSelectionCallback;
+            droneSelectionCallback = null;
+            callback.Invoke(selectedDrone);
+            Close();
             return;
         }
 
@@ -221,19 +255,27 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void RefreshWeaponDetail(ProjectileConfig weapon)
     {
-        SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하십시오.");
-        SetText(detailCategoryText, weapon != null ? $"종류: {weapon.WeaponCategory}" : string.Empty);
+        SetText(detailNameText, weapon != null ? weapon.DisplayName : "Select a weapon.");
+        SetText(detailCategoryText, weapon != null ? $"Type: {weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
-            ? $"Level: {GetWeaponLevel(weapon)}\nDamage: {weapon.AttackDamage:0.##}\nSpeed: {weapon.Speed:0.##}\nLifetime: {weapon.Lifetime:0.##}\nKnockback: {weapon.KnockbackForce:0.##}\nMuzzle: {weapon.MultiMuzzleFireMode}"
+            ? $"Factory Level: {GetFactoryWeaponLevel(weapon)}\n"
+                + $"Collection Level: {GetCollectionWeaponLevel(weapon)}\n"
+                + $"Base Damage: {weapon.AttackDamage:0.##}\n"
+                + $"Enhanced Damage: {GetEnhancedWeaponDamage(weapon):0.##}\n"
+                + $"Speed: {weapon.Speed:0.##}"
             : string.Empty);
     }
 
     private void RefreshDroneDetail(DroneConfig drone)
     {
-        SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하십시오.");
-        SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount} 개" : string.Empty);
+        SetText(detailNameText, drone != null ? drone.DisplayName : "Select a drone.");
+        SetText(detailCategoryText, drone != null ? $"Count: {drone.DroneCount}" : string.Empty);
         SetText(detailStatsText, drone != null
-            ? $"피해량: {drone.AttackDamage:0.##}\n사거리: {drone.AttackRange:0.##}\n발사간격: {drone.AttackInterval:0.##}\n탄속: {drone.ProjectileSpeed:0.##}\n편대 반경: {drone.FollowRadius:0.##}"
+            ? $"Factory Level: {GetFactoryDroneLevel(drone)}\n"
+                + $"Base Damage: {drone.AttackDamage:0.##}\n"
+                + $"Enhanced Damage: {GetEnhancedDroneDamage(drone):0.##}\n"
+                + $"Range: {drone.AttackRange:0.##}\n"
+                + $"Attack Interval: {drone.AttackInterval:0.##}"
             : string.Empty);
     }
 
@@ -252,26 +294,51 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void ResolveSources()
     {
-        if (player == null)
-        {
-            player = FindFirstObjectByType<PlayerController>();
-        }
-
-        if (droneController == null)
-        {
-            droneController = player != null
-                ? player.GetComponent<PlayerDroneController>()
-                : FindFirstObjectByType<PlayerDroneController>();
-        }
-
+        player ??= FindFirstObjectByType<PlayerController>();
+        droneController ??= player != null
+            ? player.GetComponent<PlayerDroneController>()
+            : FindFirstObjectByType<PlayerDroneController>();
         inventory ??= BaseCampManager.Instance != null
             ? BaseCampManager.Instance.Inventory
             : InventoryFacility.FindAny();
+        assemblyFactory ??= BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.AssemblyFactory
+            : FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
     }
 
-    private int GetWeaponLevel(ProjectileConfig weapon)
+    private int GetCollectionWeaponLevel(ProjectileConfig weapon)
     {
         return inventory != null ? Mathf.Max(1, inventory.GetWeaponLevel(weapon)) : 1;
+    }
+
+    private int GetFactoryWeaponLevel(ProjectileConfig weapon)
+    {
+        return assemblyFactory != null ? assemblyFactory.GetWeaponEnhanceLevel(weapon) : 0;
+    }
+
+    private int GetFactoryDroneLevel(DroneConfig drone)
+    {
+        return assemblyFactory != null ? assemblyFactory.GetDroneEnhanceLevel(drone) : 0;
+    }
+
+    private float GetEnhancedWeaponDamage(ProjectileConfig weapon)
+    {
+        return weapon != null
+            ? weapon.AttackDamage + (assemblyFactory != null
+                ? assemblyFactory.GetWeaponStatBonus(
+                    weapon,
+                    AssemblyFactory.WeaponEnhancementStat.AttackDamage)
+                : 0f)
+            : 0f;
+    }
+
+    private float GetEnhancedDroneDamage(DroneConfig drone)
+    {
+        return drone != null
+            ? drone.AttackDamage + (assemblyFactory != null
+                ? assemblyFactory.GetDroneAttackDamageBonus(drone)
+                : 0f)
+            : 0f;
     }
 
     private static void SetText(TMP_Text target, string value)
@@ -283,11 +350,10 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    private static T[] LoadAssetsInEditor<T>(string folder) where T : Object
+    private static T[] LoadAssetsInEditor<T>(string folder) where T : UnityEngine.Object
     {
         string[] guids = UnityEditor.AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { folder });
         T[] assets = new T[guids.Length];
-
         for (int i = 0; i < guids.Length; i++)
         {
             string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[i]);

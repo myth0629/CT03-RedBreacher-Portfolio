@@ -5,6 +5,26 @@ using UnityEngine.Events;
 
 public class CoreCharger : MonoBehaviour, IBaseCampFacility
 {
+    [Serializable]
+    public class UnitConversionStage
+    {
+        [Min(1)] public int requiredPlayerLevel = 1;
+        public PlayerUnitConfig currentUnit;
+        public PlayerUnitConfig nextUnit;
+
+        public string DisplayName
+        {
+            get
+            {
+                string currentName = currentUnit != null ? currentUnit.DisplayName : "Unassigned";
+                string nextName = nextUnit != null ? nextUnit.DisplayName : "Unassigned";
+                return $"{currentName} -> {nextName}";
+            }
+        }
+
+        public bool IsConfigured => currentUnit != null && nextUnit != null && currentUnit != nextUnit;
+    }
+
     public enum UnitEnhancementStat
     {
         MaxHealth,
@@ -131,6 +151,11 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     [SerializeField] private List<UnitEnhancement> unitEnhancements = new List<UnitEnhancement>();
     [SerializeField] private int selectedUnitIndex;
 
+    [Header("Unit Conversion")]
+    [SerializeField] private List<UnitConversionStage> conversionStages = new List<UnitConversionStage>();
+    [SerializeField, Min(1)] private int defaultRequiredLevelInterval = 5;
+    [SerializeField] private List<int> convertedStageIndices = new List<int>();
+
     [Header("Events")]
     public UnityEvent<int> OnLevelChanged = new UnityEvent<int>();
     public UnityEvent<PlayerUnitConfig> OnUnitSelected = new UnityEvent<PlayerUnitConfig>();
@@ -151,9 +176,96 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
     public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
     public IReadOnlyList<UnitEnhancement> UnitEnhancements => unitEnhancements;
+    public IReadOnlyList<UnitConversionStage> ConversionStages => conversionStages;
+    public UnitConversionStage SelectedConversionStage => GetConversionStageAt(selectedUnitIndex);
     public UnitEnhancement SelectedUnitEnhancement => GetUnitEnhancementAt(selectedUnitIndex);
     public PlayerUnitConfig SelectedUnitConfig => SelectedUnitEnhancement?.unitConfig;
     public int SelectedUnitIndex => selectedUnitIndex;
+
+    public bool IsConversionCompleted(int stageIndex)
+    {
+        return convertedStageIndices.Contains(stageIndex);
+    }
+
+    public bool TrySelectConversionStage(int index)
+    {
+        if (index < 0 || index >= conversionStages.Count)
+        {
+            return false;
+        }
+
+        selectedUnitIndex = index;
+        OnUnitSelected.Invoke(conversionStages[index]?.currentUnit);
+        return true;
+    }
+
+    public bool CanConvertSelectedUnit(InventoryFacility inventory, PlayerController player, int playerLevel)
+    {
+        UnitConversionStage stage = SelectedConversionStage;
+        if (stage == null || !stage.IsConfigured || IsConversionCompleted(selectedUnitIndex))
+        {
+            return false;
+        }
+
+        bool ownsCurrentUnit = inventory != null && inventory.ContainsUnit(stage.currentUnit);
+        bool hasCurrentUnitEquipped = player != null && player.UnitConfig == stage.currentUnit;
+        return playerLevel >= stage.requiredPlayerLevel && (ownsCurrentUnit || hasCurrentUnitEquipped);
+    }
+
+    public bool TryConvertSelectedUnit(InventoryFacility inventory, PlayerController player, int playerLevel)
+    {
+        if (!CanConvertSelectedUnit(inventory, player, playerLevel))
+        {
+            return false;
+        }
+
+        UnitConversionStage stage = SelectedConversionStage;
+        bool wasEquipped = player != null && player.UnitConfig == stage.currentUnit;
+        bool inventoryChanged = inventory != null && inventory.ReplaceUnit(stage.currentUnit, stage.nextUnit);
+
+        if (!inventoryChanged && inventory != null && !inventory.ContainsUnit(stage.nextUnit))
+        {
+            inventory.AddUnit(stage.nextUnit);
+        }
+
+        if (wasEquipped)
+        {
+            player.SetUnitConfig(stage.nextUnit);
+        }
+
+        int completedStageIndex = selectedUnitIndex;
+        convertedStageIndices.Add(completedStageIndex);
+        SelectNextIncompleteStage(completedStageIndex + 1);
+        OnUnitEnhanced.Invoke(stage.nextUnit, completedStageIndex + 1);
+        return true;
+    }
+
+    public void ApplyCompletedConversions(InventoryFacility inventory, PlayerController player)
+    {
+        if (inventory == null)
+        {
+            return;
+        }
+
+        List<int> completedStages = new List<int>(convertedStageIndices);
+        completedStages.Sort();
+
+        foreach (int stageIndex in completedStages)
+        {
+            UnitConversionStage stage = GetConversionStageAt(stageIndex);
+            if (stage == null || !stage.IsConfigured)
+            {
+                continue;
+            }
+
+            bool wasEquipped = player != null && player.UnitConfig == stage.currentUnit;
+            inventory.ReplaceUnit(stage.currentUnit, stage.nextUnit);
+            if (wasEquipped)
+            {
+                player.SetUnitConfig(stage.nextUnit);
+            }
+        }
+    }
 
     private void Awake()
     {
@@ -226,6 +338,8 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             data.unitEnhanceLevels.Add(unitEnhancement != null ? unitEnhancement.enhanceLevel : 0);
         }
 
+        data.convertedStageIndices.AddRange(convertedStageIndices);
+
         return data;
     }
 
@@ -241,6 +355,9 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         isUpgrading = data.isUpgrading;
         upgradeRemainingSeconds = Mathf.Max(0f, data.upgradeRemainingSeconds);
         currentUpgradeDurationSeconds = Mathf.Max(0f, data.currentUpgradeDurationSeconds);
+        convertedStageIndices = data.convertedStageIndices != null
+            ? new List<int>(data.convertedStageIndices)
+            : new List<int>();
 
         if (data.unitEnhanceLevels != null)
         {
@@ -506,6 +623,16 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return unitEnhancements[index];
     }
 
+    private UnitConversionStage GetConversionStageAt(int index)
+    {
+        if (index < 0 || index >= conversionStages.Count)
+        {
+            return null;
+        }
+
+        return conversionStages[index];
+    }
+
     private int ParseIndexId(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -622,6 +749,73 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
         NormalizeUpgradeDurations();
         NormalizeUnitEnhancements();
+        conversionStages ??= new List<UnitConversionStage>();
+        defaultRequiredLevelInterval = Mathf.Max(1, defaultRequiredLevelInterval);
+        BuildDefaultConversionStages();
+        convertedStageIndices ??= new List<int>();
+        convertedStageIndices.RemoveAll(index => index < 0 || index >= conversionStages.Count);
+        foreach (UnitConversionStage stage in conversionStages)
+        {
+            if (stage != null)
+            {
+                stage.requiredPlayerLevel = Mathf.Max(1, stage.requiredPlayerLevel);
+            }
+        }
+
+        if (conversionStages.Count > 0)
+        {
+            selectedUnitIndex = Mathf.Clamp(selectedUnitIndex, 0, conversionStages.Count - 1);
+            if (IsConversionCompleted(selectedUnitIndex))
+            {
+                SelectNextIncompleteStage(0);
+            }
+        }
+    }
+
+    private void SelectNextIncompleteStage(int startIndex)
+    {
+        for (int i = Mathf.Max(0, startIndex); i < conversionStages.Count; i++)
+        {
+            if (!IsConversionCompleted(i))
+            {
+                selectedUnitIndex = i;
+                return;
+            }
+        }
+
+        for (int i = 0; i < Mathf.Min(startIndex, conversionStages.Count); i++)
+        {
+            if (!IsConversionCompleted(i))
+            {
+                selectedUnitIndex = i;
+                return;
+            }
+        }
+    }
+
+    private void BuildDefaultConversionStages()
+    {
+        if (conversionStages.Count > 0 || unitEnhancements == null || unitEnhancements.Count < 2)
+        {
+            return;
+        }
+
+        for (int i = 0; i < unitEnhancements.Count - 1; i++)
+        {
+            PlayerUnitConfig currentUnit = unitEnhancements[i]?.unitConfig;
+            PlayerUnitConfig nextUnit = unitEnhancements[i + 1]?.unitConfig;
+            if (currentUnit == null || nextUnit == null || currentUnit == nextUnit)
+            {
+                continue;
+            }
+
+            conversionStages.Add(new UnitConversionStage
+            {
+                requiredPlayerLevel = (i + 1) * defaultRequiredLevelInterval,
+                currentUnit = currentUnit,
+                nextUnit = nextUnit
+            });
+        }
     }
 
     private void OnValidate()

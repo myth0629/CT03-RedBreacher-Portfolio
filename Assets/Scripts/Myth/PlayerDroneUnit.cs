@@ -6,6 +6,7 @@ public class PlayerDroneUnit : MonoBehaviour
     private DroneConfig config;
     private Transform muzzle;
     private CombatHealth currentTarget;
+    private AssemblyFactory assemblyFactory;
     private int slotIndex;
     private int slotCount;
     private float nextAttackTime;
@@ -17,6 +18,9 @@ public class PlayerDroneUnit : MonoBehaviour
         slotIndex = index;
         slotCount = Mathf.Max(1, count);
         muzzle = FindMuzzle(transform);
+        assemblyFactory = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.AssemblyFactory
+            : FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
         CombatPlane.ClampTransform(transform);
     }
 
@@ -152,7 +156,12 @@ public class PlayerDroneUnit : MonoBehaviour
 
     private float GetDamage(ProjectileConfig projectileConfig)
     {
-        return config.AttackDamage + (projectileConfig != null ? projectileConfig.AttackDamage : 0f);
+        float assemblyBonus = assemblyFactory != null
+            ? assemblyFactory.GetDroneAttackDamageBonus(config)
+            : 0f;
+        return config.AttackDamage
+            + assemblyBonus
+            + (projectileConfig != null ? projectileConfig.AttackDamage : 0f);
     }
 
     private Vector3 GetFirePosition(Vector3 direction)

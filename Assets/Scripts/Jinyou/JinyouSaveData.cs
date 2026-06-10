@@ -59,11 +59,22 @@ public class JinyouAssemblyFactorySaveData
     public int level = 1;
     public string selectedMenuId;
     public int selectedWeaponIndex;
+    public string selectedWeaponId;
+    public string selectedDroneId;
     public bool isUpgrading;
     public float upgradeRemainingSeconds;
     public float currentUpgradeDurationSeconds;
     public List<JinyouMenuSaveData> menus = new List<JinyouMenuSaveData>();
     public List<int> weaponEnhanceLevels = new List<int>();
+    public List<JinyouEnhancementLevelSaveData> weaponEnhancements = new List<JinyouEnhancementLevelSaveData>();
+    public List<JinyouEnhancementLevelSaveData> droneEnhancements = new List<JinyouEnhancementLevelSaveData>();
+}
+
+[Serializable]
+public class JinyouEnhancementLevelSaveData
+{
+    public string configId;
+    public int level;
 }
 
 [Serializable]
@@ -83,6 +94,7 @@ public class JinyouCoreChargerSaveData
     public float upgradeRemainingSeconds;
     public float currentUpgradeDurationSeconds;
     public List<int> unitEnhanceLevels = new List<int>();
+    public List<int> convertedStageIndices = new List<int>();
 }
 
 [Serializable]
