@@ -74,6 +74,7 @@ public class PlayerController : MonoBehaviour
     private PlayerStatAllocator statAllocator;
     private PlayerEquipmentPartLoadout equipmentPartLoadout;
     private PlayerAutoSkillController autoSkillController;
+    private PlayerBossDodgeController bossDodgeController;
     private InventoryFacility inventory;
     private AssemblyFactory assemblyFactory;
     private Vehicle vehicle;
@@ -207,6 +208,7 @@ public class PlayerController : MonoBehaviour
         ApplyHealthStats();
         EnsureCombatComponents();
         RefreshUnitReferences();
+        bossDodgeController = PlayerBossDodgeController.Ensure(this);
 
         // 장착된 기체의 전체 스프라이트에 바닥 그림자를 적용한다.
         SpriteShapeShadow.Ensure(gameObject);
@@ -429,6 +431,18 @@ public class PlayerController : MonoBehaviour
                 FinishAutoReposition();
             }
 
+            return;
+        }
+
+        if (bossDodgeController != null && bossDodgeController.IsDodging)
+        {
+            if (isRepositioning)
+            {
+                FinishAutoReposition();
+            }
+
+            SetVehicleMoveInput(0f, 0f);
+            TryAimAndAttackCurrentTarget();
             return;
         }
 

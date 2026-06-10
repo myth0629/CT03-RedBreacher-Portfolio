@@ -31,12 +31,14 @@ public class CombatHealth : MonoBehaviour
 
     private float currentHealth;
     private float lastDamageTime = float.NegativeInfinity;
+    private float invulnerableUntil;
     private bool isDead;
     private bool deathRewardClaimed;
 
     public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
     public bool IsDead => isDead;
+    public bool IsInvulnerable => Time.time < invulnerableUntil;
 
     private void Awake()
     {
@@ -55,6 +57,7 @@ public class CombatHealth : MonoBehaviour
         currentHealth = maxHealth;
         isDead = false;
         deathRewardClaimed = false;
+        invulnerableUntil = 0f;
     }
 
     public void SetMaxHealth(float newMaxHealth, bool preserveCurrentRatio)
@@ -71,7 +74,7 @@ public class CombatHealth : MonoBehaviour
 
     public void TakeDamage(float damage, bool isCritical = false)
     {
-        if (isDead || damage <= 0f)
+        if (isDead || IsInvulnerable || damage <= 0f)
         {
             return;
         }
@@ -85,6 +88,12 @@ public class CombatHealth : MonoBehaviour
         {
             Die();
         }
+    }
+
+    public void SetTemporaryInvulnerability(float duration)
+    {
+        // 회피 중 연속 피격을 막기 위해 기존 무적 시간보다 길 때만 갱신한다.
+        invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + Mathf.Max(0f, duration));
     }
 
     private void ShowDamageNumber(float damage, bool isCritical)
