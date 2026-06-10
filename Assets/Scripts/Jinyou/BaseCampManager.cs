@@ -34,13 +34,7 @@ public class BaseCampManager : MonoBehaviour
     [Header("Idle Automation")]
     [SerializeField] private bool enableAutomation = true;
     [SerializeField] private int autoCollectUnlockCommandCenterLevel = 2;
-    [SerializeField] private int autoUpgradeUnlockCommandCenterLevel = 4;
     [SerializeField] private float autoCollectIntervalSeconds = 5f;
-    [SerializeField] private float autoUpgradeIntervalSeconds = 10f;
-    [SerializeField] private bool autoUpgradeCommandCenter = true;
-    [SerializeField] private bool autoUpgradeEnergyRefinery = true;
-    [SerializeField] private bool autoUpgradeAssemblyFactory = true;
-    [SerializeField] private bool autoUpgradeCoreCharger = true;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugPanel = true;
@@ -57,7 +51,6 @@ public class BaseCampManager : MonoBehaviour
     private bool isRestoringUnifiedSave;
     private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
     private float autoCollectTimer;
-    private float autoUpgradeTimer;
     private int observedPlayerLevel;
 
     public CommandCenter CommandCenter => commandCenter;
@@ -73,7 +66,6 @@ public class BaseCampManager : MonoBehaviour
     public PlayerProgression PlayerProgression => ResolvePlayerProgression();
     public JinyouOfflineRewardSaveData LastOfflineReward => lastOfflineReward;
     public bool IsAutoCollectUnlocked => IsCommandCenterLevelAtLeast(autoCollectUnlockCommandCenterLevel);
-    public bool IsAutoUpgradeUnlocked => IsCommandCenterLevelAtLeast(autoUpgradeUnlockCommandCenterLevel);
 
     private void Awake()
     {
@@ -178,26 +170,6 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.TrySelectMenu(menuId);
     }
 
-    public void SelectCoreRoute(string routeId)
-    {
-        coreCharger?.TrySelectRoute(routeId);
-    }
-
-    public void SelectCoreOption(string optionId)
-    {
-        coreCharger?.TrySelectOption(optionId);
-    }
-
-    public void InvestCoreRoute(string routeId)
-    {
-        coreCharger?.TryInvestRoute(routeId);
-    }
-
-    public void InvestCoreOption(string optionId)
-    {
-        coreCharger?.TryInvestOption(optionId);
-    }
-
     public void SelectAssemblyWeapon(int weaponIndex)
     {
         assemblyFactory?.TrySelectWeapon(weaponIndex);
@@ -258,16 +230,6 @@ public class BaseCampManager : MonoBehaviour
         }
     }
 
-    public void SelectCoreUnit(int unitIndex)
-    {
-        coreCharger?.TrySelectUnit(unitIndex);
-    }
-
-    public void SelectCoreUnit(PlayerUnitConfig unitConfig)
-    {
-        coreCharger?.TrySelectUnit(unitConfig);
-    }
-
     public void EnhanceCoreUnit()
     {
         ConvertSelectedCoreUnit();
@@ -282,7 +244,7 @@ public class BaseCampManager : MonoBehaviour
 
         PlayerController player = FindFirstObjectByType<PlayerController>();
         int playerLevel = PlayerProgression != null ? PlayerProgression.Level : commanderLevel;
-        if (coreCharger.TryConvertSelectedUnit(Inventory, player, playerLevel))
+        if (coreCharger.TryConvertCurrentUnit(Inventory, player, playerLevel))
         {
             DailyMissionManager.ReportUnitEnhanced();
             SaveUnifiedGameIfReady();
@@ -393,6 +355,15 @@ public class BaseCampManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    [ContextMenu("Reset All Offline Save Data")]
+    public void ResetAllOfflineSaveData()
+    {
+        autoSaveUnifiedState = false;
+        unifiedSaveReady = false;
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+    }
+
     private void SetCredits(int value)
     {
         CurrencyWallet.SetCredits(value);
@@ -444,19 +415,6 @@ public class BaseCampManager : MonoBehaviour
             autoCollectTimer = 0f;
         }
 
-        if (IsAutoUpgradeUnlocked)
-        {
-            autoUpgradeTimer += deltaTime;
-            if (autoUpgradeTimer >= Mathf.Max(0.1f, autoUpgradeIntervalSeconds))
-            {
-                autoUpgradeTimer = 0f;
-                AutoUpgradeFacilities();
-            }
-        }
-        else
-        {
-            autoUpgradeTimer = 0f;
-        }
     }
 
     private void AutoCollectRefineryCredits()
@@ -467,29 +425,6 @@ public class BaseCampManager : MonoBehaviour
         }
 
         CollectRefineryCredits();
-    }
-
-    private void AutoUpgradeFacilities()
-    {
-        if (autoUpgradeCommandCenter)
-        {
-            TrySpendAndUpgrade(commandCenter);
-        }
-
-        if (autoUpgradeEnergyRefinery)
-        {
-            TrySpendAndUpgrade(energyRefinery);
-        }
-
-        if (autoUpgradeAssemblyFactory)
-        {
-            TrySpendAndUpgrade(assemblyFactory);
-        }
-
-        if (autoUpgradeCoreCharger)
-        {
-            TrySpendAndUpgrade(coreCharger);
-        }
     }
 
     private bool IsCommandCenterLevelAtLeast(int requiredLevel)
@@ -513,7 +448,6 @@ public class BaseCampManager : MonoBehaviour
         GUILayout.Label($"Credits: {Credits}");
         GUILayout.Label($"Core Crystals: {CoreCrystals}");
         GUILayout.Label($"Auto Collect: {(IsAutoCollectUnlocked ? "ON" : $"Command Lv.{autoCollectUnlockCommandCenterLevel}")}");
-        GUILayout.Label($"Auto Upgrade: {(IsAutoUpgradeUnlocked ? "ON" : $"Command Lv.{autoUpgradeUnlockCommandCenterLevel}")}");
 
         if (GUILayout.Button("+ Level")) AddCommanderLevel(1);
         if (GUILayout.Button("+ 1000 Credits")) AddCredits(1000);
@@ -702,6 +636,7 @@ public class BaseCampManager : MonoBehaviour
         JinyouSaveData data = new JinyouSaveData
         {
             commanderLevel = commanderLevel,
+            mainBuildingLevel = commandCenter != null ? commandCenter.Level : 1,
             lastSavedUnixTime = GetCurrentUnixTime(),
             credits = wallet != null ? wallet.Credits : credits,
             coreCrystals = wallet != null ? wallet.CoreCrystals : 0,
@@ -730,6 +665,10 @@ public class BaseCampManager : MonoBehaviour
 
         isRestoringUnifiedSave = true;
         commanderLevel = Mathf.Max(1, data.commanderLevel);
+        data.researchLab ??= new JinyouCommandCenterSaveData();
+        data.researchLab.level = data.version >= 2 && data.mainBuildingLevel > 0
+            ? data.mainBuildingLevel
+            : Mathf.Max(1, data.researchLab.level);
         PlayerCurrencyWallet wallet = EnsureCurrencyWallet();
         wallet?.SetCredits(data.credits);
         wallet?.SetCoreCrystals(data.coreCrystals);

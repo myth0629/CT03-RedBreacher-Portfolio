@@ -13868,6 +13868,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StrategyResearchLabPanel
   baseCampManager: {fileID: 0}
   upgradeButton: {fileID: 519658554035159801}
+  resetOfflineDataButton: {fileID: 0}
   levelText: {fileID: 6728557380807450388}
   offlineRewardText: {fileID: 7426642505181815932}
   upgradeText: {fileID: 8882257347909575673}
@@ -19792,48 +19793,48 @@ MonoBehaviour:
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
   selectedWeaponIndex: 0
   defaultWeaponMaxEnhanceLevel: 10
   weaponMaxLevelIncreasePerFactoryLevel: 5
   defaultWeaponEnhanceCost: 100
-  defaultWeaponAttackIncrease: 5
+  defaultWeaponAttackIncrease: 1
   droneEnhancements: []
   selectedDroneIndex: 0
   defaultDroneMaxEnhanceLevel: 10
@@ -31246,21 +31247,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoreChargerPanel
   baseCampManager: {fileID: 0}
   upgradeButton: {fileID: 5024208019707139039}
-  firstUnitButton: {fileID: 608532312912118928}
-  secondUnitButton: {fileID: 6179220285341395515}
-  thirdUnitButton: {fileID: 8934423336735886091}
   enhanceUnitButton: {fileID: 3853873838081243510}
   levelText: {fileID: 4991335088912770062}
   upgradeText: {fileID: 7048555644453786693}
   upgradeConditionText: {fileID: 2173779024658527545}
   upgradeProgressFill: {fileID: 3506820725551203255}
+  currentUnitPreviewImage: {fileID: 0}
   selectedUnitText: {fileID: 5530492752396025813}
+  unitSoTransitionText: {fileID: 0}
   unitStateText: {fileID: 5672148369887153733}
-  inventoryPanel: {fileID: 2695654891698078163}
-  unitInventoryArea: {fileID: 0}
-  unitInventoryContentRoot: {fileID: 0}
-  inventoryUnitButtonPrefab: {fileID: 0}
-  inventoryUnitListText: {fileID: 0}
 --- !u!1 &5254000922626176845
 GameObject:
   m_ObjectHideFlags: 0
@@ -51637,10 +51632,18 @@ MonoBehaviour:
   level: 1
   maxLevel: 10
   upgradeCost: 400
-  upgradeCostByLevel: 900100009001000090010000900100009001000090010000900100009001000090010000
+  upgradeCostByLevel:
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
   requiredCommanderLevel: 1
-  requiredResearchLabLevel: 3
-  requiredResearchLabLevelByLevel: 030000000300000003000000030000000300000003000000030000000300000003000000
+  requiredResearchLabLevel: 1
   upgradeDurationSeconds: 10
   upgradeDurationSecondsByLevel:
   - 10
@@ -51652,8 +51655,7 @@ MonoBehaviour:
   - 10
   - 10
   - 10
-  unitEnhancements: []
-  selectedUnitIndex: 0
+  levelsPerConversion: 5
   conversionStages:
   - requiredPlayerLevel: 5
     currentUnit: {fileID: 11400000, guid: a3b7befadd4964e5b9ee9048889e72fb, type: 2}
@@ -51682,12 +51684,8 @@ MonoBehaviour:
   - requiredPlayerLevel: 45
     currentUnit: {fileID: 11400000, guid: e28a933543b9d40508a43f36876752b7, type: 2}
     nextUnit: {fileID: 11400000, guid: 17004bd252efd4db98ecca26469c5c40, type: 2}
-  defaultRequiredLevelInterval: 5
   convertedStageIndices: []
   OnLevelChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  OnUnitSelected:
     m_PersistentCalls:
       m_Calls: []
   OnUnitEnhanced:

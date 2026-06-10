@@ -6,43 +6,33 @@ public class CoreChargerPanel : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button upgradeButton;
-    [SerializeField] private Button firstUnitButton;
-    [SerializeField] private Button secondUnitButton;
-    [SerializeField] private Button thirdUnitButton;
     [SerializeField] private Button enhanceUnitButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
+    [SerializeField] private Image currentUnitPreviewImage;
     [SerializeField] private TMP_Text selectedUnitText;
+    [SerializeField] private TMP_Text unitSoTransitionText;
     [SerializeField] private TMP_Text unitStateText;
-    [SerializeField] private InventoryPanel inventoryPanel;
-    [SerializeField] private GameObject unitInventoryArea;
-    [SerializeField] private RectTransform unitInventoryContentRoot;
-    [SerializeField] private Button inventoryUnitButtonPrefab;
-    [SerializeField] private TMP_Text inventoryUnitListText;
 
     private CoreCharger coreCharger;
     private InventoryFacility inventory;
     private PlayerController player;
+    private float observedUpgradeDuration;
 
     private void OnEnable()
     {
         ResolveReferences();
-        firstUnitButton?.onClick.AddListener(SelectFirstStage);
-        secondUnitButton?.onClick.AddListener(SelectSecondStage);
-        thirdUnitButton?.onClick.AddListener(SelectThirdStage);
-        enhanceUnitButton?.onClick.AddListener(ConvertSelectedUnit);
-        SetActive(unitInventoryArea, false);
+        upgradeButton?.onClick.AddListener(UpgradeCoreCharger);
+        enhanceUnitButton?.onClick.AddListener(ConvertCurrentUnit);
         Refresh();
     }
 
     private void OnDisable()
     {
-        firstUnitButton?.onClick.RemoveListener(SelectFirstStage);
-        secondUnitButton?.onClick.RemoveListener(SelectSecondStage);
-        thirdUnitButton?.onClick.RemoveListener(SelectThirdStage);
-        enhanceUnitButton?.onClick.RemoveListener(ConvertSelectedUnit);
+        upgradeButton?.onClick.RemoveListener(UpgradeCoreCharger);
+        enhanceUnitButton?.onClick.RemoveListener(ConvertCurrentUnit);
     }
 
     private void Update()
@@ -53,10 +43,6 @@ public class CoreChargerPanel : MonoBehaviour
     public void Configure(
         BaseCampManager manager,
         Button upgrade,
-        Button firstUnit,
-        Button secondUnit,
-        Button thirdUnit,
-        Button close,
         TMP_Text level,
         TMP_Text upgradeLabel,
         TMP_Text selectedUnit,
@@ -64,9 +50,6 @@ public class CoreChargerPanel : MonoBehaviour
     {
         baseCampManager = manager;
         upgradeButton = upgrade;
-        firstUnitButton = firstUnit;
-        secondUnitButton = secondUnit;
-        thirdUnitButton = thirdUnit;
         levelText = level;
         upgradeText = upgradeLabel;
         selectedUnitText = selectedUnit;
@@ -74,158 +57,158 @@ public class CoreChargerPanel : MonoBehaviour
         Refresh();
     }
 
-    public void SelectUnit(PlayerUnitConfig unitConfig)
+    private void ConvertCurrentUnit()
     {
-        if (coreCharger == null || unitConfig == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < coreCharger.ConversionStages.Count; i++)
-        {
-            CoreCharger.UnitConversionStage stage = coreCharger.ConversionStages[i];
-            if (stage != null && stage.currentUnit == unitConfig)
-            {
-                SelectUnitByIndex(i);
-                return;
-            }
-        }
-    }
-
-    public void SelectUnitByIndex(int unitIndex)
-    {
-        coreCharger?.TrySelectConversionStage(unitIndex);
+        baseCampManager?.ConvertSelectedCoreUnit();
         Refresh();
     }
 
-    private void SelectFirstStage()
+    private void UpgradeCoreCharger()
     {
-        SelectUnitByIndex(0);
-    }
-
-    private void SelectSecondStage()
-    {
-        SelectUnitByIndex(1);
-    }
-
-    private void SelectThirdStage()
-    {
-        SelectUnitByIndex(2);
-    }
-
-    private void ConvertSelectedUnit()
-    {
-        baseCampManager?.ConvertSelectedCoreUnit();
+        baseCampManager?.UpgradeCoreCharger();
         Refresh();
     }
 
     private void Refresh()
     {
         ResolveReferences();
+
         if (coreCharger == null)
         {
+            SetText(upgradeConditionText, "Core Charger is not connected.");
+            SetUnitPreview(currentUnitPreviewImage, null);
+            SetInteractable(upgradeButton, false);
+            SetInteractable(enhanceUnitButton, false);
             return;
         }
 
         int playerLevel = GetPlayerLevel();
-        CoreCharger.UnitConversionStage stage = coreCharger.SelectedConversionStage;
+        CoreCharger.UnitConversionStage stage = coreCharger.CurrentConversionStage;
 
-        SetText(levelText, $"Player Lv. {playerLevel}");
-        SetText(upgradeText, "Unit Conversion");
-        SetText(upgradeConditionText, BuildConditionText(stage, playerLevel));
-        SetText(selectedUnitText, stage != null ? stage.DisplayName : "No conversion configured");
-        SetText(unitStateText, BuildStageSummary(playerLevel));
-        SetText(inventoryUnitListText, BuildStageSummary(playerLevel));
+        int researchLabLevel = baseCampManager?.CommandCenter != null
+            ? baseCampManager.CommandCenter.Level
+            : 1;
 
-        SetActive(upgradeProgressFill != null ? upgradeProgressFill.gameObject : null, false);
-        SetActive(unitInventoryArea, false);
+        SetText(levelText, $"Core Charger Lv. {coreCharger.Level}");
+        SetText(upgradeText, coreCharger.IsUpgrading
+            ? $"Upgrading... {coreCharger.UpgradeRemainingSeconds:0}s"
+            : $"Upgrade ({coreCharger.UpgradeCost} Credits)");
+        SetText(selectedUnitText, stage != null ? stage.DisplayName : "All conversions complete");
+        SetUnitPreview(currentUnitPreviewImage, stage?.currentUnit);
+        SetText(unitSoTransitionText, BuildUnitSoTransitionText(stage));
+        SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
+            coreCharger,
+            baseCampManager != null ? baseCampManager.Credits : 0,
+            baseCampManager != null ? baseCampManager.CommanderLevel : 1,
+            researchLabLevel));
 
-        if (upgradeButton != null)
-        {
-            upgradeButton.interactable = false;
-            upgradeButton.gameObject.SetActive(false);
-        }
+        string conversionState = BuildConversionStateText(stage, playerLevel);
+        SetText(unitStateText, conversionState);
 
-        if (enhanceUnitButton != null)
-        {
-            enhanceUnitButton.interactable = coreCharger.CanConvertSelectedUnit(inventory, player, playerLevel);
-            TMP_Text buttonText = enhanceUnitButton.GetComponentInChildren<TMP_Text>(true);
-            SetText(buttonText, "Convert Unit");
-        }
+        bool canConvert = coreCharger.CanConvertCurrentUnit(inventory, player, playerLevel);
+        SetInteractable(enhanceUnitButton, canConvert);
+        SetText(enhanceUnitButton != null
+            ? enhanceUnitButton.GetComponentInChildren<TMP_Text>(true)
+            : null, stage != null ? "Enhance Unit" : "Complete");
 
-        SetStageButton(firstUnitButton, 0);
-        SetStageButton(secondUnitButton, 1);
-        SetStageButton(thirdUnitButton, 2);
+        BaseCampUpgradeStatus.SetUpgradeProgress(
+            upgradeProgressFill,
+            coreCharger,
+            ref observedUpgradeDuration);
+        SetInteractable(upgradeButton, coreCharger.CanStartUpgrade(
+            baseCampManager != null ? baseCampManager.Credits : 0,
+            baseCampManager != null ? baseCampManager.CommanderLevel : 1,
+            researchLabLevel));
     }
 
-    private string BuildConditionText(CoreCharger.UnitConversionStage stage, int playerLevel)
+    private string BuildConversionStateText(CoreCharger.UnitConversionStage stage, int playerLevel)
     {
-        if (stage == null || !stage.IsConfigured)
+        if (stage == null)
         {
-            return "Configure a conversion stage on CoreCharger.";
+            return coreCharger.ConversionStages.Count == 0
+                ? "No unit SO conversion stages configured."
+                : "All unit SO conversions are complete.";
         }
 
-        if (coreCharger.IsConversionCompleted(coreCharger.SelectedUnitIndex))
+        if (!stage.IsConfigured)
         {
-            return "Conversion completed";
+            return "Assign the current and next Unit SO.";
         }
+
+        int requiredCoreLevel = coreCharger.GetRequiredCoreChargerLevel(coreCharger.CurrentStageIndex);
+        string stageText = $"Stage {coreCharger.CurrentStageIndex + 1}/{coreCharger.ConversionStages.Count}"
+            + $" | Player Lv.{stage.requiredPlayerLevel}"
+            + $" | Core Charger Lv.{requiredCoreLevel}";
 
         if (playerLevel < stage.requiredPlayerLevel)
         {
-            return $"Requires Player Lv. {stage.requiredPlayerLevel}";
+            return $"{stageText}\nRequires Player Lv. {stage.requiredPlayerLevel}";
+        }
+
+        if (coreCharger.Level < requiredCoreLevel)
+        {
+            return $"{stageText}\nUpgrade Core Charger to Lv. {requiredCoreLevel}";
         }
 
         bool ownsCurrent = inventory != null && inventory.ContainsUnit(stage.currentUnit);
         bool equippedCurrent = player != null && player.UnitConfig == stage.currentUnit;
         if (!ownsCurrent && !equippedCurrent)
         {
-            return $"Requires {stage.currentUnit.DisplayName}";
+            return $"{stageText}\nRequires {stage.currentUnit.DisplayName}";
         }
 
-        return "Ready to convert";
+        return $"{stageText}\nReady to convert";
     }
 
-    private string BuildStageSummary(int playerLevel)
+    private static string BuildUnitSoTransitionText(CoreCharger.UnitConversionStage stage)
     {
-        if (coreCharger.ConversionStages.Count == 0)
+        if (stage == null)
         {
-            return "No conversion stages";
+            return "No pending Unit SO conversion";
         }
 
-        string summary = string.Empty;
-        for (int i = 0; i < coreCharger.ConversionStages.Count; i++)
+        if (stage.currentUnit == null || stage.nextUnit == null)
         {
-            CoreCharger.UnitConversionStage stage = coreCharger.ConversionStages[i];
-            if (stage == null)
-            {
-                continue;
-            }
-
-            string state = coreCharger.IsConversionCompleted(i)
-                ? "Completed"
-                : playerLevel >= stage.requiredPlayerLevel ? "Unlocked" : "Locked";
-            string selected = i == coreCharger.SelectedUnitIndex ? " *" : string.Empty;
-            summary += $"{stage.DisplayName} / Lv.{stage.requiredPlayerLevel} / {state}{selected}\n";
+            return $"Before SO: {FormatUnitSo(stage.currentUnit)}\n"
+                + $"After SO: {FormatUnitSo(stage.nextUnit)}";
         }
 
-        return summary.TrimEnd();
+        PlayerUnitConfig current = stage.currentUnit;
+        PlayerUnitConfig next = stage.nextUnit;
+        return $"{FormatUnitSo(current)} -> {FormatUnitSo(next)}\n"
+            + $"HP: {FormatStatChange(current.MaxHealth, next.MaxHealth)}\n"
+            + $"Attack: {FormatStatChange(current.AttackDamage, next.AttackDamage)}\n"
+            + $"Attack Range: {FormatStatChange(current.AttackRange, next.AttackRange)}\n"
+            + $"Attack Interval: {FormatStatChange(current.AttackInterval, next.AttackInterval)}\n"
+            + $"Move Speed: {FormatStatChange(current.MoveSpeed, next.MoveSpeed)}\n"
+            + $"Rotation Speed: {FormatStatChange(current.RotationSpeed, next.RotationSpeed)}\n"
+            + $"Crit Chance: {FormatPercentChange(current.CritChance, next.CritChance)}\n"
+            + $"Crit Damage: {FormatMultiplierChange(current.CritMultiplier, next.CritMultiplier)}";
     }
 
-    private void SetStageButton(Button button, int stageIndex)
+    private static string FormatUnitSo(PlayerUnitConfig unitConfig)
     {
-        if (button == null)
-        {
-            return;
-        }
+        return unitConfig != null
+            ? $"{unitConfig.name} ({unitConfig.DisplayName})"
+            : "Unassigned";
+    }
 
-        bool exists = stageIndex >= 0 && stageIndex < coreCharger.ConversionStages.Count;
-        button.interactable = exists;
-        TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>(true);
-        if (exists)
-        {
-            CoreCharger.UnitConversionStage stage = coreCharger.ConversionStages[stageIndex];
-            SetText(buttonText, stage != null ? stage.DisplayName : $"Stage {stageIndex + 1}");
-        }
+    private static string FormatStatChange(float current, float next)
+    {
+        return $"{current:0.##} -> {next:0.##} ({next - current:+0.##;-0.##;0})";
+    }
+
+    private static string FormatPercentChange(float current, float next)
+    {
+        float currentPercent = current * 100f;
+        float nextPercent = next * 100f;
+        return $"{currentPercent:0.##}% -> {nextPercent:0.##}% "
+            + $"({nextPercent - currentPercent:+0.##;-0.##;0}%p)";
+    }
+
+    private static string FormatMultiplierChange(float current, float next)
+    {
+        return $"x{current:0.##} -> x{next:0.##} ({next - current:+0.##;-0.##;0})";
     }
 
     private int GetPlayerLevel()
@@ -246,6 +229,15 @@ public class CoreChargerPanel : MonoBehaviour
         player ??= FindFirstObjectByType<PlayerController>();
     }
 
+    private static void SetInteractable(Button button, bool value)
+    {
+        if (button != null)
+        {
+            button.gameObject.SetActive(true);
+            button.interactable = value;
+        }
+    }
+
     private static void SetText(TMP_Text target, string value)
     {
         if (target != null)
@@ -254,11 +246,24 @@ public class CoreChargerPanel : MonoBehaviour
         }
     }
 
-    private static void SetActive(GameObject target, bool value)
+    private static void SetUnitPreview(Image target, PlayerUnitConfig unitConfig)
     {
-        if (target != null)
+        if (target == null)
         {
-            target.SetActive(value);
+            return;
         }
+
+        Sprite sprite = null;
+        if (unitConfig != null && unitConfig.UnitPrefab != null)
+        {
+            SpriteRenderer spriteRenderer =
+                unitConfig.UnitPrefab.GetComponentInChildren<SpriteRenderer>(true);
+            sprite = spriteRenderer != null ? spriteRenderer.sprite : null;
+        }
+
+        target.sprite = sprite;
+        target.preserveAspect = true;
+        target.enabled = sprite != null;
     }
+
 }

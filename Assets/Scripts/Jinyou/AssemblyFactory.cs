@@ -88,7 +88,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     public class WeaponStatIncrease
     {
         public WeaponEnhancementStat stat = WeaponEnhancementStat.AttackDamage;
-        public float amount = 5f;
+        public float amount = 1f;
 
         public void Normalize()
         {
@@ -102,7 +102,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         public int cost = 100;
         public List<WeaponStatIncrease> statIncreases = new List<WeaponStatIncrease>
         {
-            new WeaponStatIncrease { stat = WeaponEnhancementStat.AttackDamage, amount = 5f }
+            new WeaponStatIncrease { stat = WeaponEnhancementStat.AttackDamage, amount = 1f }
         };
 
         public void Normalize()
@@ -254,7 +254,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     [SerializeField, Min(1)] private int defaultWeaponMaxEnhanceLevel = 10;
     [SerializeField, Min(1)] private int weaponMaxLevelIncreasePerFactoryLevel = 5;
     [SerializeField, Min(0)] private int defaultWeaponEnhanceCost = 100;
-    [SerializeField, Min(0f)] private float defaultWeaponAttackIncrease = 5f;
+    [SerializeField, Min(0f)] private float defaultWeaponAttackIncrease = 1f;
 
     [Header("Drone Enhancement")]
     [SerializeField] private List<DroneEnhancement> droneEnhancements = new List<DroneEnhancement>();

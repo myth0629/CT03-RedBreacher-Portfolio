@@ -4,9 +4,10 @@ using System.Collections.Generic;
 [Serializable]
 public class JinyouSaveData
 {
-    public int version = 1;
+    public int version = 2;
     public long lastSavedUnixTime;
     public int commanderLevel = 1;
+    public int mainBuildingLevel = 1;
     public int credits = 500;
     public int coreCrystals;
     public JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
@@ -89,11 +90,9 @@ public class JinyouMenuSaveData
 public class JinyouCoreChargerSaveData
 {
     public int level = 1;
-    public int selectedUnitIndex;
     public bool isUpgrading;
     public float upgradeRemainingSeconds;
     public float currentUpgradeDurationSeconds;
-    public List<int> unitEnhanceLevels = new List<int>();
     public List<int> convertedStageIndices = new List<int>();
 }
 

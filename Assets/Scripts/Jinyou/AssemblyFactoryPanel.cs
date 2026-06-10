@@ -166,8 +166,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         }
 
         bool droneMode = assemblyFactory.SelectedMenuId == "drone";
-        SetText(levelText,
-            $"Factory Lv.{assemblyFactory.Level} / Weapon Cap {assemblyFactory.CurrentWeaponEnhanceLevelCap} / Drone Cap {assemblyFactory.CurrentDroneEnhanceLevelCap}");
+        SetText(levelText, $"Factory Lv.{assemblyFactory.Level}");
         SetText(upgradeText, droneMode
             ? BuildSelectedDroneHeader()
             : BuildSelectedWeaponHeader());
