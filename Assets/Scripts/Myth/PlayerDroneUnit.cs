@@ -18,6 +18,9 @@ public class PlayerDroneUnit : MonoBehaviour
         slotCount = Mathf.Max(1, count);
         muzzle = FindMuzzle(transform);
         CombatPlane.ClampTransform(transform);
+
+        // 드론 외형과 동일한 실루엣 그림자를 생성한다.
+        SpriteShapeShadow.Ensure(gameObject);
     }
 
     private void Update()

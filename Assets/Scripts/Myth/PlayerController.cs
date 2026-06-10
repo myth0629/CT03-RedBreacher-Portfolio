@@ -207,6 +207,9 @@ public class PlayerController : MonoBehaviour
         ApplyHealthStats();
         EnsureCombatComponents();
         RefreshUnitReferences();
+
+        // 장착된 기체의 전체 스프라이트에 바닥 그림자를 적용한다.
+        SpriteShapeShadow.Ensure(gameObject);
     }
 
     private void Start()

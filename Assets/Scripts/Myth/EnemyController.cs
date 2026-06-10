@@ -38,6 +38,9 @@ public class EnemyController : MonoBehaviour
         }
 
         EnsureEnemyComponents();
+
+        // 적 스프라이트 모양을 그대로 사용하는 바닥 그림자를 생성한다.
+        SpriteShapeShadow.Ensure(gameObject);
     }
 
     protected virtual void Start()
