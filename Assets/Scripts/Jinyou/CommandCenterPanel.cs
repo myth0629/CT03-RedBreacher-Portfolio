@@ -4,6 +4,9 @@ using UnityEngine.UI;
 
 public class CommandCenterPanel : MonoBehaviour
 {
+    private static readonly Color LockedColor = new Color32(0xFF, 0x39, 0x39, 0xFF);
+    private static readonly Color UnlockedColor = Color.white;
+
     [Header("Panels")]
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button upgradeButton;
@@ -13,6 +16,12 @@ public class CommandCenterPanel : MonoBehaviour
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text unlockText;
+    
+    [Header("BaseUnlockStatus")]
+    [SerializeField] private TMP_Text energyRefineryUnlockText;
+    [SerializeField] private TMP_Text assemblyFactoryUnlockText;
+    [SerializeField] private TMP_Text coreChargerUnlockText;
+    [SerializeField] private TMP_Text controlTowerUnlockText;
     
     [Header("Visual")]
     [SerializeField] private Image facilityImage;
@@ -81,6 +90,7 @@ public class CommandCenterPanel : MonoBehaviour
             ? $"완료까지 {cmdCenter.UpgradeRemainingSeconds:0}초"
             : $"업그레이드 ({cmdCenter.UpgradeCost} 크레딧)");
         SetText(unlockText, BuildUnlockSummary());
+        RefreshBaseUnlockStatus();
 
         if (upgradeButton != null && baseCampManager != null)
         {
@@ -99,6 +109,48 @@ public class CommandCenterPanel : MonoBehaviour
         BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, cmdCenter, ref observedUpgradeDuration);
     }
 
+    private void RefreshBaseUnlockStatus()
+    {
+        SetUnlockStatusText(energyRefineryUnlockText, "energy_refinery", "에너지 정제소");
+        SetUnlockStatusText(assemblyFactoryUnlockText, "assembly_factory", "조립 공장");
+        SetUnlockStatusText(coreChargerUnlockText, "core_charger", "코어 충전소");
+        SetUnlockStatusText(controlTowerUnlockText, "boss_dungeon", "관제탑");
+    }
+
+    // 기지 해금과 레벨수치를 한 눈에 볼수 있는 기능
+    private void SetUnlockStatusText(TMP_Text target, string facilityId, string fallbackDisplayName)
+    {
+        if (target == null || cmdCenter == null)
+        {
+            return;
+        }
+
+        CommandCenter.FacilityUnlock unlock = FindFacilityUnlock(facilityId);
+        string displayName = unlock != null && !string.IsNullOrWhiteSpace(unlock.displayName)
+            ? unlock.displayName
+            : fallbackDisplayName;
+        int requiredLevel = unlock != null ? unlock.requiredLabLevel : 1;
+        bool unlocked = unlock != null && cmdCenter.Level >= requiredLevel;
+
+        target.text = unlocked
+            ? $"{displayName}: 해금됨(Lv. {requiredLevel})"
+            : $"{displayName}: 해금되지 않음";
+        target.color = unlocked ? UnlockedColor : LockedColor;
+    }
+
+    private CommandCenter.FacilityUnlock FindFacilityUnlock(string facilityId)
+    {
+        foreach (CommandCenter.FacilityUnlock item in cmdCenter.FacilityUnlocks)
+        {
+            if (item != null && item.facilityId == facilityId)
+            {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
     private void UpdateFacilityVisual()
     {
         if (facilityImage == null || levelSprites == null || levelSprites.Length == 0 || cmdCenter == null)
@@ -111,13 +163,20 @@ public class CommandCenterPanel : MonoBehaviour
         facilityImage.color = Color.white;
     }
 
+    // 다음 업그레이드 시 해금요소 미리보기
     private string BuildUnlockSummary()
     {
         string summary = string.Empty;
+        int nextLevel = cmdCenter.Level + 1;
 
         foreach (CommandCenter.FacilityUnlock item in cmdCenter.FacilityUnlocks)
         {
-            summary += $"{item.displayName}: {(item.unlocked ? "잠금해제" : $"Lv.{item.requiredLabLevel} 증가")}\n";
+            if (item == null || item.unlocked || item.requiredLabLevel > nextLevel)
+            {
+                continue;
+            }
+
+            summary += $"{item.displayName}: 해금됨.\n";
         }
 
         return summary.TrimEnd();
