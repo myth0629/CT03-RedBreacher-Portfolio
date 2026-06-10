@@ -160,11 +160,11 @@ public class AutoTurretSkill : MonoBehaviour
 
     private void Fire(CombatHealth target)
     {
-        float damage = PlayerSkillCombat.CalculateDamage(owner, config);
+        float damage = PlayerSkillCombat.CalculateDamage(owner, config, out bool isCritical);
         ProjectileConfig projectileConfig = config.TurretProjectileConfig;
         if (projectileConfig == null)
         {
-            target.TakeDamage(damage);
+            target.TakeDamage(damage, isCritical);
             CombatRewardService.GrantIfKilled(owner, target);
             return;
         }
@@ -186,7 +186,8 @@ public class AutoTurretSkill : MonoBehaviour
             damage,
             projectileConfig.Speed,
             projectileConfig.Lifetime,
-            owner.Health);
+            owner.Health,
+            isCritical);
     }
 
     private static Transform FindChildByName(Transform root, string childName)

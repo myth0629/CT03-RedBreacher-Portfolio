@@ -22,6 +22,19 @@ public class InventoryFacility : MonoBehaviour
     }
 
     [System.Serializable]
+    public class CollectionGrantResult
+    {
+        public bool success;
+        public bool isNew;
+        public string configId;
+        public int previousLevel;
+        public int currentLevel;
+        public int duplicateProgress;
+        public int requiredDuplicates;
+        public int coreCrystalReward;
+    }
+
+    [System.Serializable]
     private class CollectionProgressSaveData
     {
         public List<CollectionProgress> weapons = new List<CollectionProgress>();
@@ -150,20 +163,24 @@ public class InventoryFacility : MonoBehaviour
 
     public bool AddWeapon(ProjectileConfig weaponConfig, int quantity)
     {
+        return GrantWeapon(weaponConfig, quantity).success;
+    }
+
+    public CollectionGrantResult GrantWeapon(ProjectileConfig weaponConfig, int quantity = 1)
+    {
         EnsureCollectionProgressInitialized();
         if (weaponConfig == null || quantity <= 0)
         {
-            return false;
+            return new CollectionGrantResult();
         }
 
+        bool isNew = !ContainsWeapon(weaponConfig);
         RegisterWeaponConfig(weaponConfig);
         int previousLevel = GetWeaponLevel(weaponConfig);
-        AddCopies(
+        int coreCrystalReward = AddCopies(
             weaponProgress,
-            weaponConfig.Id,
-            quantity,
-            weaponConfig.MaxLevel,
-            weaponConfig.MaxLevelDuplicateCoreCrystalReward);
+            weaponConfig,
+            quantity);
         int currentLevel = GetWeaponLevel(weaponConfig);
         SaveCollectionProgress();
         NotifyCollectionChanged();
@@ -171,25 +188,37 @@ public class InventoryFacility : MonoBehaviour
         {
             OnWeaponLevelChanged.Invoke(weaponConfig.Id, currentLevel);
         }
-        return true;
+
+        return BuildGrantResult(
+            weaponConfig,
+            isNew,
+            previousLevel,
+            currentLevel,
+            GetDuplicateProgress(weaponConfig),
+            GetRequiredDuplicates(weaponConfig),
+            coreCrystalReward);
     }
 
     public bool AddSkill(PlayerSkillConfig skillConfig, int quantity = 1)
     {
+        return GrantSkill(skillConfig, quantity).success;
+    }
+
+    public CollectionGrantResult GrantSkill(PlayerSkillConfig skillConfig, int quantity = 1)
+    {
         EnsureCollectionProgressInitialized();
         if (skillConfig == null || quantity <= 0)
         {
-            return false;
+            return new CollectionGrantResult();
         }
 
+        bool isNew = !ContainsSkill(skillConfig);
         RegisterSkillConfig(skillConfig);
         int previousLevel = GetSkillLevel(skillConfig);
-        AddCopies(
+        int coreCrystalReward = AddCopies(
             skillProgress,
-            skillConfig.Id,
-            quantity,
-            skillConfig.MaxLevel,
-            skillConfig.MaxLevelDuplicateCoreCrystalReward);
+            skillConfig,
+            quantity);
         int currentLevel = GetSkillLevel(skillConfig);
         SyncSkillConfigsFromProgress();
         SaveCollectionProgress();
@@ -198,7 +227,15 @@ public class InventoryFacility : MonoBehaviour
         {
             OnSkillLevelChanged.Invoke(skillConfig.Id, currentLevel);
         }
-        return true;
+
+        return BuildGrantResult(
+            skillConfig,
+            isNew,
+            previousLevel,
+            currentLevel,
+            GetDuplicateProgress(skillConfig),
+            GetRequiredDuplicates(skillConfig),
+            coreCrystalReward);
     }
 
     public void RegisterInitialWeapon(ProjectileConfig weaponConfig)
@@ -394,6 +431,37 @@ public class InventoryFacility : MonoBehaviour
         SaveEquipmentParts();
         OnEquipmentPartsChanged.Invoke();
         OnInventoryChanged.Invoke();
+        return true;
+    }
+
+    public bool AcquireEquipmentPart(
+        EquipmentPartInstance part,
+        PlayerEquipmentPartLoadout loadout,
+        PlayerCurrencyWallet wallet,
+        out int autoSaleCredits)
+    {
+        autoSaleCredits = 0;
+        if (part == null)
+        {
+            return false;
+        }
+
+        EquipmentPartInstance equippedPart = loadout != null
+            ? loadout.GetEquippedPart(part.slot)
+            : null;
+        if (equippedPart == null || part.rarity >= equippedPart.rarity)
+        {
+            return AddEquipmentPart(part);
+        }
+
+        if (wallet == null)
+        {
+            return AddEquipmentPart(part);
+        }
+
+        // 같은 슬롯의 장착 파츠보다 낮은 등급은 보관하지 않고 즉시 판매한다.
+        autoSaleCredits = Mathf.Max(0, part.salePrice);
+        wallet.AddCredits(autoSaleCredits);
         return true;
     }
 
@@ -605,10 +673,9 @@ public class InventoryFacility : MonoBehaviour
 
             AddCopies(
                 weaponProgress,
-                stack.weaponConfig.Id,
+                stack.weaponConfig,
                 Mathf.Max(1, stack.quantity),
-                stack.weaponConfig.MaxLevel,
-                0);
+                false);
         }
 
         SaveCollectionProgress();
@@ -616,53 +683,72 @@ public class InventoryFacility : MonoBehaviour
         SyncSkillConfigsFromProgress();
     }
 
-    private void AddCopies(
+    private int AddCopies(
         List<CollectionProgress> progressList,
-        string configId,
+        IDuplicateLevelConfig config,
         int quantity,
-        int maxLevel,
-        int maxLevelReward)
+        bool grantMaxLevelReward = true)
     {
-        CollectionProgress progress = FindProgress(progressList, configId);
+        CollectionProgress progress = FindProgress(progressList, config.Id);
         int remainingCopies = quantity;
         if (progress == null)
         {
-            progress = CreateProgress(configId);
+            progress = CreateProgress(config.Id);
             progressList.Add(progress);
             remainingCopies--;
         }
 
-        while (remainingCopies > 0)
+        // 공통 계산기가 레벨 진행 후 최대 레벨 초과 중복 수량을 반환한다.
+        int maxLevelDuplicates = DuplicateLevelProgression.AddDuplicates(
+            config,
+            ref progress.level,
+            ref progress.duplicateProgress,
+            remainingCopies);
+        if (grantMaxLevelReward)
         {
-            if (progress.level >= maxLevel)
-            {
-                GrantMaxLevelDuplicateReward(maxLevelReward, remainingCopies);
-                break;
-            }
-
-            progress.duplicateProgress++;
-            remainingCopies--;
-            int required = Mathf.Max(1, progress.level);
-            if (progress.duplicateProgress >= required)
-            {
-                progress.duplicateProgress -= required;
-                progress.level++;
-            }
+            return GrantMaxLevelDuplicateReward(
+                config.MaxLevelDuplicateCoreCrystalReward,
+                maxLevelDuplicates);
         }
+
+        return 0;
     }
 
-    private void GrantMaxLevelDuplicateReward(int rewardPerCopy, int copyCount)
+    private int GrantMaxLevelDuplicateReward(int rewardPerCopy, int copyCount)
     {
         int reward = Mathf.Max(0, rewardPerCopy) * Mathf.Max(0, copyCount);
         if (reward <= 0)
         {
-            return;
+            return 0;
         }
 
         PlayerCurrencyWallet wallet = BaseCampManager.Instance != null
             ? BaseCampManager.Instance.CurrencyWallet
             : FindFirstObjectByType<PlayerCurrencyWallet>(FindObjectsInactive.Include);
         wallet?.AddCoreCrystals(reward);
+        return wallet != null ? reward : 0;
+    }
+
+    private static CollectionGrantResult BuildGrantResult(
+        IDuplicateLevelConfig config,
+        bool isNew,
+        int previousLevel,
+        int currentLevel,
+        int duplicateProgress,
+        int requiredDuplicates,
+        int coreCrystalReward)
+    {
+        return new CollectionGrantResult
+        {
+            success = config != null,
+            isNew = isNew,
+            configId = config?.Id,
+            previousLevel = previousLevel,
+            currentLevel = currentLevel,
+            duplicateProgress = duplicateProgress,
+            requiredDuplicates = requiredDuplicates,
+            coreCrystalReward = coreCrystalReward
+        };
     }
 
     private void RegisterWeaponConfig(ProjectileConfig weaponConfig)
@@ -761,7 +847,7 @@ public class InventoryFacility : MonoBehaviour
 
     private static int GetRequiredDuplicates(int level, int maxLevel)
     {
-        return level > 0 && level < maxLevel ? level : 0;
+        return DuplicateLevelProgression.GetRequiredDuplicates(level, maxLevel);
     }
 
     private void SaveCollectionProgress()

@@ -18,7 +18,7 @@ public static class CombatRewardService
         // 일반 공격, 드론, 스킬 처치가 동일한 보상 경로를 사용한다.
         player.Progression?.AddExperience(enemy.ExperienceReward);
         GrantCurrency(player, enemy);
-        TryGrantEquipmentPart(enemy);
+        TryGrantEquipmentPart(player, enemy);
     }
 
     private static void GrantCurrency(PlayerController player, EnemyController enemy)
@@ -43,7 +43,7 @@ public static class CombatRewardService
         wallet.Add(CurrencyType.CoreCrystals, enemy.CoreCrystalReward);
     }
 
-    private static void TryGrantEquipmentPart(EnemyController enemy)
+    private static void TryGrantEquipmentPart(PlayerController player, EnemyController enemy)
     {
         InventoryFacility inventory = BaseCampManager.Instance != null
             ? BaseCampManager.Instance.Inventory
@@ -71,12 +71,32 @@ public static class CombatRewardService
         EquipmentPartInstance part = EquipmentPartGenerator.Create(
             config,
             EquipmentPartGenerator.RollRarity());
-        if (!inventory.AddEquipmentPart(part))
+        PlayerEquipmentPartLoadout loadout = player != null
+            ? player.EquipmentPartLoadout
+            : null;
+        PlayerCurrencyWallet wallet = player != null
+            ? player.GetComponent<PlayerCurrencyWallet>()
+            : null;
+        if (wallet == null && BaseCampManager.Instance != null)
+        {
+            wallet = BaseCampManager.Instance.CurrencyWallet;
+        }
+
+        if (!inventory.AcquireEquipmentPart(part, loadout, wallet, out int autoSaleCredits))
         {
             return;
         }
 
         inventory.PlayEquipmentPartDropVisual(config, part, enemy.transform.position);
+        if (autoSaleCredits > 0)
+        {
+            Debug.Log(
+                $"[파츠 자동 판매] {config.DisplayName} / {GetRarityName(part.rarity)} / "
+                + $"{autoSaleCredits} 크레딧 획득",
+                enemy.gameObject);
+            return;
+        }
+
         Debug.Log(
             $"[파츠 드롭] {config.DisplayName} / {GetRarityName(part.rarity)} / "
             + $"{GetSlotName(part.slot)} / 주옵 {part.mainStatValue * 100f:0.##}% / "

@@ -20,8 +20,8 @@ public class EnemyController : MonoBehaviour
     private float contactDamageMultiplier = 1f;
     private float rewardMultiplier = 1f;
 
-    private float MoveSpeedValue => (enemyConfig != null ? enemyConfig.MoveSpeed : moveSpeed) * moveSpeedMultiplier;
-    private float StopDistanceValue => enemyConfig != null ? enemyConfig.StopDistance : stopDistance;
+    protected float MoveSpeedValue => (enemyConfig != null ? enemyConfig.MoveSpeed : moveSpeed) * moveSpeedMultiplier;
+    protected float StopDistanceValue => enemyConfig != null ? enemyConfig.StopDistance : stopDistance;
     private float ContactDamageValue => (enemyConfig != null ? enemyConfig.ContactDamage : contactDamage) * contactDamageMultiplier;
     private float ContactIntervalValue => enemyConfig != null ? enemyConfig.ContactInterval : contactInterval;
     public int EnemyLevel => enemyLevel;
@@ -30,7 +30,7 @@ public class EnemyController : MonoBehaviour
     public int CoreCrystalReward => Mathf.RoundToInt((enemyConfig != null ? enemyConfig.CoreCrystalReward : 0) * rewardMultiplier);
     public float PartDropChance => enemyConfig != null ? enemyConfig.PartDropChance : 0.05f;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         if (GetComponent<CombatHealth>() == null)
         {
@@ -40,7 +40,7 @@ public class EnemyController : MonoBehaviour
         EnsureEnemyComponents();
     }
 
-    private void Start()
+    protected virtual void Start()
     {
         targetPlayer = FindFirstObjectByType<PlayerController>();
     }
@@ -81,7 +81,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
+    protected virtual void FixedUpdate()
     {
         CombatPlane.ClampTransform(transform);
 
@@ -128,7 +128,7 @@ public class EnemyController : MonoBehaviour
         StopBody();
     }
 
-    public void ApplyKnockback(Vector3 knockbackDirection, float knockbackForce)
+    public virtual void ApplyKnockback(Vector3 knockbackDirection, float knockbackForce)
     {
         Vector3 direction = CombatPlane.ProjectDirection(knockbackDirection);
         if (direction.sqrMagnitude <= 0f || knockbackForce <= 0f)
@@ -140,7 +140,7 @@ public class EnemyController : MonoBehaviour
         knockbackVelocity += direction * knockbackForce;
     }
 
-    private bool UpdateKnockback()
+    protected bool UpdateKnockback()
     {
         if (knockbackVelocity.sqrMagnitude <= 0.0001f)
         {
@@ -155,7 +155,7 @@ public class EnemyController : MonoBehaviour
         return true;
     }
 
-    private void EnsureEnemyComponents()
+    protected void EnsureEnemyComponents()
     {
         // 탑뷰 전투는 X/Z 평면만 쓰고 Y 높이는 0.1로 고정한다.
         CombatPlane.ClampTransform(transform);
@@ -178,7 +178,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    private void StopBody()
+    protected void StopBody()
     {
         if (body == null)
         {
@@ -205,5 +205,15 @@ public class EnemyController : MonoBehaviour
         // 접촉 중에는 쿨타임마다 플레이어에게 피해를 준다.
         player.Health.TakeDamage(ContactDamageValue);
         nextContactTime = Time.time + ContactIntervalValue;
+    }
+
+    protected PlayerController ResolveTargetPlayer()
+    {
+        if (targetPlayer == null)
+        {
+            targetPlayer = FindFirstObjectByType<PlayerController>();
+        }
+
+        return targetPlayer;
     }
 }

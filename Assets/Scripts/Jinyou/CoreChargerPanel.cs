@@ -11,12 +11,10 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private Button secondUnitButton;
     [SerializeField] private Button thirdUnitButton;
     [SerializeField] private Button enhanceUnitButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
-    [SerializeField] private TMP_Text currencyText;
     [SerializeField] private TMP_Text selectedUnitText;
     [SerializeField] private TMP_Text unitStateText;
     [SerializeField] private InventoryPanel inventoryPanel;
@@ -39,7 +37,6 @@ public class CoreChargerPanel : MonoBehaviour
         secondUnitButton?.onClick.AddListener(SelectSecondUnit);
         thirdUnitButton?.onClick.AddListener(SelectThirdUnit);
         enhanceUnitButton?.onClick.AddListener(EnhanceSelectedUnit);
-        closeButton?.onClick.AddListener(ClosePanel);
         SetActive(unitInventoryArea, false);
         Refresh();
     }
@@ -48,7 +45,6 @@ public class CoreChargerPanel : MonoBehaviour
     {
         UnsubscribeInventoryEvents();
         upgradeButton?.onClick.RemoveListener(UpgradeCharger);
-        closeButton?.onClick.RemoveListener(ClosePanel);
         firstUnitButton?.onClick.RemoveListener(OpenInventoryUnitSelection);
         secondUnitButton?.onClick.RemoveListener(SelectSecondUnit);
         thirdUnitButton?.onClick.RemoveListener(SelectThirdUnit);
@@ -78,7 +74,6 @@ public class CoreChargerPanel : MonoBehaviour
         firstUnitButton = firstUnit;
         secondUnitButton = secondUnit;
         thirdUnitButton = thirdUnit;
-        closeButton = close;
         levelText = level;
         upgradeText = upgradeLabel;
         selectedUnitText = selectedUnit;
@@ -143,9 +138,8 @@ public class CoreChargerPanel : MonoBehaviour
 
         SetText(levelText, $"Lv. {coreCharger.Level}");
         SetText(upgradeText, coreCharger.IsUpgrading
-            ? $"Upgrading {coreCharger.UpgradeRemainingSeconds:0}s"
-            : $"Upgrade Cost {coreCharger.UpgradeCost}");
-        SetText(currencyText, baseCampManager != null ? $"Credits {baseCampManager.Credits}" : "Credits --");
+            ? $"완료까지 {coreCharger.UpgradeRemainingSeconds:0}초"
+            : $"업그레이드 ({coreCharger.UpgradeCost} 크레딧)");
         SetText(selectedUnitText, BuildSelectedUnitText());
         SetText(unitStateText, BuildUnitSummary());
         SetText(inventoryUnitListText, BuildInventoryUnitListText());

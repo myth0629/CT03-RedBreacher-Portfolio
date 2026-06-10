@@ -28,9 +28,15 @@ public class PlayerProjectile : MonoBehaviour
     private CombatHealth owner;
     private Rigidbody body;
     private bool hasHit;
+    private bool isCritical;
     private GameObject projectileEffectInstance;
     private bool isReleased;
     private int _wallLayer;
+
+    public Vector3 TravelDirection => direction;
+    public float TravelSpeed => speed;
+    public Vector3 TravelVelocity => direction * speed;
+    public bool IsInFlight => !isReleased && gameObject.activeInHierarchy;
 
     private void Awake()
     {
@@ -66,6 +72,7 @@ public class PlayerProjectile : MonoBehaviour
         expireTime = 0f;
         owner = null;
         direction = Vector3.zero;
+        isCritical = false;
 
         if (body != null)
         {
@@ -126,7 +133,13 @@ public class PlayerProjectile : MonoBehaviour
         ApplyCollisionRadius();
     }
 
-    public void Launch(Vector3 launchDirection, float launchDamage, float launchSpeed, float lifetime, CombatHealth launchOwner)
+    public void Launch(
+        Vector3 launchDirection,
+        float launchDamage,
+        float launchSpeed,
+        float lifetime,
+        CombatHealth launchOwner,
+        bool launchCritical = false)
     {
         EnsureProjectileComponents();
         direction = CombatPlane.ProjectDirection(launchDirection);
@@ -138,6 +151,7 @@ public class PlayerProjectile : MonoBehaviour
         damage = launchDamage;
         speed = launchSpeed;
         owner = launchOwner;
+        isCritical = launchCritical;
         expireTime = Time.time + lifetime;
         hasHit = false;
         isReleased = false;
@@ -402,7 +416,7 @@ public class PlayerProjectile : MonoBehaviour
 
     private void ApplyDamageToTarget(CombatHealth target, float appliedDamage)
     {
-        target.TakeDamage(appliedDamage);
+        target.TakeDamage(appliedDamage, isCritical);
         PlayerController player = owner != null ? owner.GetComponent<PlayerController>() : null;
         CombatRewardService.GrantIfKilled(player, target);
         ApplyKnockback(target);
@@ -440,6 +454,7 @@ public class CombatObjectPool : MonoBehaviour
 {
     private static CombatObjectPool instance;
     private static readonly Queue<PlayerProjectile> projectiles = new Queue<PlayerProjectile>();
+    private static readonly Queue<BossProjectile> bossProjectiles = new Queue<BossProjectile>();
     private static readonly Dictionary<GameObject, Queue<GameObject>> effects = new Dictionary<GameObject, Queue<GameObject>>();
 
     private Transform projectileRoot;
@@ -495,6 +510,30 @@ public class CombatObjectPool : MonoBehaviour
         projectile.transform.SetParent(Instance.projectileRoot, false);
         projectile.gameObject.SetActive(false);
         projectiles.Enqueue(projectile);
+    }
+
+    public static BossProjectile GetBossProjectile()
+    {
+        BossProjectile projectile = bossProjectiles.Count > 0
+            ? bossProjectiles.Dequeue()
+            : CreateBossProjectile();
+        projectile.gameObject.SetActive(true);
+        projectile.PrepareForReuse();
+        return projectile;
+    }
+
+    public static void ReleaseBossProjectile(BossProjectile projectile)
+    {
+        if (projectile == null)
+        {
+            return;
+        }
+
+        // 보스 발사체도 플레이어 발사체와 별도 큐에서 재사용한다.
+        projectile.ResetForPool();
+        projectile.transform.SetParent(Instance.projectileRoot, false);
+        projectile.gameObject.SetActive(false);
+        bossProjectiles.Enqueue(projectile);
     }
 
     public static GameObject GetEffect(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
@@ -553,6 +592,15 @@ public class CombatObjectPool : MonoBehaviour
         GameObject projectileObject = new GameObject("Combat Projectile");
         projectileObject.transform.SetParent(Instance.projectileRoot, false);
         PlayerProjectile projectile = projectileObject.AddComponent<PlayerProjectile>();
+        projectile.gameObject.SetActive(false);
+        return projectile;
+    }
+
+    private static BossProjectile CreateBossProjectile()
+    {
+        GameObject projectileObject = new GameObject("Boss Projectile");
+        projectileObject.transform.SetParent(Instance.projectileRoot, false);
+        BossProjectile projectile = projectileObject.AddComponent<BossProjectile>();
         projectile.gameObject.SetActive(false);
         return projectile;
     }

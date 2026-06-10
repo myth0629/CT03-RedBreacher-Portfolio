@@ -59,8 +59,10 @@ public class EnemySpawnManager : MonoBehaviour
     private int currentRound;
     private int currentRoundInStage;
     private int lastReportedStageClearRound;
+    private int pausedRoundForBoss;
     private bool roundsActive;
     private bool spawningRound;
+    private bool bossEncounterActive;
 
     public int CurrentStage => currentStage;
     public int CurrentRound => currentRound;
@@ -68,6 +70,10 @@ public class EnemySpawnManager : MonoBehaviour
     public int RoundsPerStage => Mathf.Max(1, roundsPerStage);
     public int AliveEnemyCount => aliveEnemies.Count;
     public bool IsSpawningRound => spawningRound;
+    public bool IsBossEncounterActive => bossEncounterActive;
+    public bool CanStartBossEncounter => !bossEncounterActive
+        && playerDeathRestartRoutine == null
+        && (player == null || player.Health == null || !player.Health.IsDead);
 
     private void Awake()
     {
@@ -103,7 +109,7 @@ public class EnemySpawnManager : MonoBehaviour
 
     public void StartRounds()
     {
-        if (roundRoutine != null)
+        if (roundRoutine != null || bossEncounterActive)
         {
             return;
         }
@@ -164,6 +170,54 @@ public class EnemySpawnManager : MonoBehaviour
         {
             StartRounds();
         }
+    }
+
+    public bool PauseForBossEncounter()
+    {
+        if (!CanStartBossEncounter)
+        {
+            return false;
+        }
+
+        // 현재 진행 중인 라운드를 저장하고 일반 적 생성을 보스전 동안 중단한다.
+        pausedRoundForBoss = spawningRound || aliveEnemies.Count == 0
+            ? currentRound
+            : Mathf.Max(startRound, currentRound - 1);
+        bossEncounterActive = true;
+        roundsActive = false;
+
+        if (roundRoutine != null)
+        {
+            StopCoroutine(roundRoutine);
+            roundRoutine = null;
+        }
+
+        spawningRound = false;
+        ClearSpawnedEnemies();
+        return true;
+    }
+
+    public void ResumePausedRound()
+    {
+        if (!bossEncounterActive)
+        {
+            return;
+        }
+
+        // 보스 승리 후 소환 직전 라운드를 처음부터 다시 진행한다.
+        bossEncounterActive = false;
+        currentRound = Mathf.Max(startRound, pausedRoundForBoss);
+        RefreshStageRoundState();
+        SaveProgress();
+        roundsActive = true;
+        StartRounds();
+    }
+
+    public void CancelBossEncounterForPlayerDeath()
+    {
+        // 사망 재시작 루틴이 현재 스테이지의 첫 라운드를 결정하도록 상태만 해제한다.
+        bossEncounterActive = false;
+        roundsActive = false;
     }
 
     private int GetEnemyCountForRound(int round)
@@ -423,6 +477,7 @@ public class EnemySpawnManager : MonoBehaviour
     private IEnumerator RestartCurrentStageAfterPlayerDeath()
     {
         int stageToRestart = Mathf.Max(1, currentStage);
+        bossEncounterActive = false;
         roundsActive = false;
 
         if (roundRoutine != null)

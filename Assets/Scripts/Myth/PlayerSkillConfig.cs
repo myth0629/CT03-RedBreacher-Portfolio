@@ -7,7 +7,7 @@ public enum PlayerSkillType
 }
 
 [CreateAssetMenu(menuName = "Myth/Combat/Player Skill Config")]
-public class PlayerSkillConfig : ScriptableObject
+public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
 {
     [Header("Identity")]
     [SerializeField] private string id = "skill_default";

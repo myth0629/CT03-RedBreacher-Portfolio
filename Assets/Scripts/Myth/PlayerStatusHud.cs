@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class PlayerStatusHud : MonoBehaviour
@@ -13,6 +14,7 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text creditsText;
     [SerializeField] private TMP_Text coreCrystalsText;
     [SerializeField] private TMP_Text stageText;
+    [SerializeField] private TMP_Text roundText;
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text healthText;
@@ -57,12 +59,16 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text stattankPopupMoveSpeedText;
     [SerializeField] private TMP_Text stattankPopupCritChanceText;
     [SerializeField] private TMP_Text stattankPopupCritMultiplierText;
+    
+    [Header("GameQuit Popup")]
+    [SerializeField] private GameObject gameQuitPopup;
 
     [Header("Bars")]
     [SerializeField] private Slider healthSlider;
     [SerializeField] private Slider experienceSlider;
     [SerializeField] private Image healthFillImage;
     [SerializeField] private Image experienceFillImage;
+    [SerializeField] private Image roundProgressFillImage;
 
     private void Awake()
     {
@@ -96,9 +102,16 @@ public class PlayerStatusHud : MonoBehaviour
 
         if (spawnManager != null)
         {
-            string stageValue = $"스테이지 {spawnManager.CurrentStage}  {spawnManager.CurrentRoundInStage}/{spawnManager.RoundsPerStage}";
+            string stageValue = $"스테이지 {spawnManager.CurrentStage}";
+            string roundValue = $"{spawnManager.CurrentRoundInStage}/{spawnManager.RoundsPerStage}";
+            float roundProgress = spawnManager.RoundsPerStage > 0
+                ? Mathf.Clamp01((float)spawnManager.CurrentRoundInStage / spawnManager.RoundsPerStage)
+                : 0f;
+
             SetText(stageText, stageValue);
+            SetText(roundText, roundValue);
             SetText(tankPopupStageText, stageValue);
+            SetFill(roundProgressFillImage, roundProgress);
         }
 
         if (currencyWallet == null)
@@ -143,6 +156,29 @@ public class PlayerStatusHud : MonoBehaviour
 
         RefreshTankPopup(health, progression);
         RefreshStatUpgradePopup(progression);
+
+        if (gameQuitPopup != null)
+        {
+            if (WasGameQuitPopupRequested() && !gameQuitPopup.activeSelf)
+            {
+                gameQuitPopup.SetActive(true);
+            }
+        }
+    }
+
+    // PC버전의 ESC키나 스마트폰 버전의 백버튼을 누르면 게임종료 팝업창을 활성화
+    private bool WasGameQuitPopupRequested()
+    {
+        return Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+    }
+
+    public void GameQuit()
+    {
+        Application.Quit();
+        
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
     }
 
     private void RefreshTankPopup(CombatHealth health, PlayerProgression progression)

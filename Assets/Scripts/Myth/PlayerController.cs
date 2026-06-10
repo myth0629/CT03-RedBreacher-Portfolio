@@ -988,7 +988,7 @@ public class PlayerController : MonoBehaviour
         RefreshFireMuzzles();
 
         int muzzleCount = GetFireMuzzleCount(activeProjectileConfig);
-        float damage = CalculateAttackDamage(activeProjectileConfig);
+        float damage = CalculateAttackDamage(activeProjectileConfig, out bool isCritical);
         if (GetMultiMuzzleFireMode(activeProjectileConfig) == MultiMuzzleFireMode.SplitDamage)
         {
             damage /= Mathf.Max(1, muzzleCount);
@@ -996,13 +996,18 @@ public class PlayerController : MonoBehaviour
 
         for (int i = 0; i < muzzleCount; i++)
         {
-            FireProjectileFrom(GetFireMuzzle(i), direction, damage, activeProjectileConfig);
+            FireProjectileFrom(GetFireMuzzle(i), direction, damage, activeProjectileConfig, isCritical);
         }
 
         return GetAttackIntervalMultiplier(activeProjectileConfig);
     }
 
-    private void FireProjectileFrom(Transform muzzle, Vector3 direction, float damage, ProjectileConfig activeProjectileConfig)
+    private void FireProjectileFrom(
+        Transform muzzle,
+        Vector3 direction,
+        float damage,
+        ProjectileConfig activeProjectileConfig,
+        bool isCritical)
     {
         PlayerProjectile projectile = CreateProjectile();
         projectile.transform.position = GetFirePosition(muzzle, direction);
@@ -1011,10 +1016,16 @@ public class PlayerController : MonoBehaviour
             GetProjectileCollisionRadius(activeProjectileConfig),
             GetProjectileKnockback(activeProjectileConfig));
         projectile.ConfigureEffects(fireFlashEffectPrefab, projectileEffectPrefab, hitEffectPrefab);
-        projectile.Launch(direction, damage, GetProjectileSpeed(activeProjectileConfig), GetProjectileLifetime(activeProjectileConfig), health);
+        projectile.Launch(
+            direction,
+            damage,
+            GetProjectileSpeed(activeProjectileConfig),
+            GetProjectileLifetime(activeProjectileConfig),
+            health,
+            isCritical);
     }
 
-    private float CalculateAttackDamage(ProjectileConfig activeProjectileConfig)
+    private float CalculateAttackDamage(ProjectileConfig activeProjectileConfig, out bool isCritical)
     {
         // 최종 기본 피해는 기체 공격력과 장착 무기 공격력을 합산한다.
         float damage = (AttackDamageValue + GetWeaponAttackDamage(activeProjectileConfig))
@@ -1024,7 +1035,8 @@ public class PlayerController : MonoBehaviour
         float multiplier = Mathf.Max(1f, CritMultiplierValue);
 
         // 치명타는 방어력 없이 최종 발사 데미지에만 단순 배율로 적용한다.
-        if (Random.value < chance)
+        isCritical = Random.value < chance;
+        if (isCritical)
         {
             damage *= multiplier;
         }
@@ -1040,7 +1052,9 @@ public class PlayerController : MonoBehaviour
         }
 
         int level = inventory != null ? Mathf.Max(1, inventory.GetWeaponLevel(activeProjectileConfig)) : 1;
-        float levelMultiplier = 1f + activeProjectileConfig.DamagePercentPerLevel * (level - 1);
+        float levelMultiplier = DuplicateLevelProgression.GetLevelMultiplier(
+            level,
+            activeProjectileConfig.DamagePercentPerLevel);
         return activeProjectileConfig.AttackDamage * levelMultiplier
             + GetAssemblyBonus(activeProjectileConfig, AssemblyFactory.WeaponEnhancementStat.AttackDamage);
     }

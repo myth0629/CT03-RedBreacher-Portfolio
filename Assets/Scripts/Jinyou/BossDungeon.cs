@@ -12,9 +12,11 @@ public class BossDungeon : MonoBehaviour
         public int requiredResearchLabLevel = 1;
         public int recommendedPower;
         public string rewardSummary;
+        public BossEnemyConfig bossConfig;
     }
 
     [SerializeField] private CommandCenter cmdCenter;
+    [SerializeField] private BossEncounterManager bossEncounterManager;
     [SerializeField] private List<BossDifficulty> difficulties = new List<BossDifficulty>
     {
         new BossDifficulty { difficultyId = "normal", displayName = "Normal Boss", requiredResearchLabLevel = 1, recommendedPower = 1000, rewardSummary = "Credits / Parts" },
@@ -48,7 +50,10 @@ public class BossDungeon : MonoBehaviour
         ResolveReferences();
         return cmdCenter != null
             && cmdCenter.BossTickets > 0
-            && IsDifficultyUnlocked(difficulty);
+            && IsDifficultyUnlocked(difficulty)
+            && difficulty != null
+            && bossEncounterManager != null
+            && bossEncounterManager.CanSummon(difficulty.bossConfig);
     }
 
     public bool TryEnter(BossDifficulty difficulty)
@@ -58,7 +63,13 @@ public class BossDungeon : MonoBehaviour
             return false;
         }
 
-        return cmdCenter.TryUseBossTicket();
+        // 보스와 스폰 환경을 먼저 검증한 뒤 티켓을 소모하고 실제 전투를 시작한다.
+        if (!cmdCenter.TryUseBossTicket())
+        {
+            return false;
+        }
+
+        return bossEncounterManager.TrySummon(difficulty.bossConfig);
     }
 
     public BossDifficulty GetHighestUnlockedDifficulty()
@@ -87,6 +98,7 @@ public class BossDungeon : MonoBehaviour
         cmdCenter ??= BaseCampManager.Instance != null
             ? BaseCampManager.Instance.CommandCenter
             : FindFirstObjectByType<CommandCenter>();
+        bossEncounterManager ??= FindFirstObjectByType<BossEncounterManager>();
     }
 
     private void OnValidate()
