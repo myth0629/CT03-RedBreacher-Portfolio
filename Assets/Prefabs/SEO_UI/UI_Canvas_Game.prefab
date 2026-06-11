@@ -6070,7 +6070,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1228531111622564206
 RectTransform:
   m_ObjectHideFlags: 0
@@ -14115,6 +14115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StrategyResearchLabPanel
   baseCampManager: {fileID: 0}
   upgradeButton: {fileID: 519658554035159801}
+  resetOfflineDataButton: {fileID: 0}
   levelText: {fileID: 6728557380807450388}
   offlineRewardText: {fileID: 7426642505181815932}
   upgradeText: {fileID: 8882257347909575673}
@@ -20102,8 +20103,8 @@ MonoBehaviour:
     developmentCost: 150
     developmentCostByLevel: 9600000096000000960000009600000096000000
     powerBonusPerLevel: 0.02
-  - menuId: mech
-    displayName: Mech Upgrade
+  - menuId: drone
+    displayName: Drone Enhancement
     requiredFactoryLevel: 1
     unlocked: 1
     developmentLevel: 0
@@ -20124,48 +20125,59 @@ MonoBehaviour:
   - weaponConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
     displayNameOverride: 
     enhanceLevel: 0
+    baseMaxEnhanceLevel: 10
     enhancementLevels:
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
     - cost: 0
       statIncreases:
       - stat: 0
-        amount: 6
+        amount: 1
   selectedWeaponIndex: 0
+  defaultWeaponMaxEnhanceLevel: 10
+  weaponMaxLevelIncreasePerFactoryLevel: 5
+  defaultWeaponEnhanceCost: 100
+  defaultWeaponAttackIncrease: 1
+  droneEnhancements: []
+  selectedDroneIndex: 0
+  defaultDroneMaxEnhanceLevel: 10
+  droneMaxLevelIncreasePerFactoryLevel: 5
+  defaultDroneEnhanceCost: 100
+  defaultDroneAttackIncrease: 2
   OnLevelChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -20179,6 +20191,12 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   OnWeaponEnhanced:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDroneSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDroneEnhanced:
     m_PersistentCalls:
       m_Calls: []
   OnUpgradeStarted:
@@ -29951,6 +29969,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 343930013bb3e4d20b09a6d23cd00cfa, type: 2}
   - {fileID: 11400000, guid: 5410af9470a294451afeff07869cf317, type: 2}
   droneOptions:
+  - {fileID: 11400000, guid: b7852272a9c4e4dc592925326a646e6c, type: 2}
+  - {fileID: 11400000, guid: 30f23e51557154a2fa9274534a86abd7, type: 2}
+  - {fileID: 11400000, guid: a93bb0aa025a74f39aa3a6441b0b9200, type: 2}
+  - {fileID: 11400000, guid: 3756b241be6a94d029bcf731c5cb62e1, type: 2}
+  - {fileID: 11400000, guid: 5faadff3b83884b2089d0f1ad60e50e0, type: 2}
+  - {fileID: 11400000, guid: ae3a2e63d1ae14b47a7e0d9b676fc95e, type: 2}
+  - {fileID: 11400000, guid: dfe3330626cdb4676b35f99164f35d0f, type: 2}
+  - {fileID: 11400000, guid: bd627f069d96e4798a3a6b6fcfa94ab3, type: 2}
+  - {fileID: 11400000, guid: 1845985246b8748c69a3698aafe170ed, type: 2}
+  - {fileID: 11400000, guid: 927676cb259ef4cd5bf3a0cb603a7426, type: 2}
+  - {fileID: 11400000, guid: 9dcb2e68ea8944e2abbe7b475690091e, type: 2}
   - {fileID: 11400000, guid: 4e51ea7d06fcf4db2b8a8ef6f360292d, type: 2}
   equipButton: {fileID: 6190431088268413664}
   selectionRoot: {fileID: 4887737011173240076}
@@ -31892,21 +31921,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoreChargerPanel
   baseCampManager: {fileID: 0}
   upgradeButton: {fileID: 5024208019707139039}
-  firstUnitButton: {fileID: 608532312912118928}
-  secondUnitButton: {fileID: 6179220285341395515}
-  thirdUnitButton: {fileID: 8934423336735886091}
   enhanceUnitButton: {fileID: 3853873838081243510}
   levelText: {fileID: 4991335088912770062}
   upgradeText: {fileID: 7048555644453786693}
   upgradeConditionText: {fileID: 2173779024658527545}
   upgradeProgressFill: {fileID: 3506820725551203255}
+  currentUnitPreviewImage: {fileID: 0}
   selectedUnitText: {fileID: 5530492752396025813}
+  unitSoTransitionText: {fileID: 0}
   unitStateText: {fileID: 5672148369887153733}
-  inventoryPanel: {fileID: 2695654891698078163}
-  unitInventoryArea: {fileID: 0}
-  unitInventoryContentRoot: {fileID: 0}
-  inventoryUnitButtonPrefab: {fileID: 0}
-  inventoryUnitListText: {fileID: 0}
 --- !u!1 &5254000922626176845
 GameObject:
   m_ObjectHideFlags: 0
@@ -39729,7 +39752,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2315925559235509167
 RectTransform:
   m_ObjectHideFlags: 0
@@ -52093,6 +52116,7 @@ MonoBehaviour:
   weaponInventoryContentRoot: {fileID: 0}
   inventoryWeaponButtonPrefab: {fileID: 0}
   inventoryWeaponListText: {fileID: 0}
+  loadoutSelectionPanel: {fileID: 1768912542881721125}
 --- !u!1 &8580997346564624259
 GameObject:
   m_ObjectHideFlags: 0
@@ -52727,10 +52751,18 @@ MonoBehaviour:
   level: 1
   maxLevel: 10
   upgradeCost: 400
-  upgradeCostByLevel: 900100009001000090010000900100009001000090010000900100009001000090010000
+  upgradeCostByLevel:
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
+  - 400
   requiredCommanderLevel: 1
-  requiredResearchLabLevel: 3
-  requiredResearchLabLevelByLevel: 030000000300000003000000030000000300000003000000030000000300000003000000
+  requiredResearchLabLevel: 1
   upgradeDurationSeconds: 10
   upgradeDurationSecondsByLevel:
   - 10
@@ -52742,12 +52774,37 @@ MonoBehaviour:
   - 10
   - 10
   - 10
-  unitEnhancements: []
-  selectedUnitIndex: 0
+  levelsPerConversion: 5
+  conversionStages:
+  - requiredPlayerLevel: 5
+    currentUnit: {fileID: 11400000, guid: a3b7befadd4964e5b9ee9048889e72fb, type: 2}
+    nextUnit: {fileID: 11400000, guid: b535319339de54f20b16ab7ad83876b4, type: 2}
+  - requiredPlayerLevel: 10
+    currentUnit: {fileID: 11400000, guid: b535319339de54f20b16ab7ad83876b4, type: 2}
+    nextUnit: {fileID: 11400000, guid: 1b09e14ee9c1c4819a25d6ae79a99aed, type: 2}
+  - requiredPlayerLevel: 15
+    currentUnit: {fileID: 11400000, guid: 1b09e14ee9c1c4819a25d6ae79a99aed, type: 2}
+    nextUnit: {fileID: 11400000, guid: 13d7f73cfd910410193b4068e032d2e4, type: 2}
+  - requiredPlayerLevel: 20
+    currentUnit: {fileID: 11400000, guid: 13d7f73cfd910410193b4068e032d2e4, type: 2}
+    nextUnit: {fileID: 11400000, guid: aaa8f364b28444e249d29f0d45528398, type: 2}
+  - requiredPlayerLevel: 25
+    currentUnit: {fileID: 11400000, guid: aaa8f364b28444e249d29f0d45528398, type: 2}
+    nextUnit: {fileID: 11400000, guid: 916e46552ec34463287a47882e8267d5, type: 2}
+  - requiredPlayerLevel: 30
+    currentUnit: {fileID: 11400000, guid: 916e46552ec34463287a47882e8267d5, type: 2}
+    nextUnit: {fileID: 11400000, guid: 6f73a84cde5eb4e63bca255f36534195, type: 2}
+  - requiredPlayerLevel: 35
+    currentUnit: {fileID: 11400000, guid: 6f73a84cde5eb4e63bca255f36534195, type: 2}
+    nextUnit: {fileID: 11400000, guid: 394620a82606b4a9a9a23b4cc72a1abd, type: 2}
+  - requiredPlayerLevel: 40
+    currentUnit: {fileID: 11400000, guid: 394620a82606b4a9a9a23b4cc72a1abd, type: 2}
+    nextUnit: {fileID: 11400000, guid: e28a933543b9d40508a43f36876752b7, type: 2}
+  - requiredPlayerLevel: 45
+    currentUnit: {fileID: 11400000, guid: e28a933543b9d40508a43f36876752b7, type: 2}
+    nextUnit: {fileID: 11400000, guid: 17004bd252efd4db98ecca26469c5c40, type: 2}
+  convertedStageIndices: []
   OnLevelChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  OnUnitSelected:
     m_PersistentCalls:
       m_Calls: []
   OnUnitEnhanced:
