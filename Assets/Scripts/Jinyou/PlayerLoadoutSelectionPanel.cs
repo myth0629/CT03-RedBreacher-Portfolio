@@ -268,7 +268,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private void RefreshDroneDetail(DroneConfig drone)
     {
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
-        SetText(detailCategoryText, drone != null ? $"Count: {drone.DroneCount}" : string.Empty);
+        SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount}" : string.Empty);
         SetText(detailStatsText, drone != null
             ? $"공장강화 Lv. {GetFactoryDroneLevel(drone)}\n"
                 + $"피해량: {drone.AttackDamage:0.##} (+ {GetEnhancedDroneDamage(drone):0.##})\n"

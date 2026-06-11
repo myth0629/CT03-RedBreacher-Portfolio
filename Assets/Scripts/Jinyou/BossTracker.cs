@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BossDungeon : MonoBehaviour
+public class BossTracker : MonoBehaviour
 {
     [Serializable]
     public class BossDifficulty

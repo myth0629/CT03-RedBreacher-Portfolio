@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class BossSummonButton : MonoBehaviour
 {
     [Header("Source")]
-    [SerializeField] private BossDungeon bossDungeon;
+    [SerializeField] private BossTracker bossTracker;
 
     [Header("UI")]
     [SerializeField] private Button summonButton;
@@ -43,14 +43,14 @@ public class BossSummonButton : MonoBehaviour
     public void TrySummonBoss()
     {
         ResolveReferences();
-        if (bossDungeon == null)
+        if (bossTracker == null)
         {
             stateMessage = "보스 시스템이 연결되지 않았습니다.";
             Refresh();
             return;
         }
 
-        BossDungeon.BossDifficulty difficulty = bossDungeon.GetHighestUnlockedDifficulty();
+        BossTracker.BossDifficulty difficulty = bossTracker.GetHighestUnlockedDifficulty();
         if (difficulty == null)
         {
             stateMessage = "해금된 보스가 없습니다.";
@@ -59,7 +59,7 @@ public class BossSummonButton : MonoBehaviour
         }
 
         // 게임 HUD 버튼에서도 기지와 동일한 티켓 소모 및 소환 검증을 사용한다.
-        if (bossDungeon.TryEnter(difficulty))
+        if (bossTracker.TryEnter(difficulty))
         {
             stateMessage = $"{difficulty.displayName} 소환";
             DailyMissionManager.ReportBossTicketUsed();
@@ -75,9 +75,9 @@ public class BossSummonButton : MonoBehaviour
     private void Refresh()
     {
         ResolveReferences();
-        CommandCenter commandCenter = bossDungeon != null ? bossDungeon.CmdCenter : null;
-        BossDungeon.BossDifficulty difficulty = bossDungeon != null
-            ? bossDungeon.GetHighestUnlockedDifficulty()
+        CommandCenter commandCenter = bossTracker != null ? bossTracker.CmdCenter : null;
+        BossTracker.BossDifficulty difficulty = bossTracker != null
+            ? bossTracker.GetHighestUnlockedDifficulty()
             : null;
 
         if (ticketText != null)
@@ -101,14 +101,14 @@ public class BossSummonButton : MonoBehaviour
 
         if (summonButton != null)
         {
-            summonButton.interactable = bossDungeon != null
+            summonButton.interactable = bossTracker != null
                 && difficulty != null
-                && bossDungeon.CanEnter(difficulty);
+                && bossTracker.CanEnter(difficulty);
         }
     }
 
     private void ResolveReferences()
     {
-        bossDungeon ??= FindFirstObjectByType<BossDungeon>();
+        bossTracker ??= FindFirstObjectByType<BossTracker>();
     }
 }
