@@ -3389,6 +3389,8 @@ PrefabInstance:
     - {fileID: 1860935558078974005, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
     - {fileID: 886125317694230958, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
     - {fileID: 595684889872363121, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+    - {fileID: 9155171251553826700, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+    - {fileID: 5682883655336014214, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 8342931487984087429, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       insertIndex: 2
@@ -3412,17 +3414,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 223680561859441903, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
   m_PrefabInstance: {fileID: 1942723899}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1942723901 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4882755183315216833, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
-  m_PrefabInstance: {fileID: 1942723899}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 808690bed6a8d4943b69060f60fd14dd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InventoryFacility
 --- !u!114 &1942723902 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
@@ -3760,7 +3751,7 @@ MonoBehaviour:
   assemblyFactory: {fileID: 1942723903}
   coreCharger: {fileID: 1942723902}
   traitPointFacility: {fileID: 0}
-  inventory: {fileID: 1942723901}
+  inventory: {fileID: 0}
   autoFindFacilities: 1
   facilityPanels:
   - {fileID: 1942723900}
