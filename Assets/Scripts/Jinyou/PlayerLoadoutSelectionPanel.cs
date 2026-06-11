@@ -74,6 +74,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void LoadEquippedLoadout()
     {
+        DroneConfig initialDrone = RegisterInitialDrone();
+
         string savedWeaponId = PlayerPrefs.GetString(SelectedWeaponKey, string.Empty);
         if (!string.IsNullOrEmpty(savedWeaponId))
         {
@@ -89,11 +91,20 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         if (!string.IsNullOrEmpty(savedDroneId))
         {
             DroneConfig drone = FindDroneById(savedDroneId);
-            if (drone != null)
+            if (drone != null && (inventory == null || inventory.ContainsDrone(drone)))
             {
                 selectedDrone = drone;
                 droneController?.SetDroneConfig(drone);
+                return;
             }
+        }
+
+        selectedDrone = initialDrone;
+        droneController?.SetDroneConfig(initialDrone);
+        if (initialDrone != null)
+        {
+            PlayerPrefs.SetString(SelectedDroneKey, initialDrone.Id);
+            PlayerPrefs.Save();
         }
     }
 
@@ -225,7 +236,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         for (int i = 0; i < droneOptions.Length; i++)
         {
             DroneConfig drone = droneOptions[i];
-            if (drone == null)
+            if (drone == null || (inventory != null && !inventory.ContainsDrone(drone)))
             {
                 continue;
             }
@@ -289,9 +300,9 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             return;
         }
 
-        droneController?.SetDroneConfig(selectedDrone);
-        if (selectedDrone != null)
+        if (selectedDrone != null && (inventory == null || inventory.ContainsDrone(selectedDrone)))
         {
+            droneController?.SetDroneConfig(selectedDrone);
             PlayerPrefs.SetString(SelectedDroneKey, selectedDrone.Id);
             PlayerPrefs.Save();
         }
@@ -352,6 +363,19 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private int GetWeaponLevel(ProjectileConfig weapon)
     {
         return inventory != null ? Mathf.Max(1, inventory.GetWeaponLevel(weapon)) : 1;
+    }
+
+    private DroneConfig RegisterInitialDrone()
+    {
+        if (droneOptions == null || droneOptions.Length == 0)
+        {
+            return null;
+        }
+
+        DroneConfig initialDrone = FindDroneById("drone_default") ?? droneOptions[0];
+        // 기본 드론은 최초 지급이므로 수집 업적에는 포함하지 않는다.
+        inventory?.RegisterInitialDrone(initialDrone);
+        return initialDrone;
     }
 
     private static void SetText(TMP_Text target, string value)

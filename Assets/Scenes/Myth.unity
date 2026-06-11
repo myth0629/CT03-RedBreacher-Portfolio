@@ -1383,6 +1383,90 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.size
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[0].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 30f23e51557154a2fa9274534a86abd7, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[1].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: a93bb0aa025a74f39aa3a6441b0b9200, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[2].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 3756b241be6a94d029bcf731c5cb62e1, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[3].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 5faadff3b83884b2089d0f1ad60e50e0, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[4].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: ae3a2e63d1ae14b47a7e0d9b676fc95e, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[5].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: dfe3330626cdb4676b35f99164f35d0f, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[6].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: bd627f069d96e4798a3a6b6fcfa94ab3, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[7].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 1845985246b8748c69a3698aafe170ed, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[8].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 927676cb259ef4cd5bf3a0cb603a7426, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[9].droneConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 9dcb2e68ea8944e2abbe7b475690091e, type: 2}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[0].requiredCoreChargerLevel
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[1].requiredCoreChargerLevel
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[2].requiredCoreChargerLevel
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[3].requiredCoreChargerLevel
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[4].requiredCoreChargerLevel
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[5].requiredCoreChargerLevel
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[6].requiredCoreChargerLevel
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[7].requiredCoreChargerLevel
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[8].requiredCoreChargerLevel
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1760968628234148139, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: droneUnlocks.Array.data[9].requiredCoreChargerLevel
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 1802672399350225724, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -1913,6 +1997,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2963755602433542004, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
   m_PrefabInstance: {fileID: 952800190}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &1195112969 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1322240335075145229, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
+  m_PrefabInstance: {fileID: 3007835671500335650}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1205459554
 GameObject:
   m_ObjectHideFlags: 0
@@ -2144,6 +2233,7 @@ MonoBehaviour:
   coreCharger: {fileID: 177518630}
   traitPointFacility: {fileID: 2016186009}
   inventory: {fileID: 629834416}
+  dailyMissionManager: {fileID: 0}
   autoFindFacilities: 1
   facilityPanels:
   - {fileID: 0}
@@ -2152,6 +2242,9 @@ MonoBehaviour:
   credits: 500
   currencyWallet: {fileID: 0}
   playerProgression: {fileID: 3007835671500335655}
+  useUnifiedSave: 1
+  autoSaveUnifiedState: 1
+  unifiedSaveKey: Jinyou.SaveData
   showDebugPanel: 0
   debugPanelRect:
     serializedVersion: 2
@@ -2166,6 +2259,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   OnCommanderLevelChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnOfflineRewardsClaimed:
     m_PersistentCalls:
       m_Calls: []
 --- !u!4 &1250891664
@@ -3389,6 +3485,10 @@ PrefabInstance:
       propertyPath: droneConfig
       value: 
       objectReference: {fileID: 11400000, guid: 5faadff3b83884b2089d0f1ad60e50e0, type: 2}
+    - target: {fileID: 2421075610840562408, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
+      propertyPath: droneSpawnParent
+      value: 
+      objectReference: {fileID: 1195112969}
     - target: {fileID: 4696198792450951766, guid: 442f3938bb76e4d27b4a931a1902292e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

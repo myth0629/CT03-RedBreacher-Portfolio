@@ -87,36 +87,52 @@ public class AchievementManager : MonoBehaviour
             this.rewardAmount = Mathf.Max(0, rewardAmount);
         }
 
-        public int AddProgress(int amount)
+        public bool AddProgress(int amount)
         {
             int positiveAmount = Mathf.Max(0, amount);
-            if (positiveAmount == 0)
+            if (positiveAmount == 0 || completed)
             {
-                return 0;
+                return false;
             }
 
-            currentAmount = Mathf.Max(0, currentAmount + positiveAmount);
-            return ConsumeCompletedMilestones();
+            int previousAmount = currentAmount;
+            currentAmount = Mathf.Min(NextTargetAmount, currentAmount + positiveAmount);
+            RefreshCompletionState();
+            return previousAmount != currentAmount;
         }
 
-        public int SetProgress(int amount)
+        public bool SetProgress(int amount)
         {
-            int nextAmount = Mathf.Max(0, amount);
-            if (nextAmount <= currentAmount)
+            if (completed)
             {
-                currentAmount = nextAmount;
-                return 0;
+                return false;
             }
 
-            currentAmount = nextAmount;
-            return ConsumeCompletedMilestones();
+            int previousAmount = currentAmount;
+            currentAmount = Mathf.Clamp(amount, 0, NextTargetAmount);
+            RefreshCompletionState();
+            return previousAmount != currentAmount;
+        }
+
+        public bool TryClaimReward()
+        {
+            RefreshCompletionState();
+            if (!completed)
+            {
+                return false;
+            }
+
+            // 보상을 받은 뒤에만 다음 업적 단계의 진행을 허용한다.
+            completedCount++;
+            completed = false;
+            return true;
         }
 
         public void RestoreProgress(int amount, int completedMilestones)
         {
-            currentAmount = Mathf.Max(0, amount);
             completedCount = Mathf.Max(0, completedMilestones);
-            completed = completedCount > 0;
+            currentAmount = Mathf.Clamp(amount, 0, NextTargetAmount);
+            RefreshCompletionState();
         }
 
         public void ResetProgress()
@@ -145,24 +161,14 @@ public class AchievementManager : MonoBehaviour
             repeatRequirementAmount = Mathf.Max(1, repeatRequirementAmount);
             progressAmountPerEvent = Mathf.Max(1, progressAmountPerEvent);
             rewardAmount = Mathf.Max(0, rewardAmount);
-            currentAmount = Mathf.Max(0, currentAmount);
             completedCount = Mathf.Max(0, completedCount);
-            completed = completedCount > 0;
+            currentAmount = Mathf.Clamp(currentAmount, 0, NextTargetAmount);
+            RefreshCompletionState();
         }
 
-        private int ConsumeCompletedMilestones()
+        private void RefreshCompletionState()
         {
-            int completionCount = 0;
-            int safety = 0;
-            while (currentAmount >= NextTargetAmount && safety < 1000)
-            {
-                completed = true;
-                completedCount++;
-                completionCount++;
-                safety++;
-            }
-
-            return completionCount;
+            completed = currentAmount >= NextTargetAmount;
         }
 
         private int GetRequiredAmountForCompletion(int completionIndex)
@@ -319,9 +325,12 @@ public class AchievementManager : MonoBehaviour
             }
 
             int amount = Mathf.Max(0, eventCount) * achievement.ProgressAmountPerEvent;
-            int completionCount = achievement.AddProgress(amount);
-            changed = changed || amount > 0;
-            RewardCompletedMilestones(achievement, completionCount);
+            bool wasCompleted = achievement.Completed;
+            changed = achievement.AddProgress(amount) || changed;
+            if (!wasCompleted && achievement.Completed)
+            {
+                OnAchievementCompleted.Invoke(achievement);
+            }
         }
 
         NotifyIfChanged(changed);
@@ -337,32 +346,35 @@ public class AchievementManager : MonoBehaviour
                 continue;
             }
 
-            int before = achievement.CurrentAmount;
-            int completionCount = achievement.SetProgress(amount);
-            changed = changed || before != achievement.CurrentAmount;
-            RewardCompletedMilestones(achievement, completionCount);
+            bool wasCompleted = achievement.Completed;
+            changed = achievement.SetProgress(amount) || changed;
+            if (!wasCompleted && achievement.Completed)
+            {
+                OnAchievementCompleted.Invoke(achievement);
+            }
         }
 
         NotifyIfChanged(changed);
     }
 
-    private void RewardCompletedMilestones(AchievementEntry achievement, int completionCount)
+    public bool TryClaimReward(string achievementId)
     {
-        if (achievement == null || completionCount <= 0)
+        AchievementEntry achievement = achievements.Find(item =>
+            item != null && item.Id == achievementId);
+        if (achievement == null || !achievement.TryClaimReward())
         {
-            return;
+            return false;
         }
 
         PlayerCurrencyWallet wallet = ResolveCurrencyWallet();
         if (wallet != null && achievement.RewardAmount > 0)
         {
-            wallet.Add(achievement.RewardCurrency, achievement.RewardAmount * completionCount);
+            wallet.Add(achievement.RewardCurrency, achievement.RewardAmount);
         }
 
-        for (int i = 0; i < completionCount; i++)
-        {
-            OnAchievementCompleted.Invoke(achievement);
-        }
+        Save();
+        OnAchievementsChanged.Invoke();
+        return true;
     }
 
     private PlayerCurrencyWallet ResolveCurrencyWallet()

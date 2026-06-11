@@ -55,13 +55,15 @@ public class PlayerDroneUnit : MonoBehaviour
         }
 
         Fire(direction);
-        nextAttackTime = Time.time + Mathf.Max(0.01f, config.AttackInterval);
+        nextAttackTime = Time.time + GetAttackInterval();
     }
 
     private void FollowPlayerSlot()
     {
         Vector3 targetPosition = GetSlotPosition();
-        float followRate = Mathf.Max(0f, config.FollowSpeed) * Time.deltaTime;
+        CoreCharger coreCharger = GetCoreCharger();
+        float followSpeedBonus = coreCharger != null ? coreCharger.DroneFollowSpeedBonus : 0f;
+        float followRate = Mathf.Max(0f, config.FollowSpeed + followSpeedBonus) * Time.deltaTime;
         transform.position = CombatPlane.WithFixedY(Vector3.Lerp(transform.position, targetPosition, followRate));
     }
 
@@ -124,7 +126,8 @@ public class PlayerDroneUnit : MonoBehaviour
         }
 
         float distanceSqr = CombatPlane.DistanceSqr(transform.position, target.transform.position);
-        if (distanceSqr > closestDistanceSqr || distanceSqr > config.AttackRange * config.AttackRange)
+        float attackRange = GetAttackRange();
+        if (distanceSqr > closestDistanceSqr || distanceSqr > attackRange * attackRange)
         {
             return currentClosest;
         }
@@ -135,7 +138,8 @@ public class PlayerDroneUnit : MonoBehaviour
 
     private bool IsTargetInRange(CombatHealth target)
     {
-        return target != null && CombatPlane.DistanceSqr(transform.position, target.transform.position) <= config.AttackRange * config.AttackRange;
+        float attackRange = GetAttackRange();
+        return target != null && CombatPlane.DistanceSqr(transform.position, target.transform.position) <= attackRange * attackRange;
     }
 
     private bool IsFacing(Vector3 direction)
@@ -155,7 +159,26 @@ public class PlayerDroneUnit : MonoBehaviour
 
     private float GetDamage(ProjectileConfig projectileConfig)
     {
-        return config.AttackDamage + (projectileConfig != null ? projectileConfig.AttackDamage : 0f);
+        return config.AttackDamage
+            + (projectileConfig != null ? projectileConfig.AttackDamage : 0f)
+            + (GetCoreCharger()?.DroneAttackDamageBonus ?? 0f);
+    }
+
+    private float GetAttackRange()
+    {
+        return Mathf.Max(0f, config.AttackRange + (GetCoreCharger()?.DroneAttackRangeBonus ?? 0f));
+    }
+
+    private float GetAttackInterval()
+    {
+        return Mathf.Max(
+            0.01f,
+            config.AttackInterval - (GetCoreCharger()?.DroneAttackIntervalReduction ?? 0f));
+    }
+
+    private static CoreCharger GetCoreCharger()
+    {
+        return BaseCampManager.Instance != null ? BaseCampManager.Instance.CoreCharger : null;
     }
 
     private Vector3 GetFirePosition(Vector3 direction)

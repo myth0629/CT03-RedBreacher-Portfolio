@@ -189,7 +189,10 @@ public class CoreChargerPanel : MonoBehaviour
 
     private string BuildUnitSummary()
     {
-        string summary = string.Empty;
+        string summary = $"드론 강화: 공격력 +{coreCharger.DroneAttackDamageBonus:0.##}"
+            + $" / 사거리 +{coreCharger.DroneAttackRangeBonus:0.##}"
+            + $" / 발사간격 -{coreCharger.DroneAttackIntervalReduction:0.##}"
+            + $" / 추적속도 +{coreCharger.DroneFollowSpeedBonus:0.##}\n";
         foreach (CoreCharger.UnitEnhancement unitEnhancement in coreCharger.UnitEnhancements)
         {
             if (unitEnhancement == null)

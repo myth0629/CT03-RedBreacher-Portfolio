@@ -90,6 +90,18 @@ public class AchievementPopup : MonoBehaviour
         if (rewardClaim != null)
         {
             rewardClaim.enabled = achievement.Completed;
+
+            // 프리팹 수정 없이 보상 이미지를 수령 버튼으로 사용한다.
+            Button claimButton = rewardClaim.GetComponent<Button>();
+            if (claimButton == null)
+            {
+                claimButton = rewardClaim.gameObject.AddComponent<Button>();
+            }
+
+            claimButton.targetGraphic = rewardClaim;
+            claimButton.interactable = achievement.Completed;
+            claimButton.onClick.AddListener(() =>
+                achievementManager.TryClaimReward(achievement.Id));
         }
     }
 

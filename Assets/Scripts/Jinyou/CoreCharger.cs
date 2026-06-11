@@ -114,6 +114,13 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
     }
 
+    [Serializable]
+    public class DroneUnlock
+    {
+        public DroneConfig droneConfig;
+        [Min(1)] public int requiredCoreChargerLevel = 2;
+    }
+
     [Header("Level")]
     [SerializeField] private int level = 1;
     [SerializeField] private int maxLevel = 10;
@@ -130,6 +137,13 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     [Header("Unit Enhancement")]
     [SerializeField] private List<UnitEnhancement> unitEnhancements = new List<UnitEnhancement>();
     [SerializeField] private int selectedUnitIndex;
+
+    [Header("Drone Enhancement")]
+    [SerializeField] private float droneAttackDamagePerLevel = 1f;
+    [SerializeField] private float droneAttackRangePerLevel = 0.1f;
+    [SerializeField] private float droneAttackIntervalReductionPerLevel = 0.02f;
+    [SerializeField] private float droneFollowSpeedPerLevel = 0.2f;
+    [SerializeField] private List<DroneUnlock> droneUnlocks = new List<DroneUnlock>();
 
     [Header("Events")]
     public UnityEvent<int> OnLevelChanged = new UnityEvent<int>();
@@ -154,6 +168,10 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     public UnitEnhancement SelectedUnitEnhancement => GetUnitEnhancementAt(selectedUnitIndex);
     public PlayerUnitConfig SelectedUnitConfig => SelectedUnitEnhancement?.unitConfig;
     public int SelectedUnitIndex => selectedUnitIndex;
+    public float DroneAttackDamageBonus => Mathf.Max(0, level - 1) * droneAttackDamagePerLevel;
+    public float DroneAttackRangeBonus => Mathf.Max(0, level - 1) * droneAttackRangePerLevel;
+    public float DroneAttackIntervalReduction => Mathf.Max(0, level - 1) * droneAttackIntervalReductionPerLevel;
+    public float DroneFollowSpeedBonus => Mathf.Max(0, level - 1) * droneFollowSpeedPerLevel;
 
     private void Awake()
     {
@@ -256,6 +274,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
 
         NormalizeConfiguredValues();
+        SyncUnlockedDrones(false);
         OnLevelChanged.Invoke(level);
     }
 
@@ -444,6 +463,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         currentUpgradeDurationSeconds = 0f;
         level++;
         requiredCommanderLevel++;
+        SyncUnlockedDrones(true);
         OnLevelChanged.Invoke(level);
         OnUpgradeCompleted.Invoke();
     }
@@ -610,6 +630,35 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         selectedUnitIndex = Mathf.Clamp(selectedUnitIndex, 0, unitEnhancements.Count - 1);
     }
 
+    private void SyncUnlockedDrones(bool reportCollection)
+    {
+        InventoryFacility inventory = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.Inventory
+            : InventoryFacility.FindAny();
+        if (inventory == null || droneUnlocks == null)
+        {
+            return;
+        }
+
+        foreach (DroneUnlock droneUnlock in droneUnlocks)
+        {
+            if (droneUnlock?.droneConfig == null
+                || level < Mathf.Max(1, droneUnlock.requiredCoreChargerLevel))
+            {
+                continue;
+            }
+
+            if (reportCollection)
+            {
+                inventory.AddDrone(droneUnlock.droneConfig);
+            }
+            else
+            {
+                inventory.RegisterInitialDrone(droneUnlock.droneConfig);
+            }
+        }
+    }
+
     private void NormalizeConfiguredValues()
     {
         level = Mathf.Max(1, level);
@@ -622,6 +671,21 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
         NormalizeUpgradeDurations();
         NormalizeUnitEnhancements();
+        droneAttackDamagePerLevel = Mathf.Max(0f, droneAttackDamagePerLevel);
+        droneAttackRangePerLevel = Mathf.Max(0f, droneAttackRangePerLevel);
+        droneAttackIntervalReductionPerLevel = Mathf.Max(0f, droneAttackIntervalReductionPerLevel);
+        droneFollowSpeedPerLevel = Mathf.Max(0f, droneFollowSpeedPerLevel);
+        droneUnlocks ??= new List<DroneUnlock>();
+        foreach (DroneUnlock droneUnlock in droneUnlocks)
+        {
+            if (droneUnlock != null)
+            {
+                droneUnlock.requiredCoreChargerLevel = Mathf.Clamp(
+                    droneUnlock.requiredCoreChargerLevel,
+                    1,
+                    maxLevel);
+            }
+        }
     }
 
     private void OnValidate()

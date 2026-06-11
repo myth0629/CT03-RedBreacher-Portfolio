@@ -39,6 +39,7 @@ public class InventoryFacility : MonoBehaviour
     {
         public List<CollectionProgress> weapons = new List<CollectionProgress>();
         public List<CollectionProgress> skills = new List<CollectionProgress>();
+        public List<string> drones = new List<string>();
     }
 
     [System.Serializable]
@@ -89,6 +90,7 @@ public class InventoryFacility : MonoBehaviour
     private bool collectionProgressInitialized;
     private List<CollectionProgress> weaponProgress = new List<CollectionProgress>();
     private List<CollectionProgress> skillProgress = new List<CollectionProgress>();
+    private List<string> ownedDroneIds = new List<string>();
     private readonly List<PlayerSkillConfig> ownedSkillConfigs = new List<PlayerSkillConfig>();
 
     public IReadOnlyList<ProjectileConfig> WeaponConfigs
@@ -156,6 +158,22 @@ public class InventoryFacility : MonoBehaviour
         return unitConfig != null && unitConfigs.Contains(unitConfig);
     }
 
+    public bool ContainsDrone(DroneConfig droneConfig)
+    {
+        EnsureCollectionProgressInitialized();
+        return droneConfig != null && ownedDroneIds.Contains(droneConfig.Id);
+    }
+
+    public bool AddDrone(DroneConfig droneConfig)
+    {
+        return RegisterDrone(droneConfig, true);
+    }
+
+    public bool RegisterInitialDrone(DroneConfig droneConfig)
+    {
+        return RegisterDrone(droneConfig, false);
+    }
+
     public bool AddWeapon(ProjectileConfig weaponConfig)
     {
         return AddWeapon(weaponConfig, 1);
@@ -187,6 +205,12 @@ public class InventoryFacility : MonoBehaviour
         if (currentLevel != previousLevel)
         {
             OnWeaponLevelChanged.Invoke(weaponConfig.Id, currentLevel);
+        }
+
+        if (isNew)
+        {
+            // 중복 무기가 아닌 최초 획득만 수집 업적에 반영한다.
+            AchievementManager.ReportWeaponCollected();
         }
 
         return BuildGrantResult(
@@ -654,6 +678,7 @@ public class InventoryFacility : MonoBehaviour
             CollectionProgressSaveData saveData = JsonUtility.FromJson<CollectionProgressSaveData>(json);
             weaponProgress = saveData?.weapons ?? new List<CollectionProgress>();
             skillProgress = saveData?.skills ?? new List<CollectionProgress>();
+            ownedDroneIds = saveData?.drones ?? new List<string>();
             NormalizeCollectionProgress();
             SyncWeaponConfigsFromProgress();
             SyncSkillConfigsFromProgress();
@@ -663,6 +688,7 @@ public class InventoryFacility : MonoBehaviour
         // 기존 Inspector 수량은 최초 보유와 중복 진행도로 한 번만 이관한다.
         weaponProgress = new List<CollectionProgress>();
         skillProgress = new List<CollectionProgress>();
+        ownedDroneIds = new List<string>();
         for (int i = 0; i < weaponStacks.Count; i++)
         {
             WeaponStack stack = weaponStacks[i];
@@ -681,6 +707,26 @@ public class InventoryFacility : MonoBehaviour
         SaveCollectionProgress();
         SyncWeaponConfigsFromProgress();
         SyncSkillConfigsFromProgress();
+    }
+
+    private bool RegisterDrone(DroneConfig droneConfig, bool reportCollection)
+    {
+        EnsureCollectionProgressInitialized();
+        if (droneConfig == null || ownedDroneIds.Contains(droneConfig.Id))
+        {
+            return false;
+        }
+
+        // 드론 ID를 기준으로 최초 해금만 저장하고 수집 업적에 반영한다.
+        ownedDroneIds.Add(droneConfig.Id);
+        SaveCollectionProgress();
+        NotifyCollectionChanged();
+        if (reportCollection)
+        {
+            AchievementManager.ReportDroneCollected();
+        }
+
+        return true;
     }
 
     private int AddCopies(
@@ -798,6 +844,15 @@ public class InventoryFacility : MonoBehaviour
     {
         NormalizeProgressList(weaponProgress);
         NormalizeProgressList(skillProgress);
+        ownedDroneIds ??= new List<string>();
+        HashSet<string> droneIds = new HashSet<string>();
+        for (int i = ownedDroneIds.Count - 1; i >= 0; i--)
+        {
+            if (string.IsNullOrWhiteSpace(ownedDroneIds[i]) || !droneIds.Add(ownedDroneIds[i]))
+            {
+                ownedDroneIds.RemoveAt(i);
+            }
+        }
     }
 
     private static void NormalizeProgressList(List<CollectionProgress> progressList)
@@ -855,7 +910,8 @@ public class InventoryFacility : MonoBehaviour
         CollectionProgressSaveData saveData = new CollectionProgressSaveData
         {
             weapons = weaponProgress,
-            skills = skillProgress
+            skills = skillProgress,
+            drones = ownedDroneIds
         };
         PlayerPrefs.SetString(CollectionProgressKey, JsonUtility.ToJson(saveData));
         PlayerPrefs.Save();
