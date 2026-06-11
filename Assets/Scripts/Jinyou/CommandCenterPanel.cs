@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class CommandCenterPanel : MonoBehaviour
@@ -11,7 +10,6 @@ public class CommandCenterPanel : MonoBehaviour
     [Header("Panels")]
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button upgradeButton;
-    [SerializeField] private Button resetOfflineDataButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text offlineRewardText;
     [SerializeField] private TMP_Text upgradeText;
@@ -31,23 +29,17 @@ public class CommandCenterPanel : MonoBehaviour
 
     private CommandCenter cmdCenter;
     private float observedUpgradeDuration;
-    private bool resetConfirmationPending;
 
     private void OnEnable()
     {
         ResolveReferences();
-        EnsureResetOfflineDataButton();
         upgradeButton?.onClick.AddListener(UpgradeResearchLab);
-        resetOfflineDataButton?.onClick.AddListener(ResetOfflineData);
         Refresh();
     }
 
     private void OnDisable()
     {
         upgradeButton?.onClick.RemoveListener(UpgradeResearchLab);
-        resetOfflineDataButton?.onClick.RemoveListener(ResetOfflineData);
-        resetConfirmationPending = false;
-        SetButtonText(resetOfflineDataButton, "Reset Offline Data");
     }
 
     private void Update()
@@ -80,41 +72,6 @@ public class CommandCenterPanel : MonoBehaviour
     {
         baseCampManager?.UpgradeResearchLab();
         Refresh();
-    }
-
-    private void ResetOfflineData()
-    {
-        if (!resetConfirmationPending)
-        {
-            resetConfirmationPending = true;
-            SetButtonText(resetOfflineDataButton, "Click Again To Reset");
-            return;
-        }
-
-        baseCampManager?.ResetAllOfflineSaveData();
-        Scene activeScene = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(activeScene.name);
-    }
-
-    private void EnsureResetOfflineDataButton()
-    {
-        if (resetOfflineDataButton != null || upgradeButton == null)
-        {
-            return;
-        }
-
-        resetOfflineDataButton = Instantiate(upgradeButton, upgradeButton.transform.parent);
-        resetOfflineDataButton.name = "Reset Offline Data Button";
-        resetOfflineDataButton.onClick.RemoveAllListeners();
-
-        if (resetOfflineDataButton.transform is RectTransform resetRect
-            && upgradeButton.transform is RectTransform upgradeRect)
-        {
-            resetRect.anchoredPosition = upgradeRect.anchoredPosition
-                + Vector2.up * (upgradeRect.rect.height + 20f);
-        }
-
-        SetButtonText(resetOfflineDataButton, "Reset Offline Data");
     }
 
     private void Refresh()
@@ -237,10 +194,5 @@ public class CommandCenterPanel : MonoBehaviour
         {
             target.text = value;
         }
-    }
-
-    private static void SetButtonText(Button button, string value)
-    {
-        SetText(button != null ? button.GetComponentInChildren<TMP_Text>(true) : null, value);
     }
 }
