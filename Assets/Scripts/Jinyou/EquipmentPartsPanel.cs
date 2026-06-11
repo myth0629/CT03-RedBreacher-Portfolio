@@ -14,6 +14,9 @@ public class EquipmentPartsPanel : MonoBehaviour
     [Header("Part List")]
     [SerializeField] private RectTransform partContentRoot;
     [SerializeField] private Button partButtonPrefab;
+    [SerializeField] private Color commonFrameColor = Color.white;
+    [SerializeField] private Color rareFrameColor = new Color(0.25f, 0.55f, 1f, 1f);
+    [SerializeField] private Color epicFrameColor = new Color(0.75f, 0.3f, 1f, 1f);
 
     [Header("Equipped Slots")]
     [SerializeField] private TMP_Text armorSlotText;
@@ -120,6 +123,21 @@ public class EquipmentPartsPanel : MonoBehaviour
 
         Button button = Instantiate(partButtonPrefab, partContentRoot);
         EquipmentPartConfig config = inventory.ResolveEquipmentPartConfig(part.configId);
+        Image iconImage = FindChildImage(button.transform, "Icon");
+        if (iconImage != null)
+        {
+            // 파츠 종류별 SO에 지정된 아이콘을 목록 슬롯에 표시한다.
+            iconImage.sprite = config != null ? config.Icon : null;
+            iconImage.enabled = iconImage.sprite != null;
+        }
+
+        Image frameImage = FindChildImage(button.transform, "Frame");
+        if (frameImage != null)
+        {
+            // 파츠 희귀도에 따라 슬롯 프레임 색상을 구분한다.
+            frameImage.color = GetRarityFrameColor(part.rarity);
+        }
+
         TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
         if (label != null)
         {
@@ -130,6 +148,40 @@ public class EquipmentPartsPanel : MonoBehaviour
         string capturedId = part.instanceId;
         button.onClick.AddListener(() => Select(capturedId));
         spawnedButtons.Add(button);
+    }
+
+    private static Image FindChildImage(Transform root, string childName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root.GetComponent<Image>();
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Image image = FindChildImage(root.GetChild(i), childName);
+            if (image != null)
+            {
+                return image;
+            }
+        }
+
+        return null;
+    }
+
+    private Color GetRarityFrameColor(EquipmentPartRarity rarity)
+    {
+        return rarity switch
+        {
+            EquipmentPartRarity.Rare => rareFrameColor,
+            EquipmentPartRarity.Epic => epicFrameColor,
+            _ => commonFrameColor
+        };
     }
 
     private void Select(string instanceId)
