@@ -6,8 +6,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button upgradeButton;
-    [SerializeField] private Button weaponMenuButton;
-    [SerializeField] private Button mechMenuButton;
     [SerializeField] private Button skillMenuButton;
     [SerializeField] private Button partsMenuButton;
     [SerializeField] private Button weaponEnhanceButton;
@@ -67,8 +65,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
     public void Configure(
         BaseCampManager manager,
         Button upgrade,
-        Button weapon,
-        Button mech,
         Button skill,
         Button parts,
         Button close,
@@ -79,8 +75,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
     {
         baseCampManager = manager;
         upgradeButton = upgrade;
-        weaponMenuButton = weapon;
-        mechMenuButton = mech;
         skillMenuButton = skill;
         partsMenuButton = parts;
         closeButton = close;
@@ -200,8 +194,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
                 ? "Factory MAX"
                 : $"Upgrade Factory ({assemblyFactory.UpgradeCost})");
 
-        SetActive(weaponMenuButton != null ? weaponMenuButton.gameObject : null, false);
-        SetActive(mechMenuButton != null ? mechMenuButton.gameObject : null, false);
         SetActive(weaponEnhanceButton != null ? weaponEnhanceButton.gameObject : null, true);
         SetActive(upgradeButton != null ? upgradeButton.gameObject : null, true);
         SetActive(skillMenuButton != null ? skillMenuButton.gameObject : null, true);
