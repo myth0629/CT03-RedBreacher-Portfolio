@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,6 +13,7 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private CoreCharger coreCharger;
     [SerializeField] private TraitPointFacility traitPointFacility;
     [SerializeField] private InventoryFacility inventory;
+    [SerializeField] private DailyMissionManager dailyMissionManager;
     [SerializeField] private bool autoFindFacilities = true;
 
     [Header("Facility Panels")]
@@ -24,6 +26,11 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private PlayerCurrencyWallet currencyWallet;
     [SerializeField] private PlayerProgression playerProgression;
 
+    [Header("Unified Save")]
+    [SerializeField] private bool useUnifiedSave = true;
+    [SerializeField] private bool autoSaveUnifiedState = true;
+    [SerializeField] private string unifiedSaveKey = "Jinyou.SaveData";
+
     [Header("Debug")]
     [SerializeField] private bool showDebugPanel = true;
     [SerializeField] private Rect debugPanelRect = new Rect(16f, 16f, 280f, 220f);
@@ -32,8 +39,12 @@ public class BaseCampManager : MonoBehaviour
     public UnityEvent<int> OnCreditsChanged = new UnityEvent<int>();
     public UnityEvent<int> OnCoreCrystalsChanged = new UnityEvent<int>();
     public UnityEvent<int> OnCommanderLevelChanged = new UnityEvent<int>();
+    public UnityEvent<JinyouOfflineRewardSaveData> OnOfflineRewardsClaimed = new UnityEvent<JinyouOfflineRewardSaveData>();
 
     private PlayerCurrencyWallet registeredCurrencyWallet;
+    private bool unifiedSaveReady;
+    private bool isRestoringUnifiedSave;
+    private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
 
     public CommandCenter CommandCenter => commandCenter;
     public EnergyRefinery EnergyRefinery => energyRefinery;
@@ -46,6 +57,7 @@ public class BaseCampManager : MonoBehaviour
     public int CoreCrystals => CurrencyWallet.CoreCrystals;
     public PlayerCurrencyWallet CurrencyWallet => EnsureCurrencyWallet();
     public PlayerProgression PlayerProgression => ResolvePlayerProgression();
+    public JinyouOfflineRewardSaveData LastOfflineReward => lastOfflineReward;
 
     private void Awake()
     {
@@ -58,14 +70,34 @@ public class BaseCampManager : MonoBehaviour
         Instance = this;
         EnsureCurrencyWallet();
         ConnectFacilities();
+        EnsureDailyMissionManager();
     }
 
     private void Start()
     {
+        ConnectFacilities();
+        LoadUnifiedGame();
+        SubscribeUnifiedSaveEvents();
+        unifiedSaveReady = true;
+        SaveUnifiedGame();
+
         if (closePanelsOnStart)
         {
             CloseAllPanels();
         }
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+            SaveUnifiedGame();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveUnifiedGame();
     }
 
     private void OnDestroy()
@@ -76,6 +108,8 @@ public class BaseCampManager : MonoBehaviour
             registeredCurrencyWallet.OnCoreCrystalsChanged.RemoveListener(HandleCoreCrystalsChanged);
             registeredCurrencyWallet = null;
         }
+
+        UnsubscribeUnifiedSaveEvents();
 
         if (Instance == this)
         {
@@ -255,6 +289,61 @@ public class BaseCampManager : MonoBehaviour
     {
         commanderLevel = Mathf.Max(1, value);
         OnCommanderLevelChanged.Invoke(commanderLevel);
+        SaveUnifiedGameIfReady();
+    }
+
+    [ContextMenu("Save Unified Game")]
+    public void SaveUnifiedGame()
+    {
+        if (!useUnifiedSave
+            || isRestoringUnifiedSave
+            || string.IsNullOrWhiteSpace(unifiedSaveKey))
+        {
+            return;
+        }
+
+        // 준비된 시설 상태를 하나의 JSON으로 저장해 시스템 간 시점을 맞춘다.
+        JinyouSaveData data = CaptureUnifiedSaveData();
+        PlayerPrefs.SetString(unifiedSaveKey, JsonUtility.ToJson(data));
+        PlayerPrefs.Save();
+    }
+
+    [ContextMenu("Load Unified Game")]
+    public void LoadUnifiedGame()
+    {
+        if (!useUnifiedSave
+            || string.IsNullOrWhiteSpace(unifiedSaveKey)
+            || !PlayerPrefs.HasKey(unifiedSaveKey))
+        {
+            return;
+        }
+
+        string json = PlayerPrefs.GetString(unifiedSaveKey, string.Empty);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return;
+        }
+
+        try
+        {
+            RestoreUnifiedSaveData(JsonUtility.FromJson<JinyouSaveData>(json));
+        }
+        catch (ArgumentException exception)
+        {
+            Debug.LogWarning($"통합 저장 데이터를 읽지 못했습니다: {exception.Message}", this);
+        }
+    }
+
+    [ContextMenu("Delete Unified Save")]
+    public void DeleteUnifiedSave()
+    {
+        if (string.IsNullOrWhiteSpace(unifiedSaveKey))
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(unifiedSaveKey);
+        PlayerPrefs.Save();
     }
 
     private void SetCredits(int value)
@@ -400,6 +489,19 @@ public class BaseCampManager : MonoBehaviour
         return traitPointFacility;
     }
 
+    private DailyMissionManager EnsureDailyMissionManager()
+    {
+        dailyMissionManager ??= DailyMissionManager.Instance
+            ?? FindFirstObjectByType<DailyMissionManager>();
+        if (dailyMissionManager == null)
+        {
+            // 일일 미션이 없는 전투 씬에서도 동일한 저장 데이터를 유지한다.
+            dailyMissionManager = gameObject.AddComponent<DailyMissionManager>();
+        }
+
+        return dailyMissionManager;
+    }
+
     private void RegisterCurrencyWalletEvents()
     {
         if (currencyWallet == null)
@@ -432,11 +534,210 @@ public class BaseCampManager : MonoBehaviour
         // 기존 기지 UI 이벤트를 유지하면서 실제 값은 wallet이 관리한다.
         credits = value;
         OnCreditsChanged.Invoke(value);
+        SaveUnifiedGameIfReady();
     }
 
     private void HandleCoreCrystalsChanged(int value)
     {
         OnCoreCrystalsChanged.Invoke(value);
+        SaveUnifiedGameIfReady();
+    }
+
+    private JinyouSaveData CaptureUnifiedSaveData()
+    {
+        PlayerCurrencyWallet wallet = EnsureCurrencyWallet();
+        AchievementManager achievementManager = AchievementManager.Instance
+            ?? FindFirstObjectByType<AchievementManager>();
+        DailyMissionManager resolvedDailyMissionManager = EnsureDailyMissionManager();
+
+        return new JinyouSaveData
+        {
+            version = 1,
+            lastSavedUnixTime = GetCurrentUnixTime(),
+            commanderLevel = commanderLevel,
+            credits = wallet != null ? wallet.Credits : credits,
+            coreCrystals = wallet != null ? wallet.CoreCrystals : 0,
+            lastOfflineReward = lastOfflineReward,
+            researchLab = commandCenter != null ? commandCenter.CaptureState() : new JinyouCommandCenterSaveData(),
+            energyRefinery = energyRefinery != null ? energyRefinery.CaptureState() : new JinyouEnergyRefinerySaveData(),
+            assemblyFactory = assemblyFactory != null ? assemblyFactory.CaptureState() : new JinyouAssemblyFactorySaveData(),
+            coreCharger = coreCharger != null ? coreCharger.CaptureState() : new JinyouCoreChargerSaveData(),
+            traitPoints = TraitPointFacility != null ? TraitPointFacility.CaptureState() : new JinyouTraitPointSaveData(),
+            achievements = achievementManager != null ? achievementManager.CaptureState() : new JinyouAchievementSaveData(),
+            dailyMissions = resolvedDailyMissionManager.CaptureState()
+        };
+    }
+
+    private void RestoreUnifiedSaveData(JinyouSaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        isRestoringUnifiedSave = true;
+        try
+        {
+            // 재화와 시설을 먼저 복원한 뒤 업적과 일일 미션을 복원한다.
+            commanderLevel = Mathf.Max(1, data.commanderLevel);
+            PlayerCurrencyWallet wallet = EnsureCurrencyWallet();
+            wallet?.SetCredits(data.credits);
+            wallet?.SetCoreCrystals(data.coreCrystals);
+            commandCenter?.RestoreState(data.researchLab);
+            energyRefinery?.RestoreState(data.energyRefinery);
+            assemblyFactory?.RestoreState(data.assemblyFactory);
+            coreCharger?.RestoreState(data.coreCharger);
+            TraitPointFacility?.RestoreState(data.traitPoints);
+
+            AchievementManager achievementManager = AchievementManager.Instance
+                ?? FindFirstObjectByType<AchievementManager>();
+            achievementManager?.RestoreState(data.achievements);
+            EnsureDailyMissionManager().RestoreState(data.dailyMissions);
+
+            ApplyOfflineRewards(data.lastSavedUnixTime);
+            OnCommanderLevelChanged.Invoke(commanderLevel);
+        }
+        finally
+        {
+            isRestoringUnifiedSave = false;
+        }
+    }
+
+    private void ApplyOfflineRewards(long lastSavedUnixTime)
+    {
+        lastOfflineReward = new JinyouOfflineRewardSaveData();
+        if (lastSavedUnixTime <= 0 || commandCenter == null)
+        {
+            return;
+        }
+
+        float elapsedSeconds = Mathf.Max(0f, GetCurrentUnixTime() - lastSavedUnixTime);
+        float maxOfflineSeconds = Mathf.Max(0f, commandCenter.OfflineRewardLimitHours) * 3600f;
+        float appliedSeconds = Mathf.Min(elapsedSeconds, maxOfflineSeconds);
+        if (appliedSeconds <= 0f)
+        {
+            return;
+        }
+
+        int storedCreditsBefore = energyRefinery != null ? energyRefinery.StoredCredits : 0;
+        energyRefinery?.Produce(appliedSeconds);
+        int storedCreditsAfter = energyRefinery != null ? energyRefinery.StoredCredits : storedCreditsBefore;
+
+        lastOfflineReward = new JinyouOfflineRewardSaveData
+        {
+            elapsedSeconds = elapsedSeconds,
+            appliedSeconds = appliedSeconds,
+            refineryCreditsAdded = Mathf.Max(0, storedCreditsAfter - storedCreditsBefore),
+            bossTicketsAdded = commandCenter.ProduceBossTicketsOffline(appliedSeconds)
+        };
+
+        if (lastOfflineReward.HasReward)
+        {
+            OnOfflineRewardsClaimed.Invoke(lastOfflineReward);
+            DailyMissionManager.ReportOfflineRewardClaimed();
+        }
+    }
+
+    private void SubscribeUnifiedSaveEvents()
+    {
+        OnCommanderLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        commandCenter?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        commandCenter?.OnBossTicketsChanged.AddListener(HandleUnifiedSaveEvent);
+        energyRefinery?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        energyRefinery?.OnCreditsChanged.AddListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnMenuSelected.AddListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnMenuUnlocked.AddListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnWeaponEnhanced.AddListener(HandleUnifiedSaveEvent);
+        coreCharger?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        coreCharger?.OnUnitEnhanced.AddListener(HandleUnifiedSaveEvent);
+        TraitPointFacility?.OnTraitsChanged.AddListener(HandleUnifiedSaveEvent);
+
+        AchievementManager achievementManager = AchievementManager.Instance
+            ?? FindFirstObjectByType<AchievementManager>();
+        achievementManager?.OnAchievementsChanged.AddListener(HandleUnifiedSaveEvent);
+        achievementManager?.OnAchievementCompleted.AddListener(HandleUnifiedSaveEvent);
+
+        DailyMissionManager resolvedDailyMissionManager = EnsureDailyMissionManager();
+        resolvedDailyMissionManager.OnDailyMissionsChanged.AddListener(HandleUnifiedSaveEvent);
+        resolvedDailyMissionManager.OnDailyMissionCompleted.AddListener(HandleUnifiedSaveEvent);
+        resolvedDailyMissionManager.OnDailyMissionRewardClaimed.AddListener(HandleUnifiedSaveEvent);
+    }
+
+    private void UnsubscribeUnifiedSaveEvents()
+    {
+        OnCommanderLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        commandCenter?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        commandCenter?.OnBossTicketsChanged.RemoveListener(HandleUnifiedSaveEvent);
+        energyRefinery?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        energyRefinery?.OnCreditsChanged.RemoveListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnMenuSelected.RemoveListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnMenuUnlocked.RemoveListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnWeaponEnhanced.RemoveListener(HandleUnifiedSaveEvent);
+        coreCharger?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        coreCharger?.OnUnitEnhanced.RemoveListener(HandleUnifiedSaveEvent);
+        TraitPointFacility?.OnTraitsChanged.RemoveListener(HandleUnifiedSaveEvent);
+
+        AchievementManager achievementManager = AchievementManager.Instance
+            ?? FindFirstObjectByType<AchievementManager>();
+        achievementManager?.OnAchievementsChanged.RemoveListener(HandleUnifiedSaveEvent);
+        achievementManager?.OnAchievementCompleted.RemoveListener(HandleUnifiedSaveEvent);
+
+        if (dailyMissionManager != null)
+        {
+            dailyMissionManager.OnDailyMissionsChanged.RemoveListener(HandleUnifiedSaveEvent);
+            dailyMissionManager.OnDailyMissionCompleted.RemoveListener(HandleUnifiedSaveEvent);
+            dailyMissionManager.OnDailyMissionRewardClaimed.RemoveListener(HandleUnifiedSaveEvent);
+        }
+    }
+
+    private void HandleUnifiedSaveEvent()
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void HandleUnifiedSaveEvent(int value)
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void HandleUnifiedSaveEvent(string value)
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void HandleUnifiedSaveEvent(ProjectileConfig weaponConfig, int level)
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void HandleUnifiedSaveEvent(PlayerUnitConfig unitConfig, int level)
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void HandleUnifiedSaveEvent(AchievementManager.AchievementEntry achievement)
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void HandleUnifiedSaveEvent(DailyMissionManager.DailyMissionEntry mission)
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void SaveUnifiedGameIfReady()
+    {
+        if (autoSaveUnifiedState && unifiedSaveReady)
+        {
+            SaveUnifiedGame();
+        }
+    }
+
+    private static long GetCurrentUnixTime()
+    {
+        return DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     }
 }
 
