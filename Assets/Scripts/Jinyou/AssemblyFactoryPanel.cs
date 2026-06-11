@@ -11,7 +11,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [SerializeField] private Button skillMenuButton;
     [SerializeField] private Button partsMenuButton;
     [SerializeField] private Button weaponEnhanceButton;
-    [SerializeField] private Button closeButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text weaponEnhanceText;
@@ -38,7 +37,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
         skillMenuButton?.onClick.AddListener(OpenWeaponSelection);
         partsMenuButton?.onClick.AddListener(OpenDroneSelection);
         weaponEnhanceButton?.onClick.AddListener(EnhanceSelected);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
@@ -48,7 +46,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
         skillMenuButton?.onClick.RemoveListener(OpenWeaponSelection);
         partsMenuButton?.onClick.RemoveListener(OpenDroneSelection);
         weaponEnhanceButton?.onClick.RemoveListener(EnhanceSelected);
-        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void OnDestroy()
@@ -83,7 +80,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
         mechMenuButton = mech;
         skillMenuButton = skill;
         partsMenuButton = parts;
-        closeButton = close;
         levelText = level;
         upgradeText = upgradeLabel;
         selectedMenuText = selectedMenu;

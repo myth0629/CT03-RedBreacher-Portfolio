@@ -344,6 +344,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 312005978914795150, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 470816713723182658, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
@@ -360,6 +364,10 @@ PrefabInstance:
       propertyPath: baseCampManager
       value: 
       objectReference: {fileID: 1014545411}
+    - target: {fileID: 1745294116167952554, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3308468766648349158, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
@@ -380,6 +388,10 @@ PrefabInstance:
       propertyPath: baseCampManager
       value: 
       objectReference: {fileID: 1014545411}
+    - target: {fileID: 3730999893816065883, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3798514534424420286, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
@@ -388,15 +400,15 @@ PrefabInstance:
       propertyPath: baseCampManager
       value: 
       objectReference: {fileID: 1014545411}
+    - target: {fileID: 4405127953282678508, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 4518451818696574336, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
       objectReference: {fileID: 1014545411}
     - target: {fileID: 4581351486435730668, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
-      propertyPath: baseCampManager
-      value: 
-      objectReference: {fileID: 1014545411}
-    - target: {fileID: 4709250552992776755, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
       objectReference: {fileID: 1014545411}
@@ -416,10 +428,10 @@ PrefabInstance:
       propertyPath: uiCamera
       value: 
       objectReference: {fileID: 1520222790}
-    - target: {fileID: 8066542686855589667, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
-      propertyPath: baseCampManager
+    - target: {fileID: 7974653099875783120, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: loadoutSelectionPanel
       value: 
-      objectReference: {fileID: 1014545411}
+      objectReference: {fileID: 0}
     - target: {fileID: 8202966004120693924, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
@@ -508,6 +520,10 @@ PrefabInstance:
       propertyPath: baseCampManager
       value: 
       objectReference: {fileID: 1014545411}
+    - target: {fileID: 9133624897412737851, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -557,9 +573,16 @@ MonoBehaviour:
   - {fileID: 0}
   closePanelsOnStart: 1
   commanderLevel: 100
+  syncCommanderLevelFromPlayerProgression: 1
   credits: 50000
   currencyWallet: {fileID: 0}
   playerProgression: {fileID: 0}
+  useUnifiedSave: 1
+  autoSaveUnifiedState: 1
+  unifiedSaveKey: Jinyou.SaveData
+  enableAutomation: 1
+  autoCollectUnlockCommandCenterLevel: 2
+  autoCollectIntervalSeconds: 5
   showDebugPanel: 0
   debugPanelRect:
     serializedVersion: 2
@@ -574,6 +597,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   OnCommanderLevelChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnOfflineRewardsClaimed:
     m_PersistentCalls:
       m_Calls: []
 --- !u!4 &1014545412
