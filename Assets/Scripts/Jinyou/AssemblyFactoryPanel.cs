@@ -35,8 +35,8 @@ public class AssemblyFactoryPanel : MonoBehaviour
     {
         ResolveReferences();
         upgradeButton?.onClick.AddListener(UpgradeFactory);
-        weaponMenuButton?.onClick.AddListener(OpenWeaponSelection);
-        mechMenuButton?.onClick.AddListener(OpenDroneSelection);
+        skillMenuButton?.onClick.AddListener(OpenWeaponSelection);
+        partsMenuButton?.onClick.AddListener(OpenDroneSelection);
         weaponEnhanceButton?.onClick.AddListener(EnhanceSelected);
         closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
@@ -45,8 +45,8 @@ public class AssemblyFactoryPanel : MonoBehaviour
     private void OnDisable()
     {
         upgradeButton?.onClick.RemoveListener(UpgradeFactory);
-        weaponMenuButton?.onClick.RemoveListener(OpenWeaponSelection);
-        mechMenuButton?.onClick.RemoveListener(OpenDroneSelection);
+        skillMenuButton?.onClick.RemoveListener(OpenWeaponSelection);
+        partsMenuButton?.onClick.RemoveListener(OpenDroneSelection);
         weaponEnhanceButton?.onClick.RemoveListener(EnhanceSelected);
         closeButton?.onClick.RemoveListener(ClosePanel);
     }
@@ -185,10 +185,10 @@ public class AssemblyFactoryPanel : MonoBehaviour
                 researchLabLevel));
         }
 
-        SetButtonLabel(weaponMenuButton, assemblyFactory.SelectedWeaponConfig != null
+        SetButtonLabel(skillMenuButton, assemblyFactory.SelectedWeaponConfig != null
             ? $"Weapon: {assemblyFactory.SelectedWeaponConfig.DisplayName}"
             : "Select Weapon");
-        SetButtonLabel(mechMenuButton, assemblyFactory.SelectedDroneConfig != null
+        SetButtonLabel(partsMenuButton, assemblyFactory.SelectedDroneConfig != null
             ? $"Drone: {assemblyFactory.SelectedDroneConfig.DisplayName}"
             : "Select Drone");
         SetButtonLabel(weaponEnhanceButton, droneMode
@@ -200,13 +200,23 @@ public class AssemblyFactoryPanel : MonoBehaviour
                 ? "Factory MAX"
                 : $"Upgrade Factory ({assemblyFactory.UpgradeCost})");
 
-        SetActive(weaponMenuButton != null ? weaponMenuButton.gameObject : null, true);
-        SetActive(mechMenuButton != null ? mechMenuButton.gameObject : null, true);
+        SetActive(weaponMenuButton != null ? weaponMenuButton.gameObject : null, false);
+        SetActive(mechMenuButton != null ? mechMenuButton.gameObject : null, false);
         SetActive(weaponEnhanceButton != null ? weaponEnhanceButton.gameObject : null, true);
         SetActive(upgradeButton != null ? upgradeButton.gameObject : null, true);
-        SetActive(skillMenuButton != null ? skillMenuButton.gameObject : null, false);
-        SetActive(partsMenuButton != null ? partsMenuButton.gameObject : null, false);
+        SetActive(skillMenuButton != null ? skillMenuButton.gameObject : null, true);
+        SetActive(partsMenuButton != null ? partsMenuButton.gameObject : null, true);
         SetActive(weaponInventoryArea, false);
+
+        if (skillMenuButton != null)
+        {
+            skillMenuButton.interactable = true;
+        }
+
+        if (partsMenuButton != null)
+        {
+            partsMenuButton.interactable = true;
+        }
 
         if (upgradeButton != null && baseCampManager != null)
         {
