@@ -120,6 +120,8 @@ public class DailyMissionManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private bool resetByLocalDate = true;
+    [SerializeField] private bool saveToPlayerPrefs = true;
+    [SerializeField] private string saveKey = "DailyMissionManager.SaveData";
 
     [Header("Missions")]
     [SerializeField] private List<DailyMissionEntry> missions = new List<DailyMissionEntry>
@@ -153,7 +155,20 @@ public class DailyMissionManager : MonoBehaviour
 
         Instance = this;
         ValidateMissions();
-        ResetForDateIfNeeded(GetCurrentDateKey());
+        Load();
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+            Save();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        Save();
     }
 
     private void OnDestroy()
@@ -201,7 +216,7 @@ public class DailyMissionManager : MonoBehaviour
 
     public void AddProgress(DailyMissionType missionType, int amount)
     {
-        ResetForDateIfNeeded(GetCurrentDateKey());
+        bool dateChanged = ResetForDateIfNeeded(GetCurrentDateKey());
 
         bool changed = false;
         foreach (DailyMissionEntry mission in missions)
@@ -219,22 +234,30 @@ public class DailyMissionManager : MonoBehaviour
             }
         }
 
-        if (changed)
+        if (dateChanged || changed)
         {
+            Save();
             OnDailyMissionsChanged.Invoke();
         }
     }
 
     public bool TryClaimReward(string missionId)
     {
-        ResetForDateIfNeeded(GetCurrentDateKey());
+        bool dateChanged = ResetForDateIfNeeded(GetCurrentDateKey());
 
         DailyMissionEntry mission = missions.Find(item => item != null && item.Id == missionId);
         if (mission == null || !mission.TryClaim(ResolveCurrencyWallet()))
         {
+            if (dateChanged)
+            {
+                Save();
+                OnDailyMissionsChanged.Invoke();
+            }
+
             return false;
         }
 
+        Save();
         OnDailyMissionRewardClaimed.Invoke(mission);
         OnDailyMissionsChanged.Invoke();
         return true;
@@ -243,12 +266,20 @@ public class DailyMissionManager : MonoBehaviour
     [ContextMenu("Claim All Daily Mission Rewards")]
     public void ClaimAllRewards()
     {
+        bool dateChanged = ResetForDateIfNeeded(GetCurrentDateKey());
+        bool changed = false;
         foreach (DailyMissionEntry mission in missions)
         {
             if (mission != null && mission.TryClaim(ResolveCurrencyWallet()))
             {
+                changed = true;
                 OnDailyMissionRewardClaimed.Invoke(mission);
             }
+        }
+
+        if (dateChanged || changed)
+        {
+            Save();
         }
 
         OnDailyMissionsChanged.Invoke();
@@ -256,8 +287,16 @@ public class DailyMissionManager : MonoBehaviour
 
     public JinyouDailyMissionSaveData CaptureState()
     {
-        ResetForDateIfNeeded(GetCurrentDateKey());
+        if (ResetForDateIfNeeded(GetCurrentDateKey()))
+        {
+            Save();
+        }
 
+        return CreateSaveData();
+    }
+
+    private JinyouDailyMissionSaveData CreateSaveData()
+    {
         JinyouDailyMissionSaveData data = new JinyouDailyMissionSaveData
         {
             dateKey = dateKey
@@ -289,6 +328,7 @@ public class DailyMissionManager : MonoBehaviour
         if (data == null || string.IsNullOrWhiteSpace(data.dateKey) || data.dateKey != currentDateKey)
         {
             ResetForDateIfNeeded(currentDateKey, true);
+            Save();
             OnDailyMissionsChanged.Invoke();
             return;
         }
@@ -308,6 +348,7 @@ public class DailyMissionManager : MonoBehaviour
             }
         }
 
+        Save();
         OnDailyMissionsChanged.Invoke();
     }
 
@@ -315,14 +356,15 @@ public class DailyMissionManager : MonoBehaviour
     public void ResetToday()
     {
         ResetForDateIfNeeded(GetCurrentDateKey(), true);
+        Save();
         OnDailyMissionsChanged.Invoke();
     }
 
-    private void ResetForDateIfNeeded(string currentDateKey, bool force = false)
+    private bool ResetForDateIfNeeded(string currentDateKey, bool force = false)
     {
         if (!force && dateKey == currentDateKey)
         {
-            return;
+            return false;
         }
 
         dateKey = currentDateKey;
@@ -330,6 +372,52 @@ public class DailyMissionManager : MonoBehaviour
         {
             mission?.ResetProgress();
         }
+
+        return true;
+    }
+
+    private void Load()
+    {
+        string currentDateKey = GetCurrentDateKey();
+        if (!saveToPlayerPrefs
+            || string.IsNullOrWhiteSpace(saveKey)
+            || !PlayerPrefs.HasKey(saveKey))
+        {
+            ResetForDateIfNeeded(currentDateKey, true);
+            Save();
+            return;
+        }
+
+        string json = PlayerPrefs.GetString(saveKey, string.Empty);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            ResetForDateIfNeeded(currentDateKey, true);
+            Save();
+            return;
+        }
+
+        try
+        {
+            // 통합 저장이 없어도 당일 미션 진행도를 자체 복원한다.
+            RestoreState(JsonUtility.FromJson<JinyouDailyMissionSaveData>(json));
+        }
+        catch (ArgumentException exception)
+        {
+            Debug.LogWarning($"일일 미션 저장 데이터를 읽지 못했습니다: {exception.Message}", this);
+            ResetForDateIfNeeded(currentDateKey, true);
+            Save();
+        }
+    }
+
+    private void Save()
+    {
+        if (!saveToPlayerPrefs || string.IsNullOrWhiteSpace(saveKey))
+        {
+            return;
+        }
+
+        PlayerPrefs.SetString(saveKey, JsonUtility.ToJson(CreateSaveData()));
+        PlayerPrefs.Save();
     }
 
     private string GetCurrentDateKey()

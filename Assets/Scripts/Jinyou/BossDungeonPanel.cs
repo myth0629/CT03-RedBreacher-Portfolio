@@ -124,7 +124,10 @@ public class BossDungeonPanel : MonoBehaviour
             string state = bossDungeon.IsDifficultyUnlocked(difficulty)
                 ? "OPEN"
                 : $"Research Lv.{difficulty.requiredResearchLabLevel}";
-            summary += $"{difficulty.displayName}: {state} / {difficulty.rewardSummary}\n";
+            summary += $"{difficulty.displayName}: {state}"
+                + $" / 크레딧 {difficulty.ClearCreditReward}"
+                + $" / 코어 {difficulty.ClearCoreCrystalReward}"
+                + $" / {bossDungeon.GetRecordSummary(difficulty)}\n";
         }
 
         return summary.TrimEnd();

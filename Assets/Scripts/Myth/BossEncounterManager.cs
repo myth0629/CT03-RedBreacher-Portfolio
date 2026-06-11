@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class BossEncounterManager : MonoBehaviour
@@ -14,6 +15,7 @@ public class BossEncounterManager : MonoBehaviour
     private bool encounterActive;
 
     public bool IsEncounterActive => encounterActive;
+    public event Action<bool> EncounterEnded;
 
     private void Awake()
     {
@@ -89,6 +91,7 @@ public class BossEncounterManager : MonoBehaviour
         activeBossHealth = null;
         bossEncounterHud?.Hide();
         enemySpawnManager?.ResumePausedRound();
+        EncounterEnded?.Invoke(true);
     }
 
     private void HandlePlayerDefeat()
@@ -103,6 +106,12 @@ public class BossEncounterManager : MonoBehaviour
         activeBossHealth = null;
         bossEncounterHud?.Hide();
         enemySpawnManager?.CancelBossEncounterForPlayerDeath();
+        EncounterEnded?.Invoke(false);
+    }
+
+    public void ShowResult(string title, string detail, bool success)
+    {
+        bossEncounterHud?.ShowResult(title, detail, success);
     }
 
     private void ResolveReferences()

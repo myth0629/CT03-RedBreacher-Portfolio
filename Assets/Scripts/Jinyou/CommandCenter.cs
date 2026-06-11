@@ -164,6 +164,12 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         return true;
     }
 
+    public void RefundBossTicket()
+    {
+        // 소환 시작에 실패한 경우에만 이미 차감한 티켓을 복구한다.
+        AddBossTicket();
+    }
+
     public int ProduceBossTicketsOffline(float elapsedSeconds)
     {
         if (elapsedSeconds <= 0f || bossTickets >= bossTicketCapacity)
