@@ -75,7 +75,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         if (coreCharger == null)
         {
-            SetText(upgradeConditionText, "Core Charger is not connected.");
+            SetText(upgradeConditionText, "코어 충전소가 연결되지 않았습니다.");
             SetUnitPreview(currentUnitPreviewImage, null);
             SetInteractable(upgradeButton, false);
             SetInteractable(enhanceUnitButton, false);
@@ -89,14 +89,14 @@ public class CoreChargerPanel : MonoBehaviour
             ? baseCampManager.CommandCenter.Level
             : 1;
 
-        SetText(levelText, $"Core Charger Lv. {coreCharger.Level}");
+        SetText(levelText, $"코어 충전소 레벨 {coreCharger.Level}");
         SetText(upgradeText, coreCharger.IsUpgrading
-            ? $"Upgrading... {coreCharger.UpgradeRemainingSeconds:0}s"
-            : $"Upgrade ({coreCharger.UpgradeCost} Credits)");
-        SetText(selectedUnitText, stage != null ? stage.DisplayName : "All conversions complete");
+            ? $"업그레이드 중... {coreCharger.UpgradeRemainingSeconds:0}초"
+            : $"업그레이드 ({coreCharger.UpgradeCost} 크레딧)");
+        SetText(selectedUnitText, stage != null ? stage.DisplayName : "모든 변환 완료");
         SetUnitPreview(currentUnitPreviewImage, stage?.currentUnit);
         SetText(unitSoTransitionText, BuildUnitSoTransitionText(stage));
-        SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
+        SetText(upgradeConditionText, BuildUpgradeConditionText(
             coreCharger,
             baseCampManager != null ? baseCampManager.Credits : 0,
             baseCampManager != null ? baseCampManager.CommanderLevel : 1,
@@ -109,7 +109,7 @@ public class CoreChargerPanel : MonoBehaviour
         SetInteractable(enhanceUnitButton, canConvert);
         SetText(enhanceUnitButton != null
             ? enhanceUnitButton.GetComponentInChildren<TMP_Text>(true)
-            : null, stage != null ? "Enhance Unit" : "Complete");
+            : null, stage != null ? "유닛 강화" : "완료");
 
         BaseCampUpgradeStatus.SetUpgradeProgress(
             upgradeProgressFill,
@@ -126,71 +126,121 @@ public class CoreChargerPanel : MonoBehaviour
         if (stage == null)
         {
             return coreCharger.ConversionStages.Count == 0
-                ? "No unit SO conversion stages configured."
-                : "All unit SO conversions are complete.";
+                ? "유닛 SO 변환 단계가 설정되지 않았습니다."
+                : "모든 유닛 SO 변환이 완료되었습니다.";
         }
 
         if (!stage.IsConfigured)
         {
-            return "Assign the current and next Unit SO.";
+            return "현재 및 다음 유닛 SO를 지정하세요.";
         }
 
         int requiredCoreLevel = coreCharger.GetRequiredCoreChargerLevel(coreCharger.CurrentStageIndex);
-        string stageText = $"Stage {coreCharger.CurrentStageIndex + 1}/{coreCharger.ConversionStages.Count}"
-            + $" | Player Lv.{stage.requiredPlayerLevel}"
-            + $" | Core Charger Lv.{requiredCoreLevel}";
+        string stageText = $"단계 {coreCharger.CurrentStageIndex + 1}/{coreCharger.ConversionStages.Count}"
+            + $" | 플레이어 레벨 {stage.requiredPlayerLevel}"
+            + $" | 코어 충전소 레벨 {requiredCoreLevel}";
 
         if (playerLevel < stage.requiredPlayerLevel)
         {
-            return $"{stageText}\nRequires Player Lv. {stage.requiredPlayerLevel}";
+            return $"{stageText}\n플레이어 레벨 {stage.requiredPlayerLevel} 필요";
         }
 
         if (coreCharger.Level < requiredCoreLevel)
         {
-            return $"{stageText}\nUpgrade Core Charger to Lv. {requiredCoreLevel}";
+            return $"{stageText}\n코어 충전소 레벨 {requiredCoreLevel} 필요";
         }
 
         bool ownsCurrent = inventory != null && inventory.ContainsUnit(stage.currentUnit);
         bool equippedCurrent = player != null && player.UnitConfig == stage.currentUnit;
         if (!ownsCurrent && !equippedCurrent)
         {
-            return $"{stageText}\nRequires {stage.currentUnit.DisplayName}";
+            return $"{stageText}\n{stage.currentUnit.DisplayName} 필요";
         }
 
-        return $"{stageText}\nReady to convert";
+        return $"{stageText}\n변환 준비 완료";
     }
 
     private static string BuildUnitSoTransitionText(CoreCharger.UnitConversionStage stage)
     {
         if (stage == null)
         {
-            return "No pending Unit SO conversion";
+            return "대기 중인 유닛 SO 변환 없음";
         }
 
         if (stage.currentUnit == null || stage.nextUnit == null)
         {
-            return $"Before SO: {FormatUnitSo(stage.currentUnit)}\n"
-                + $"After SO: {FormatUnitSo(stage.nextUnit)}";
+            return $"변환 전 SO: {FormatUnitSo(stage.currentUnit)}\n"
+                + $"변환 후 SO: {FormatUnitSo(stage.nextUnit)}";
         }
 
         PlayerUnitConfig current = stage.currentUnit;
         PlayerUnitConfig next = stage.nextUnit;
         return $"{FormatUnitSo(current)} -> {FormatUnitSo(next)}\n"
-            + $"HP: {FormatStatChange(current.MaxHealth, next.MaxHealth)}\n"
-            + $"Attack: {FormatStatChange(current.AttackDamage, next.AttackDamage)}\n"
-            + $"Attack Range: {FormatStatChange(current.AttackRange, next.AttackRange)}\n"
-            + $"Attack Interval: {FormatStatChange(current.AttackInterval, next.AttackInterval)}\n"
-            + $"Move Speed: {FormatStatChange(current.MoveSpeed, next.MoveSpeed)}\n"
-            + $"Rotation Speed: {FormatStatChange(current.RotationSpeed, next.RotationSpeed)}\n"
-            + $"Crit Chance: {FormatPercentChange(current.CritChance, next.CritChance)}\n"
-            + $"Crit Damage: {FormatMultiplierChange(current.CritMultiplier, next.CritMultiplier)}";
+            + $"체력: {FormatStatChange(current.MaxHealth, next.MaxHealth)}\n"
+            + $"공격력: {FormatStatChange(current.AttackDamage, next.AttackDamage)}\n"
+            + $"공격 범위: {FormatStatChange(current.AttackRange, next.AttackRange)}\n"
+            + $"공격 간격: {FormatStatChange(current.AttackInterval, next.AttackInterval)}\n"
+            + $"이동 속도: {FormatStatChange(current.MoveSpeed, next.MoveSpeed)}\n"
+            + $"회전 속도: {FormatStatChange(current.RotationSpeed, next.RotationSpeed)}\n"
+            + $"치명타 확률: {FormatPercentChange(current.CritChance, next.CritChance)}\n"
+            + $"치명타 피해: {FormatMultiplierChange(current.CritMultiplier, next.CritMultiplier)}";
     }
 
     private static string FormatUnitSo(PlayerUnitConfig unitConfig)
     {
         return unitConfig != null
-            ? $"{unitConfig.name} ({unitConfig.DisplayName})"
-            : "Unassigned";
+            ? unitConfig.DisplayName
+            : "미지정";
+    }
+
+    private static string BuildUpgradeConditionText(
+        IBaseCampFacility facility,
+        int credits,
+        int commanderLevel,
+        int researchLabLevel)
+    {
+        if (facility == null)
+        {
+            return "시설이 연결되지 않았습니다.";
+        }
+
+        if (facility.IsUpgrading)
+        {
+            return $"업그레이드 중... {facility.UpgradeRemainingSeconds:0}초 남음";
+        }
+
+        if (researchLabLevel < facility.RequiredResearchLabLevel)
+        {
+            return $"연구소 레벨 {facility.RequiredResearchLabLevel} 필요";
+        }
+
+        int levelLimit = facility.GetLevelLimit(researchLabLevel);
+        if (facility.Level >= levelLimit && facility.Level < facility.MaxLevel)
+        {
+            return $"현재 최대 레벨: {levelLimit}. 연구소를 업그레이드하세요.";
+        }
+
+        if (facility.Level >= facility.MaxLevel)
+        {
+            return "최대 레벨에 도달했습니다.";
+        }
+
+        if (credits < facility.UpgradeCost)
+        {
+            return $"{facility.UpgradeCost - credits} 크레딧 부족";
+        }
+
+        if (commanderLevel < facility.RequiredCommanderLevel)
+        {
+            return $"지휘관 레벨 {facility.RequiredCommanderLevel} 필요";
+        }
+
+        if (facility.CanStartUpgrade(credits, commanderLevel, researchLabLevel))
+        {
+            return "업그레이드 가능";
+        }
+
+        return "최대 레벨에 도달했습니다.";
     }
 
     private static string FormatStatChange(float current, float next)
