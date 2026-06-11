@@ -49,7 +49,7 @@ public class BaseCampHud : MonoBehaviour
 
         if (baseCampManager == null)
         {
-            SetText(commanderLevelText, "플레이어 Lv. --");
+            SetText(commanderLevelText, "지휘관 Lv. --");
             SetText(bossTicketText, "티켓 --/--");
             SetText(refineryStorageText, "--/--");
             SetFill(refineryStorageFill, 0f);
@@ -58,7 +58,7 @@ public class BaseCampHud : MonoBehaviour
 
         CommandCenter researchLab = baseCampManager.CommandCenter;
         EnergyRefinery refinery = baseCampManager.EnergyRefinery;
-        SetText(commanderLevelText, $"플레이어 Lv. {baseCampManager.CommanderLevel}");
+        SetText(commanderLevelText, $"지휘관 Lv. {baseCampManager.CommanderLevel}");
 
         if (researchLab != null)
         {

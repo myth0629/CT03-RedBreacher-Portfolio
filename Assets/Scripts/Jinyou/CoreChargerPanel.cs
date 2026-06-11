@@ -89,10 +89,10 @@ public class CoreChargerPanel : MonoBehaviour
             ? baseCampManager.CommandCenter.Level
             : 1;
 
-        SetText(levelText, $"코어 충전소 레벨 {coreCharger.Level}");
+        SetText(levelText, $"Lv. {coreCharger.Level}");
         SetText(upgradeText, coreCharger.IsUpgrading
-            ? $"업그레이드 중... {coreCharger.UpgradeRemainingSeconds:0}초"
-            : $"업그레이드 ({coreCharger.UpgradeCost} 크레딧)");
+            ? $"완료까지 {coreCharger.UpgradeRemainingSeconds:0}초"
+            : $"기지 업그레이드 ({coreCharger.UpgradeCost} 크레딧)");
         SetText(selectedUnitText, stage != null ? stage.DisplayName : "모든 변환 완료");
         SetUnitPreview(currentUnitPreviewImage, stage?.currentUnit);
         SetText(unitSoTransitionText, BuildUnitSoTransitionText(stage));
@@ -175,8 +175,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         PlayerUnitConfig current = stage.currentUnit;
         PlayerUnitConfig next = stage.nextUnit;
-        return $"{FormatUnitSo(current)} -> {FormatUnitSo(next)}\n"
-            + $"체력: {FormatStatChange(current.MaxHealth, next.MaxHealth)}\n"
+        return $"체력: {FormatStatChange(current.MaxHealth, next.MaxHealth)}\n"
             + $"공격력: {FormatStatChange(current.AttackDamage, next.AttackDamage)}\n"
             + $"공격 범위: {FormatStatChange(current.AttackRange, next.AttackRange)}\n"
             + $"공격 간격: {FormatStatChange(current.AttackInterval, next.AttackInterval)}\n"
@@ -232,7 +231,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         if (commanderLevel < facility.RequiredCommanderLevel)
         {
-            return $"지휘관 레벨 {facility.RequiredCommanderLevel} 필요";
+            return $"지휘관 Lv.{facility.RequiredCommanderLevel} 필요";
         }
 
         if (facility.CanStartUpgrade(credits, commanderLevel, researchLabLevel))
@@ -245,20 +244,20 @@ public class CoreChargerPanel : MonoBehaviour
 
     private static string FormatStatChange(float current, float next)
     {
-        return $"{current:0.##} -> {next:0.##} ({next - current:+0.##;-0.##;0})";
+        return $"{current:0.##} -> <color=#4AD787>{next:0.##} ({next - current:+0.##;-0.##;0})</color>";
     }
 
     private static string FormatPercentChange(float current, float next)
     {
         float currentPercent = current * 100f;
         float nextPercent = next * 100f;
-        return $"{currentPercent:0.##}% -> {nextPercent:0.##}% "
-            + $"({nextPercent - currentPercent:+0.##;-0.##;0}%p)";
+        return $"{currentPercent:0.##}% -> <color=#4AD787>{nextPercent:0.##}% "
+            + $"({nextPercent - currentPercent:+0.##;-0.##;0}%p)</color>";
     }
 
     private static string FormatMultiplierChange(float current, float next)
     {
-        return $"x{current:0.##} -> x{next:0.##} ({next - current:+0.##;-0.##;0})";
+        return $"x{current:0.##} -> <color=#4AD787>x{next:0.##} ({next - current:+0.##;-0.##;0})</color>";
     }
 
     private int GetPlayerLevel()
