@@ -38,6 +38,7 @@ public static class BalanceCsvImporter
         ImportEquipmentParts();
         ImportGachaWeapons();
         ImportGachaSkills();
+        BaseCampBalanceCsvImporter.Import();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("밸런스 CSV 임포트 완료");

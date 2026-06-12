@@ -5,6 +5,7 @@ using UnityEngine.Events;
 
 public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 {
+    private const string FacilityId = "assembly_factory";
     private const string WeaponEnhancementSaveKey = "AssemblyFactory.WeaponEnhancements";
 
     [Serializable]
@@ -37,50 +38,10 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         public string displayName;
         public int requiredFactoryLevel = 1;
         public bool unlocked;
-        public int developmentLevel;
-        public int maxDevelopmentLevel = 5;
-        public int developmentCost = 150;
-        public List<int> developmentCostByLevel = new List<int>();
-        public float powerBonusPerLevel = 0.02f;
-
-        public int MaxDevelopmentLevel => Mathf.Max(1, maxDevelopmentLevel);
-        public bool IsMaxDevelopmentLevel => developmentLevel >= MaxDevelopmentLevel;
-        public int NextDevelopmentCost => GetDevelopmentCost(developmentLevel);
-        public float PowerBonus => Mathf.Max(0, developmentLevel) * Mathf.Max(0f, powerBonusPerLevel);
-
-        public int GetDevelopmentCost(int levelIndex)
-        {
-            if (levelIndex < 0 || levelIndex >= MaxDevelopmentLevel)
-            {
-                return 0;
-            }
-
-            if (developmentCostByLevel != null && levelIndex < developmentCostByLevel.Count)
-            {
-                return Mathf.Max(0, developmentCostByLevel[levelIndex]);
-            }
-
-            return Mathf.Max(0, developmentCost);
-        }
 
         public void Normalize()
         {
             requiredFactoryLevel = Mathf.Max(1, requiredFactoryLevel);
-            maxDevelopmentLevel = Mathf.Max(1, maxDevelopmentLevel);
-            developmentLevel = Mathf.Clamp(developmentLevel, 0, maxDevelopmentLevel);
-            developmentCost = Mathf.Max(0, developmentCost);
-            powerBonusPerLevel = Mathf.Max(0f, powerBonusPerLevel);
-            developmentCostByLevel ??= new List<int>();
-
-            while (developmentCostByLevel.Count < maxDevelopmentLevel)
-            {
-                developmentCostByLevel.Add(developmentCost);
-            }
-
-            for (int i = 0; i < developmentCostByLevel.Count; i++)
-            {
-                developmentCostByLevel[i] = Mathf.Max(0, developmentCostByLevel[i]);
-            }
         }
     }
 
@@ -126,7 +87,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         public ProjectileConfig weaponConfig;
         public string displayNameOverride;
         public int enhanceLevel;
-        [Min(1)] public int baseMaxEnhanceLevel = 10;
+        [NonSerialized] public int maxEnhanceLevel;
         public List<WeaponEnhancementLevel> enhancementLevels = new List<WeaponEnhancementLevel>
         {
             new WeaponEnhancementLevel()
@@ -145,7 +106,9 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             }
         }
 
-        public int MaxEnhanceLevel => enhancementLevels != null ? enhancementLevels.Count : 0;
+        public int MaxEnhanceLevel => enhancementLevels != null
+            ? Mathf.Min(maxEnhanceLevel, enhancementLevels.Count)
+            : 0;
         public int NextEnhanceCost => GetEnhancementLevel(enhanceLevel)?.cost ?? 0;
         public bool IsMaxLevel => enhanceLevel >= MaxEnhanceLevel;
 
@@ -185,7 +148,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         public void Normalize()
         {
             enhanceLevel = Mathf.Max(0, enhanceLevel);
-            baseMaxEnhanceLevel = Mathf.Max(1, baseMaxEnhanceLevel);
 
             if (enhancementLevels == null)
             {
@@ -197,7 +159,10 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
                 level?.Normalize();
             }
 
-            enhanceLevel = Mathf.Min(enhanceLevel, MaxEnhanceLevel);
+            if (maxEnhanceLevel > 0)
+            {
+                enhanceLevel = Mathf.Min(enhanceLevel, MaxEnhanceLevel);
+            }
         }
     }
 
@@ -206,8 +171,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     {
         public DroneConfig droneConfig;
         [Min(0)] public int enhanceLevel;
-        [Min(1)] public int baseMaxEnhanceLevel = 10;
-        [Min(1)] public int maxEnhanceLevel = 10;
+        [NonSerialized] public int maxEnhanceLevel;
         [Min(0)] public int costPerEnhancement = 100;
         [Min(0f)] public float attackDamagePerLevel = 2f;
 
@@ -217,9 +181,10 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
         public void Normalize()
         {
-            baseMaxEnhanceLevel = Mathf.Max(1, baseMaxEnhanceLevel);
-            maxEnhanceLevel = Mathf.Max(baseMaxEnhanceLevel, maxEnhanceLevel);
-            enhanceLevel = Mathf.Clamp(enhanceLevel, 0, maxEnhanceLevel);
+            maxEnhanceLevel = Mathf.Max(0, maxEnhanceLevel);
+            enhanceLevel = maxEnhanceLevel > 0
+                ? Mathf.Clamp(enhanceLevel, 0, maxEnhanceLevel)
+                : Mathf.Max(0, enhanceLevel);
             costPerEnhancement = Mathf.Max(0, costPerEnhancement);
             attackDamagePerLevel = Mathf.Max(0f, attackDamagePerLevel);
         }
@@ -227,40 +192,27 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     [Header("Level")]
     [SerializeField] private int level = 1;
-    [SerializeField] private int maxLevel = 10;
-
-    [Header("Upgrade")]
-    [SerializeField] private int upgradeCost = 350;
-    [SerializeField] private List<int> upgradeCostByLevel = new List<int>();
-    [SerializeField] private int requiredCommanderLevel = 1;
-    [SerializeField] private List<int> requiredCommanderLevelByLevel = new List<int>();
-    [SerializeField] private int requiredResearchLabLevel = 2;
-    [SerializeField] private List<int> requiredResearchLabLevelByLevel = new List<int>();
-    [SerializeField] private float upgradeDurationSeconds = 10f;
-    [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
+    private int maxLevel = 1;
 
     [Header("Assembly Menus")]
     [SerializeField] private List<AssemblyMenu> menus = new List<AssemblyMenu>
     {
-        new AssemblyMenu { menuId = "weapon", displayName = "Weapon Upgrade", requiredFactoryLevel = 1, unlocked = true, developmentCost = 150, powerBonusPerLevel = 0.01f },
-        new AssemblyMenu { menuId = "drone", displayName = "Drone Enhancement", requiredFactoryLevel = 1, unlocked = true, developmentCost = 200, powerBonusPerLevel = 0.03f },
-        new AssemblyMenu { menuId = "skill", displayName = "Skill Upgrade", requiredFactoryLevel = 2, developmentCost = 250, powerBonusPerLevel = 0.025f },
-        new AssemblyMenu { menuId = "parts", displayName = "Parts Crafting", requiredFactoryLevel = 3, developmentCost = 300, powerBonusPerLevel = 0.02f }
+        new AssemblyMenu { menuId = "weapon", displayName = "Weapon Upgrade", requiredFactoryLevel = 1, unlocked = true },
+        new AssemblyMenu { menuId = "drone", displayName = "Drone Enhancement", requiredFactoryLevel = 1, unlocked = true },
+        new AssemblyMenu { menuId = "skill", displayName = "Skill Upgrade", requiredFactoryLevel = 2 },
+        new AssemblyMenu { menuId = "parts", displayName = "Parts Crafting", requiredFactoryLevel = 3 }
     };
 
     [Header("Weapon Enhancement")]
     [SerializeField] private List<WeaponEnhancement> weaponEnhancements = new List<WeaponEnhancement>();
     [SerializeField] private int selectedWeaponIndex;
-    [SerializeField, Min(1)] private int defaultWeaponMaxEnhanceLevel = 10;
-    [SerializeField, Min(1)] private int weaponMaxLevelIncreasePerFactoryLevel = 5;
+    [SerializeField] private bool saveWeaponEnhancementsToPlayerPrefs = true;
     [SerializeField, Min(0)] private int defaultWeaponEnhanceCost = 100;
     [SerializeField, Min(0f)] private float defaultWeaponAttackIncrease = 1f;
 
     [Header("Drone Enhancement")]
     [SerializeField] private List<DroneEnhancement> droneEnhancements = new List<DroneEnhancement>();
     [SerializeField] private int selectedDroneIndex;
-    [SerializeField, Min(1)] private int defaultDroneMaxEnhanceLevel = 10;
-    [SerializeField, Min(1)] private int droneMaxLevelIncreasePerFactoryLevel = 5;
     [SerializeField, Min(0)] private int defaultDroneEnhanceCost = 100;
     [SerializeField, Min(0f)] private float defaultDroneAttackIncrease = 2f;
 
@@ -277,6 +229,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     private string selectedMenuId;
     private bool isUpgrading;
+    private bool balanceReady;
     private float upgradeRemainingSeconds;
     private float currentUpgradeDurationSeconds;
     private readonly Dictionary<string, int> savedWeaponLevels = new Dictionary<string, int>();
@@ -306,12 +259,22 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     private void Awake()
     {
-        NormalizeUpgradeCosts();
-        NormalizeCommanderRequirements();
+        BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
+        string error = "기지 밸런스 설정을 찾을 수 없습니다.";
+        if (config != null && config.ValidateFacility(FacilityId, out maxLevel, out error))
+        {
+            balanceReady = true;
+        }
+        else
+        {
+            Debug.LogError($"조립 공장 밸런스 초기화 실패: {error}", this);
+        }
+
+        level = Mathf.Clamp(level, 1, maxLevel);
         NormalizeMenus();
+        ApplyFactoryEnhanceLevelCaps();
         NormalizeWeaponEnhancements();
         NormalizeDroneEnhancements();
-        ApplyFactoryEnhanceLevelCaps();
         LoadWeaponEnhancements();
         RefreshUnlocks();
     }
@@ -337,49 +300,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         selectedMenuId = menuId;
         OnMenuSelected.Invoke(menuId);
         return true;
-    }
-
-    public bool CanDevelopSelectedMenu(int credits)
-    {
-        AssemblyMenu selectedMenu = SelectedMenu;
-        return selectedMenu != null
-            && selectedMenu.unlocked
-            && !selectedMenu.IsMaxDevelopmentLevel
-            && credits >= selectedMenu.NextDevelopmentCost;
-    }
-
-    public bool TryDevelopSelectedMenu(ref int availableCredits)
-    {
-        if (!CanDevelopSelectedMenu(availableCredits))
-        {
-            return false;
-        }
-
-        AssemblyMenu selectedMenu = SelectedMenu;
-        availableCredits -= selectedMenu.NextDevelopmentCost;
-        selectedMenu.developmentLevel++;
-        OnMenuSelected.Invoke(selectedMenu.menuId);
-        return true;
-    }
-
-    public float GetMenuPowerBonus(string menuId)
-    {
-        AssemblyMenu menu = GetMenu(menuId);
-        return menu != null ? menu.PowerBonus : 0f;
-    }
-
-    public float GetTotalMenuPowerBonus()
-    {
-        float totalBonus = 0f;
-        foreach (AssemblyMenu menu in menus)
-        {
-            if (menu != null && menu.unlocked)
-            {
-                totalBonus += menu.PowerBonus;
-            }
-        }
-
-        return totalBonus;
     }
 
     public bool TrySelectWeapon(int index)
@@ -412,7 +332,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     public bool TrySelectDrone(DroneConfig droneConfig)
     {
-        if (droneConfig == null)
+        if (!IsMenuUnlocked("drone") || droneConfig == null)
         {
             return false;
         }
@@ -427,6 +347,16 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     public bool HasWeaponEnhancement(ProjectileConfig weaponConfig)
     {
         return FindWeaponEnhancement(weaponConfig) != null;
+    }
+
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveWeaponEnhancementsToPlayerPrefs = enabled;
+        if (clearStoredData)
+        {
+            PlayerPrefs.DeleteKey(WeaponEnhancementSaveKey);
+            PlayerPrefs.Save();
+        }
     }
 
     public JinyouAssemblyFactorySaveData CaptureState()
@@ -453,7 +383,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             data.menus.Add(new JinyouMenuSaveData
             {
                 menuId = menu.menuId,
-                developmentLevel = menu.developmentLevel,
                 unlocked = menu.unlocked
             });
         }
@@ -517,7 +446,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
                     continue;
                 }
 
-                menu.developmentLevel = menuData.developmentLevel;
                 menu.unlocked = menuData.unlocked;
                 menu.Normalize();
             }
@@ -689,12 +617,16 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     public bool CanUpgrade(int credits, int commanderLevel)
     {
-        return !isUpgrading && level < maxLevel && credits >= UpgradeCost && commanderLevel >= requiredCommanderLevel;
+        return balanceReady
+            && !isUpgrading
+            && level < maxLevel
+            && credits >= UpgradeCost
+            && commanderLevel >= RequiredCommanderLevel;
     }
 
     public int GetLevelLimit(int researchLabLevel)
     {
-        return Mathf.Min(maxLevel, Mathf.Max(1, researchLabLevel) + 2);
+        return maxLevel;
     }
 
     public bool CanStartUpgrade(int availableCredits, int commanderLevel, int researchLabLevel)
@@ -736,6 +668,11 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     public void CompleteUpgradeImmediately()
     {
         Upgrade();
+    }
+
+    public void AdvanceUpgradeOffline(float elapsedSeconds)
+    {
+        TickUpgrade(Mathf.Max(0f, elapsedSeconds));
     }
 
     private void StartUpgradeTimer()
@@ -818,13 +755,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     private float GetUpgradeDurationForCurrentLevel()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < upgradeDurationSecondsByLevel.Count)
-        {
-            return Mathf.Max(0f, upgradeDurationSecondsByLevel[index]);
-        }
-
-        return upgradeDurationSeconds;
+        return Mathf.Max(0f, GetCurrentBalance()?.upgradeSeconds ?? 0f);
     }
 
     private int GetUpgradeCostForCurrentLevel()
@@ -834,101 +765,17 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             return 0;
         }
 
-        int index = Mathf.Max(0, level - 1);
-        if (index < upgradeCostByLevel.Count)
-        {
-            return Mathf.Max(0, upgradeCostByLevel[index]);
-        }
-
-        return Mathf.Max(0, upgradeCost);
+        return Mathf.Max(0, GetCurrentBalance()?.upgradeCost ?? 0);
     }
 
     private int GetRequiredResearchLabLevelForCurrentUpgrade()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < requiredResearchLabLevelByLevel.Count)
-        {
-            return Mathf.Max(1, requiredResearchLabLevelByLevel[index]);
-        }
-
-        return Mathf.Max(1, requiredResearchLabLevel);
+        return GetCurrentBalance()?.requiredCommandCenterLevel ?? int.MaxValue;
     }
 
     private int GetRequiredCommanderLevelForCurrentUpgrade()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < requiredCommanderLevelByLevel.Count)
-        {
-            return Mathf.Max(1, requiredCommanderLevelByLevel[index]);
-        }
-
-        return Mathf.Max(1, requiredCommanderLevel);
-    }
-
-    private void NormalizeUpgradeDurations()
-    {
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (upgradeDurationSecondsByLevel.Count < targetCount)
-        {
-            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
-        }
-
-        for (int i = 0; i < upgradeDurationSecondsByLevel.Count; i++)
-        {
-            upgradeDurationSecondsByLevel[i] = Mathf.Max(0f, upgradeDurationSecondsByLevel[i]);
-        }
-    }
-
-    private void NormalizeResearchLabRequirements()
-    {
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (requiredResearchLabLevelByLevel.Count < targetCount)
-        {
-            requiredResearchLabLevelByLevel.Add(requiredResearchLabLevel);
-        }
-
-        for (int i = 0; i < requiredResearchLabLevelByLevel.Count; i++)
-        {
-            requiredResearchLabLevelByLevel[i] = Mathf.Max(1, requiredResearchLabLevelByLevel[i]);
-        }
-    }
-
-    private void NormalizeUpgradeCosts()
-    {
-        if (upgradeCostByLevel == null)
-        {
-            upgradeCostByLevel = new List<int>();
-        }
-
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (upgradeCostByLevel.Count < targetCount)
-        {
-            upgradeCostByLevel.Add(upgradeCost);
-        }
-
-        for (int i = 0; i < upgradeCostByLevel.Count; i++)
-        {
-            upgradeCostByLevel[i] = Mathf.Max(0, upgradeCostByLevel[i]);
-        }
-    }
-
-    private void NormalizeCommanderRequirements()
-    {
-        if (requiredCommanderLevelByLevel == null)
-        {
-            requiredCommanderLevelByLevel = new List<int>();
-        }
-
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (requiredCommanderLevelByLevel.Count < targetCount)
-        {
-            requiredCommanderLevelByLevel.Add(requiredCommanderLevel);
-        }
-
-        for (int i = 0; i < requiredCommanderLevelByLevel.Count; i++)
-        {
-            requiredCommanderLevelByLevel[i] = Mathf.Max(1, requiredCommanderLevelByLevel[i]);
-        }
+        return GetCurrentBalance()?.requiredCommanderLevel ?? int.MaxValue;
     }
 
     private void NormalizeMenus()
@@ -977,7 +824,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         WeaponEnhancement enhancement = new WeaponEnhancement
         {
             weaponConfig = weaponConfig,
-            baseMaxEnhanceLevel = defaultWeaponMaxEnhanceLevel,
+            maxEnhanceLevel = GetWeaponEnhanceLevelCap(),
             enhancementLevels = new List<WeaponEnhancementLevel>()
         };
 
@@ -996,7 +843,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         DroneEnhancement enhancement = new DroneEnhancement
         {
             droneConfig = droneConfig,
-            baseMaxEnhanceLevel = defaultDroneMaxEnhanceLevel,
             maxEnhanceLevel = GetDroneEnhanceLevelCap(),
             costPerEnhancement = defaultDroneEnhanceCost,
             attackDamagePerLevel = defaultDroneAttackIncrease
@@ -1081,6 +927,9 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     private void ApplyFactoryEnhanceLevelCaps()
     {
+        weaponEnhancements ??= new List<WeaponEnhancement>();
+        droneEnhancements ??= new List<DroneEnhancement>();
+
         int weaponCap = GetWeaponEnhanceLevelCap();
         foreach (WeaponEnhancement enhancement in weaponEnhancements)
         {
@@ -1089,11 +938,9 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
                 continue;
             }
 
-            int targetLevelCount = Mathf.Max(
-                weaponCap,
-                enhancement.baseMaxEnhanceLevel
-                    + (Mathf.Max(1, level) - 1) * weaponMaxLevelIncreasePerFactoryLevel);
-            EnsureWeaponEnhancementLevels(enhancement, targetLevelCount);
+            // 강화 상한은 조립 공장 CSV의 현재 레벨 값만 사용한다.
+            enhancement.maxEnhanceLevel = weaponCap;
+            EnsureWeaponEnhancementLevels(enhancement, weaponCap);
             enhancement.Normalize();
         }
 
@@ -1105,10 +952,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
                 continue;
             }
 
-            enhancement.maxEnhanceLevel = Mathf.Max(
-                droneCap,
-                enhancement.baseMaxEnhanceLevel
-                    + (Mathf.Max(1, level) - 1) * droneMaxLevelIncreasePerFactoryLevel);
+            enhancement.maxEnhanceLevel = droneCap;
             enhancement.Normalize();
         }
     }
@@ -1135,18 +979,26 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     private int GetWeaponEnhanceLevelCap()
     {
-        return defaultWeaponMaxEnhanceLevel
-            + (Mathf.Max(1, level) - 1) * weaponMaxLevelIncreasePerFactoryLevel;
+        return Mathf.Max(0, GetCurrentBalance()?.weaponEnhanceLevelCap ?? 0);
     }
 
     private int GetDroneEnhanceLevelCap()
     {
-        return defaultDroneMaxEnhanceLevel
-            + (Mathf.Max(1, level) - 1) * droneMaxLevelIncreasePerFactoryLevel;
+        return Mathf.Max(0, GetCurrentBalance()?.droneEnhanceLevelCap ?? 0);
+    }
+
+    private BaseCampBalanceConfig.FacilityLevelData GetCurrentBalance()
+    {
+        return BaseCampBalanceConfig.Current?.GetLevel(FacilityId, level);
     }
 
     private void LoadWeaponEnhancements()
     {
+        if (!saveWeaponEnhancementsToPlayerPrefs)
+        {
+            return;
+        }
+
         string json = PlayerPrefs.GetString(WeaponEnhancementSaveKey, string.Empty);
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -1191,6 +1043,11 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     private void SaveWeaponEnhancements()
     {
+        if (!saveWeaponEnhancementsToPlayerPrefs)
+        {
+            return;
+        }
+
         WeaponEnhancementSaveData saveData = new WeaponEnhancementSaveData
         {
             selectedWeaponId = SelectedWeaponConfig != null ? SelectedWeaponConfig.Id : string.Empty
@@ -1218,26 +1075,12 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     private void OnValidate()
     {
         level = Mathf.Max(1, level);
-        maxLevel = Mathf.Max(level, maxLevel);
-        upgradeCost = Mathf.Max(0, upgradeCost);
-        NormalizeUpgradeCosts();
-        requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
-        NormalizeCommanderRequirements();
-        requiredResearchLabLevel = Mathf.Max(1, requiredResearchLabLevel);
-        NormalizeResearchLabRequirements();
-        upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
-        NormalizeUpgradeDurations();
         NormalizeMenus();
         NormalizeWeaponEnhancements();
-        defaultWeaponMaxEnhanceLevel = Mathf.Max(1, defaultWeaponMaxEnhanceLevel);
-        weaponMaxLevelIncreasePerFactoryLevel = Mathf.Max(1, weaponMaxLevelIncreasePerFactoryLevel);
         defaultWeaponEnhanceCost = Mathf.Max(0, defaultWeaponEnhanceCost);
         defaultWeaponAttackIncrease = Mathf.Max(0f, defaultWeaponAttackIncrease);
-        defaultDroneMaxEnhanceLevel = Mathf.Max(1, defaultDroneMaxEnhanceLevel);
-        droneMaxLevelIncreasePerFactoryLevel = Mathf.Max(1, droneMaxLevelIncreasePerFactoryLevel);
         defaultDroneEnhanceCost = Mathf.Max(0, defaultDroneEnhanceCost);
         defaultDroneAttackIncrease = Mathf.Max(0f, defaultDroneAttackIncrease);
         NormalizeDroneEnhancements();
-        ApplyFactoryEnhanceLevelCaps();
     }
 }

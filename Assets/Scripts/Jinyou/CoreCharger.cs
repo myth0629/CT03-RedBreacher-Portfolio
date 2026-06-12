@@ -5,6 +5,7 @@ using UnityEngine.Events;
 
 public class CoreCharger : MonoBehaviour, IBaseCampFacility
 {
+    private const string FacilityId = "core_charger";
     [Serializable]
     public class UnitConversionStage
     {
@@ -34,15 +35,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     [Header("Level")]
     [SerializeField] private int level = 1;
-    [SerializeField] private int maxLevel = 10;
-
-    [Header("Upgrade")]
-    [SerializeField] private int upgradeCost = 400;
-    [SerializeField] private List<int> upgradeCostByLevel = new List<int>();
-    [SerializeField] private int requiredCommanderLevel = 1;
-    [SerializeField] private int requiredResearchLabLevel = 1;
-    [SerializeField] private float upgradeDurationSeconds = 10f;
-    [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
+    private int maxLevel = 1;
 
     [Header("Unit SO Conversion")]
     [SerializeField, Min(1)] private int levelsPerConversion = 5;
@@ -50,10 +43,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     [SerializeField] private List<int> convertedStageIndices = new List<int>();
 
     [Header("Drone Enhancement")]
-    [SerializeField] private float droneAttackDamagePerLevel = 1f;
-    [SerializeField] private float droneAttackRangePerLevel = 0.1f;
-    [SerializeField] private float droneAttackIntervalReductionPerLevel = 0.02f;
-    [SerializeField] private float droneFollowSpeedPerLevel = 0.2f;
     [SerializeField] private List<DroneUnlock> droneUnlocks = new List<DroneUnlock>();
 
     [Header("Events")]
@@ -63,14 +52,15 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     public UnityEvent OnUpgradeCompleted = new UnityEvent();
 
     private bool isUpgrading;
+    private bool balanceReady;
     private float upgradeRemainingSeconds;
     private float currentUpgradeDurationSeconds;
 
     public int Level => level;
     public int MaxLevel => maxLevel;
     public int UpgradeCost => GetUpgradeCostForCurrentLevel();
-    public int RequiredCommanderLevel => requiredCommanderLevel;
-    public int RequiredResearchLabLevel => requiredResearchLabLevel;
+    public int RequiredCommanderLevel => GetCurrentBalance()?.requiredCommanderLevel ?? int.MaxValue;
+    public int RequiredResearchLabLevel => GetCurrentBalance()?.requiredCommandCenterLevel ?? int.MaxValue;
     public bool IsUpgrading => isUpgrading;
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
     public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
@@ -78,13 +68,24 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     public int CurrentStageIndex => FindFirstIncompleteStage();
     public IReadOnlyList<UnitConversionStage> ConversionStages => conversionStages;
     public UnitConversionStage CurrentConversionStage => GetConversionStageAt(CurrentStageIndex);
-    public float DroneAttackDamageBonus => Mathf.Max(0, level - 1) * droneAttackDamagePerLevel;
-    public float DroneAttackRangeBonus => Mathf.Max(0, level - 1) * droneAttackRangePerLevel;
-    public float DroneAttackIntervalReduction => Mathf.Max(0, level - 1) * droneAttackIntervalReductionPerLevel;
-    public float DroneFollowSpeedBonus => Mathf.Max(0, level - 1) * droneFollowSpeedPerLevel;
+    public float DroneAttackDamageBonus => Mathf.Max(0f, GetCurrentBalance()?.droneAttackDamageBonus ?? 0f);
+    public float DroneAttackRangeBonus => Mathf.Max(0f, GetCurrentBalance()?.droneAttackRangeBonus ?? 0f);
+    public float DroneAttackIntervalReduction => Mathf.Max(0f, GetCurrentBalance()?.droneAttackIntervalReduction ?? 0f);
+    public float DroneFollowSpeedBonus => Mathf.Max(0f, GetCurrentBalance()?.droneFollowSpeedBonus ?? 0f);
 
     private void Awake()
     {
+        BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
+        string error = "기지 밸런스 설정을 찾을 수 없습니다.";
+        if (config != null && config.ValidateFacility(FacilityId, out maxLevel, out error))
+        {
+            balanceReady = true;
+        }
+        else
+        {
+            Debug.LogError($"코어 충전소 밸런스 초기화 실패: {error}", this);
+        }
+
         Normalize();
         SyncUnlockedDrones(false);
     }
@@ -207,15 +208,16 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     public bool CanUpgrade(int credits, int commanderLevel)
     {
-        return !isUpgrading
+        return balanceReady
+            && !isUpgrading
             && level < maxLevel
             && credits >= UpgradeCost
-            && commanderLevel >= requiredCommanderLevel;
+            && commanderLevel >= RequiredCommanderLevel;
     }
 
     public int GetLevelLimit(int researchLabLevel)
     {
-        return Mathf.Min(maxLevel, Mathf.Max(1, researchLabLevel) + 2);
+        return maxLevel;
     }
 
     public bool CanStartUpgrade(int credits, int commanderLevel, int researchLabLevel)
@@ -252,6 +254,11 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
         OnUpgradeStarted.Invoke();
         CompleteUpgrade();
+    }
+
+    public void AdvanceUpgradeOffline(float elapsedSeconds)
+    {
+        TickUpgrade(Mathf.Max(0f, elapsedSeconds));
     }
 
     private UnitConversionStage GetConversionStageAt(int index)
@@ -332,18 +339,17 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             return 0;
         }
 
-        int index = Mathf.Max(0, level - 1);
-        return index < upgradeCostByLevel.Count
-            ? Mathf.Max(0, upgradeCostByLevel[index])
-            : Mathf.Max(0, upgradeCost);
+        return Mathf.Max(0, GetCurrentBalance()?.upgradeCost ?? 0);
     }
 
     private float GetUpgradeDurationForCurrentLevel()
     {
-        int index = Mathf.Max(0, level - 1);
-        return index < upgradeDurationSecondsByLevel.Count
-            ? Mathf.Max(0f, upgradeDurationSecondsByLevel[index])
-            : Mathf.Max(0f, upgradeDurationSeconds);
+        return Mathf.Max(0f, GetCurrentBalance()?.upgradeSeconds ?? 0f);
+    }
+
+    private BaseCampBalanceConfig.FacilityLevelData GetCurrentBalance()
+    {
+        return BaseCampBalanceConfig.Current?.GetLevel(FacilityId, level);
     }
 
     private void SyncUnlockedDrones(bool reportCollection)
@@ -377,25 +383,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     private void Normalize()
     {
-        level = Mathf.Max(1, level);
-        maxLevel = Mathf.Max(level, maxLevel);
-        upgradeCost = Mathf.Max(0, upgradeCost);
-        requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
-        requiredResearchLabLevel = Mathf.Max(1, requiredResearchLabLevel);
-        upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
-        upgradeCostByLevel ??= new List<int>();
-        upgradeDurationSecondsByLevel ??= new List<float>();
-
-        int upgradeCount = Mathf.Max(0, maxLevel - 1);
-        while (upgradeCostByLevel.Count < upgradeCount)
-        {
-            upgradeCostByLevel.Add(upgradeCost);
-        }
-
-        while (upgradeDurationSecondsByLevel.Count < upgradeCount)
-        {
-            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
-        }
+        level = balanceReady ? Mathf.Clamp(level, 1, maxLevel) : Mathf.Max(1, level);
 
         levelsPerConversion = Mathf.Max(1, levelsPerConversion);
         conversionStages ??= new List<UnitConversionStage>();
@@ -420,19 +408,12 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             }
         }
 
-        droneAttackDamagePerLevel = Mathf.Max(0f, droneAttackDamagePerLevel);
-        droneAttackRangePerLevel = Mathf.Max(0f, droneAttackRangePerLevel);
-        droneAttackIntervalReductionPerLevel = Mathf.Max(0f, droneAttackIntervalReductionPerLevel);
-        droneFollowSpeedPerLevel = Mathf.Max(0f, droneFollowSpeedPerLevel);
         droneUnlocks ??= new List<DroneUnlock>();
         foreach (DroneUnlock droneUnlock in droneUnlocks)
         {
             if (droneUnlock != null)
             {
-                droneUnlock.requiredCoreChargerLevel = Mathf.Clamp(
-                    droneUnlock.requiredCoreChargerLevel,
-                    1,
-                    maxLevel);
+                droneUnlock.requiredCoreChargerLevel = Mathf.Max(1, droneUnlock.requiredCoreChargerLevel);
             }
         }
     }

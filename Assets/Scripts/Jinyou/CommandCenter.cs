@@ -5,6 +5,8 @@ using UnityEngine.Events;
 
 public class CommandCenter : MonoBehaviour, IBaseCampFacility
 {
+    private const string FacilityId = "command_center";
+
     [Serializable]
     public class FacilityUnlock
     {
@@ -16,31 +18,13 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
 
     [Header("Level")]
     [SerializeField] private int level = 1;
-    [SerializeField] private int maxLevel = 10;
+    private int maxLevel = 1;
 
-    [Header("Upgrade")]
-    [SerializeField] private int upgradeCost = 500;
-    [SerializeField] private int requiredCommanderLevel = 1;
-    [SerializeField] private List<int> requiredCommanderLevelByLevel = new List<int>();
-    [SerializeField] private float upgradeDurationSeconds = 10f;
-    [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
-
-    [Header("Convenience Bonus")]
-    [SerializeField] private float offlineRewardLimitHours = 2f;
-    [SerializeField] private float bossTicketProductionDaySeconds = 86400f;
-    [SerializeField] private int bossTicketsProducedPerDay = 2;
-    [SerializeField] private int bossTicketCapacity = 3;
+    [Header("Runtime State")]
     [SerializeField] private int bossTickets = 1;
 
     [Header("Facility Unlocks")]
-    [SerializeField] private List<FacilityUnlock> facilityUnlocks = new List<FacilityUnlock>
-    {
-        new FacilityUnlock { facilityId = "energy_refinery", displayName = "에너지 정제소", requiredLabLevel = 1, unlocked = true },
-        new FacilityUnlock { facilityId = "assembly_factory", displayName = "조립 공장", requiredLabLevel = 2 },
-        new FacilityUnlock { facilityId = "core_charger", displayName = "코어 충전소", requiredLabLevel = 3 },
-        new FacilityUnlock { facilityId = "trait_point_facility", displayName = "스텟 강화소", requiredLabLevel = 1, unlocked = true },
-        new FacilityUnlock { facilityId = "boss_dungeon", displayName = "관제탑", requiredLabLevel = 1, unlocked = true }
-    };
+    [SerializeField] private List<FacilityUnlock> facilityUnlocks = new List<FacilityUnlock>();
 
     [Header("Events")]
     public UnityEvent<int> OnLevelChanged = new UnityEvent<int>();
@@ -50,19 +34,24 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
     public UnityEvent OnUpgradeCompleted = new UnityEvent();
 
     private bool isUpgrading;
+    private bool balanceReady;
+    private int bossTicketCapacity;
     private float upgradeRemainingSeconds;
     private float currentUpgradeDurationSeconds;
     private float bossTicketProductionSeconds;
 
     public int Level => level;
     public int MaxLevel => maxLevel;
-    public int UpgradeCost => upgradeCost;
+    public int UpgradeCost => level < maxLevel
+        ? Mathf.Max(0, GetCurrentBalance()?.upgradeCost ?? 0)
+        : 0;
     public int RequiredCommanderLevel => GetRequiredCommanderLevelForCurrentUpgrade();
     public int RequiredResearchLabLevel => 1;
-    public float OfflineRewardLimitHours => offlineRewardLimitHours;
-    public float BossTicketChargeSeconds => bossTicketProductionDaySeconds / Mathf.Max(1, bossTicketsProducedPerDay);
-    public float BossTicketProductionDaySeconds => bossTicketProductionDaySeconds;
-    public int BossTicketsProducedPerDay => bossTicketsProducedPerDay;
+    public float OfflineRewardLimitHours => Mathf.Max(0f, GetCurrentBalance()?.offlineRewardHours ?? 0f);
+    public float TicketOfflineLimitHours => Mathf.Max(0f, GetCurrentBalance()?.ticketOfflineLimitHours ?? 0f);
+    public float BossTicketChargeSeconds => BossTicketProductionDaySeconds / Mathf.Max(1, BossTicketsProducedPerDay);
+    public float BossTicketProductionDaySeconds => Mathf.Max(0f, GetCurrentBalance()?.ticketProductionDaySeconds ?? 0f);
+    public int BossTicketsProducedPerDay => Mathf.Max(0, GetCurrentBalance()?.ticketsPerDay ?? 0);
     public float BossTicketProductionProgress => BossTicketChargeSeconds > 0f
         ? Mathf.Clamp01(bossTicketProductionSeconds / BossTicketChargeSeconds)
         : 1f;
@@ -72,6 +61,23 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
     public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
     public IReadOnlyList<FacilityUnlock> FacilityUnlocks => facilityUnlocks;
+
+    private void Awake()
+    {
+        BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
+        string error = "기지 밸런스 설정을 찾을 수 없습니다.";
+        if (config != null && config.ValidateFacility(FacilityId, out maxLevel, out error))
+        {
+            balanceReady = true;
+            level = Mathf.Clamp(level, 1, maxLevel);
+            ApplyLevelBalance();
+            NormalizeFacilityUnlocks();
+        }
+        else
+        {
+            Debug.LogError($"지휘 본부 밸런스 초기화 실패: {error}", this);
+        }
+    }
 
     private void Start()
     {
@@ -100,7 +106,11 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
 
     public bool CanUpgrade(int credits, int commanderLevel)
     {
-        return !isUpgrading && level < maxLevel && credits >= upgradeCost && commanderLevel >= RequiredCommanderLevel;
+        return balanceReady
+            && !isUpgrading
+            && level < maxLevel
+            && credits >= UpgradeCost
+            && commanderLevel >= RequiredCommanderLevel;
     }
 
     public int GetLevelLimit(int researchLabLevel)
@@ -130,7 +140,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
             return false;
         }
 
-        availableCredits -= upgradeCost;
+        availableCredits -= UpgradeCost;
         StartUpgradeTimer();
         return true;
     }
@@ -172,7 +182,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
 
     public int ProduceBossTicketsOffline(float elapsedSeconds)
     {
-        if (elapsedSeconds <= 0f || bossTickets >= bossTicketCapacity)
+        if (!balanceReady || elapsedSeconds <= 0f || bossTickets >= bossTicketCapacity)
         {
             return 0;
         }
@@ -193,10 +203,6 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
                 bossTickets++;
             }
 
-            if (bossTickets >= bossTicketCapacity)
-            {
-                bossTicketProductionSeconds = 0f;
-            }
         }
 
         int addedTickets = bossTickets - beforeTickets;
@@ -213,9 +219,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         return new JinyouCommandCenterSaveData
         {
             level = level,
-            upgradeCost = upgradeCost,
             bossTickets = bossTickets,
-            bossTicketCapacity = bossTicketCapacity,
             bossTicketProductionSeconds = bossTicketProductionSeconds,
             isUpgrading = isUpgrading,
             upgradeRemainingSeconds = upgradeRemainingSeconds,
@@ -231,8 +235,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         }
 
         level = Mathf.Clamp(data.level, 1, maxLevel);
-        upgradeCost = Mathf.Max(0, data.upgradeCost);
-        bossTicketCapacity = Mathf.Max(0, data.bossTicketCapacity);
+        ApplyLevelBalance();
         bossTickets = Mathf.Clamp(data.bossTickets, 0, bossTicketCapacity);
         bossTicketProductionSeconds = Mathf.Max(0f, data.bossTicketProductionSeconds);
         isUpgrading = data.isUpgrading;
@@ -246,6 +249,11 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
     public void CompleteUpgradeImmediately()
     {
         Upgrade();
+    }
+
+    public void AdvanceUpgradeOffline(float elapsedSeconds)
+    {
+        TickUpgrade(Mathf.Max(0f, elapsedSeconds));
     }
 
     private void StartUpgradeTimer()
@@ -281,9 +289,8 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
 
     private void TickBossTicketProduction(float deltaTime)
     {
-        if (bossTickets >= bossTicketCapacity)
+        if (!balanceReady || bossTickets >= bossTicketCapacity)
         {
-            bossTicketProductionSeconds = 0f;
             return;
         }
 
@@ -328,8 +335,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         upgradeRemainingSeconds = 0f;
         currentUpgradeDurationSeconds = 0f;
         level++;
-        upgradeCost = Mathf.RoundToInt(upgradeCost * 1.4f);
-        bossTicketCapacity = Mathf.Max(bossTicketCapacity, level + 2);
+        ApplyLevelBalance();
         RefreshUnlocks();
         OnLevelChanged.Invoke(level);
         OnUpgradeCompleted.Invoke();
@@ -357,89 +363,57 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
 
     private void NormalizeFacilityUnlocks()
     {
-        SetFacilityUnlockRequirement("energy_refinery", "에너지 정제소", 1);
-        SetFacilityUnlockRequirement("assembly_factory", "조립 공장", 2);
-        SetFacilityUnlockRequirement("core_charger", "코어 충전소", 3);
-        SetFacilityUnlockRequirement("trait_point_facility", "스텟 강화소", 1);
-        SetFacilityUnlockRequirement("boss_dungeon", "관제탑", 1);
+        BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
+        if (config == null)
+        {
+            return;
+        }
+
+        List<FacilityUnlock> previousUnlocks = facilityUnlocks ?? new List<FacilityUnlock>();
+        facilityUnlocks = new List<FacilityUnlock>();
+        foreach (BaseCampBalanceConfig.FacilityUnlockData unlock in config.Unlocks)
+        {
+            FacilityUnlock previous = previousUnlocks.Find(item => item.facilityId == unlock.facilityId);
+            facilityUnlocks.Add(new FacilityUnlock
+            {
+                facilityId = unlock.facilityId,
+                displayName = unlock.displayName,
+                requiredLabLevel = unlock.requiredCommandCenterLevel,
+                unlocked = previous != null && previous.unlocked
+            });
+        }
     }
 
     private float GetUpgradeDurationForCurrentLevel()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < upgradeDurationSecondsByLevel.Count)
-        {
-            return Mathf.Max(0f, upgradeDurationSecondsByLevel[index]);
-        }
-
-        return upgradeDurationSeconds;
+        return Mathf.Max(0f, GetCurrentBalance()?.upgradeSeconds ?? 0f);
     }
 
     private int GetRequiredCommanderLevelForCurrentUpgrade()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < requiredCommanderLevelByLevel.Count)
-        {
-            return Mathf.Max(1, requiredCommanderLevelByLevel[index]);
-        }
-
-        return Mathf.Max(1, requiredCommanderLevel);
+        return GetCurrentBalance()?.requiredCommanderLevel ?? int.MaxValue;
     }
 
-    private void NormalizeUpgradeDurations()
+    private BaseCampBalanceConfig.FacilityLevelData GetCurrentBalance()
     {
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (upgradeDurationSecondsByLevel.Count < targetCount)
-        {
-            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
-        }
-
-        for (int i = 0; i < upgradeDurationSecondsByLevel.Count; i++)
-        {
-            upgradeDurationSecondsByLevel[i] = Mathf.Max(0f, upgradeDurationSecondsByLevel[i]);
-        }
+        return BaseCampBalanceConfig.Current?.GetLevel(FacilityId, level);
     }
 
-    private void NormalizeCommanderLevelRequirements()
+    private void ApplyLevelBalance()
     {
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (requiredCommanderLevelByLevel.Count < targetCount)
+        BaseCampBalanceConfig.FacilityLevelData balance = GetCurrentBalance();
+        if (balance == null)
         {
-            requiredCommanderLevelByLevel.Add(requiredCommanderLevel);
+            return;
         }
 
-        for (int i = 0; i < requiredCommanderLevelByLevel.Count; i++)
-        {
-            requiredCommanderLevelByLevel[i] = Mathf.Max(1, requiredCommanderLevelByLevel[i]);
-        }
-    }
-
-    private void SetFacilityUnlockRequirement(string facilityId, string displayName, int requiredLabLevel)
-    {
-        FacilityUnlock facility = facilityUnlocks.Find(item => item.facilityId == facilityId);
-        if (facility == null)
-        {
-            facility = new FacilityUnlock { facilityId = facilityId };
-            facilityUnlocks.Add(facility);
-        }
-
-        facility.displayName = displayName;
-        facility.requiredLabLevel = requiredLabLevel;
+        bossTicketCapacity = Mathf.Max(0, balance.ticketCapacity);
+        bossTickets = Mathf.Clamp(bossTickets, 0, bossTicketCapacity);
     }
 
     private void OnValidate()
     {
         level = Mathf.Max(1, level);
-        maxLevel = Mathf.Max(level, maxLevel);
-        upgradeCost = Mathf.Max(0, upgradeCost);
-        requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
-        NormalizeCommanderLevelRequirements();
-        upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
-        NormalizeUpgradeDurations();
-        bossTicketProductionDaySeconds = Mathf.Max(1f, bossTicketProductionDaySeconds);
-        bossTicketsProducedPerDay = Mathf.Max(1, bossTicketsProducedPerDay);
-        bossTicketCapacity = Mathf.Max(0, bossTicketCapacity);
-        bossTickets = Mathf.Clamp(bossTickets, 0, bossTicketCapacity);
-        NormalizeFacilityUnlocks();
+        bossTickets = Mathf.Max(0, bossTickets);
     }
 }

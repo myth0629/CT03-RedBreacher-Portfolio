@@ -8,6 +8,10 @@ public class PlayerStatAllocator : MonoBehaviour
     private const string HealthLevelKey = "PlayerStatAllocator.HealthLevel";
     private const string CritChanceLevelKey = "PlayerStatAllocator.CritChanceLevel";
     private const string CritMultiplierLevelKey = "PlayerStatAllocator.CritMultiplierLevel";
+    private const string LegacyAttackPointKey = "TraitPointFacility.AttackPoints";
+    private const string LegacyMaxHealthPointKey = "TraitPointFacility.MaxHealthPoints";
+    private const string LegacyCritChancePointKey = "TraitPointFacility.CritChancePoints";
+    private const string LegacyCritMultiplierPointKey = "TraitPointFacility.CritMultiplierPoints";
 
     [Header("Attack")]
     [SerializeField] private float attackPercentPerLevel = 0.02f;
@@ -46,14 +50,15 @@ public class PlayerStatAllocator : MonoBehaviour
     public float HealthPercentPerLevel => Mathf.Max(0f, healthPercentPerLevel);
     public float CritChancePerLevel => Mathf.Max(0f, critChancePerLevel);
     public float CritMultiplierPerLevel => Mathf.Max(0f, critMultiplierPerLevel);
-    public float AttackBonusPercent => AttackDisplayLevel * AttackPercentPerLevel;
-    public float HealthBonusPercent => HealthDisplayLevel * HealthPercentPerLevel;
-    public float CritChanceBonus => CritChanceDisplayLevel * CritChancePerLevel;
-    public float CritMultiplierBonus => CritMultiplierDisplayLevel * CritMultiplierPerLevel;
+    public float AttackBonusPercent => attackLevel * AttackPercentPerLevel;
+    public float HealthBonusPercent => healthLevel * HealthPercentPerLevel;
+    public float CritChanceBonus => critChanceLevel * CritChancePerLevel;
+    public float CritMultiplierBonus => critMultiplierLevel * CritMultiplierPerLevel;
     public float AttackMultiplier => 1f + AttackBonusPercent;
     public float HealthMultiplier => 1f + HealthBonusPercent;
     public float MaxCritChance => Mathf.Clamp01(maxCritChance);
     public float MaxCritMultiplier => Mathf.Max(1f, maxCritMultiplier);
+    public int TotalAllocatedLevels => attackLevel + healthLevel + critChanceLevel + critMultiplierLevel;
     public bool CanUpgradeAttack => attackLevel < Mathf.Max(0, maxAttackLevel);
     public bool CanUpgradeHealth => healthLevel < Mathf.Max(0, maxHealthLevel);
     public bool CanUpgradeCritChance => playerController == null || playerController.CritChance < MaxCritChance;
@@ -64,6 +69,7 @@ public class PlayerStatAllocator : MonoBehaviour
         progression = GetComponent<PlayerProgression>();
         playerController = GetComponent<PlayerController>();
         Load();
+        MigrateLegacyTraitPoints();
     }
 
     public void UpgradeAttack()
@@ -136,6 +142,20 @@ public class PlayerStatAllocator : MonoBehaviour
         Save();
     }
 
+    public void ResetAllocationsAndRefund()
+    {
+        int refundPoints = TotalAllocatedLevels;
+        if (refundPoints <= 0)
+        {
+            return;
+        }
+
+        // 기지에서 초기화할 때는 투자한 스탯 포인트를 플레이어에게 반환한다.
+        ResetAllocations();
+        progression ??= GetComponent<PlayerProgression>();
+        progression?.AddStatPoints(refundPoints);
+    }
+
     private bool TryUpgrade(ref int currentLevel, int maxLevel)
     {
         if (progression == null)
@@ -189,6 +209,26 @@ public class PlayerStatAllocator : MonoBehaviour
         PlayerPrefs.SetInt(HealthLevelKey, healthLevel);
         PlayerPrefs.SetInt(CritChanceLevelKey, critChanceLevel);
         PlayerPrefs.SetInt(CritMultiplierLevelKey, critMultiplierLevel);
+        PlayerPrefs.Save();
+    }
+
+    private void MigrateLegacyTraitPoints()
+    {
+        int legacyPoints = PlayerPrefs.GetInt(LegacyAttackPointKey, 0)
+            + PlayerPrefs.GetInt(LegacyMaxHealthPointKey, 0)
+            + PlayerPrefs.GetInt(LegacyCritChancePointKey, 0)
+            + PlayerPrefs.GetInt(LegacyCritMultiplierPointKey, 0);
+        if (legacyPoints <= 0)
+        {
+            return;
+        }
+
+        // 적용되지 않던 구 특성 투자량은 새 스탯 시스템에서 다시 쓸 수 있도록 환급한다.
+        progression?.AddStatPoints(legacyPoints);
+        PlayerPrefs.DeleteKey(LegacyAttackPointKey);
+        PlayerPrefs.DeleteKey(LegacyMaxHealthPointKey);
+        PlayerPrefs.DeleteKey(LegacyCritChancePointKey);
+        PlayerPrefs.DeleteKey(LegacyCritMultiplierPointKey);
         PlayerPrefs.Save();
     }
 }

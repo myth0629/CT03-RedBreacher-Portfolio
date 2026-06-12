@@ -1,29 +1,17 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
 {
+    private const string FacilityId = "energy_refinery";
+
     [Header("Level")]
     [SerializeField] private int level = 1;
-    [SerializeField] private int maxLevel = 10;
+    private int maxLevel = 1;
 
     [Header("Production")]
     [SerializeField] private int storedCredits;
-    [SerializeField] private int storageCapacity = 1000;
-    [SerializeField] private List<int> storageCapacityByLevel = new List<int>();
-    [SerializeField] private float creditsPerMinute = 60f;
-    [SerializeField] private List<float> creditsPerMinuteByLevel = new List<float>();
     [SerializeField] private bool produceWhilePlaying = true;
-
-    [Header("Upgrade")]
-    [SerializeField] private int upgradeCost = 250;
-    [SerializeField] private List<int> upgradeCostByLevel = new List<int>();
-    [SerializeField] private int requiredCommanderLevel = 1;
-    [SerializeField] private int requiredResearchLabLevel = 1;
-    [SerializeField] private List<int> requiredResearchLabLevelByLevel = new List<int>();
-    [SerializeField] private float upgradeDurationSeconds = 10f;
-    [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
 
     [Header("Events")]
     public UnityEvent<int> OnCreditsChanged = new UnityEvent<int>();
@@ -33,6 +21,7 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
 
     private float productionBuffer;
     private bool isUpgrading;
+    private bool balanceReady;
     private float upgradeRemainingSeconds;
     private float currentUpgradeDurationSeconds;
 
@@ -41,7 +30,7 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
     public int StoredCredits => storedCredits;
     public int StorageCapacity => GetStorageCapacityForCurrentLevel();
     public int UpgradeCost => GetUpgradeCostForCurrentLevel();
-    public int RequiredCommanderLevel => requiredCommanderLevel;
+    public int RequiredCommanderLevel => GetCurrentBalance()?.requiredCommanderLevel ?? int.MaxValue;
     public int RequiredResearchLabLevel => GetRequiredResearchLabLevelForCurrentUpgrade();
     public bool IsUpgrading => isUpgrading;
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
@@ -51,7 +40,19 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
 
     private void Awake()
     {
-        NormalizeConfiguredValues();
+        BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
+        string error = "기지 밸런스 설정을 찾을 수 없습니다.";
+        if (config != null && config.ValidateFacility(FacilityId, out maxLevel, out error))
+        {
+            balanceReady = true;
+        }
+        else
+        {
+            Debug.LogError($"에너지 정제소 밸런스 초기화 실패: {error}", this);
+        }
+
+        level = Mathf.Clamp(level, 1, maxLevel);
+        storedCredits = Mathf.Clamp(storedCredits, 0, StorageCapacity);
     }
 
     private void Update()
@@ -117,12 +118,16 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
 
     public bool CanUpgrade(int credits, int commanderLevel)
     {
-        return !isUpgrading && level < maxLevel && credits >= UpgradeCost && commanderLevel >= requiredCommanderLevel;
+        return balanceReady
+            && !isUpgrading
+            && level < maxLevel
+            && credits >= UpgradeCost
+            && commanderLevel >= RequiredCommanderLevel;
     }
 
     public int GetLevelLimit(int researchLabLevel)
     {
-        return Mathf.Min(maxLevel, Mathf.Max(1, researchLabLevel) * 2);
+        return maxLevel;
     }
 
     public bool CanStartUpgrade(int availableCredits, int commanderLevel, int researchLabLevel)
@@ -164,6 +169,11 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
     public void CompleteUpgradeImmediately()
     {
         Upgrade();
+    }
+
+    public void AdvanceUpgradeOffline(float elapsedSeconds)
+    {
+        TickUpgrade(Mathf.Max(0f, elapsedSeconds));
     }
 
     private void StartUpgradeTimer()
@@ -211,7 +221,6 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
         currentUpgradeDurationSeconds = 0f;
         level++;
         storedCredits = Mathf.Clamp(storedCredits, 0, StorageCapacity);
-        requiredCommanderLevel++;
         OnLevelChanged.Invoke(level);
         OnUpgradeCompleted.Invoke();
     }
@@ -223,149 +232,37 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
             return 0;
         }
 
-        int index = Mathf.Max(0, level - 1);
-        if (index < upgradeCostByLevel.Count)
-        {
-            return Mathf.Max(0, upgradeCostByLevel[index]);
-        }
-
-        return Mathf.Max(0, upgradeCost);
+        return Mathf.Max(0, GetCurrentBalance()?.upgradeCost ?? 0);
     }
 
     private float GetCreditsPerMinuteForCurrentLevel()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < creditsPerMinuteByLevel.Count)
-        {
-            return Mathf.Max(0f, creditsPerMinuteByLevel[index]);
-        }
-
-        return Mathf.Max(0f, creditsPerMinute);
+        return Mathf.Max(0f, GetCurrentBalance()?.creditsPerMinute ?? 0f);
     }
 
     private int GetStorageCapacityForCurrentLevel()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < storageCapacityByLevel.Count)
-        {
-            return Mathf.Max(1, storageCapacityByLevel[index]);
-        }
-
-        return Mathf.Max(1, storageCapacity);
+        return Mathf.Max(1, GetCurrentBalance()?.storageCapacity ?? 1);
     }
 
     private float GetUpgradeDurationForCurrentLevel()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < upgradeDurationSecondsByLevel.Count)
-        {
-            return Mathf.Max(0f, upgradeDurationSecondsByLevel[index]);
-        }
-
-        return upgradeDurationSeconds;
+        return Mathf.Max(0f, GetCurrentBalance()?.upgradeSeconds ?? 0f);
     }
 
     private int GetRequiredResearchLabLevelForCurrentUpgrade()
     {
-        int index = Mathf.Max(0, level - 1);
-        if (index < requiredResearchLabLevelByLevel.Count)
-        {
-            return Mathf.Max(1, requiredResearchLabLevelByLevel[index]);
-        }
-
-        return Mathf.Max(1, requiredResearchLabLevel);
+        return GetCurrentBalance()?.requiredCommandCenterLevel ?? int.MaxValue;
     }
 
-    private void NormalizeUpgradeDurations()
+    private BaseCampBalanceConfig.FacilityLevelData GetCurrentBalance()
     {
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (upgradeDurationSecondsByLevel.Count < targetCount)
-        {
-            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
-        }
-
-        for (int i = 0; i < upgradeDurationSecondsByLevel.Count; i++)
-        {
-            upgradeDurationSecondsByLevel[i] = Mathf.Max(0f, upgradeDurationSecondsByLevel[i]);
-        }
-    }
-
-    private void NormalizeUpgradeCosts()
-    {
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (upgradeCostByLevel.Count < targetCount)
-        {
-            upgradeCostByLevel.Add(upgradeCost);
-        }
-
-        for (int i = 0; i < upgradeCostByLevel.Count; i++)
-        {
-            upgradeCostByLevel[i] = Mathf.Max(0, upgradeCostByLevel[i]);
-        }
-    }
-
-    private void NormalizeCreditsPerMinute()
-    {
-        int targetCount = Mathf.Max(1, maxLevel);
-        while (creditsPerMinuteByLevel.Count < targetCount)
-        {
-            creditsPerMinuteByLevel.Add(creditsPerMinute);
-        }
-
-        for (int i = 0; i < creditsPerMinuteByLevel.Count; i++)
-        {
-            creditsPerMinuteByLevel[i] = Mathf.Max(0f, creditsPerMinuteByLevel[i]);
-        }
-    }
-
-    private void NormalizeStorageCapacities()
-    {
-        int targetCount = Mathf.Max(1, maxLevel);
-        while (storageCapacityByLevel.Count < targetCount)
-        {
-            storageCapacityByLevel.Add(storageCapacity);
-        }
-
-        for (int i = 0; i < storageCapacityByLevel.Count; i++)
-        {
-            storageCapacityByLevel[i] = Mathf.Max(1, storageCapacityByLevel[i]);
-        }
-    }
-
-    private void NormalizeConfiguredValues()
-    {
-        level = Mathf.Max(1, level);
-        maxLevel = Mathf.Max(level, maxLevel);
-        storageCapacity = Mathf.Max(1, storageCapacity);
-        NormalizeStorageCapacities();
-        storedCredits = Mathf.Clamp(storedCredits, 0, StorageCapacity);
-        creditsPerMinute = Mathf.Max(0f, creditsPerMinute);
-        NormalizeCreditsPerMinute();
-        upgradeCost = Mathf.Max(0, upgradeCost);
-        NormalizeUpgradeCosts();
-        requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
-        requiredResearchLabLevel = Mathf.Max(1, requiredResearchLabLevel);
-        NormalizeResearchLabRequirements();
-        upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
-        NormalizeUpgradeDurations();
-    }
-
-    private void NormalizeResearchLabRequirements()
-    {
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (requiredResearchLabLevelByLevel.Count < targetCount)
-        {
-            requiredResearchLabLevelByLevel.Add(requiredResearchLabLevel);
-        }
-
-        for (int i = 0; i < requiredResearchLabLevelByLevel.Count; i++)
-        {
-            requiredResearchLabLevelByLevel[i] = Mathf.Max(1, requiredResearchLabLevelByLevel[i]);
-        }
+        return BaseCampBalanceConfig.Current?.GetLevel(FacilityId, level);
     }
 
     private void OnValidate()
     {
-        NormalizeConfiguredValues();
+        level = Mathf.Max(1, level);
+        storedCredits = Mathf.Max(0, storedCredits);
     }
 }

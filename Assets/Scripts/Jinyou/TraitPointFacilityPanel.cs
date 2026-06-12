@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class TraitPointFacilityPanel : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
-    [SerializeField] private TraitPointFacility traitPointFacility;
+    [SerializeField] private PlayerStatAllocator statAllocator;
     [SerializeField] private TMP_Text availablePointText;
     [SerializeField] private TMP_Text attackText;
     [SerializeField] private TMP_Text maxHealthText;
@@ -45,72 +45,72 @@ public class TraitPointFacilityPanel : MonoBehaviour
 
     public void InvestAttack()
     {
-        Invest(TraitPointFacility.TraitStat.AttackDamage);
+        ResolveReferences();
+        statAllocator?.TryUpgradeAttack();
+        Refresh();
     }
 
     public void InvestMaxHealth()
     {
-        Invest(TraitPointFacility.TraitStat.MaxHealth);
+        ResolveReferences();
+        statAllocator?.TryUpgradeHealth();
+        Refresh();
     }
 
     public void InvestCritChance()
     {
-        Invest(TraitPointFacility.TraitStat.CritChance);
+        ResolveReferences();
+        statAllocator?.TryUpgradeCritChance();
+        Refresh();
     }
 
     public void InvestCritMultiplier()
     {
-        Invest(TraitPointFacility.TraitStat.CritMultiplier);
+        ResolveReferences();
+        statAllocator?.TryUpgradeCritMultiplier();
+        Refresh();
     }
 
     public void ResetTraits()
     {
         ResolveReferences();
-        traitPointFacility?.ResetAllocatedPoints();
+        statAllocator?.ResetAllocationsAndRefund();
         Refresh();
     }
 
     public void Refresh()
     {
         ResolveReferences();
-        if (traitPointFacility == null)
+        if (statAllocator == null)
         {
             return;
         }
 
-        int availablePoints = traitPointFacility.AvailableTraitPoints;
+        PlayerProgression progression = statAllocator.GetComponent<PlayerProgression>();
+        int availablePoints = progression != null ? progression.StatPoints : 0;
         SetText(availablePointText, $"Trait Points {availablePoints}");
-        SetText(attackText, BuildStatLine(TraitPointFacility.TraitStat.AttackDamage));
-        SetText(maxHealthText, BuildStatLine(TraitPointFacility.TraitStat.MaxHealth));
-        SetText(critChanceText, BuildStatLine(TraitPointFacility.TraitStat.CritChance));
-        SetText(critMultiplierText, BuildStatLine(TraitPointFacility.TraitStat.CritMultiplier));
-        SetText(summaryText, traitPointFacility.BuildSummary());
+        SetText(attackText, $"Attack Lv.{statAllocator.AttackDisplayLevel}  +{statAllocator.AttackBonusPercent * 100f:0.#}%");
+        SetText(maxHealthText, $"Max Health Lv.{statAllocator.HealthDisplayLevel}  +{statAllocator.HealthBonusPercent * 100f:0.#}%");
+        SetText(critChanceText, $"Crit Chance Lv.{statAllocator.CritChanceDisplayLevel}  +{statAllocator.CritChanceBonus * 100f:0.#}%");
+        SetText(critMultiplierText, $"Crit Multiplier Lv.{statAllocator.CritMultiplierDisplayLevel}  +{statAllocator.CritMultiplierBonus * 100f:0.#}%");
+        SetText(summaryText, BuildSummary());
 
-        SetInvestButton(attackButton, availablePoints);
-        SetInvestButton(maxHealthButton, availablePoints);
-        SetInvestButton(critChanceButton, availablePoints);
-        SetInvestButton(critMultiplierButton, availablePoints);
+        SetInvestButton(attackButton, availablePoints, statAllocator.CanUpgradeAttack);
+        SetInvestButton(maxHealthButton, availablePoints, statAllocator.CanUpgradeHealth);
+        SetInvestButton(critChanceButton, availablePoints, statAllocator.CanUpgradeCritChance);
+        SetInvestButton(critMultiplierButton, availablePoints, statAllocator.CanUpgradeCritMultiplier);
         if (resetButton != null)
         {
-            resetButton.interactable = traitPointFacility.AttackDamagePoints
-                + traitPointFacility.MaxHealthPoints
-                + traitPointFacility.CritChancePoints
-                + traitPointFacility.CritMultiplierPoints > 0;
+            resetButton.interactable = statAllocator.TotalAllocatedLevels > 0;
         }
     }
 
-    private void Invest(TraitPointFacility.TraitStat stat)
+    private string BuildSummary()
     {
-        ResolveReferences();
-        traitPointFacility?.TryInvest(stat);
-        Refresh();
-    }
-
-    private string BuildStatLine(TraitPointFacility.TraitStat stat)
-    {
-        int points = traitPointFacility.GetAllocatedPoints(stat);
-        float bonus = traitPointFacility.GetBonusValue(stat) * 100f;
-        return $"{TraitPointFacility.GetStatDisplayName(stat)} Lv.{points}  +{bonus:0.#}%";
+        return $"Attack +{statAllocator.AttackBonusPercent * 100f:0.#}%\n"
+            + $"Max Health +{statAllocator.HealthBonusPercent * 100f:0.#}%\n"
+            + $"Crit Chance +{statAllocator.CritChanceBonus * 100f:0.#}%\n"
+            + $"Crit Multiplier +{statAllocator.CritMultiplierBonus * 100f:0.#}%";
     }
 
     private void ClosePanel()
@@ -121,16 +121,19 @@ public class TraitPointFacilityPanel : MonoBehaviour
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
-        traitPointFacility ??= baseCampManager != null
-            ? baseCampManager.TraitPointFacility
-            : FindFirstObjectByType<TraitPointFacility>();
+        if (statAllocator == null && baseCampManager?.PlayerProgression != null)
+        {
+            statAllocator = baseCampManager.PlayerProgression.GetComponent<PlayerStatAllocator>();
+        }
+
+        statAllocator ??= FindFirstObjectByType<PlayerStatAllocator>();
     }
 
-    private static void SetInvestButton(Button button, int availablePoints)
+    private static void SetInvestButton(Button button, int availablePoints, bool canUpgrade)
     {
         if (button != null)
         {
-            button.interactable = availablePoints > 0;
+            button.interactable = availablePoints > 0 && canUpgrade;
         }
     }
 

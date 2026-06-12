@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class BaseCampManager : MonoBehaviour
 {
@@ -11,7 +12,6 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private EnergyRefinery energyRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
-    [SerializeField] private TraitPointFacility traitPointFacility;
     [SerializeField] private InventoryFacility inventory;
     [SerializeField] private DailyMissionManager dailyMissionManager;
     [SerializeField] private bool autoFindFacilities = true;
@@ -32,7 +32,7 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private string unifiedSaveKey = "Jinyou.SaveData";
 
     [Header("Debug")]
-    [SerializeField] private bool showDebugPanel = true;
+    [SerializeField] private bool showDebugPanel;
     [SerializeField] private Rect debugPanelRect = new Rect(16f, 16f, 280f, 220f);
 
     [Header("Events")]
@@ -44,13 +44,13 @@ public class BaseCampManager : MonoBehaviour
     private PlayerCurrencyWallet registeredCurrencyWallet;
     private bool unifiedSaveReady;
     private bool isRestoringUnifiedSave;
+    private bool confirmPlayerPrefsReset;
     private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
 
     public CommandCenter CommandCenter => commandCenter;
     public EnergyRefinery EnergyRefinery => energyRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
-    public TraitPointFacility TraitPointFacility => ResolveTraitPointFacility();
     public InventoryFacility Inventory => ResolveInventory();
     public int CommanderLevel => commanderLevel;
     public int Credits => CurrencyWallet.Credits;
@@ -77,6 +77,7 @@ public class BaseCampManager : MonoBehaviour
     {
         ConnectFacilities();
         LoadUnifiedGame();
+        ConfigureUnifiedPersistence();
         SubscribeUnifiedSaveEvents();
         unifiedSaveReady = true;
         SaveUnifiedGame();
@@ -129,7 +130,6 @@ public class BaseCampManager : MonoBehaviour
         energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
-        traitPointFacility ??= FindFirstObjectByType<TraitPointFacility>();
         inventory ??= InventoryFacility.FindAny();
     }
 
@@ -170,17 +170,26 @@ public class BaseCampManager : MonoBehaviour
 
     public void SelectAssemblyWeapon(int weaponIndex)
     {
-        assemblyFactory?.TrySelectWeapon(weaponIndex);
+        if (assemblyFactory != null && assemblyFactory.TrySelectWeapon(weaponIndex))
+        {
+            SaveUnifiedGameIfReady();
+        }
     }
 
     public void SelectAssemblyWeapon(ProjectileConfig weaponConfig)
     {
-        assemblyFactory?.TrySelectWeapon(weaponConfig);
+        if (assemblyFactory != null && assemblyFactory.TrySelectWeapon(weaponConfig))
+        {
+            SaveUnifiedGameIfReady();
+        }
     }
 
     public void SelectAssemblyDrone(DroneConfig droneConfig)
     {
-        assemblyFactory?.TrySelectDrone(droneConfig);
+        if (assemblyFactory != null && assemblyFactory.TrySelectDrone(droneConfig))
+        {
+            SaveUnifiedGameIfReady();
+        }
     }
 
     public void EnhanceAssemblyWeapon()
@@ -209,7 +218,7 @@ public class BaseCampManager : MonoBehaviour
         if (assemblyFactory.TryEnhanceSelectedDrone(ref availableCredits))
         {
             SetCreditsForFacility(availableCredits);
-            DailyMissionManager.ReportWeaponEnhanced();
+            DailyMissionManager.ReportDroneEnhanced();
             SaveUnifiedGameIfReady();
         }
     }
@@ -233,11 +242,6 @@ public class BaseCampManager : MonoBehaviour
             DailyMissionManager.ReportUnitEnhanced();
             SaveUnifiedGameIfReady();
         }
-    }
-
-    public void InvestTraitPoint(TraitPointFacility.TraitStat stat)
-    {
-        TraitPointFacility?.TryInvest(stat);
     }
 
     public void UseBossTicket()
@@ -361,6 +365,7 @@ public class BaseCampManager : MonoBehaviour
 
         int availableCredits = Credits;
         int researchLabLevel = commandCenter != null ? commandCenter.Level : 1;
+        int upgradeCost = facility.UpgradeCost;
 
         if (!facility.CanStartUpgrade(availableCredits, commanderLevel, researchLabLevel))
         {
@@ -369,20 +374,23 @@ public class BaseCampManager : MonoBehaviour
 
         // 시설은 타이머만 시작하고, 실제 재화 차감은 wallet 한 곳에서 처리한다.
         int simulatedCredits = availableCredits;
-        if (CurrencyWallet.CanSpend(CurrencyType.Credits, facility.UpgradeCost)
+        if (CurrencyWallet.CanSpend(CurrencyType.Credits, upgradeCost)
             && facility.TryStartUpgrade(ref simulatedCredits, commanderLevel, researchLabLevel))
         {
-            CurrencyWallet.TrySpend(CurrencyType.Credits, facility.UpgradeCost);
+            CurrencyWallet.TrySpend(CurrencyType.Credits, upgradeCost);
+            DailyMissionManager.ReportFacilityUpgraded();
         }
     }
 
     private void OnGUI()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (showDebugPanel)
         {
             debugPanelRect.height = Mathf.Max(debugPanelRect.height, 260f);
             debugPanelRect = GUILayout.Window(GetInstanceID(), debugPanelRect, DrawDebugPanel, "Base Camp");
         }
+#endif
     }
 
     private void DrawDebugPanel(int windowId)
@@ -400,6 +408,19 @@ public class BaseCampManager : MonoBehaviour
         if (GUILayout.Button("Upgrade Assembly")) UpgradeAssemblyFactory();
         if (GUILayout.Button("Upgrade Core")) UpgradeCoreCharger();
         if (GUILayout.Button("Reset Level/Stage")) ResetLevelAndStageDebug();
+        if (GUILayout.Button(confirmPlayerPrefsReset
+                ? "Confirm Reset All Save"
+                : "Reset All PlayerPrefs"))
+        {
+            if (confirmPlayerPrefsReset)
+            {
+                ResetAllPlayerPrefsDebug();
+            }
+            else
+            {
+                confirmPlayerPrefsReset = true;
+            }
+        }
 
         GUI.DragWindow();
     }
@@ -432,6 +453,18 @@ public class BaseCampManager : MonoBehaviour
         {
             spawnManager.ResetStageProgress();
         }
+    }
+
+    [ContextMenu("Debug/Reset All PlayerPrefs")]
+    private void ResetAllPlayerPrefsDebug()
+    {
+        // 모든 저장 키를 제거한 뒤 씬을 다시 로드해 Inspector 초기값으로 테스트한다.
+        unifiedSaveReady = false;
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(activeScene.buildIndex);
     }
 
     private PlayerCurrencyWallet EnsureCurrencyWallet()
@@ -479,17 +512,6 @@ public class BaseCampManager : MonoBehaviour
         return inventory;
     }
 
-    private TraitPointFacility ResolveTraitPointFacility()
-    {
-        if (traitPointFacility != null)
-        {
-            return traitPointFacility;
-        }
-
-        traitPointFacility = FindFirstObjectByType<TraitPointFacility>();
-        return traitPointFacility;
-    }
-
     private DailyMissionManager EnsureDailyMissionManager()
     {
         dailyMissionManager ??= DailyMissionManager.Instance
@@ -530,6 +552,23 @@ public class BaseCampManager : MonoBehaviour
         HandleCoreCrystalsChanged(currencyWallet.CoreCrystals);
     }
 
+    private void ConfigureUnifiedPersistence()
+    {
+        if (!useUnifiedSave)
+        {
+            return;
+        }
+
+        // 개별 저장을 통합 저장으로 한 번 마이그레이션한 뒤 중복 키를 제거한다.
+        EnsureCurrencyWallet().SetStandaloneSaveEnabled(false, true);
+        assemblyFactory?.SetStandaloneSaveEnabled(false, true);
+        EnsureDailyMissionManager().SetStandaloneSaveEnabled(false, true);
+
+        AchievementManager achievementManager = AchievementManager.Instance
+            ?? FindFirstObjectByType<AchievementManager>();
+        achievementManager?.SetStandaloneSaveEnabled(false, true);
+    }
+
     private void HandleCreditsChanged(int value)
     {
         // 기존 기지 UI 이벤트를 유지하면서 실제 값은 wallet이 관리한다.
@@ -564,7 +603,6 @@ public class BaseCampManager : MonoBehaviour
             energyRefinery = energyRefinery != null ? energyRefinery.CaptureState() : new JinyouEnergyRefinerySaveData(),
             assemblyFactory = assemblyFactory != null ? assemblyFactory.CaptureState() : new JinyouAssemblyFactorySaveData(),
             coreCharger = coreCharger != null ? coreCharger.CaptureState() : new JinyouCoreChargerSaveData(),
-            traitPoints = TraitPointFacility != null ? TraitPointFacility.CaptureState() : new JinyouTraitPointSaveData(),
             achievements = achievementManager != null ? achievementManager.CaptureState() : new JinyouAchievementSaveData(),
             dailyMissions = resolvedDailyMissionManager.CaptureState()
         };
@@ -594,8 +632,6 @@ public class BaseCampManager : MonoBehaviour
             assemblyFactory?.RestoreState(data.assemblyFactory);
             coreCharger?.RestoreState(data.coreCharger);
             coreCharger?.ApplyCompletedConversions(Inventory, FindFirstObjectByType<PlayerController>());
-            TraitPointFacility?.RestoreState(data.traitPoints);
-
             AchievementManager achievementManager = AchievementManager.Instance
                 ?? FindFirstObjectByType<AchievementManager>();
             achievementManager?.RestoreState(data.achievements);
@@ -619,23 +655,32 @@ public class BaseCampManager : MonoBehaviour
         }
 
         float elapsedSeconds = Mathf.Max(0f, GetCurrentUnixTime() - lastSavedUnixTime);
-        float maxOfflineSeconds = Mathf.Max(0f, commandCenter.OfflineRewardLimitHours) * 3600f;
-        float appliedSeconds = Mathf.Min(elapsedSeconds, maxOfflineSeconds);
-        if (appliedSeconds <= 0f)
+        if (elapsedSeconds <= 0f)
         {
             return;
         }
 
+        // 건설 시간은 전체 미접속 시간을 반영하고 생산 보상은 시설별 한도를 적용한다.
+        commandCenter.AdvanceUpgradeOffline(elapsedSeconds);
+        energyRefinery?.AdvanceUpgradeOffline(elapsedSeconds);
+        assemblyFactory?.AdvanceUpgradeOffline(elapsedSeconds);
+        coreCharger?.AdvanceUpgradeOffline(elapsedSeconds);
+
+        float maxOfflineSeconds = Mathf.Max(0f, commandCenter.OfflineRewardLimitHours) * 3600f;
+        float appliedSeconds = Mathf.Min(elapsedSeconds, maxOfflineSeconds);
         int storedCreditsBefore = energyRefinery != null ? energyRefinery.StoredCredits : 0;
         energyRefinery?.Produce(appliedSeconds);
         int storedCreditsAfter = energyRefinery != null ? energyRefinery.StoredCredits : storedCreditsBefore;
+        float ticketOfflineSeconds = Mathf.Min(
+            elapsedSeconds,
+            Mathf.Max(0f, commandCenter.TicketOfflineLimitHours) * 3600f);
 
         lastOfflineReward = new JinyouOfflineRewardSaveData
         {
             elapsedSeconds = elapsedSeconds,
             appliedSeconds = appliedSeconds,
             refineryCreditsAdded = Mathf.Max(0, storedCreditsAfter - storedCreditsBefore),
-            bossTicketsAdded = commandCenter.ProduceBossTicketsOffline(appliedSeconds)
+            bossTicketsAdded = commandCenter.ProduceBossTicketsOffline(ticketOfflineSeconds)
         };
 
         if (lastOfflineReward.HasReward)
@@ -659,8 +704,6 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.OnDroneEnhanced.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnUnitEnhanced.AddListener(HandleUnifiedSaveEvent);
-        TraitPointFacility?.OnTraitsChanged.AddListener(HandleUnifiedSaveEvent);
-
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.OnAchievementsChanged.AddListener(HandleUnifiedSaveEvent);
@@ -686,8 +729,6 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.OnDroneEnhanced.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnUnitEnhanced.RemoveListener(HandleUnifiedSaveEvent);
-        TraitPointFacility?.OnTraitsChanged.RemoveListener(HandleUnifiedSaveEvent);
-
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.OnAchievementsChanged.RemoveListener(HandleUnifiedSaveEvent);
@@ -878,6 +919,19 @@ public class PlayerCurrencyWallet : MonoBehaviour, ICurrencyWallet
         coreCrystals = Mathf.Max(0, value);
         Save();
         OnCoreCrystalsChanged.Invoke(coreCrystals);
+    }
+
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveToPlayerPrefs = enabled;
+        if (!clearStoredData)
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(CreditsKey);
+        PlayerPrefs.DeleteKey(CoreCrystalsKey);
+        PlayerPrefs.Save();
     }
 
     private void Load()

@@ -11,7 +11,8 @@ public enum DailyMissionType
     EnhanceUnit,
     UseBossTicket,
     DrawWeaponGacha,
-    ClaimOfflineReward
+    ClaimOfflineReward,
+    EnhanceDrone
 }
 
 [DisallowMultipleComponent]
@@ -129,6 +130,7 @@ public class DailyMissionManager : MonoBehaviour
         new DailyMissionEntry("collect_credits", DailyMissionType.CollectCredits, "Credit Recovery", "Collect 1000 refinery credits", 1000, CurrencyType.Credits, 200),
         new DailyMissionEntry("upgrade_facility", DailyMissionType.UpgradeFacility, "Base Expansion", "Start 1 facility upgrade", 1, CurrencyType.Credits, 300),
         new DailyMissionEntry("enhance_weapon", DailyMissionType.EnhanceWeapon, "Weapon Tuning", "Enhance a weapon 1 time", 1, CurrencyType.Credits, 200),
+        new DailyMissionEntry("enhance_drone", DailyMissionType.EnhanceDrone, "Drone Tuning", "Enhance a drone 1 time", 1, CurrencyType.Credits, 200),
         new DailyMissionEntry("enhance_unit", DailyMissionType.EnhanceUnit, "Core Calibration", "Enhance a unit 1 time", 1, CurrencyType.Credits, 200),
         new DailyMissionEntry("use_boss_ticket", DailyMissionType.UseBossTicket, "Boss Recon", "Use 1 boss ticket", 1, CurrencyType.CoreCrystals, 5),
         new DailyMissionEntry("draw_weapon", DailyMissionType.DrawWeaponGacha, "Supply Draw", "Draw weapons 1 time", 1, CurrencyType.Credits, 150),
@@ -197,6 +199,11 @@ public class DailyMissionManager : MonoBehaviour
     public static void ReportUnitEnhanced(int amount = 1)
     {
         Instance?.AddProgress(DailyMissionType.EnhanceUnit, amount);
+    }
+
+    public static void ReportDroneEnhanced(int amount = 1)
+    {
+        Instance?.AddProgress(DailyMissionType.EnhanceDrone, amount);
     }
 
     public static void ReportBossTicketUsed(int amount = 1)
@@ -283,6 +290,16 @@ public class DailyMissionManager : MonoBehaviour
         }
 
         OnDailyMissionsChanged.Invoke();
+    }
+
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveToPlayerPrefs = enabled;
+        if (clearStoredData && !string.IsNullOrWhiteSpace(saveKey))
+        {
+            PlayerPrefs.DeleteKey(saveKey);
+            PlayerPrefs.Save();
+        }
     }
 
     public JinyouDailyMissionSaveData CaptureState()
@@ -439,6 +456,19 @@ public class DailyMissionManager : MonoBehaviour
     private void ValidateMissions()
     {
         missions ??= new List<DailyMissionEntry>();
+        if (!missions.Exists(item => item != null && item.MissionType == DailyMissionType.EnhanceDrone))
+        {
+            // 기존 프리팹 목록에도 드론 강화 미션을 자동으로 추가한다.
+            missions.Add(new DailyMissionEntry(
+                "enhance_drone",
+                DailyMissionType.EnhanceDrone,
+                "Drone Tuning",
+                "Enhance a drone 1 time",
+                1,
+                CurrencyType.Credits,
+                200));
+        }
+
         foreach (DailyMissionEntry mission in missions)
         {
             mission?.Validate();

@@ -15,7 +15,6 @@ public class JinyouSaveData
     public JinyouEnergyRefinerySaveData energyRefinery = new JinyouEnergyRefinerySaveData();
     public JinyouAssemblyFactorySaveData assemblyFactory = new JinyouAssemblyFactorySaveData();
     public JinyouCoreChargerSaveData coreCharger = new JinyouCoreChargerSaveData();
-    public JinyouTraitPointSaveData traitPoints = new JinyouTraitPointSaveData();
     public JinyouAchievementSaveData achievements = new JinyouAchievementSaveData();
     public JinyouDailyMissionSaveData dailyMissions = new JinyouDailyMissionSaveData();
 }
@@ -35,9 +34,7 @@ public class JinyouOfflineRewardSaveData
 public class JinyouCommandCenterSaveData
 {
     public int level = 1;
-    public int upgradeCost;
     public int bossTickets;
-    public int bossTicketCapacity;
     public float bossTicketProductionSeconds;
     public bool isUpgrading;
     public float upgradeRemainingSeconds;
@@ -82,7 +79,6 @@ public class JinyouEnhancementLevelSaveData
 public class JinyouMenuSaveData
 {
     public string menuId;
-    public int developmentLevel;
     public bool unlocked;
 }
 
@@ -94,15 +90,6 @@ public class JinyouCoreChargerSaveData
     public float upgradeRemainingSeconds;
     public float currentUpgradeDurationSeconds;
     public List<int> convertedStageIndices = new List<int>();
-}
-
-[Serializable]
-public class JinyouTraitPointSaveData
-{
-    public int attackDamagePoints;
-    public int maxHealthPoints;
-    public int critChancePoints;
-    public int critMultiplierPoints;
 }
 
 [Serializable]
