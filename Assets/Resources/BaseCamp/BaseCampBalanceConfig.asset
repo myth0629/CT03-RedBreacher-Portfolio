@@ -35,7 +35,7 @@ MonoBehaviour:
     droneFollowSpeedBonus: 0
   - facilityId: command_center
     level: 2
-    upgradeCost: 700
+    upgradeCost: 1000
     upgradeSeconds: 20
     requiredCommanderLevel: 2
     requiredCommandCenterLevel: 1
@@ -54,7 +54,7 @@ MonoBehaviour:
     droneFollowSpeedBonus: 0
   - facilityId: command_center
     level: 3
-    upgradeCost: 1000
+    upgradeCost: 2000
     upgradeSeconds: 30
     requiredCommanderLevel: 3
     requiredCommandCenterLevel: 1
@@ -73,7 +73,7 @@ MonoBehaviour:
     droneFollowSpeedBonus: 0
   - facilityId: command_center
     level: 4
-    upgradeCost: 1400
+    upgradeCost: 4000
     upgradeSeconds: 40
     requiredCommanderLevel: 4
     requiredCommandCenterLevel: 1
@@ -92,7 +92,7 @@ MonoBehaviour:
     droneFollowSpeedBonus: 0
   - facilityId: command_center
     level: 5
-    upgradeCost: 2000
+    upgradeCost: 10000
     upgradeSeconds: 50
     requiredCommanderLevel: 5
     requiredCommandCenterLevel: 1
@@ -111,7 +111,7 @@ MonoBehaviour:
     droneFollowSpeedBonus: 0
   - facilityId: command_center
     level: 6
-    upgradeCost: 2800
+    upgradeCost: 25000
     upgradeSeconds: 60
     requiredCommanderLevel: 6
     requiredCommandCenterLevel: 1
@@ -130,7 +130,7 @@ MonoBehaviour:
     droneFollowSpeedBonus: 0
   - facilityId: command_center
     level: 7
-    upgradeCost: 4000
+    upgradeCost: 50000
     upgradeSeconds: 70
     requiredCommanderLevel: 7
     requiredCommandCenterLevel: 1
@@ -149,7 +149,7 @@ MonoBehaviour:
     droneFollowSpeedBonus: 0
   - facilityId: command_center
     level: 8
-    upgradeCost: 5600
+    upgradeCost: 100000
     upgradeSeconds: 80
     requiredCommanderLevel: 8
     requiredCommandCenterLevel: 1
@@ -168,7 +168,7 @@ MonoBehaviour:
     droneFollowSpeedBonus: 0
   - facilityId: command_center
     level: 9
-    upgradeCost: 8000
+    upgradeCost: 200000
     upgradeSeconds: 90
     requiredCommanderLevel: 9
     requiredCommandCenterLevel: 1
