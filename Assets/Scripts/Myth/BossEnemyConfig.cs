@@ -3,6 +3,9 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Myth/Combat/Boss Enemy Config")]
 public class BossEnemyConfig : EnemyConfig
 {
+    [Header("Tracker")]
+    [SerializeField] private Sprite portrait;
+
     [Header("Ranged Attack")]
     [SerializeField] private float rangedAttackRange = 7f;
     [SerializeField] private float rangedAttackDamage = 12f;
@@ -44,6 +47,7 @@ public class BossEnemyConfig : EnemyConfig
     [SerializeField] private float dodgeCheckInterval = 0.1f;
     [SerializeField] private LayerMask dodgeObstacleMask;
 
+    public Sprite Portrait => portrait;
     public float RangedAttackRange => Mathf.Max(0.1f, rangedAttackRange);
     public float RangedAttackDamage => Mathf.Max(0f, rangedAttackDamage);
     public float RangedAttackInterval => Mathf.Max(0.1f, rangedAttackInterval);

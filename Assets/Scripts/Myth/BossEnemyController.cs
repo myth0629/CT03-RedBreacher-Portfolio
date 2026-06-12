@@ -17,6 +17,7 @@ public class BossEnemyController : EnemyController
     private float nextLaserTime;
     private float nextDodgeTime;
     private float nextDodgeCheckTime;
+    private float attackDamageMultiplier = 1f;
     private bool isDodging;
 
     protected override void Awake()
@@ -34,8 +35,26 @@ public class BossEnemyController : EnemyController
 
     public void InitializeBoss(BossEnemyConfig config, int level)
     {
+        InitializeBoss(config, level, 1f, 1f, 1f, 1f);
+    }
+
+    public void InitializeBoss(
+        BossEnemyConfig config,
+        int level,
+        float healthScale,
+        float moveSpeedScale,
+        float damageScale,
+        float rewardScale)
+    {
         bossConfig = config;
-        Initialize(config, level, 1f, 1f, 1f, 1f);
+        attackDamageMultiplier = Mathf.Max(0.01f, damageScale);
+        Initialize(
+            config,
+            level,
+            healthScale,
+            moveSpeedScale,
+            damageScale,
+            rewardScale);
         ResolveFirePoints();
         EnsureLaserLine();
         nextRangedAttackTime = Time.time;
@@ -131,7 +150,9 @@ public class BossEnemyController : EnemyController
         int muzzleCount = Mathf.Max(1, firePoints.Count);
         int projectilesPerMuzzle = bossConfig.ProjectilesPerFirePoint;
         int totalProjectileCount = muzzleCount * projectilesPerMuzzle;
-        float damagePerProjectile = bossConfig.RangedAttackDamage / totalProjectileCount;
+        float damagePerProjectile = bossConfig.RangedAttackDamage
+            * attackDamageMultiplier
+            / totalProjectileCount;
 
         for (int muzzleIndex = 0; muzzleIndex < muzzleCount; muzzleIndex++)
         {
@@ -462,7 +483,7 @@ public class BossEnemyController : EnemyController
                 continue;
             }
 
-            player.Health.TakeDamage(bossConfig.LaserDamage);
+            player.Health.TakeDamage(bossConfig.LaserDamage * attackDamageMultiplier);
             return;
         }
     }
