@@ -7,7 +7,6 @@ public class BossTrackerPanel : MonoBehaviour
 {
     [Header("Source")]
     [SerializeField] private BaseCampManager baseCampManager;
-    [FormerlySerializedAs("bossDungeon")]
     [SerializeField] private BossTracker bossTracker;
 
     [Header("Ticket")]
