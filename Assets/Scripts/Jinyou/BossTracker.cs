@@ -5,6 +5,15 @@ using UnityEngine;
 public class BossTracker : MonoBehaviour
 {
     [Serializable]
+    public class BossDefinition
+    {
+        public string bossId;
+        public string displayName;
+        public Sprite portrait;
+        public BossEnemyConfig bossConfig;
+    }
+
+    [Serializable]
     public class BossDifficulty
     {
         public string difficultyId;
@@ -13,29 +22,72 @@ public class BossTracker : MonoBehaviour
         public int recommendedPower;
         public string rewardSummary;
         public BossEnemyConfig bossConfig;
+        [Min(0.01f)] public float healthMultiplier = 1f;
+        [Min(0.01f)] public float moveSpeedMultiplier = 1f;
+        [Min(0.01f)] public float damageMultiplier = 1f;
+        [Min(0.01f)] public float rewardMultiplier = 1f;
     }
 
     [SerializeField] private CommandCenter cmdCenter;
     [SerializeField] private BossEncounterManager bossEncounterManager;
+    [SerializeField] private List<BossDefinition> bosses = new List<BossDefinition>();
+
+    // Kept under the original field name so existing prefab data remains valid.
     [SerializeField] private List<BossDifficulty> difficulties = new List<BossDifficulty>
     {
-        new BossDifficulty { difficultyId = "normal", displayName = "Normal Boss", requiredResearchLabLevel = 1, recommendedPower = 1000, rewardSummary = "Credits / Parts" },
-        new BossDifficulty { difficultyId = "hard", displayName = "Hard Boss", requiredResearchLabLevel = 3, recommendedPower = 3000, rewardSummary = "Rare Parts" },
-        new BossDifficulty { difficultyId = "elite", displayName = "Elite Boss", requiredResearchLabLevel = 5, recommendedPower = 6000, rewardSummary = "Core Materials" }
+        new BossDifficulty
+        {
+            difficultyId = "normal",
+            displayName = "Normal",
+            requiredResearchLabLevel = 1,
+            recommendedPower = 1000,
+            rewardSummary = "Credits / Parts"
+        },
+        new BossDifficulty
+        {
+            difficultyId = "hard",
+            displayName = "Hard",
+            requiredResearchLabLevel = 3,
+            recommendedPower = 3000,
+            rewardSummary = "Rare Parts",
+            healthMultiplier = 1.75f,
+            moveSpeedMultiplier = 1.1f,
+            damageMultiplier = 1.5f,
+            rewardMultiplier = 1.75f
+        },
+        new BossDifficulty
+        {
+            difficultyId = "elite",
+            displayName = "Elite",
+            requiredResearchLabLevel = 5,
+            recommendedPower = 6000,
+            rewardSummary = "Core Materials",
+            healthMultiplier = 3f,
+            moveSpeedMultiplier = 1.2f,
+            damageMultiplier = 2.25f,
+            rewardMultiplier = 3f
+        }
     };
 
+    [SerializeField] private int selectedBossIndex;
+    [SerializeField] private int selectedDifficultyIndex;
+
+    public IReadOnlyList<BossDefinition> Bosses => bosses;
     public IReadOnlyList<BossDifficulty> Difficulties => difficulties;
     public CommandCenter CmdCenter => cmdCenter;
+    public BossDefinition SelectedBoss => GetBoss(selectedBossIndex);
+    public BossDifficulty SelectedDifficulty => GetDifficulty(selectedDifficultyIndex);
+    public event Action SelectionChanged;
 
     private void Awake()
     {
         ResolveReferences();
+        EnsureValidSelection();
     }
 
     public bool IsDifficultyUnlocked(BossDifficulty difficulty)
     {
         ResolveReferences();
-
         if (difficulty == null)
         {
             return false;
@@ -45,52 +97,174 @@ public class BossTracker : MonoBehaviour
         return researchLevel >= difficulty.requiredResearchLabLevel;
     }
 
-    public bool CanEnter(BossDifficulty difficulty)
+    public bool CanEnterSelected()
+    {
+        return CanEnter(SelectedBoss, SelectedDifficulty);
+    }
+
+    public bool CanEnter(BossDefinition boss, BossDifficulty difficulty)
     {
         ResolveReferences();
+        BossEnemyConfig config = GetBossConfig(boss, difficulty);
         return cmdCenter != null
             && cmdCenter.BossTickets > 0
             && IsDifficultyUnlocked(difficulty)
-            && difficulty != null
             && bossEncounterManager != null
-            && bossEncounterManager.CanSummon(difficulty.bossConfig);
+            && bossEncounterManager.CanSummon(config);
     }
 
-    public bool TryEnter(BossDifficulty difficulty)
+    public bool TryEnterSelected()
     {
-        if (!CanEnter(difficulty))
+        BossDefinition boss = SelectedBoss;
+        BossDifficulty difficulty = SelectedDifficulty;
+        if (!CanEnter(boss, difficulty))
         {
             return false;
         }
 
-        // 보스와 스폰 환경을 먼저 검증한 뒤 티켓을 소모하고 실제 전투를 시작한다.
         if (!cmdCenter.TryUseBossTicket())
         {
             return false;
         }
 
-        return bossEncounterManager.TrySummon(difficulty.bossConfig);
+        BossEnemyConfig config = GetBossConfig(boss, difficulty);
+        return bossEncounterManager.TrySummon(
+            config,
+            difficulty.healthMultiplier,
+            difficulty.moveSpeedMultiplier,
+            difficulty.damageMultiplier,
+            difficulty.rewardMultiplier);
+    }
+
+    public bool TryEnter(BossDifficulty difficulty)
+    {
+        if (difficulty != null)
+        {
+            int index = difficulties.IndexOf(difficulty);
+            if (index >= 0)
+            {
+                selectedDifficultyIndex = index;
+            }
+        }
+
+        return TryEnterSelected();
+    }
+
+    public void SelectPreviousBoss()
+    {
+        CycleBoss(-1);
+    }
+
+    public void SelectNextBoss()
+    {
+        CycleBoss(1);
+    }
+
+    public void SelectPreviousDifficulty()
+    {
+        CycleDifficulty(-1);
+    }
+
+    public void SelectNextDifficulty()
+    {
+        CycleDifficulty(1);
     }
 
     public BossDifficulty GetHighestUnlockedDifficulty()
     {
-        BossDifficulty selectedDifficulty = null;
+        BossDifficulty selected = null;
+        foreach (BossDifficulty difficulty in difficulties)
+        {
+            if (IsDifficultyUnlocked(difficulty)
+                && (selected == null
+                    || difficulty.requiredResearchLabLevel > selected.requiredResearchLabLevel))
+            {
+                selected = difficulty;
+            }
+        }
+
+        return selected;
+    }
+
+    private void CycleBoss(int direction)
+    {
+        if (bosses.Count <= 1)
+        {
+            return;
+        }
+
+        selectedBossIndex = WrapIndex(selectedBossIndex + direction, bosses.Count);
+        SelectionChanged?.Invoke();
+    }
+
+    private void CycleDifficulty(int direction)
+    {
+        if (difficulties.Count <= 1)
+        {
+            return;
+        }
+
+        selectedDifficultyIndex = WrapIndex(selectedDifficultyIndex + direction, difficulties.Count);
+        SelectionChanged?.Invoke();
+    }
+
+    private BossDefinition GetBoss(int index)
+    {
+        EnsureBossFallback();
+        return bosses.Count > 0 ? bosses[WrapIndex(index, bosses.Count)] : null;
+    }
+
+    private BossDifficulty GetDifficulty(int index)
+    {
+        return difficulties.Count > 0 ? difficulties[WrapIndex(index, difficulties.Count)] : null;
+    }
+
+    private static BossEnemyConfig GetBossConfig(BossDefinition boss, BossDifficulty difficulty)
+    {
+        return boss != null && boss.bossConfig != null
+            ? boss.bossConfig
+            : difficulty != null ? difficulty.bossConfig : null;
+    }
+
+    private void EnsureValidSelection()
+    {
+        EnsureBossFallback();
+        selectedBossIndex = bosses.Count > 0 ? WrapIndex(selectedBossIndex, bosses.Count) : 0;
+        selectedDifficultyIndex = difficulties.Count > 0
+            ? WrapIndex(selectedDifficultyIndex, difficulties.Count)
+            : 0;
+
+        if (!IsDifficultyUnlocked(SelectedDifficulty))
+        {
+            BossDifficulty highest = GetHighestUnlockedDifficulty();
+            int unlockedIndex = difficulties.IndexOf(highest);
+            selectedDifficultyIndex = unlockedIndex >= 0 ? unlockedIndex : 0;
+        }
+    }
+
+    private void EnsureBossFallback()
+    {
+        if (bosses.Count > 0)
+        {
+            return;
+        }
 
         foreach (BossDifficulty difficulty in difficulties)
         {
-            if (!IsDifficultyUnlocked(difficulty))
+            if (difficulty?.bossConfig == null)
             {
                 continue;
             }
 
-            if (selectedDifficulty == null
-                || difficulty.requiredResearchLabLevel > selectedDifficulty.requiredResearchLabLevel)
+            bosses.Add(new BossDefinition
             {
-                selectedDifficulty = difficulty;
-            }
+                bossId = difficulty.bossConfig.Id,
+                displayName = difficulty.bossConfig.DisplayName,
+                portrait = difficulty.bossConfig.Portrait,
+                bossConfig = difficulty.bossConfig
+            });
+            break;
         }
-
-        return selectedDifficulty;
     }
 
     private void ResolveReferences()
@@ -99,6 +273,11 @@ public class BossTracker : MonoBehaviour
             ? BaseCampManager.Instance.CommandCenter
             : FindFirstObjectByType<CommandCenter>();
         bossEncounterManager ??= FindFirstObjectByType<BossEncounterManager>();
+    }
+
+    private static int WrapIndex(int index, int count)
+    {
+        return count > 0 ? (index % count + count) % count : 0;
     }
 
     private void OnValidate()
@@ -112,6 +291,10 @@ public class BossTracker : MonoBehaviour
 
             difficulty.requiredResearchLabLevel = Mathf.Max(1, difficulty.requiredResearchLabLevel);
             difficulty.recommendedPower = Mathf.Max(0, difficulty.recommendedPower);
+            difficulty.healthMultiplier = Mathf.Max(0.01f, difficulty.healthMultiplier);
+            difficulty.moveSpeedMultiplier = Mathf.Max(0.01f, difficulty.moveSpeedMultiplier);
+            difficulty.damageMultiplier = Mathf.Max(0.01f, difficulty.damageMultiplier);
+            difficulty.rewardMultiplier = Mathf.Max(0.01f, difficulty.rewardMultiplier);
         }
     }
 }

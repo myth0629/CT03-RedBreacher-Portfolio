@@ -1,10 +1,12 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class BossSummonButton : MonoBehaviour
 {
     [Header("Source")]
+    [FormerlySerializedAs("bossDungeon")]
     [SerializeField] private BossTracker bossTracker;
 
     [Header("UI")]
@@ -17,10 +19,7 @@ public class BossSummonButton : MonoBehaviour
 
     private void Awake()
     {
-        if (summonButton == null)
-        {
-            summonButton = GetComponent<Button>();
-        }
+        summonButton ??= GetComponent<Button>();
     }
 
     private void OnEnable()
@@ -45,28 +44,35 @@ public class BossSummonButton : MonoBehaviour
         ResolveReferences();
         if (bossTracker == null)
         {
-            stateMessage = "보스 시스템이 연결되지 않았습니다.";
+            stateMessage = "Boss Tracker is not connected.";
             Refresh();
             return;
         }
 
-        BossTracker.BossDifficulty difficulty = bossTracker.GetHighestUnlockedDifficulty();
-        if (difficulty == null)
+        BossTracker.BossDefinition boss = bossTracker.SelectedBoss;
+        BossTracker.BossDifficulty difficulty = bossTracker.SelectedDifficulty;
+        if (boss == null || difficulty == null)
         {
-            stateMessage = "해금된 보스가 없습니다.";
+            stateMessage = "No boss is selected.";
             Refresh();
             return;
         }
 
-        // 게임 HUD 버튼에서도 기지와 동일한 티켓 소모 및 소환 검증을 사용한다.
-        if (bossTracker.TryEnter(difficulty))
+        if (!bossTracker.IsDifficultyUnlocked(difficulty))
         {
-            stateMessage = $"{difficulty.displayName} 소환";
+            stateMessage = $"{difficulty.displayName} is locked.";
+            Refresh();
+            return;
+        }
+
+        if (bossTracker.TryEnterSelected())
+        {
+            stateMessage = $"{GetBossName(boss)} - {difficulty.displayName}";
             DailyMissionManager.ReportBossTicketUsed();
         }
         else
         {
-            stateMessage = "티켓 또는 보스 설정을 확인하세요.";
+            stateMessage = "Check the ticket count or boss encounter state.";
         }
 
         Refresh();
@@ -76,22 +82,23 @@ public class BossSummonButton : MonoBehaviour
     {
         ResolveReferences();
         CommandCenter commandCenter = bossTracker != null ? bossTracker.CmdCenter : null;
+        BossTracker.BossDefinition boss = bossTracker != null ? bossTracker.SelectedBoss : null;
         BossTracker.BossDifficulty difficulty = bossTracker != null
-            ? bossTracker.GetHighestUnlockedDifficulty()
+            ? bossTracker.SelectedDifficulty
             : null;
 
         if (ticketText != null)
         {
             ticketText.text = commandCenter != null
-                ? $"티켓 {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}"
-                : "티켓 --/--";
+                ? $"Ticket {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}"
+                : "Ticket --/--";
         }
 
         if (bossNameText != null)
         {
-            bossNameText.text = difficulty != null
-                ? difficulty.displayName
-                : "보스 미해금";
+            bossNameText.text = boss != null && difficulty != null
+                ? $"{GetBossName(boss)} [{difficulty.displayName}]"
+                : "No boss selected";
         }
 
         if (stateText != null)
@@ -101,10 +108,18 @@ public class BossSummonButton : MonoBehaviour
 
         if (summonButton != null)
         {
-            summonButton.interactable = bossTracker != null
-                && difficulty != null
-                && bossTracker.CanEnter(difficulty);
+            summonButton.interactable = bossTracker != null && bossTracker.CanEnterSelected();
         }
+    }
+
+    private static string GetBossName(BossTracker.BossDefinition boss)
+    {
+        if (!string.IsNullOrWhiteSpace(boss.displayName))
+        {
+            return boss.displayName;
+        }
+
+        return boss.bossConfig != null ? boss.bossConfig.DisplayName : "Boss";
     }
 
     private void ResolveReferences()
