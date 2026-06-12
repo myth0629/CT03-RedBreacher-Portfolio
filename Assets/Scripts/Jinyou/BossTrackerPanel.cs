@@ -36,7 +36,6 @@ public class BossTrackerPanel : MonoBehaviour
     {
         ResolveReferences();
         ResolvePanelWidgets();
-        EnsureSelectionControls();
         BindButtons();
         if (bossTracker != null)
         {
@@ -69,9 +68,9 @@ public class BossTrackerPanel : MonoBehaviour
 
         if (commandCenter == null)
         {
-            SetText(ticketText, "Ticket --/--");
-            SetText(productionText, "Ticket production unavailable");
-            SetText(difficultyText, "Boss Tracker is not connected.");
+            SetText(ticketText, "티켓 --/--");
+            SetText(productionText, "티켓 생산 정보 없음");
+            SetText(difficultyText, "보스 트래커가 연결되지 않았습니다.");
             SetBossInfo(null, null);
             SetFill(ticketProgressFill, 0f);
             return;
@@ -82,8 +81,8 @@ public class BossTrackerPanel : MonoBehaviour
             ? bossTracker.SelectedDifficulty
             : null;
 
-        SetText(ticketText, $"Ticket {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}");
-        SetText(productionText, $"{commandCenter.BossTicketsProducedPerDay} tickets per day");
+        SetText(ticketText, $"티켓 {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}");
+        SetText(productionText, $"하루 {commandCenter.BossTicketsProducedPerDay}개 지급");
         SetText(difficultyText, BuildDifficultySummary(difficulty));
         SetBossInfo(boss, difficulty);
         SetFill(ticketProgressFill, commandCenter.BossTicketCapacity > 0
@@ -101,13 +100,13 @@ public class BossTrackerPanel : MonoBehaviour
     {
         if (bossTracker == null || difficulty == null)
         {
-            return "Difficulty unavailable";
+            return "난이도 정보 없음";
         }
 
         string state = bossTracker.IsDifficultyUnlocked(difficulty)
-            ? "OPEN"
-            : $"Command Center Lv.{difficulty.requiredResearchLabLevel}";
-        return $"{difficulty.displayName} | {state} | Power {difficulty.recommendedPower:N0}";
+            ? "해금"
+            : $"사령부 Lv.{difficulty.requiredResearchLabLevel} 필요";
+        return $"{difficulty.displayName} | {state} | 권장 전투력 {difficulty.recommendedPower:N0}";
     }
 
     private void SetBossInfo(
@@ -117,7 +116,7 @@ public class BossTrackerPanel : MonoBehaviour
         BossEnemyConfig config = boss != null ? boss.bossConfig : null;
         string displayName = boss != null && !string.IsNullOrWhiteSpace(boss.displayName)
             ? boss.displayName
-            : config != null ? config.DisplayName : "No boss selected";
+            : config != null ? config.DisplayName : "선택된 보스 없음";
 
         float healthMultiplier = difficulty != null ? difficulty.healthMultiplier : 1f;
         float damageMultiplier = difficulty != null ? difficulty.damageMultiplier : 1f;
@@ -128,16 +127,16 @@ public class BossTrackerPanel : MonoBehaviour
             ? $"{config.MaxHealth * healthMultiplier:0}"
             : string.Empty);
         SetText(rangedAttackText, config != null
-            ? $"Spread Shot ({config.RangedAttackDamage * damageMultiplier:0})"
+            ? $"범위 공격 ({config.RangedAttackDamage * damageMultiplier:0})"
             : string.Empty);
         SetText(laserAttackText, config != null
-            ? $"Laser ({config.LaserDamage * damageMultiplier:0})"
+            ? $"레이저 공격 ({config.LaserDamage * damageMultiplier:0})"
             : string.Empty);
         SetText(creditRewardText, config != null
-            ? $"Credits {Mathf.RoundToInt(config.CreditReward * rewardMultiplier):N0}"
+            ? $"크레딧 {Mathf.RoundToInt(config.CreditReward * rewardMultiplier):N0}"
             : string.Empty);
         SetText(coreRewardText, config != null
-            ? $"Core {Mathf.RoundToInt(config.CoreCrystalReward * rewardMultiplier):N0}"
+            ? $"코어 {Mathf.RoundToInt(config.CoreCrystalReward * rewardMultiplier):N0}"
             : string.Empty);
 
         if (bossIcon != null)
@@ -169,73 +168,6 @@ public class BossTrackerPanel : MonoBehaviour
         creditRewardText ??= FindByName(texts, "CreditReward_txt");
         coreRewardText ??= FindByName(texts, "CoreReward_txt");
         bossIcon ??= FindByName(images, "Boss_Icon");
-        difficultyText ??= CreateDifficultyText(
-            bossNameText != null ? bossNameText.transform.parent : transform);
-    }
-
-    private void EnsureSelectionControls()
-    {
-        Transform iconTransform = bossIcon != null ? bossIcon.transform : transform;
-        Transform panelTransform = bossNameText != null ? bossNameText.transform.parent : transform;
-
-        previousBossButton ??= CreateArrowButton(
-            "Previous Boss Button",
-            iconTransform.parent,
-            "<",
-            new Vector2(0f, 0.5f),
-            new Vector2(-45f, 0f),
-            new Vector2(70f, 110f));
-        nextBossButton ??= CreateArrowButton(
-            "Next Boss Button",
-            iconTransform.parent,
-            ">",
-            new Vector2(1f, 0.5f),
-            new Vector2(45f, 0f),
-            new Vector2(70f, 110f));
-        previousDifficultyButton ??= CreateArrowButton(
-            "Previous Difficulty Button",
-            panelTransform,
-            "v",
-            new Vector2(1f, 1f),
-            new Vector2(-95f, -115f),
-            new Vector2(60f, 42f));
-        nextDifficultyButton ??= CreateArrowButton(
-            "Next Difficulty Button",
-            panelTransform,
-            "^",
-            new Vector2(1f, 1f),
-            new Vector2(-25f, -115f),
-            new Vector2(60f, 42f));
-    }
-
-    private TMP_Text CreateDifficultyText(Transform parent)
-    {
-        Transform existing = parent.Find("Selected Difficulty Text");
-        if (existing != null)
-        {
-            return existing.GetComponent<TMP_Text>();
-        }
-
-        GameObject textObject = new GameObject(
-            "Selected Difficulty Text",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(TextMeshProUGUI));
-        textObject.layer = gameObject.layer;
-        RectTransform rect = textObject.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = new Vector2(0.5f, 1f);
-        rect.anchorMax = new Vector2(0.5f, 1f);
-        rect.pivot = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = new Vector2(0f, -92f);
-        rect.sizeDelta = new Vector2(620f, 42f);
-
-        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
-        text.alignment = TextAlignmentOptions.Center;
-        text.fontSize = 26f;
-        text.color = new Color(1f, 0.8f, 0.25f, 1f);
-        text.raycastTarget = false;
-        return text;
     }
 
     private void BindButtons()
@@ -272,60 +204,6 @@ public class BossTrackerPanel : MonoBehaviour
     private void SelectNextDifficulty()
     {
         bossTracker?.SelectNextDifficulty();
-    }
-
-    private static Button CreateArrowButton(
-        string objectName,
-        Transform parent,
-        string label,
-        Vector2 anchor,
-        Vector2 anchoredPosition,
-        Vector2 size)
-    {
-        Transform existing = parent != null ? parent.Find(objectName) : null;
-        if (existing != null)
-        {
-            return existing.GetComponent<Button>();
-        }
-
-        GameObject buttonObject = new GameObject(
-            objectName,
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image),
-            typeof(Button));
-        buttonObject.layer = parent != null ? parent.gameObject.layer : 5;
-        RectTransform rect = buttonObject.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        rect.anchorMin = anchor;
-        rect.anchorMax = anchor;
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = anchoredPosition;
-        rect.sizeDelta = size;
-
-        Image image = buttonObject.GetComponent<Image>();
-        image.color = new Color(0.93f, 0.22f, 0.14f, 0.92f);
-
-        GameObject textObject = new GameObject(
-            "Label",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(TextMeshProUGUI));
-        textObject.layer = buttonObject.layer;
-        RectTransform textRect = textObject.GetComponent<RectTransform>();
-        textRect.SetParent(rect, false);
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.sizeDelta = Vector2.zero;
-
-        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
-        text.text = label;
-        text.alignment = TextAlignmentOptions.Center;
-        text.fontSize = Mathf.Min(size.x, size.y) * 0.55f;
-        text.color = Color.white;
-        text.raycastTarget = false;
-
-        return buttonObject.GetComponent<Button>();
     }
 
     private static T FindByName<T>(T[] components, string objectName) where T : Component
