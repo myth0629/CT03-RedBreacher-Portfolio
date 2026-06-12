@@ -44,7 +44,7 @@ public class BossSummonButton : MonoBehaviour
         ResolveReferences();
         if (bossTracker == null)
         {
-            stateMessage = "Boss Tracker is not connected.";
+            stateMessage = "보스 트래커가 연결되지 않았습니다.";
             Refresh();
             return;
         }
@@ -53,26 +53,26 @@ public class BossSummonButton : MonoBehaviour
         BossTracker.BossDifficulty difficulty = bossTracker.SelectedDifficulty;
         if (boss == null || difficulty == null)
         {
-            stateMessage = "No boss is selected.";
+            stateMessage = "선택된 보스가 없습니다.";
             Refresh();
             return;
         }
 
         if (!bossTracker.IsDifficultyUnlocked(difficulty))
         {
-            stateMessage = $"{difficulty.displayName} is locked.";
+            stateMessage = $"{difficulty.displayName} 난이도가 잠겨 있습니다.";
             Refresh();
             return;
         }
 
         if (bossTracker.TryEnterSelected())
         {
-            stateMessage = $"{GetBossName(boss)} - {difficulty.displayName}";
+            stateMessage = $"{GetBossName(boss)} - {difficulty.displayName} 소환";
             DailyMissionManager.ReportBossTicketUsed();
         }
         else
         {
-            stateMessage = "Check the ticket count or boss encounter state.";
+            stateMessage = "티켓 수 또는 보스전 진행 상태를 확인하세요.";
         }
 
         Refresh();
@@ -90,15 +90,15 @@ public class BossSummonButton : MonoBehaviour
         if (ticketText != null)
         {
             ticketText.text = commandCenter != null
-                ? $"Ticket {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}"
-                : "Ticket --/--";
+                ? $"티켓 {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}"
+                : "티켓 --/--";
         }
 
         if (bossNameText != null)
         {
             bossNameText.text = boss != null && difficulty != null
                 ? $"{GetBossName(boss)} [{difficulty.displayName}]"
-                : "No boss selected";
+                : "선택된 보스 없음";
         }
 
         if (stateText != null)
@@ -119,7 +119,7 @@ public class BossSummonButton : MonoBehaviour
             return boss.displayName;
         }
 
-        return boss.bossConfig != null ? boss.bossConfig.DisplayName : "Boss";
+        return boss.bossConfig != null ? boss.bossConfig.DisplayName : "보스";
     }
 
     private void ResolveReferences()

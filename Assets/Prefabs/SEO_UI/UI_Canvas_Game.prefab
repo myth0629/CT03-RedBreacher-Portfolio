@@ -45277,39 +45277,39 @@ MonoBehaviour:
   bossEncounterManager: {fileID: 0}
   bosses:
   - bossId: 01
-    displayName: Mecha
+    displayName: "\uBA54\uCE74"
     portrait: {fileID: 21300000, guid: f074e433c7ebd9d44b31ec4a2ab4b3f4, type: 3}
     bossConfig: {fileID: 11400000, guid: a1ffffd30eecc4c6fac1fb56a049d363, type: 2}
   - bossId: 02
-    displayName: Siege Tank
+    displayName: "\uACF5\uC131 \uC804\uCC28"
     portrait: {fileID: 21300000, guid: 047ae6ddbf30c4c5aa9815417ded8eb4, type: 3}
     bossConfig: {fileID: 11400000, guid: b722d45890784b61acaf6b198b84e01a, type: 2}
   difficulties:
   - difficultyId: 01
-    displayName: Normal
+    displayName: "\uC77C\uBC18"
     requiredResearchLabLevel: 1
     recommendedPower: 1000
-    rewardSummary: Credits / Parts
+    rewardSummary: "\uD06C\uB808\uB527 / \uBD80\uD488"
     bossConfig: {fileID: 11400000, guid: a1ffffd30eecc4c6fac1fb56a049d363, type: 2}
     healthMultiplier: 1
     moveSpeedMultiplier: 1
     damageMultiplier: 1
     rewardMultiplier: 1
   - difficultyId: hard
-    displayName: Hard
+    displayName: "\uC5B4\uB824\uC6C0"
     requiredResearchLabLevel: 3
     recommendedPower: 3000
-    rewardSummary: Rare Parts
+    rewardSummary: "\uD76C\uADC0 \uBD80\uD488"
     bossConfig: {fileID: 11400000, guid: a1ffffd30eecc4c6fac1fb56a049d363, type: 2}
     healthMultiplier: 1.75
     moveSpeedMultiplier: 1.1
     damageMultiplier: 1.5
     rewardMultiplier: 1.75
   - difficultyId: elite
-    displayName: Elite
+    displayName: "\uC815\uC608"
     requiredResearchLabLevel: 5
     recommendedPower: 6000
-    rewardSummary: Core Materials
+    rewardSummary: "\uCF54\uC5B4 \uC7AC\uB8CC"
     bossConfig: {fileID: 11400000, guid: a1ffffd30eecc4c6fac1fb56a049d363, type: 2}
     healthMultiplier: 3
     moveSpeedMultiplier: 1.2

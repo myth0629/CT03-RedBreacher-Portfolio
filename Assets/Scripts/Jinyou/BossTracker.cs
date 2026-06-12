@@ -38,18 +38,18 @@ public class BossTracker : MonoBehaviour
         new BossDifficulty
         {
             difficultyId = "normal",
-            displayName = "Normal",
+            displayName = "일반",
             requiredResearchLabLevel = 1,
             recommendedPower = 1000,
-            rewardSummary = "Credits / Parts"
+            rewardSummary = "크레딧 / 부품"
         },
         new BossDifficulty
         {
             difficultyId = "hard",
-            displayName = "Hard",
+            displayName = "어려움",
             requiredResearchLabLevel = 3,
             recommendedPower = 3000,
-            rewardSummary = "Rare Parts",
+            rewardSummary = "희귀 부품",
             healthMultiplier = 1.75f,
             moveSpeedMultiplier = 1.1f,
             damageMultiplier = 1.5f,
@@ -58,10 +58,10 @@ public class BossTracker : MonoBehaviour
         new BossDifficulty
         {
             difficultyId = "elite",
-            displayName = "Elite",
+            displayName = "정예",
             requiredResearchLabLevel = 5,
             recommendedPower = 6000,
-            rewardSummary = "Core Materials",
+            rewardSummary = "코어 재료",
             healthMultiplier = 3f,
             moveSpeedMultiplier = 1.2f,
             damageMultiplier = 2.25f,
