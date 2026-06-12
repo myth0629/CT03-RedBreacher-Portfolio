@@ -55,6 +55,16 @@ public class BossEncounterManager : MonoBehaviour
 
     public bool TrySummon(BossEnemyConfig config)
     {
+        return TrySummon(config, 1f, 1f, 1f, 1f);
+    }
+
+    public bool TrySummon(
+        BossEnemyConfig config,
+        float healthScale,
+        float moveSpeedScale,
+        float damageScale,
+        float rewardScale)
+    {
         if (!CanSummon(config) || !enemySpawnManager.PauseForBossEncounter())
         {
             return false;
@@ -78,7 +88,13 @@ public class BossEncounterManager : MonoBehaviour
         }
 
         // 보스 SO의 전투 수치를 적용하고 기존 보상/타겟 경로에 등록한다.
-        activeBoss.InitializeBoss(config, enemySpawnManager.CurrentStage);
+        activeBoss.InitializeBoss(
+            config,
+            enemySpawnManager.CurrentStage,
+            healthScale,
+            moveSpeedScale,
+            damageScale,
+            rewardScale);
         encounterActive = true;
         bossEncounterHud?.Show(config, activeBossHealth);
         return true;

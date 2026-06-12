@@ -10,55 +10,55 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f20b74b75695450a81bb73172856bd0, type: 3}
-  m_Name: Boss01
+  m_Name: Boss02
   m_EditorClassIdentifier: Assembly-CSharp::BossEnemyConfig
-  id: 01
-  displayName: "\uBA54\uCE74"
+  id: 02
+  displayName: "\uACF5\uC131 \uC804\uCC28"
   enemyPrefab: {fileID: 5508998916971657268, guid: 99d761f792bed40e6a109c516339568f, type: 3}
-  maxHealth: 10000
-  moveSpeed: 1.2
+  maxHealth: 14000
+  moveSpeed: 0.95
   stopDistance: 1.1
-  contactDamage: 5
+  contactDamage: 8
   contactInterval: 1
-  experienceReward: 10
-  creditReward: 10
-  coreCrystalReward: 10
-  partDropChance: 0.05
-  portrait: {fileID: 21300000, guid: f074e433c7ebd9d44b31ec4a2ab4b3f4, type: 3}
-  rangedAttackRange: 6
-  rangedAttackDamage: 200
-  rangedAttackInterval: 1.5
-  projectileSpeed: 8
-  projectileLifetime: 3
-  projectileCollisionRadius: 0.25
+  experienceReward: 15
+  creditReward: 18
+  coreCrystalReward: 14
+  partDropChance: 0.08
+  portrait: {fileID: 21300000, guid: 047ae6ddbf30c4c5aa9815417ded8eb4, type: 3}
+  rangedAttackRange: 7
+  rangedAttackDamage: 260
+  rangedAttackInterval: 1.8
+  projectileSpeed: 7
+  projectileLifetime: 3.5
+  projectileCollisionRadius: 0.3
   firePointNamePrefix: FirePoint
-  projectilesPerFirePoint: 5
-  spreadAngle: 60
+  projectilesPerFirePoint: 7
+  spreadAngle: 75
   fireEffectPrefab: {fileID: 1040091274170476, guid: 4dc3813479a19d149be60c7c1cea13e9, type: 3}
   projectileEffectPrefab: {fileID: 1745751436853880, guid: 2e67eb66973abec448716e2c9c3ecb64, type: 3}
   hitEffectPrefab: {fileID: 1282465575348918, guid: b077b8f66a284634cb92797eb3bc985b, type: 3}
   effectCleanupDelay: 2
-  laserCooldown: 6
-  laserDamage: 100
-  laserLength: 12
-  laserWidth: 1.5
-  laserWarningDuration: 1.5
-  laserActiveDuration: 0.25
+  laserCooldown: 7
+  laserDamage: 160
+  laserLength: 14
+  laserWidth: 1.8
+  laserWarningDuration: 1.8
+  laserActiveDuration: 0.3
   laserFirePointName: LaserFirePoint
   laserBeamEffectPrefab: {fileID: 1310484524390396, guid: 39de359d72f20024fa83f16530b3283c, type: 3}
-  laserProjectileSpeed: 20
-  laserProjectileScale: 2
+  laserProjectileSpeed: 18
+  laserProjectileScale: 2.4
   laserBeamRotationOffset: {x: 0, y: 0, z: 0}
   laserLineMaterial: {fileID: -876546973899608171, guid: f090c02c15e42bf41ba8388b37b3c21e, type: 3}
-  laserWarningColor: {r: 1, g: 0.2, b: 0.1, a: 0.55}
-  laserActiveColor: {r: 1, g: 0, b: 0, a: 1}
-  dodgeDetectionRadius: 4
-  dodgeDistance: 2
-  dodgeCooldown: 2.5
-  dodgeSpeed: 6
-  dodgePredictionTime: 0.8
-  dodgeCollisionRadius: 0.75
-  dodgeCheckInterval: 0.1
+  laserWarningColor: {r: 1, g: 0.45, b: 0.05, a: 0.55}
+  laserActiveColor: {r: 1, g: 0.25, b: 0, a: 1}
+  dodgeDetectionRadius: 3
+  dodgeDistance: 1.5
+  dodgeCooldown: 3.5
+  dodgeSpeed: 4
+  dodgePredictionTime: 0.7
+  dodgeCollisionRadius: 0.85
+  dodgeCheckInterval: 0.12
   dodgeObstacleMask:
     serializedVersion: 2
     m_Bits: 128

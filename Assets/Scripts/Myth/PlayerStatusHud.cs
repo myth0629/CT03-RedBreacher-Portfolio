@@ -62,6 +62,9 @@ public class PlayerStatusHud : MonoBehaviour
     
     [Header("GameQuit Popup")]
     [SerializeField] private GameObject gameQuitPopup;
+    
+    [Header("TraitPointFacility")]
+    [SerializeField] private TMP_Text statPointText_base;
 
     [Header("Bars")]
     [SerializeField] private Slider healthSlider;
@@ -224,6 +227,7 @@ public class PlayerStatusHud : MonoBehaviour
 
         // 미투자 상태를 UI에서는 Lv.1로 표시한다.
         SetText(statUpgradePointText, progression != null ? $"보유 중인 포인트 : {progression.StatPoints}" : "보유 중인 포인트 : 0");
+        SetText(statPointText_base, progression != null ? $"보유 포인트 : {progression.StatPoints}" : "보유 포인트 : 0");
         SetText(attackUpgradeLevelText, $"Lv.{allocator.AttackDisplayLevel}");
         SetText(healthUpgradeLevelText, $"Lv.{allocator.HealthDisplayLevel}");
         SetText(critChanceUpgradeLevelText, $"Lv.{allocator.CritChanceDisplayLevel}");

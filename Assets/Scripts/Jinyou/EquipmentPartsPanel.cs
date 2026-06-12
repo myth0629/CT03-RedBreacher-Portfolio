@@ -29,12 +29,15 @@ public class EquipmentPartsPanel : MonoBehaviour
     [SerializeField] private TMP_Text mainStatText;
     [SerializeField] private TMP_Text subStatText;
     [SerializeField] private TMP_Text salePriceText;
+    [SerializeField] private Image partIcon;
+    [SerializeField] private TMP_Text beforeSelectText;
+    [SerializeField] private TMP_Text mainStatTitle;
+    [SerializeField] private TMP_Text subStatTitle;
 
     [Header("Buttons")]
     [SerializeField] private Button equipButton;
     [SerializeField] private Button unequipButton;
     [SerializeField] private Button sellButton;
-    [SerializeField] private Button closeButton;
 
     private readonly List<Button> spawnedButtons = new List<Button>();
     private string selectedInstanceId;
@@ -46,7 +49,6 @@ public class EquipmentPartsPanel : MonoBehaviour
         equipButton?.onClick.AddListener(EquipSelected);
         unequipButton?.onClick.AddListener(UnequipSelected);
         sellButton?.onClick.AddListener(SellSelected);
-        closeButton?.onClick.AddListener(Close);
         Rebuild();
     }
 
@@ -56,7 +58,6 @@ public class EquipmentPartsPanel : MonoBehaviour
         equipButton?.onClick.RemoveListener(EquipSelected);
         unequipButton?.onClick.RemoveListener(UnequipSelected);
         sellButton?.onClick.RemoveListener(SellSelected);
-        closeButton?.onClick.RemoveListener(Close);
         ClearButtons();
     }
 
@@ -75,11 +76,6 @@ public class EquipmentPartsPanel : MonoBehaviour
 
         RefreshEquippedSlots();
         RefreshDetail();
-    }
-
-    public void Close()
-    {
-        gameObject.SetActive(false);
     }
 
     public void EquipSelected()
@@ -127,8 +123,9 @@ public class EquipmentPartsPanel : MonoBehaviour
         if (iconImage != null)
         {
             // 파츠 종류별 SO에 지정된 아이콘을 목록 슬롯에 표시한다.
-            iconImage.sprite = config != null ? config.Icon : null;
+            iconImage.sprite = GetPartsIcon(config);
             iconImage.enabled = iconImage.sprite != null;
+            iconImage.preserveAspect = true;
         }
 
         Image frameImage = FindChildImage(button.transform, "Frame");
@@ -202,11 +199,11 @@ public class EquipmentPartsPanel : MonoBehaviour
         EquipmentPartInstance part = loadout != null ? loadout.GetEquippedPart(slot) : null;
         if (part == null)
         {
-            return $"{GetSlotName(slot)}: 미장착";
+            return "미장착";
         }
 
         EquipmentPartConfig config = inventory != null ? inventory.ResolveEquipmentPartConfig(part.configId) : null;
-        return $"{GetSlotName(slot)}: {GetDisplayName(config, part)} ({GetRarityName(part.rarity)})";
+        return $"{GetDisplayName(config, part)} ({GetRarityName(part.rarity)})";
     }
 
     private void RefreshDetail()
@@ -216,16 +213,25 @@ public class EquipmentPartsPanel : MonoBehaviour
             ? inventory.ResolveEquipmentPartConfig(part.configId)
             : null;
 
-        SetText(partNameText, part != null ? GetDisplayName(config, part) : "파츠를 선택하세요");
-        SetText(rarityText, part != null ? GetRarityName(part.rarity) : string.Empty);
+        SetText(beforeSelectText, part != null ? string.Empty : "파츠를 선택하세요");
+        SetText(partNameText, part != null ? GetDisplayName(config, part) : string.Empty);
+        SetText(rarityText, part != null ? $"/ {GetRarityName(part.rarity)}" : string.Empty);
+        SetText(mainStatTitle, part != null ? "주 옵션" : string.Empty);
         SetText(mainStatText, part != null ? FormatStat(part.mainStatType, part.mainStatValue) : string.Empty);
+        SetText(subStatTitle, part != null ? "부가 옵션" : string.Empty);
         SetText(subStatText, part != null ? BuildSubStatText(part) : string.Empty);
-        SetText(salePriceText, part != null ? $"{part.salePrice:N0} 크레딧" : string.Empty);
+        SetText(salePriceText, part != null ? $"판매\n{part.salePrice:N0} 크레딧" : string.Empty);
+        SetPartIcon(partIcon, GetPartsIcon(config));
 
+        bool hasSelection = part != null;
         bool equipped = part != null && loadout != null && loadout.IsEquipped(part.instanceId);
+        SetButtonVisible(equipButton, hasSelection);
+        SetButtonVisible(unequipButton, hasSelection);
+        SetButtonVisible(sellButton, hasSelection);
+
         if (equipButton != null)
         {
-            equipButton.interactable = part != null && !equipped;
+            equipButton.interactable = hasSelection && !equipped;
         }
 
         if (unequipButton != null)
@@ -235,7 +241,7 @@ public class EquipmentPartsPanel : MonoBehaviour
 
         if (sellButton != null)
         {
-            sellButton.interactable = part != null && !equipped;
+            sellButton.interactable = hasSelection && !equipped;
         }
     }
 
@@ -312,23 +318,30 @@ public class EquipmentPartsPanel : MonoBehaviour
         return config != null ? config.DisplayName : part.configId;
     }
 
-    private static string GetSlotName(EquipmentPartSlot slot)
+    private static Sprite GetPartsIcon(EquipmentPartConfig config)
     {
-        return slot switch
-        {
-            EquipmentPartSlot.Armor => "장갑",
-            EquipmentPartSlot.Engine => "엔진",
-            _ => "칩"
-        };
+        return config != null ? config.Icon : null;
     }
 
     private static string GetRarityName(EquipmentPartRarity rarity)
     {
-        return rarity switch
+        string rarityName = rarity switch
         {
             EquipmentPartRarity.Rare => "희귀",
             EquipmentPartRarity.Epic => "영웅",
             _ => "일반"
+        };
+
+        return $"<color=#{GetRarityColorHex(rarity)}>{rarityName}</color>";
+    }
+
+    private static string GetRarityColorHex(EquipmentPartRarity rarity)
+    {
+        return rarity switch
+        {
+            EquipmentPartRarity.Rare => "59CCFF",
+            EquipmentPartRarity.Epic => "FF73E6",
+            _ => "FFFFFF"
         };
     }
 
@@ -352,5 +365,25 @@ public class EquipmentPartsPanel : MonoBehaviour
         {
             target.text = value;
         }
+    }
+
+    private static void SetButtonVisible(Button target, bool visible)
+    {
+        if (target != null && target.gameObject.activeSelf != visible)
+        {
+            target.gameObject.SetActive(visible);
+        }
+    }
+
+    private static void SetPartIcon(Image target, Sprite icon)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        target.sprite = icon;
+        target.enabled = icon != null;
+        target.preserveAspect = true;
     }
 }

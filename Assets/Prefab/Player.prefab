@@ -104,6 +104,9 @@ GameObject:
   - component: {fileID: 7644490488002421366}
   - component: {fileID: 1908932380892413804}
   - component: {fileID: 2421075610840562408}
+  - component: {fileID: 3325100126612599426}
+  - component: {fileID: 37404869335228815}
+  - component: {fileID: 1767878642600871842}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -148,6 +151,18 @@ MonoBehaviour:
   regenDelayAfterHit: 3
   regenPercentPerSecond: 0.01
   regenFlatPerSecond: 0
+  showDamageNumber: 1
+  damageNumberFont: {fileID: 11400000, guid: 99d460ef43f55ae41b2fe57f6d43e8a8, type: 2}
+  enemyDamageColor: {r: 1, g: 1, b: 1, a: 1}
+  playerDamageColor: {r: 1, g: 0.35, b: 0.35, a: 1}
+  criticalDamageColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  damageNumberFontSize: 4
+  criticalSizeMultiplier: 1.35
+  damageNumberDuration: 0.8
+  damageNumberRiseDistance: 0.8
+  damageNumberRandomSpread: 0.25
+  damageNumberOffset: {x: 0, y: 0.8, z: 0}
+  damageNumberSortingOrder: 50
 --- !u!114 &7644490488002421366
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -160,10 +175,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 476576e4865e143768d3a9fd83b9de3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  unitConfig: {fileID: 11400000, guid: aaa8f364b28444e249d29f0d45528398, type: 2}
-  weaponConfig: {fileID: 11400000, guid: f2f70023aad27461fbc14781bd370d24, type: 2}
+  unitConfig: {fileID: 11400000, guid: 394620a82606b4a9a9a23b4cc72a1abd, type: 2}
+  weaponConfig: {fileID: 11400000, guid: 7eb1b98301c03438e9df49bfd1f36277, type: 2}
   unitRoot: {fileID: 1065801000117078494}
-  displayName: "\uD0F1\uD06C\uC774\uB984"
+  displayName: Player
   maxHealth: 100
   critChance: 0.1
   critMultiplier: 1.5
@@ -179,9 +194,28 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   firePoint: {fileID: 0}
+  enableAutoReposition: 1
+  repositionDetectionRadius: 2.5
+  repositionEnemyThreshold: 3
+  repositionDistance: 1.8
+  repositionCooldown: 5
+  repositionCheckInterval: 0.5
+  repositionSpeedMultiplier: 1.35
+  repositionStopDistance: 0.05
+  repositionObstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  repositionCollisionRadius: 0.45
+  clampRepositionToBounds: 1
+  repositionBoundsCenter: {fileID: 0}
+  repositionBoundsSize: {x: 24, y: 24}
+  repositionBoundsPadding: 1
   fireFlashEffectPrefab: {fileID: 0}
   projectileEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
+  autoSkills:
+  - {fileID: 11400000, guid: ade7c23ee0ef94de58b64675613a20d6, type: 2}
+  - {fileID: 11400000, guid: f37875bbd6023431e90ef1a693f06d5b, type: 2}
 --- !u!114 &1908932380892413804
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -213,9 +247,88 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDroneController
   player: {fileID: 7644490488002421366}
-  droneConfig: {fileID: 11400000, guid: 4e51ea7d06fcf4db2b8a8ef6f360292d, type: 2}
+  droneConfig: {fileID: 11400000, guid: 927676cb259ef4cd5bf3a0cb603a7426, type: 2}
   droneSpawnParent: {fileID: 1322240335075145229}
   spawnOnStart: 1
+--- !u!114 &3325100126612599426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2376926328701285538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d2d76a87d3584854a25294c329e9a92, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatAllocator
+  attackPercentPerLevel: 0.02
+  maxAttackLevel: 100
+  healthPercentPerLevel: 0.03
+  maxHealthLevel: 100
+  critChancePerLevel: 0.01
+  maxCritChance: 0.5
+  critMultiplierPerLevel: 0.05
+  maxCritMultiplier: 3
+  saveToPlayerPrefs: 1
+  attackLevel: 0
+  healthLevel: 0
+  critChanceLevel: 0
+  critMultiplierLevel: 0
+--- !u!114 &37404869335228815
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2376926328701285538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f20f2005bd29f4f3dbe0bf904d8462ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerEquipmentPartLoadout
+  inventory: {fileID: 0}
+  saveToPlayerPrefs: 1
+  armorInstanceId: 
+  engineInstanceId: 
+  chipInstanceId: 
+  OnLoadoutChanged:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1767878642600871842
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2376926328701285538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e3d9c4906dac4c35908507013995961, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBossDodgeController
+  minimumDragDistance: 40
+  dodgeDistance: 2
+  dodgeDuration: 0.2
+  invulnerabilityDuration: 0.25
+  dodgeCooldown: 3
+  collisionRadius: 0.45
+  wallClearance: 0.05
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 128
+  perfectDodgeAttackBonus: 0.2
+  perfectDodgeBuffDuration: 2
+  perfectDodgeFont: {fileID: 11400000, guid: d9b454495b7d24a7a933eb61bdfa0607, type: 2}
+  perfectDodgeMessage: PERFECT DODGE!!
+  perfectDodgeTextColor: {r: 0.35, g: 1, b: 1, a: 1}
+  perfectDodgeTextSize: 3.5
+  perfectDodgeFeedbackDuration: 0.6
+  perfectDodgeTextOffset: {x: 0, y: 1.2, z: 0}
+  perfectDodgeFlashColor: {r: 0.45, g: 1, b: 1, a: 1}
+  dodgeUiRoot: {fileID: 0}
+  cooldownOverlay: {fileID: 0}
+  cooldownText: {fileID: 0}
 --- !u!1 &6846552723701228545
 GameObject:
   m_ObjectHideFlags: 0

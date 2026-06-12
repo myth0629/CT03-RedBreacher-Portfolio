@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,49 +6,33 @@ public class CoreChargerPanel : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private Button upgradeButton;
-    [SerializeField] private Button firstUnitButton;
-    [SerializeField] private Button secondUnitButton;
-    [SerializeField] private Button thirdUnitButton;
     [SerializeField] private Button enhanceUnitButton;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
+    [SerializeField] private Image currentUnitPreviewImage;
     [SerializeField] private TMP_Text selectedUnitText;
+    [SerializeField] private TMP_Text unitSoTransitionText;
     [SerializeField] private TMP_Text unitStateText;
-    [SerializeField] private InventoryPanel inventoryPanel;
-    [SerializeField] private GameObject unitInventoryArea;
-    [SerializeField] private RectTransform unitInventoryContentRoot;
-    [SerializeField] private Button inventoryUnitButtonPrefab;
-    [SerializeField] private TMP_Text inventoryUnitListText;
 
     private CoreCharger coreCharger;
     private InventoryFacility inventory;
-    private readonly List<Button> spawnedUnitButtons = new List<Button>();
+    private PlayerController player;
     private float observedUpgradeDuration;
 
     private void OnEnable()
     {
         ResolveReferences();
-        SubscribeInventoryEvents();
-        upgradeButton?.onClick.AddListener(UpgradeCharger);
-        firstUnitButton?.onClick.AddListener(OpenInventoryUnitSelection);
-        secondUnitButton?.onClick.AddListener(SelectSecondUnit);
-        thirdUnitButton?.onClick.AddListener(SelectThirdUnit);
-        enhanceUnitButton?.onClick.AddListener(EnhanceSelectedUnit);
-        SetActive(unitInventoryArea, false);
+        upgradeButton?.onClick.AddListener(UpgradeCoreCharger);
+        enhanceUnitButton?.onClick.AddListener(ConvertCurrentUnit);
         Refresh();
     }
 
     private void OnDisable()
     {
-        UnsubscribeInventoryEvents();
-        upgradeButton?.onClick.RemoveListener(UpgradeCharger);
-        firstUnitButton?.onClick.RemoveListener(OpenInventoryUnitSelection);
-        secondUnitButton?.onClick.RemoveListener(SelectSecondUnit);
-        thirdUnitButton?.onClick.RemoveListener(SelectThirdUnit);
-        enhanceUnitButton?.onClick.RemoveListener(EnhanceSelectedUnit);
-        ClearUnitButtons();
+        upgradeButton?.onClick.RemoveListener(UpgradeCoreCharger);
+        enhanceUnitButton?.onClick.RemoveListener(ConvertCurrentUnit);
     }
 
     private void Update()
@@ -60,10 +43,6 @@ public class CoreChargerPanel : MonoBehaviour
     public void Configure(
         BaseCampManager manager,
         Button upgrade,
-        Button firstUnit,
-        Button secondUnit,
-        Button thirdUnit,
-        Button close,
         TMP_Text level,
         TMP_Text upgradeLabel,
         TMP_Text selectedUnit,
@@ -71,9 +50,6 @@ public class CoreChargerPanel : MonoBehaviour
     {
         baseCampManager = manager;
         upgradeButton = upgrade;
-        firstUnitButton = firstUnit;
-        secondUnitButton = secondUnit;
-        thirdUnitButton = thirdUnit;
         levelText = level;
         upgradeText = upgradeLabel;
         selectedUnitText = selectedUnit;
@@ -81,50 +57,16 @@ public class CoreChargerPanel : MonoBehaviour
         Refresh();
     }
 
-    public void SelectUnit(PlayerUnitConfig unitConfig)
+    private void ConvertCurrentUnit()
     {
-        baseCampManager?.SelectCoreUnit(unitConfig);
-        RebuildInventoryUnitButtons();
+        baseCampManager?.ConvertSelectedCoreUnit();
         Refresh();
     }
 
-    public void SelectUnitByIndex(int unitIndex)
-    {
-        baseCampManager?.SelectCoreUnit(unitIndex);
-        RebuildInventoryUnitButtons();
-        Refresh();
-    }
-
-    private void UpgradeCharger()
+    private void UpgradeCoreCharger()
     {
         baseCampManager?.UpgradeCoreCharger();
         Refresh();
-    }
-
-    private void SelectFirstUnit()
-    {
-        OpenInventoryUnitSelection();
-    }
-
-    private void SelectSecondUnit()
-    {
-        SelectUnitByIndex(1);
-    }
-
-    private void SelectThirdUnit()
-    {
-        SelectUnitByIndex(2);
-    }
-
-    private void EnhanceSelectedUnit()
-    {
-        baseCampManager?.EnhanceCoreUnit();
-        Refresh();
-    }
-
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
     }
 
     private void Refresh()
@@ -133,255 +75,216 @@ public class CoreChargerPanel : MonoBehaviour
 
         if (coreCharger == null)
         {
+            SetText(upgradeConditionText, "코어 충전소가 연결되지 않았습니다.");
+            SetUnitPreview(currentUnitPreviewImage, null);
+            SetInteractable(upgradeButton, false);
+            SetInteractable(enhanceUnitButton, false);
             return;
         }
+
+        int playerLevel = GetPlayerLevel();
+        CoreCharger.UnitConversionStage stage = coreCharger.CurrentConversionStage;
+
+        int researchLabLevel = baseCampManager?.CommandCenter != null
+            ? baseCampManager.CommandCenter.Level
+            : 1;
 
         SetText(levelText, $"Lv. {coreCharger.Level}");
         SetText(upgradeText, coreCharger.IsUpgrading
             ? $"완료까지 {coreCharger.UpgradeRemainingSeconds:0}초"
-            : $"업그레이드 ({coreCharger.UpgradeCost} 크레딧)");
-        SetText(selectedUnitText, BuildSelectedUnitText());
-        SetText(unitStateText, BuildUnitSummary());
-        SetText(inventoryUnitListText, BuildInventoryUnitListText());
-        SetActive(unitInventoryArea, inventoryPanel == null);
+            : $"기지 업그레이드 ({coreCharger.UpgradeCost} 크레딧)");
+        SetText(selectedUnitText, stage != null ? stage.DisplayName : "모든 변환 완료");
+        SetUnitPreview(currentUnitPreviewImage, stage?.currentUnit);
+        SetText(unitSoTransitionText, BuildUnitSoTransitionText(stage));
+        SetText(upgradeConditionText, BuildUpgradeConditionText(
+            coreCharger,
+            baseCampManager != null ? baseCampManager.Credits : 0,
+            baseCampManager != null ? baseCampManager.CommanderLevel : 1,
+            researchLabLevel));
 
-        if (upgradeButton != null && baseCampManager != null)
-        {
-            int researchLabLevel = baseCampManager.CommandCenter != null ? baseCampManager.CommandCenter.Level : 1;
-            upgradeButton.interactable = coreCharger.CanStartUpgrade(
-                baseCampManager.Credits,
-                baseCampManager.CommanderLevel,
-                researchLabLevel);
-            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
-                coreCharger,
-                baseCampManager.Credits,
-                baseCampManager.CommanderLevel,
-                researchLabLevel));
-        }
+        string conversionState = BuildConversionStateText(stage, playerLevel);
+        SetText(unitStateText, conversionState);
 
-        BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, coreCharger, ref observedUpgradeDuration);
+        bool canConvert = coreCharger.CanConvertCurrentUnit(inventory, player, playerLevel);
+        SetInteractable(enhanceUnitButton, canConvert);
+        SetText(enhanceUnitButton != null
+            ? enhanceUnitButton.GetComponentInChildren<TMP_Text>(true)
+            : null, stage != null ? "유닛 강화" : "완료");
 
-        if (enhanceUnitButton != null && baseCampManager != null)
-        {
-            enhanceUnitButton.interactable = coreCharger.CanEnhanceSelectedUnit(baseCampManager.Credits);
-        }
-
-        SetUnitButton(firstUnitButton, 0);
-        SetUnitButton(secondUnitButton, 1);
-        SetUnitButton(thirdUnitButton, 2);
+        BaseCampUpgradeStatus.SetUpgradeProgress(
+            upgradeProgressFill,
+            coreCharger,
+            ref observedUpgradeDuration);
+        SetInteractable(upgradeButton, coreCharger.CanStartUpgrade(
+            baseCampManager != null ? baseCampManager.Credits : 0,
+            baseCampManager != null ? baseCampManager.CommanderLevel : 1,
+            researchLabLevel));
     }
 
-    private string BuildSelectedUnitText()
+    private string BuildConversionStateText(CoreCharger.UnitConversionStage stage, int playerLevel)
     {
-        CoreCharger.UnitEnhancement selectedUnit = coreCharger.SelectedUnitEnhancement;
-        if (selectedUnit == null)
+        if (stage == null)
         {
-            return "No Unit Selected";
+            return coreCharger.ConversionStages.Count == 0
+                ? "유닛 SO 변환 단계가 설정되지 않았습니다."
+                : "모든 유닛 SO 변환이 완료되었습니다.";
         }
 
-        if (selectedUnit.IsMaxLevel)
+        if (!stage.IsConfigured)
         {
-            return $"{selectedUnit.DisplayName} Lv.MAX {BuildStatBonusSummary(selectedUnit)}";
+            return "현재 및 다음 유닛 SO를 지정하세요.";
         }
 
-        return $"{selectedUnit.DisplayName} Lv.{selectedUnit.enhanceLevel}/{selectedUnit.MaxEnhanceLevel} {BuildStatBonusSummary(selectedUnit)} / Cost {selectedUnit.NextEnhanceCost} / Next {BuildNextStatIncreaseSummary(selectedUnit)}";
+        int requiredCoreLevel = coreCharger.GetRequiredCoreChargerLevel(coreCharger.CurrentStageIndex);
+        string stageText = $"단계 {coreCharger.CurrentStageIndex + 1}/{coreCharger.ConversionStages.Count}"
+            + $" | 플레이어 레벨 {stage.requiredPlayerLevel}"
+            + $" | 코어 충전소 레벨 {requiredCoreLevel}";
+
+        if (playerLevel < stage.requiredPlayerLevel)
+        {
+            return $"{stageText}\n플레이어 레벨 {stage.requiredPlayerLevel} 필요";
+        }
+
+        if (coreCharger.Level < requiredCoreLevel)
+        {
+            return $"{stageText}\n코어 충전소 레벨 {requiredCoreLevel} 필요";
+        }
+
+        bool ownsCurrent = inventory != null && inventory.ContainsUnit(stage.currentUnit);
+        bool equippedCurrent = player != null && player.UnitConfig == stage.currentUnit;
+        if (!ownsCurrent && !equippedCurrent)
+        {
+            return $"{stageText}\n{stage.currentUnit.DisplayName} 필요";
+        }
+
+        return $"{stageText}\n변환 준비 완료";
     }
 
-    private string BuildUnitSummary()
+    private static string BuildUnitSoTransitionText(CoreCharger.UnitConversionStage stage)
     {
-        string summary = $"드론 강화: 공격력 +{coreCharger.DroneAttackDamageBonus:0.##}"
-            + $" / 사거리 +{coreCharger.DroneAttackRangeBonus:0.##}"
-            + $" / 발사간격 -{coreCharger.DroneAttackIntervalReduction:0.##}"
-            + $" / 추적속도 +{coreCharger.DroneFollowSpeedBonus:0.##}\n";
-        foreach (CoreCharger.UnitEnhancement unitEnhancement in coreCharger.UnitEnhancements)
+        if (stage == null)
         {
-            if (unitEnhancement == null)
-            {
-                continue;
-            }
-
-            string selected = unitEnhancement == coreCharger.SelectedUnitEnhancement ? " *" : string.Empty;
-            summary += $"{unitEnhancement.DisplayName}{selected}: {BuildStatBonusSummary(unitEnhancement)} (Lv.{unitEnhancement.enhanceLevel}/{unitEnhancement.MaxEnhanceLevel})\n";
+            return "대기 중인 유닛 SO 변환 없음";
         }
 
-        return summary.TrimEnd();
+        if (stage.currentUnit == null || stage.nextUnit == null)
+        {
+            return $"변환 전 SO: {FormatUnitSo(stage.currentUnit)}\n"
+                + $"변환 후 SO: {FormatUnitSo(stage.nextUnit)}";
+        }
+
+        PlayerUnitConfig current = stage.currentUnit;
+        PlayerUnitConfig next = stage.nextUnit;
+        return $"체력: {FormatStatChange(current.MaxHealth, next.MaxHealth)}\n"
+            + $"공격력: {FormatStatChange(current.AttackDamage, next.AttackDamage)}\n"
+            + $"공격 범위: {FormatStatChange(current.AttackRange, next.AttackRange)}\n"
+            + $"공격 간격: {FormatStatChange(current.AttackInterval, next.AttackInterval)}\n"
+            + $"이동 속도: {FormatStatChange(current.MoveSpeed, next.MoveSpeed)}\n"
+            + $"회전 속도: {FormatStatChange(current.RotationSpeed, next.RotationSpeed)}\n"
+            + $"치명타 확률: {FormatPercentChange(current.CritChance, next.CritChance)}\n"
+            + $"치명타 피해: {FormatMultiplierChange(current.CritMultiplier, next.CritMultiplier)}";
     }
 
-    private string BuildInventoryUnitListText()
+    private static string FormatUnitSo(PlayerUnitConfig unitConfig)
     {
-        if (inventory == null)
-        {
-            return "Inventory not connected";
-        }
-
-        if (inventory.UnitConfigs.Count == 0)
-        {
-            return "No Inventory Units";
-        }
-
-        string summary = string.Empty;
-        for (int i = 0; i < inventory.UnitConfigs.Count; i++)
-        {
-            PlayerUnitConfig unit = inventory.UnitConfigs[i];
-            if (unit == null)
-            {
-                continue;
-            }
-
-            string selected = unit == coreCharger.SelectedUnitConfig ? " *" : string.Empty;
-            string configured = coreCharger.HasUnitEnhancement(unit) ? string.Empty : " (No Enhance Data)";
-            summary += $"{i + 1}. {unit.DisplayName}{selected}{configured}\n";
-        }
-
-        return summary.TrimEnd();
+        return unitConfig != null
+            ? unitConfig.DisplayName
+            : "미지정";
     }
 
-    private static string BuildStatBonusSummary(CoreCharger.UnitEnhancement unitEnhancement)
+    private static string BuildUpgradeConditionText(
+        IBaseCampFacility facility,
+        int credits,
+        int commanderLevel,
+        int researchLabLevel)
     {
-        if (unitEnhancement == null)
+        if (facility == null)
         {
-            return string.Empty;
+            return "시설이 연결되지 않았습니다.";
         }
 
-        string summary = string.Empty;
-        foreach (CoreCharger.UnitEnhancementStat stat in System.Enum.GetValues(typeof(CoreCharger.UnitEnhancementStat)))
+        if (facility.IsUpgrading)
         {
-            float bonus = unitEnhancement.GetStatBonus(stat);
-            if (Mathf.Approximately(bonus, 0f))
-            {
-                continue;
-            }
-
-            summary += $"{CoreCharger.GetStatDisplayName(stat)} {FormatSigned(bonus)} ";
+            return $"업그레이드 중... {facility.UpgradeRemainingSeconds:0}초 남음";
         }
 
-        return string.IsNullOrWhiteSpace(summary) ? "No Bonus" : summary.TrimEnd();
+        if (researchLabLevel < facility.RequiredResearchLabLevel)
+        {
+            return $"연구소 레벨 {facility.RequiredResearchLabLevel} 필요";
+        }
+
+        int levelLimit = facility.GetLevelLimit(researchLabLevel);
+        if (facility.Level >= levelLimit && facility.Level < facility.MaxLevel)
+        {
+            return $"현재 최대 레벨: {levelLimit}. 연구소를 업그레이드하세요.";
+        }
+
+        if (facility.Level >= facility.MaxLevel)
+        {
+            return "최대 레벨에 도달했습니다.";
+        }
+
+        if (credits < facility.UpgradeCost)
+        {
+            return $"{facility.UpgradeCost - credits} 크레딧 부족";
+        }
+
+        if (commanderLevel < facility.RequiredCommanderLevel)
+        {
+            return $"지휘관 Lv.{facility.RequiredCommanderLevel} 필요";
+        }
+
+        if (facility.CanStartUpgrade(credits, commanderLevel, researchLabLevel))
+        {
+            return "업그레이드 가능";
+        }
+
+        return "최대 레벨에 도달했습니다.";
     }
 
-    private static string BuildNextStatIncreaseSummary(CoreCharger.UnitEnhancement unitEnhancement)
+    private static string FormatStatChange(float current, float next)
     {
-        CoreCharger.UnitEnhancementLevel nextLevel = unitEnhancement?.GetEnhancementLevel(unitEnhancement.enhanceLevel);
-        if (nextLevel == null || nextLevel.statIncreases == null || nextLevel.statIncreases.Count == 0)
-        {
-            return "No Bonus";
-        }
-
-        string summary = string.Empty;
-        foreach (CoreCharger.UnitStatIncrease statIncrease in nextLevel.statIncreases)
-        {
-            if (statIncrease == null || Mathf.Approximately(statIncrease.amount, 0f))
-            {
-                continue;
-            }
-
-            summary += $"{CoreCharger.GetStatDisplayName(statIncrease.stat)} {FormatSigned(statIncrease.amount)} ";
-        }
-
-        return string.IsNullOrWhiteSpace(summary) ? "No Bonus" : summary.TrimEnd();
+        return $"{current:0.##} -> <color=#4AD787>{next:0.##} ({next - current:+0.##;-0.##;0})</color>";
     }
 
-    private void SetUnitButton(Button button, int unitIndex)
+    private static string FormatPercentChange(float current, float next)
     {
-        if (button != null)
-        {
-            button.interactable = coreCharger.UnitEnhancements != null && unitIndex >= 0 && unitIndex < coreCharger.UnitEnhancements.Count;
-        }
+        float currentPercent = current * 100f;
+        float nextPercent = next * 100f;
+        return $"{currentPercent:0.##}% -> <color=#4AD787>{nextPercent:0.##}% "
+            + $"({nextPercent - currentPercent:+0.##;-0.##;0}%p)</color>";
     }
 
-    private void RebuildInventoryUnitButtons()
+    private static string FormatMultiplierChange(float current, float next)
     {
-        ClearUnitButtons();
-
-        if (unitInventoryContentRoot == null || inventoryUnitButtonPrefab == null || inventory == null)
-        {
-            return;
-        }
-
-        foreach (PlayerUnitConfig unit in inventory.UnitConfigs)
-        {
-            if (unit == null)
-            {
-                continue;
-            }
-
-            Button button = Instantiate(inventoryUnitButtonPrefab, unitInventoryContentRoot);
-            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
-            if (label != null)
-            {
-                string selected = unit == coreCharger.SelectedUnitConfig ? " *" : string.Empty;
-                string configured = coreCharger.HasUnitEnhancement(unit) ? string.Empty : " (No Data)";
-                label.text = $"{unit.DisplayName}{selected}{configured}";
-            }
-
-            PlayerUnitConfig capturedUnit = unit;
-            button.interactable = coreCharger.HasUnitEnhancement(capturedUnit);
-            button.onClick.AddListener(() => SelectUnit(capturedUnit));
-            spawnedUnitButtons.Add(button);
-        }
+        return $"x{current:0.##} -> <color=#4AD787>x{next:0.##} ({next - current:+0.##;-0.##;0})</color>";
     }
 
-    private void ClearUnitButtons()
+    private int GetPlayerLevel()
     {
-        foreach (Button button in spawnedUnitButtons)
+        if (baseCampManager?.PlayerProgression != null)
         {
-            if (button != null)
-            {
-                Destroy(button.gameObject);
-            }
+            return baseCampManager.PlayerProgression.Level;
         }
 
-        spawnedUnitButtons.Clear();
-    }
-
-    private void SubscribeInventoryEvents()
-    {
-        if (inventory != null)
-        {
-            inventory.OnInventoryChanged.AddListener(HandleInventoryChanged);
-        }
-    }
-
-    private void UnsubscribeInventoryEvents()
-    {
-        if (inventory != null)
-        {
-            inventory.OnInventoryChanged.RemoveListener(HandleInventoryChanged);
-        }
-    }
-
-    private void HandleInventoryChanged()
-    {
-        RebuildInventoryUnitButtons();
-        Refresh();
+        return baseCampManager != null ? baseCampManager.CommanderLevel : 1;
     }
 
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
-        coreCharger = baseCampManager != null ? baseCampManager.CoreCharger : null;
-        inventory = baseCampManager != null ? baseCampManager.Inventory : FindFirstObjectByType<InventoryFacility>();
-        inventoryPanel ??= FindFirstObjectByType<InventoryPanel>(FindObjectsInactive.Include);
+        coreCharger = baseCampManager != null ? baseCampManager.CoreCharger : FindFirstObjectByType<CoreCharger>();
+        inventory = baseCampManager != null ? baseCampManager.Inventory : InventoryFacility.FindAny();
+        player ??= FindFirstObjectByType<PlayerController>();
     }
 
-    private void OpenInventoryUnitSelection()
+    private static void SetInteractable(Button button, bool value)
     {
-        ResolveReferences();
-
-        if (inventoryPanel == null || coreCharger == null)
+        if (button != null)
         {
-            SetActive(unitInventoryArea, true);
-            RebuildInventoryUnitButtons();
-            return;
+            button.gameObject.SetActive(true);
+            button.interactable = value;
         }
-
-        inventoryPanel.OpenUnitSelectMode(
-            SelectUnit,
-            unit => coreCharger.HasUnitEnhancement(unit));
-    }
-
-    private static string FormatSigned(float value)
-    {
-        return value >= 0f ? $"+{value:0.##}" : $"{value:0.##}";
     }
 
     private static void SetText(TMP_Text target, string value)
@@ -392,11 +295,24 @@ public class CoreChargerPanel : MonoBehaviour
         }
     }
 
-    private static void SetActive(GameObject target, bool value)
+    private static void SetUnitPreview(Image target, PlayerUnitConfig unitConfig)
     {
-        if (target != null)
+        if (target == null)
         {
-            target.SetActive(value);
+            return;
         }
+
+        Sprite sprite = null;
+        if (unitConfig != null && unitConfig.UnitPrefab != null)
+        {
+            SpriteRenderer spriteRenderer =
+                unitConfig.UnitPrefab.GetComponentInChildren<SpriteRenderer>(true);
+            sprite = spriteRenderer != null ? spriteRenderer.sprite : null;
+        }
+
+        target.sprite = sprite;
+        target.preserveAspect = true;
+        target.enabled = sprite != null;
     }
+
 }

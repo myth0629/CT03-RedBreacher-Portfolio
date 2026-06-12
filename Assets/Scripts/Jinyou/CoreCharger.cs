@@ -5,113 +5,24 @@ using UnityEngine.Events;
 
 public class CoreCharger : MonoBehaviour, IBaseCampFacility
 {
-    public enum UnitEnhancementStat
-    {
-        MaxHealth,
-        CritChance,
-        CritMultiplier,
-        AttackRange,
-        AttackDamage,
-        AttackInterval,
-        MoveSpeed,
-        RotationSpeed,
-        FireAngleTolerance
-    }
-
     [Serializable]
-    public class UnitStatIncrease
+    public class UnitConversionStage
     {
-        public UnitEnhancementStat stat = UnitEnhancementStat.MaxHealth;
-        public float amount = 10f;
-    }
-
-    [Serializable]
-    public class UnitEnhancementLevel
-    {
-        public int cost = 100;
-        public List<UnitStatIncrease> statIncreases = new List<UnitStatIncrease>
-        {
-            new UnitStatIncrease { stat = UnitEnhancementStat.MaxHealth, amount = 10f }
-        };
-
-        public void Normalize()
-        {
-            cost = Mathf.Max(0, cost);
-            statIncreases ??= new List<UnitStatIncrease>();
-        }
-    }
-
-    [Serializable]
-    public class UnitEnhancement
-    {
-        public PlayerUnitConfig unitConfig;
-        public string displayNameOverride;
-        public int enhanceLevel;
-        public List<UnitEnhancementLevel> enhancementLevels = new List<UnitEnhancementLevel>
-        {
-            new UnitEnhancementLevel()
-        };
+        [Min(1)] public int requiredPlayerLevel = 5;
+        public PlayerUnitConfig currentUnit;
+        public PlayerUnitConfig nextUnit;
 
         public string DisplayName
         {
             get
             {
-                if (!string.IsNullOrWhiteSpace(displayNameOverride))
-                {
-                    return displayNameOverride;
-                }
-
-                return unitConfig != null ? unitConfig.DisplayName : "Unassigned Unit";
+                string currentName = currentUnit != null ? currentUnit.DisplayName : "Unassigned";
+                string nextName = nextUnit != null ? nextUnit.DisplayName : "Unassigned";
+                return $"{currentName} -> {nextName}";
             }
         }
 
-        public int MaxEnhanceLevel => enhancementLevels != null ? enhancementLevels.Count : 0;
-        public int NextEnhanceCost => GetEnhancementLevel(enhanceLevel)?.cost ?? 0;
-        public bool IsMaxLevel => enhanceLevel >= MaxEnhanceLevel;
-
-        public float GetStatBonus(UnitEnhancementStat stat)
-        {
-            float bonus = 0f;
-            for (int i = 0; i < enhanceLevel; i++)
-            {
-                UnitEnhancementLevel level = GetEnhancementLevel(i);
-                if (level?.statIncreases == null)
-                {
-                    continue;
-                }
-
-                foreach (UnitStatIncrease statIncrease in level.statIncreases)
-                {
-                    if (statIncrease != null && statIncrease.stat == stat)
-                    {
-                        bonus += statIncrease.amount;
-                    }
-                }
-            }
-
-            return bonus;
-        }
-
-        public UnitEnhancementLevel GetEnhancementLevel(int levelIndex)
-        {
-            if (enhancementLevels == null || levelIndex < 0 || levelIndex >= enhancementLevels.Count)
-            {
-                return null;
-            }
-
-            return enhancementLevels[levelIndex];
-        }
-
-        public void Normalize()
-        {
-            enhancementLevels ??= new List<UnitEnhancementLevel>();
-            foreach (UnitEnhancementLevel level in enhancementLevels)
-            {
-                level?.Normalize();
-            }
-
-            enhanceLevel = Mathf.Clamp(enhanceLevel, 0, MaxEnhanceLevel);
-        }
+        public bool IsConfigured => currentUnit != null && nextUnit != null && currentUnit != nextUnit;
     }
 
     [Serializable]
@@ -129,14 +40,14 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     [SerializeField] private int upgradeCost = 400;
     [SerializeField] private List<int> upgradeCostByLevel = new List<int>();
     [SerializeField] private int requiredCommanderLevel = 1;
-    [SerializeField] private int requiredResearchLabLevel = 3;
-    [SerializeField] private List<int> requiredResearchLabLevelByLevel = new List<int>();
+    [SerializeField] private int requiredResearchLabLevel = 1;
     [SerializeField] private float upgradeDurationSeconds = 10f;
     [SerializeField] private List<float> upgradeDurationSecondsByLevel = new List<float>();
 
-    [Header("Unit Enhancement")]
-    [SerializeField] private List<UnitEnhancement> unitEnhancements = new List<UnitEnhancement>();
-    [SerializeField] private int selectedUnitIndex;
+    [Header("Unit SO Conversion")]
+    [SerializeField, Min(1)] private int levelsPerConversion = 5;
+    [SerializeField] private List<UnitConversionStage> conversionStages = new List<UnitConversionStage>();
+    [SerializeField] private List<int> convertedStageIndices = new List<int>();
 
     [Header("Drone Enhancement")]
     [SerializeField] private float droneAttackDamagePerLevel = 1f;
@@ -147,7 +58,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     [Header("Events")]
     public UnityEvent<int> OnLevelChanged = new UnityEvent<int>();
-    public UnityEvent<PlayerUnitConfig> OnUnitSelected = new UnityEvent<PlayerUnitConfig>();
     public UnityEvent<PlayerUnitConfig, int> OnUnitEnhanced = new UnityEvent<PlayerUnitConfig, int>();
     public UnityEvent OnUpgradeStarted = new UnityEvent();
     public UnityEvent OnUpgradeCompleted = new UnityEvent();
@@ -160,14 +70,14 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     public int MaxLevel => maxLevel;
     public int UpgradeCost => GetUpgradeCostForCurrentLevel();
     public int RequiredCommanderLevel => requiredCommanderLevel;
-    public int RequiredResearchLabLevel => GetRequiredResearchLabLevelForCurrentUpgrade();
+    public int RequiredResearchLabLevel => requiredResearchLabLevel;
     public bool IsUpgrading => isUpgrading;
     public float UpgradeRemainingSeconds => upgradeRemainingSeconds;
     public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
-    public IReadOnlyList<UnitEnhancement> UnitEnhancements => unitEnhancements;
-    public UnitEnhancement SelectedUnitEnhancement => GetUnitEnhancementAt(selectedUnitIndex);
-    public PlayerUnitConfig SelectedUnitConfig => SelectedUnitEnhancement?.unitConfig;
-    public int SelectedUnitIndex => selectedUnitIndex;
+    public int CompletedConversionCount => convertedStageIndices.Count;
+    public int CurrentStageIndex => FindFirstIncompleteStage();
+    public IReadOnlyList<UnitConversionStage> ConversionStages => conversionStages;
+    public UnitConversionStage CurrentConversionStage => GetConversionStageAt(CurrentStageIndex);
     public float DroneAttackDamageBonus => Mathf.Max(0, level - 1) * droneAttackDamagePerLevel;
     public float DroneAttackRangeBonus => Mathf.Max(0, level - 1) * droneAttackRangePerLevel;
     public float DroneAttackIntervalReduction => Mathf.Max(0, level - 1) * droneAttackIntervalReductionPerLevel;
@@ -175,7 +85,8 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     private void Awake()
     {
-        NormalizeConfiguredValues();
+        Normalize();
+        SyncUnlockedDrones(false);
     }
 
     private void Update()
@@ -183,49 +94,82 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         TickUpgrade(Time.deltaTime);
     }
 
-    public bool TrySelectUnit(int index)
+    public bool IsConversionCompleted(int stageIndex)
     {
-        if (index < 0 || index >= unitEnhancements.Count)
+        return convertedStageIndices.Contains(stageIndex);
+    }
+
+    public bool CanConvertCurrentUnit(InventoryFacility inventory, PlayerController player, int playerLevel)
+    {
+        int stageIndex = CurrentStageIndex;
+        UnitConversionStage stage = GetConversionStageAt(stageIndex);
+        if (stage == null || !stage.IsConfigured)
         {
             return false;
         }
 
-        selectedUnitIndex = index;
-        OnUnitSelected.Invoke(SelectedUnitConfig);
+        bool ownsCurrentUnit = inventory != null && inventory.ContainsUnit(stage.currentUnit);
+        bool hasCurrentUnitEquipped = player != null && player.UnitConfig == stage.currentUnit;
+        int requiredCoreChargerLevel = GetRequiredCoreChargerLevel(stageIndex);
+        return playerLevel >= stage.requiredPlayerLevel
+            && level >= requiredCoreChargerLevel
+            && (ownsCurrentUnit || hasCurrentUnitEquipped);
+    }
+
+    public bool TryConvertCurrentUnit(InventoryFacility inventory, PlayerController player, int playerLevel)
+    {
+        if (!CanConvertCurrentUnit(inventory, player, playerLevel))
+        {
+            return false;
+        }
+
+        int stageIndex = CurrentStageIndex;
+        UnitConversionStage stage = conversionStages[stageIndex];
+        bool wasEquipped = player != null && player.UnitConfig == stage.currentUnit;
+        bool inventoryChanged = inventory != null && inventory.ReplaceUnit(stage.currentUnit, stage.nextUnit);
+
+        if (!inventoryChanged && inventory != null && !inventory.ContainsUnit(stage.nextUnit))
+        {
+            inventory.AddUnit(stage.nextUnit);
+        }
+
+        if (wasEquipped)
+        {
+            player.SetUnitConfig(stage.nextUnit);
+        }
+
+        convertedStageIndices.Add(stageIndex);
+        Normalize();
+        OnUnitEnhanced.Invoke(stage.nextUnit, stageIndex + 1);
+        OnLevelChanged.Invoke(Level);
         return true;
     }
 
-    public bool TrySelectUnit(PlayerUnitConfig unitConfig)
+    public void ApplyCompletedConversions(InventoryFacility inventory, PlayerController player)
     {
-        if (unitConfig == null)
+        if (inventory == null)
         {
-            return false;
+            return;
         }
 
-        for (int i = 0; i < unitEnhancements.Count; i++)
+        List<int> completedStages = new List<int>(convertedStageIndices);
+        completedStages.Sort();
+
+        foreach (int stageIndex in completedStages)
         {
-            if (unitEnhancements[i].unitConfig == unitConfig)
+            UnitConversionStage stage = GetConversionStageAt(stageIndex);
+            if (stage == null || !stage.IsConfigured)
             {
-                return TrySelectUnit(i);
+                continue;
+            }
+
+            bool wasEquipped = player != null && player.UnitConfig == stage.currentUnit;
+            inventory.ReplaceUnit(stage.currentUnit, stage.nextUnit);
+            if (wasEquipped)
+            {
+                player.SetUnitConfig(stage.nextUnit);
             }
         }
-
-        return false;
-    }
-
-    public bool TrySelectRoute(string routeId)
-    {
-        return TrySelectUnit(ParseIndexId(routeId));
-    }
-
-    public bool TrySelectOption(string optionId)
-    {
-        return TrySelectUnit(ParseIndexId(optionId));
-    }
-
-    public bool HasUnitEnhancement(PlayerUnitConfig unitConfig)
-    {
-        return FindUnitEnhancement(unitConfig) != null;
     }
 
     public JinyouCoreChargerSaveData CaptureState()
@@ -233,128 +177,40 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         JinyouCoreChargerSaveData data = new JinyouCoreChargerSaveData
         {
             level = level,
-            selectedUnitIndex = selectedUnitIndex,
             isUpgrading = isUpgrading,
             upgradeRemainingSeconds = upgradeRemainingSeconds,
             currentUpgradeDurationSeconds = currentUpgradeDurationSeconds
         };
-
-        foreach (UnitEnhancement unitEnhancement in unitEnhancements)
-        {
-            data.unitEnhanceLevels.Add(unitEnhancement != null ? unitEnhancement.enhanceLevel : 0);
-        }
-
+        data.convertedStageIndices.AddRange(convertedStageIndices);
         return data;
     }
 
     public void RestoreState(JinyouCoreChargerSaveData data)
     {
-        if (data == null)
-        {
-            return;
-        }
+        level = Mathf.Clamp(data?.level ?? 1, 1, maxLevel);
+        isUpgrading = data != null && data.isUpgrading;
+        upgradeRemainingSeconds = Mathf.Max(0f, data?.upgradeRemainingSeconds ?? 0f);
+        currentUpgradeDurationSeconds = Mathf.Max(0f, data?.currentUpgradeDurationSeconds ?? 0f);
+        convertedStageIndices = data?.convertedStageIndices != null
+            ? new List<int>(data.convertedStageIndices)
+            : new List<int>();
 
-        level = Mathf.Clamp(data.level, 1, maxLevel);
-        selectedUnitIndex = data.selectedUnitIndex;
-        isUpgrading = data.isUpgrading;
-        upgradeRemainingSeconds = Mathf.Max(0f, data.upgradeRemainingSeconds);
-        currentUpgradeDurationSeconds = Mathf.Max(0f, data.currentUpgradeDurationSeconds);
-
-        if (data.unitEnhanceLevels != null)
-        {
-            int count = Mathf.Min(data.unitEnhanceLevels.Count, unitEnhancements.Count);
-            for (int i = 0; i < count; i++)
-            {
-                if (unitEnhancements[i] != null)
-                {
-                    unitEnhancements[i].enhanceLevel = data.unitEnhanceLevels[i];
-                    unitEnhancements[i].Normalize();
-                }
-            }
-        }
-
-        NormalizeConfiguredValues();
+        Normalize();
         SyncUnlockedDrones(false);
-        OnLevelChanged.Invoke(level);
+        OnLevelChanged.Invoke(Level);
     }
 
-    public bool CanEnhanceSelectedUnit(int credits)
+    public int GetRequiredCoreChargerLevel(int stageIndex)
     {
-        UnitEnhancement selectedUnit = SelectedUnitEnhancement;
-        return selectedUnit != null
-            && !selectedUnit.IsMaxLevel
-            && credits >= selectedUnit.NextEnhanceCost;
-    }
-
-    public bool TryEnhanceSelectedUnit(ref int availableCredits)
-    {
-        if (!CanEnhanceSelectedUnit(availableCredits))
-        {
-            return false;
-        }
-
-        availableCredits -= SelectedUnitEnhancement.NextEnhanceCost;
-        EnhanceSelectedUnit();
-        return true;
-    }
-
-    public bool TryInvestRoute(string routeId)
-    {
-        if (!TrySelectRoute(routeId))
-        {
-            return false;
-        }
-
-        BaseCampManager manager = BaseCampManager.Instance;
-        int availableCredits = manager != null ? manager.Credits : int.MaxValue;
-        if (!TryEnhanceSelectedUnit(ref availableCredits))
-        {
-            return false;
-        }
-
-        manager?.SetCreditsForFacility(availableCredits);
-        return true;
-    }
-
-    public bool TryInvestOption(string optionId)
-    {
-        if (!TrySelectOption(optionId))
-        {
-            return false;
-        }
-
-        BaseCampManager manager = BaseCampManager.Instance;
-        int availableCredits = manager != null ? manager.Credits : int.MaxValue;
-        if (!TryEnhanceSelectedUnit(ref availableCredits))
-        {
-            return false;
-        }
-
-        manager?.SetCreditsForFacility(availableCredits);
-        return true;
-    }
-
-    public void EnhanceSelectedUnit()
-    {
-        UnitEnhancement selectedUnit = SelectedUnitEnhancement;
-        if (selectedUnit == null || selectedUnit.IsMaxLevel)
-        {
-            return;
-        }
-
-        selectedUnit.enhanceLevel++;
-        OnUnitEnhanced.Invoke(selectedUnit.unitConfig, selectedUnit.enhanceLevel);
-    }
-
-    public float GetUnitStatBonus(PlayerUnitConfig unitConfig, UnitEnhancementStat stat)
-    {
-        UnitEnhancement unitEnhancement = FindUnitEnhancement(unitConfig);
-        return unitEnhancement != null ? unitEnhancement.GetStatBonus(stat) : 0f;
+        return Mathf.Clamp(stageIndex + 2, 2, maxLevel);
     }
 
     public bool CanUpgrade(int credits, int commanderLevel)
     {
-        return !isUpgrading && level < maxLevel && credits >= UpgradeCost && commanderLevel >= requiredCommanderLevel;
+        return !isUpgrading
+            && level < maxLevel
+            && credits >= UpgradeCost
+            && commanderLevel >= requiredCommanderLevel;
     }
 
     public int GetLevelLimit(int researchLabLevel)
@@ -362,9 +218,9 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return Mathf.Min(maxLevel, Mathf.Max(1, researchLabLevel) + 2);
     }
 
-    public bool CanStartUpgrade(int availableCredits, int commanderLevel, int researchLabLevel)
+    public bool CanStartUpgrade(int credits, int commanderLevel, int researchLabLevel)
     {
-        return CanUpgrade(availableCredits, commanderLevel)
+        return CanUpgrade(credits, commanderLevel)
             && researchLabLevel >= RequiredResearchLabLevel
             && level < GetLevelLimit(researchLabLevel);
     }
@@ -398,26 +254,27 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         CompleteUpgrade();
     }
 
-    public void CompleteUpgradeImmediately()
+    private UnitConversionStage GetConversionStageAt(int index)
     {
-        Upgrade();
+        if (index < 0 || index >= conversionStages.Count)
+        {
+            return null;
+        }
+
+        return conversionStages[index];
     }
 
-    public static string GetStatDisplayName(UnitEnhancementStat stat)
+    private int FindFirstIncompleteStage()
     {
-        return stat switch
+        for (int i = 0; i < conversionStages.Count; i++)
         {
-            UnitEnhancementStat.MaxHealth => "Max Health",
-            UnitEnhancementStat.CritChance => "Crit Chance",
-            UnitEnhancementStat.CritMultiplier => "Crit Multiplier",
-            UnitEnhancementStat.AttackRange => "Attack Range",
-            UnitEnhancementStat.AttackDamage => "Attack Damage",
-            UnitEnhancementStat.AttackInterval => "Attack Interval",
-            UnitEnhancementStat.MoveSpeed => "Move Speed",
-            UnitEnhancementStat.RotationSpeed => "Rotation Speed",
-            UnitEnhancementStat.FireAngleTolerance => "Fire Angle",
-            _ => stat.ToString()
-        };
+            if (!convertedStageIndices.Contains(i))
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private void StartUpgradeTimer()
@@ -462,21 +319,10 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         upgradeRemainingSeconds = 0f;
         currentUpgradeDurationSeconds = 0f;
         level++;
-        requiredCommanderLevel++;
+        // 코어 충전소 레벨에 맞는 드론을 인벤토리에 해금한다.
         SyncUnlockedDrones(true);
         OnLevelChanged.Invoke(level);
         OnUpgradeCompleted.Invoke();
-    }
-
-    private float GetUpgradeDurationForCurrentLevel()
-    {
-        int index = Mathf.Max(0, level - 1);
-        if (index < upgradeDurationSecondsByLevel.Count)
-        {
-            return Mathf.Max(0f, upgradeDurationSecondsByLevel[index]);
-        }
-
-        return upgradeDurationSeconds;
     }
 
     private int GetUpgradeCostForCurrentLevel()
@@ -487,147 +333,17 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
 
         int index = Mathf.Max(0, level - 1);
-        if (index < upgradeCostByLevel.Count)
-        {
-            return Mathf.Max(0, upgradeCostByLevel[index]);
-        }
-
-        return Mathf.Max(0, upgradeCost);
+        return index < upgradeCostByLevel.Count
+            ? Mathf.Max(0, upgradeCostByLevel[index])
+            : Mathf.Max(0, upgradeCost);
     }
 
-    private int GetRequiredResearchLabLevelForCurrentUpgrade()
+    private float GetUpgradeDurationForCurrentLevel()
     {
         int index = Mathf.Max(0, level - 1);
-        if (index < requiredResearchLabLevelByLevel.Count)
-        {
-            return Mathf.Max(1, requiredResearchLabLevelByLevel[index]);
-        }
-
-        return Mathf.Max(1, requiredResearchLabLevel);
-    }
-
-    private UnitEnhancement FindUnitEnhancement(PlayerUnitConfig unitConfig)
-    {
-        if (unitConfig == null)
-        {
-            return null;
-        }
-
-        return unitEnhancements.Find(item => item.unitConfig == unitConfig);
-    }
-
-    private UnitEnhancement GetUnitEnhancementAt(int index)
-    {
-        if (index < 0 || index >= unitEnhancements.Count)
-        {
-            return null;
-        }
-
-        return unitEnhancements[index];
-    }
-
-    private int ParseIndexId(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return selectedUnitIndex;
-        }
-
-        if (int.TryParse(value, out int parsedIndex))
-        {
-            return Mathf.Clamp(parsedIndex, 0, Mathf.Max(0, unitEnhancements.Count - 1));
-        }
-
-        for (int i = 0; i < unitEnhancements.Count; i++)
-        {
-            UnitEnhancement enhancement = unitEnhancements[i];
-            if (enhancement == null)
-            {
-                continue;
-            }
-
-            if (string.Equals(enhancement.DisplayName, value, StringComparison.OrdinalIgnoreCase)
-                || (enhancement.unitConfig != null && string.Equals(enhancement.unitConfig.Id, value, StringComparison.OrdinalIgnoreCase)))
-            {
-                return i;
-            }
-        }
-
-        return selectedUnitIndex;
-    }
-
-    private void NormalizeUpgradeDurations()
-    {
-        if (upgradeDurationSecondsByLevel == null)
-        {
-            upgradeDurationSecondsByLevel = new List<float>();
-        }
-
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (upgradeDurationSecondsByLevel.Count < targetCount)
-        {
-            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
-        }
-
-        for (int i = 0; i < upgradeDurationSecondsByLevel.Count; i++)
-        {
-            upgradeDurationSecondsByLevel[i] = Mathf.Max(0f, upgradeDurationSecondsByLevel[i]);
-        }
-    }
-
-    private void NormalizeUpgradeCosts()
-    {
-        if (upgradeCostByLevel == null)
-        {
-            upgradeCostByLevel = new List<int>();
-        }
-
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (upgradeCostByLevel.Count < targetCount)
-        {
-            upgradeCostByLevel.Add(upgradeCost);
-        }
-
-        for (int i = 0; i < upgradeCostByLevel.Count; i++)
-        {
-            upgradeCostByLevel[i] = Mathf.Max(0, upgradeCostByLevel[i]);
-        }
-    }
-
-    private void NormalizeResearchLabRequirements()
-    {
-        if (requiredResearchLabLevelByLevel == null)
-        {
-            requiredResearchLabLevelByLevel = new List<int>();
-        }
-
-        int targetCount = Mathf.Max(0, maxLevel - 1);
-        while (requiredResearchLabLevelByLevel.Count < targetCount)
-        {
-            requiredResearchLabLevelByLevel.Add(requiredResearchLabLevel);
-        }
-
-        for (int i = 0; i < requiredResearchLabLevelByLevel.Count; i++)
-        {
-            requiredResearchLabLevelByLevel[i] = Mathf.Max(1, requiredResearchLabLevelByLevel[i]);
-        }
-    }
-
-    private void NormalizeUnitEnhancements()
-    {
-        unitEnhancements ??= new List<UnitEnhancement>();
-        foreach (UnitEnhancement unitEnhancement in unitEnhancements)
-        {
-            unitEnhancement?.Normalize();
-        }
-
-        if (unitEnhancements.Count == 0)
-        {
-            selectedUnitIndex = 0;
-            return;
-        }
-
-        selectedUnitIndex = Mathf.Clamp(selectedUnitIndex, 0, unitEnhancements.Count - 1);
+        return index < upgradeDurationSecondsByLevel.Count
+            ? Mathf.Max(0f, upgradeDurationSecondsByLevel[index])
+            : Mathf.Max(0f, upgradeDurationSeconds);
     }
 
     private void SyncUnlockedDrones(bool reportCollection)
@@ -659,18 +375,51 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
     }
 
-    private void NormalizeConfiguredValues()
+    private void Normalize()
     {
         level = Mathf.Max(1, level);
         maxLevel = Mathf.Max(level, maxLevel);
         upgradeCost = Mathf.Max(0, upgradeCost);
-        NormalizeUpgradeCosts();
         requiredCommanderLevel = Mathf.Max(1, requiredCommanderLevel);
         requiredResearchLabLevel = Mathf.Max(1, requiredResearchLabLevel);
-        NormalizeResearchLabRequirements();
         upgradeDurationSeconds = Mathf.Max(0f, upgradeDurationSeconds);
-        NormalizeUpgradeDurations();
-        NormalizeUnitEnhancements();
+        upgradeCostByLevel ??= new List<int>();
+        upgradeDurationSecondsByLevel ??= new List<float>();
+
+        int upgradeCount = Mathf.Max(0, maxLevel - 1);
+        while (upgradeCostByLevel.Count < upgradeCount)
+        {
+            upgradeCostByLevel.Add(upgradeCost);
+        }
+
+        while (upgradeDurationSecondsByLevel.Count < upgradeCount)
+        {
+            upgradeDurationSecondsByLevel.Add(upgradeDurationSeconds);
+        }
+
+        levelsPerConversion = Mathf.Max(1, levelsPerConversion);
+        conversionStages ??= new List<UnitConversionStage>();
+        convertedStageIndices ??= new List<int>();
+
+        for (int i = 0; i < conversionStages.Count; i++)
+        {
+            UnitConversionStage stage = conversionStages[i];
+            if (stage != null)
+            {
+                stage.requiredPlayerLevel = (i + 1) * levelsPerConversion;
+            }
+        }
+
+        convertedStageIndices.RemoveAll(index => index < 0 || index >= conversionStages.Count);
+        convertedStageIndices.Sort();
+        for (int i = convertedStageIndices.Count - 1; i > 0; i--)
+        {
+            if (convertedStageIndices[i] == convertedStageIndices[i - 1])
+            {
+                convertedStageIndices.RemoveAt(i);
+            }
+        }
+
         droneAttackDamagePerLevel = Mathf.Max(0f, droneAttackDamagePerLevel);
         droneAttackRangePerLevel = Mathf.Max(0f, droneAttackRangePerLevel);
         droneAttackIntervalReductionPerLevel = Mathf.Max(0f, droneAttackIntervalReductionPerLevel);
@@ -690,6 +439,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     private void OnValidate()
     {
-        NormalizeConfiguredValues();
+        Normalize();
     }
 }

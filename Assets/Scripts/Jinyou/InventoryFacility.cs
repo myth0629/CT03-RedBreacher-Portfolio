@@ -376,6 +376,32 @@ public class InventoryFacility : MonoBehaviour
         return true;
     }
 
+    public bool ReplaceUnit(PlayerUnitConfig currentUnit, PlayerUnitConfig nextUnit)
+    {
+        if (currentUnit == null || nextUnit == null || currentUnit == nextUnit)
+        {
+            return false;
+        }
+
+        int currentIndex = unitConfigs.IndexOf(currentUnit);
+        if (currentIndex < 0)
+        {
+            return false;
+        }
+
+        if (unitConfigs.Contains(nextUnit))
+        {
+            unitConfigs.RemoveAt(currentIndex);
+        }
+        else
+        {
+            unitConfigs[currentIndex] = nextUnit;
+        }
+
+        OnInventoryChanged.Invoke();
+        return true;
+    }
+
     public bool RemoveWeapon(ProjectileConfig weaponConfig)
     {
         return RemoveWeapon(weaponConfig, 1);

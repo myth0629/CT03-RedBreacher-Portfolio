@@ -224,6 +224,23 @@ public class PlayerController : MonoBehaviour
         equipmentPartLoadout?.OnLoadoutChanged.RemoveListener(HandleEquipmentPartLoadoutChanged);
     }
 
+    public bool SetUnitConfig(PlayerUnitConfig config)
+    {
+        if (config == null || unitConfig == config)
+        {
+            return false;
+        }
+
+        if (inventory != null && !inventory.ContainsUnit(config))
+        {
+            return false;
+        }
+
+        unitConfig = config;
+        ApplyUnitConfig();
+        return true;
+    }
+
     public void SetWeaponConfig(ProjectileConfig config)
     {
         if (config != null && inventory != null && !inventory.ContainsWeapon(config))

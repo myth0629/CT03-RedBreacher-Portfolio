@@ -137,7 +137,9 @@ public class BaseCampManager : MonoBehaviour
     {
         if (energyRefinery != null)
         {
-            AddCredits(energyRefinery.CollectCredits());
+            int collectedCredits = energyRefinery.CollectCredits();
+            AddCredits(collectedCredits);
+            DailyMissionManager.ReportCreditsCollected(collectedCredits);
         }
     }
 
@@ -166,26 +168,6 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.TrySelectMenu(menuId);
     }
 
-    public void SelectCoreRoute(string routeId)
-    {
-        coreCharger?.TrySelectRoute(routeId);
-    }
-
-    public void SelectCoreOption(string optionId)
-    {
-        coreCharger?.TrySelectOption(optionId);
-    }
-
-    public void InvestCoreRoute(string routeId)
-    {
-        coreCharger?.TryInvestRoute(routeId);
-    }
-
-    public void InvestCoreOption(string optionId)
-    {
-        coreCharger?.TryInvestOption(optionId);
-    }
-
     public void SelectAssemblyWeapon(int weaponIndex)
     {
         assemblyFactory?.TrySelectWeapon(weaponIndex);
@@ -194,6 +176,11 @@ public class BaseCampManager : MonoBehaviour
     public void SelectAssemblyWeapon(ProjectileConfig weaponConfig)
     {
         assemblyFactory?.TrySelectWeapon(weaponConfig);
+    }
+
+    public void SelectAssemblyDrone(DroneConfig droneConfig)
+    {
+        assemblyFactory?.TrySelectDrone(droneConfig);
     }
 
     public void EnhanceAssemblyWeapon()
@@ -207,30 +194,44 @@ public class BaseCampManager : MonoBehaviour
         if (assemblyFactory.TryEnhanceSelectedWeapon(ref availableCredits))
         {
             SetCreditsForFacility(availableCredits);
+            DailyMissionManager.ReportWeaponEnhanced();
         }
     }
 
-    public void SelectCoreUnit(int unitIndex)
+    public void EnhanceAssemblyDrone()
     {
-        coreCharger?.TrySelectUnit(unitIndex);
-    }
+        if (assemblyFactory == null)
+        {
+            return;
+        }
 
-    public void SelectCoreUnit(PlayerUnitConfig unitConfig)
-    {
-        coreCharger?.TrySelectUnit(unitConfig);
+        int availableCredits = Credits;
+        if (assemblyFactory.TryEnhanceSelectedDrone(ref availableCredits))
+        {
+            SetCreditsForFacility(availableCredits);
+            DailyMissionManager.ReportWeaponEnhanced();
+            SaveUnifiedGameIfReady();
+        }
     }
 
     public void EnhanceCoreUnit()
+    {
+        ConvertSelectedCoreUnit();
+    }
+
+    public void ConvertSelectedCoreUnit()
     {
         if (coreCharger == null)
         {
             return;
         }
 
-        int availableCredits = Credits;
-        if (coreCharger.TryEnhanceSelectedUnit(ref availableCredits))
+        PlayerController player = FindFirstObjectByType<PlayerController>();
+        int playerLevel = PlayerProgression != null ? PlayerProgression.Level : commanderLevel;
+        if (coreCharger.TryConvertCurrentUnit(Inventory, player, playerLevel))
         {
-            SetCreditsForFacility(availableCredits);
+            DailyMissionManager.ReportUnitEnhanced();
+            SaveUnifiedGameIfReady();
         }
     }
 
@@ -552,9 +553,10 @@ public class BaseCampManager : MonoBehaviour
 
         return new JinyouSaveData
         {
-            version = 1,
+            version = 2,
             lastSavedUnixTime = GetCurrentUnixTime(),
             commanderLevel = commanderLevel,
+            mainBuildingLevel = commandCenter != null ? commandCenter.Level : 1,
             credits = wallet != null ? wallet.Credits : credits,
             coreCrystals = wallet != null ? wallet.CoreCrystals : 0,
             lastOfflineReward = lastOfflineReward,
@@ -580,6 +582,10 @@ public class BaseCampManager : MonoBehaviour
         {
             // 재화와 시설을 먼저 복원한 뒤 업적과 일일 미션을 복원한다.
             commanderLevel = Mathf.Max(1, data.commanderLevel);
+            data.researchLab ??= new JinyouCommandCenterSaveData();
+            data.researchLab.level = data.version >= 2 && data.mainBuildingLevel > 0
+                ? data.mainBuildingLevel
+                : Mathf.Max(1, data.researchLab.level);
             PlayerCurrencyWallet wallet = EnsureCurrencyWallet();
             wallet?.SetCredits(data.credits);
             wallet?.SetCoreCrystals(data.coreCrystals);
@@ -587,6 +593,7 @@ public class BaseCampManager : MonoBehaviour
             energyRefinery?.RestoreState(data.energyRefinery);
             assemblyFactory?.RestoreState(data.assemblyFactory);
             coreCharger?.RestoreState(data.coreCharger);
+            coreCharger?.ApplyCompletedConversions(Inventory, FindFirstObjectByType<PlayerController>());
             TraitPointFacility?.RestoreState(data.traitPoints);
 
             AchievementManager achievementManager = AchievementManager.Instance
@@ -649,6 +656,7 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.OnMenuSelected.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnMenuUnlocked.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnWeaponEnhanced.AddListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnDroneEnhanced.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnUnitEnhanced.AddListener(HandleUnifiedSaveEvent);
         TraitPointFacility?.OnTraitsChanged.AddListener(HandleUnifiedSaveEvent);
@@ -675,6 +683,7 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.OnMenuSelected.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnMenuUnlocked.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnWeaponEnhanced.RemoveListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnDroneEnhanced.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnUnitEnhanced.RemoveListener(HandleUnifiedSaveEvent);
         TraitPointFacility?.OnTraitsChanged.RemoveListener(HandleUnifiedSaveEvent);
@@ -713,6 +722,11 @@ public class BaseCampManager : MonoBehaviour
     }
 
     private void HandleUnifiedSaveEvent(PlayerUnitConfig unitConfig, int level)
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void HandleUnifiedSaveEvent(DroneConfig droneConfig, int level)
     {
         SaveUnifiedGameIfReady();
     }

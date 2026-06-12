@@ -5,8 +5,14 @@ using UnityEngine.UI;
 public class BaseCampHud : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
+    
+    [Header("Commander")]
     [SerializeField] private TMP_Text commanderLevelText;
+    
+    [Header("Boss Ticket")]
     [SerializeField] private TMP_Text bossTicketText;
+    
+    [Header("Refinery Storage")]
     [SerializeField] private TMP_Text refineryStorageText;
     [SerializeField] private Image refineryStorageFill;
 
@@ -43,8 +49,8 @@ public class BaseCampHud : MonoBehaviour
 
         if (baseCampManager == null)
         {
-            SetText(commanderLevelText, "Commander Lv. --");
-            SetText(bossTicketText, "Tickets --/--");
+            SetText(commanderLevelText, "지휘관 Lv. --");
+            SetText(bossTicketText, "티켓 --/--");
             SetText(refineryStorageText, "--/--");
             SetFill(refineryStorageFill, 0f);
             return;
@@ -52,15 +58,15 @@ public class BaseCampHud : MonoBehaviour
 
         CommandCenter researchLab = baseCampManager.CommandCenter;
         EnergyRefinery refinery = baseCampManager.EnergyRefinery;
-        SetText(commanderLevelText, $"Commander Lv. {baseCampManager.CommanderLevel}");
+        SetText(commanderLevelText, $"지휘관 Lv. {baseCampManager.CommanderLevel}");
 
         if (researchLab != null)
         {
-            SetText(bossTicketText, $"Tickets {researchLab.BossTickets}/{researchLab.BossTicketCapacity}");
+            SetText(bossTicketText, $"티켓 {researchLab.BossTickets}/{researchLab.BossTicketCapacity}");
         }
         else
         {
-            SetText(bossTicketText, "Tickets --/--");
+            SetText(bossTicketText, "티켓 --/--");
         }
 
         if (refinery != null)
@@ -72,7 +78,7 @@ public class BaseCampHud : MonoBehaviour
         }
         else
         {
-            SetText(refineryStorageText, "Refinery --/--");
+            SetText(refineryStorageText, "정제소 용량 --/--");
             SetFill(refineryStorageFill, 0f);
         }
     }

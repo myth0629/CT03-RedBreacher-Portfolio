@@ -396,10 +396,6 @@ PrefabInstance:
       propertyPath: baseCampManager
       value: 
       objectReference: {fileID: 1014545411}
-    - target: {fileID: 4709250552992776755, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
-      propertyPath: baseCampManager
-      value: 
-      objectReference: {fileID: 1014545411}
     - target: {fileID: 5383062861291216909, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
@@ -416,10 +412,6 @@ PrefabInstance:
       propertyPath: uiCamera
       value: 
       objectReference: {fileID: 1520222790}
-    - target: {fileID: 8066542686855589667, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
-      propertyPath: baseCampManager
-      value: 
-      objectReference: {fileID: 1014545411}
     - target: {fileID: 8202966004120693924, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
@@ -557,9 +549,16 @@ MonoBehaviour:
   - {fileID: 0}
   closePanelsOnStart: 1
   commanderLevel: 100
+  syncCommanderLevelFromPlayerProgression: 1
   credits: 50000
   currencyWallet: {fileID: 0}
   playerProgression: {fileID: 0}
+  useUnifiedSave: 1
+  autoSaveUnifiedState: 1
+  unifiedSaveKey: Jinyou.SaveData
+  enableAutomation: 1
+  autoCollectUnlockCommandCenterLevel: 2
+  autoCollectIntervalSeconds: 5
   showDebugPanel: 0
   debugPanelRect:
     serializedVersion: 2
@@ -574,6 +573,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   OnCommanderLevelChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnOfflineRewardsClaimed:
     m_PersistentCalls:
       m_Calls: []
 --- !u!4 &1014545412

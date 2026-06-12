@@ -1,11 +1,13 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class BossSummonButton : MonoBehaviour
 {
     [Header("Source")]
-    [SerializeField] private BossDungeon bossDungeon;
+    [FormerlySerializedAs("bossDungeon")]
+    [SerializeField] private BossTracker bossTracker;
 
     [Header("UI")]
     [SerializeField] private Button summonButton;
@@ -17,10 +19,7 @@ public class BossSummonButton : MonoBehaviour
 
     private void Awake()
     {
-        if (summonButton == null)
-        {
-            summonButton = GetComponent<Button>();
-        }
+        summonButton ??= GetComponent<Button>();
     }
 
     private void OnEnable()
@@ -43,30 +42,37 @@ public class BossSummonButton : MonoBehaviour
     public void TrySummonBoss()
     {
         ResolveReferences();
-        if (bossDungeon == null)
+        if (bossTracker == null)
         {
-            stateMessage = "보스 시스템이 연결되지 않았습니다.";
+            stateMessage = "보스 트래커가 연결되지 않았습니다.";
             Refresh();
             return;
         }
 
-        BossDungeon.BossDifficulty difficulty = bossDungeon.GetHighestUnlockedDifficulty();
-        if (difficulty == null)
+        BossTracker.BossDefinition boss = bossTracker.SelectedBoss;
+        BossTracker.BossDifficulty difficulty = bossTracker.SelectedDifficulty;
+        if (boss == null || difficulty == null)
         {
-            stateMessage = "해금된 보스가 없습니다.";
+            stateMessage = "선택된 보스가 없습니다.";
             Refresh();
             return;
         }
 
-        // 게임 HUD 버튼에서도 기지와 동일한 티켓 소모 및 소환 검증을 사용한다.
-        if (bossDungeon.TryEnter(difficulty))
+        if (!bossTracker.IsDifficultyUnlocked(difficulty))
         {
-            stateMessage = $"{difficulty.displayName} 소환";
+            stateMessage = $"{difficulty.displayName} 난이도가 잠겨 있습니다.";
+            Refresh();
+            return;
+        }
+
+        if (bossTracker.TryEnterSelected())
+        {
+            stateMessage = $"{GetBossName(boss)} - {difficulty.displayName} 소환";
             DailyMissionManager.ReportBossTicketUsed();
         }
         else
         {
-            stateMessage = "티켓 또는 보스 설정을 확인하세요.";
+            stateMessage = "티켓 수 또는 보스전 진행 상태를 확인하세요.";
         }
 
         Refresh();
@@ -75,9 +81,10 @@ public class BossSummonButton : MonoBehaviour
     private void Refresh()
     {
         ResolveReferences();
-        CommandCenter commandCenter = bossDungeon != null ? bossDungeon.CmdCenter : null;
-        BossDungeon.BossDifficulty difficulty = bossDungeon != null
-            ? bossDungeon.GetHighestUnlockedDifficulty()
+        CommandCenter commandCenter = bossTracker != null ? bossTracker.CmdCenter : null;
+        BossTracker.BossDefinition boss = bossTracker != null ? bossTracker.SelectedBoss : null;
+        BossTracker.BossDifficulty difficulty = bossTracker != null
+            ? bossTracker.SelectedDifficulty
             : null;
 
         if (ticketText != null)
@@ -89,9 +96,9 @@ public class BossSummonButton : MonoBehaviour
 
         if (bossNameText != null)
         {
-            bossNameText.text = difficulty != null
-                ? difficulty.displayName
-                : "보스 미해금";
+            bossNameText.text = boss != null && difficulty != null
+                ? $"{GetBossName(boss)} [{difficulty.displayName}]"
+                : "선택된 보스 없음";
         }
 
         if (stateText != null)
@@ -101,14 +108,22 @@ public class BossSummonButton : MonoBehaviour
 
         if (summonButton != null)
         {
-            summonButton.interactable = bossDungeon != null
-                && difficulty != null
-                && bossDungeon.CanEnter(difficulty);
+            summonButton.interactable = bossTracker != null && bossTracker.CanEnterSelected();
         }
+    }
+
+    private static string GetBossName(BossTracker.BossDefinition boss)
+    {
+        if (!string.IsNullOrWhiteSpace(boss.displayName))
+        {
+            return boss.displayName;
+        }
+
+        return boss.bossConfig != null ? boss.bossConfig.DisplayName : "보스";
     }
 
     private void ResolveReferences()
     {
-        bossDungeon ??= FindFirstObjectByType<BossDungeon>();
+        bossTracker ??= FindFirstObjectByType<BossTracker>();
     }
 }
