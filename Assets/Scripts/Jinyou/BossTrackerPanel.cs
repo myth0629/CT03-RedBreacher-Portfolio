@@ -106,8 +106,7 @@ public class BossTrackerPanel : MonoBehaviour
         string state = bossTracker.IsDifficultyUnlocked(difficulty)
             ? "해금"
             : $"사령부 Lv.{difficulty.requiredResearchLabLevel} 필요";
-        string record = bossTracker.GetRecordSummary(bossTracker.SelectedBoss, difficulty);
-        return $"{difficulty.displayName} | {state} | 권장 전투력 {difficulty.recommendedPower:N0}\n{record}";
+        return $"{difficulty.displayName} | {state} | 권장 전투력 {difficulty.recommendedPower:N0}";
     }
 
     private void SetBossInfo(
@@ -142,9 +141,9 @@ public class BossTrackerPanel : MonoBehaviour
 
         if (bossIcon != null)
         {
-            Sprite portrait = boss != null && boss.portrait != null
-                ? boss.portrait
-                : config != null ? config.Portrait : null;
+            Sprite portrait = config != null && config.Portrait != null
+                ? config.Portrait
+                : boss != null ? boss.portrait : null;
             bossIcon.sprite = portrait;
             bossIcon.enabled = portrait != null;
             bossIcon.preserveAspect = true;
