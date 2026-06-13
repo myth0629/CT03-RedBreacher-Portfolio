@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class WeaponGachaPanel : MonoBehaviour
+public class GachaPanel : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private BaseCampManager baseCampManager;
@@ -12,13 +12,14 @@ public class WeaponGachaPanel : MonoBehaviour
     [Header("Weapon Draw Commands")]
     [SerializeField] private Button weaponDrawOnceButton;
     [SerializeField] private Button weaponDrawMultiButton;
+    [SerializeField] private TMP_Text weaponDrawOnceCostText;
+    [SerializeField] private TMP_Text weaponDrawMultiCostText;
 
     [Header("Skill Draw Commands")]
     [SerializeField] private Button skillDrawOnceButton;
     [SerializeField] private Button skillDrawMultiButton;
-
-    [Header("Panel Commands")]
-    [SerializeField] private Button closeButton;
+    [SerializeField] private TMP_Text skillDrawOnceCostText;
+    [SerializeField] private TMP_Text skillDrawMultiCostText;
 
     [Header("Labels")]
     [SerializeField] private TMP_Text currencyText;
@@ -44,7 +45,6 @@ public class WeaponGachaPanel : MonoBehaviour
         weaponDrawMultiButton?.onClick.AddListener(DrawWeaponMulti);
         skillDrawOnceButton?.onClick.AddListener(DrawSkillOnce);
         skillDrawMultiButton?.onClick.AddListener(DrawSkillMulti);
-        closeButton?.onClick.AddListener(ClosePanel);
         Refresh();
     }
 
@@ -54,7 +54,6 @@ public class WeaponGachaPanel : MonoBehaviour
         weaponDrawMultiButton?.onClick.RemoveListener(DrawWeaponMulti);
         skillDrawOnceButton?.onClick.RemoveListener(DrawSkillOnce);
         skillDrawMultiButton?.onClick.RemoveListener(DrawSkillMulti);
-        closeButton?.onClick.RemoveListener(ClosePanel);
     }
 
     private void Update()
@@ -124,6 +123,7 @@ public class WeaponGachaPanel : MonoBehaviour
             connected
                 ? $"1회 {weaponGacha.GetDrawCost(selectedCategory, 1)} / {multiCount}회 {weaponGacha.GetDrawCost(selectedCategory, multiCount)}"
                 : "뽑기 시설이 연결되지 않았습니다.");
+        RefreshDrawCostTexts(connected, multiCount);
         SetText(tableText, BuildTableText());
 
         SetButton(
@@ -138,6 +138,28 @@ public class WeaponGachaPanel : MonoBehaviour
         SetButton(
             skillDrawMultiButton,
             connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Skill, multiCount));
+    }
+
+    private void RefreshDrawCostTexts(bool connected, int multiCount)
+    {
+        if (!connected)
+        {
+            SetText(weaponDrawOnceCostText, "--");
+            SetText(weaponDrawMultiCostText, "--");
+            SetText(skillDrawOnceCostText, "--");
+            SetText(skillDrawMultiCostText, "--");
+            return;
+        }
+
+        SetText(weaponDrawOnceCostText, FormatCoreCrystalCost(weaponGacha.GetDrawCost(GachaCategory.Weapon, 1)));
+        SetText(weaponDrawMultiCostText, FormatCoreCrystalCost(weaponGacha.GetDrawCost(GachaCategory.Weapon, multiCount)));
+        SetText(skillDrawOnceCostText, FormatCoreCrystalCost(weaponGacha.GetDrawCost(GachaCategory.Skill, 1)));
+        SetText(skillDrawMultiCostText, FormatCoreCrystalCost(weaponGacha.GetDrawCost(GachaCategory.Skill, multiCount)));
+    }
+
+    private static string FormatCoreCrystalCost(int cost)
+    {
+        return $"{cost:N0} 소모";
     }
 
     private void ShowResults(IReadOnlyList<GachaDrawResult> results)
@@ -287,12 +309,6 @@ public class WeaponGachaPanel : MonoBehaviour
         }
 
         return string.IsNullOrWhiteSpace(text) ? "확률표가 비어 있습니다." : text.TrimEnd();
-    }
-
-    private void ClosePanel()
-    {
-        CloseResultPanel();
-        gameObject.SetActive(false);
     }
 
     public void CloseResultPanel()
