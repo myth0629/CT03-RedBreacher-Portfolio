@@ -568,7 +568,25 @@ public class CombatObjectPool : MonoBehaviour
         }
 
         Queue<GameObject> queue = GetEffectQueue(prefab);
-        GameObject effect = queue.Count > 0 ? queue.Dequeue() : Instantiate(prefab);
+
+        // 큐에 남은 항목이 외부에서 파괴됐을 수 있으므로(예: 파티클 Stop Action=Destroy,
+        // 부모와 함께 씬 전환 시 파괴) 살아있는 인스턴스를 만날 때까지 건너뛴다.
+        GameObject effect = null;
+        while (queue.Count > 0)
+        {
+            GameObject candidate = queue.Dequeue();
+            if (candidate != null)
+            {
+                effect = candidate;
+                break;
+            }
+        }
+
+        if (effect == null)
+        {
+            effect = Instantiate(prefab);
+        }
+
         CombatPooledEffect pooledEffect = effect.GetComponent<CombatPooledEffect>();
         if (pooledEffect == null)
         {

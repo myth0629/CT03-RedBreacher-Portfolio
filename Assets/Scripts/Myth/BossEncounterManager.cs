@@ -107,6 +107,7 @@ public class BossEncounterManager : MonoBehaviour
         activeBossHealth = null;
         bossEncounterHud?.Hide();
         enemySpawnManager?.ResumePausedRound();
+        MainGuideMissionManager.ReportBossDefeated();
         EncounterEnded?.Invoke(true);
     }
 

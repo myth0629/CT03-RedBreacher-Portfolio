@@ -17,6 +17,7 @@ public class JinyouSaveData
     public JinyouCoreChargerSaveData coreCharger = new JinyouCoreChargerSaveData();
     public JinyouAchievementSaveData achievements = new JinyouAchievementSaveData();
     public JinyouDailyMissionSaveData dailyMissions = new JinyouDailyMissionSaveData();
+    public JinyouGuideMissionSaveData guideMissions = new JinyouGuideMissionSaveData();
 }
 
 [Serializable]
@@ -119,4 +120,12 @@ public class JinyouDailyMissionEntrySaveData
     public string id;
     public int currentAmount;
     public bool rewardClaimed;
+}
+
+[Serializable]
+public class JinyouGuideMissionSaveData
+{
+    // 순차형 가이드 미션은 활성 단계 인덱스와 해당 단계 진행도만 저장한다.
+    public int currentIndex;
+    public int currentAmount;
 }

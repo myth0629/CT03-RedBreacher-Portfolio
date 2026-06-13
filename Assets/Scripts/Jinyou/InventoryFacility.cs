@@ -211,6 +211,7 @@ public class InventoryFacility : MonoBehaviour
         {
             // 중복 무기가 아닌 최초 획득만 수집 업적에 반영한다.
             AchievementManager.ReportWeaponCollected();
+            MainGuideMissionManager.ReportWeaponCollected();
         }
 
         return BuildGrantResult(
@@ -750,6 +751,7 @@ public class InventoryFacility : MonoBehaviour
         if (reportCollection)
         {
             AchievementManager.ReportDroneCollected();
+            MainGuideMissionManager.ReportDroneCollected();
         }
 
         return true;

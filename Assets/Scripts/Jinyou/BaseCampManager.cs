@@ -14,6 +14,7 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private CoreCharger coreCharger;
     [SerializeField] private InventoryFacility inventory;
     [SerializeField] private DailyMissionManager dailyMissionManager;
+    [SerializeField] private MainGuideMissionManager mainGuideMissionManager;
     [SerializeField] private bool autoFindFacilities = true;
 
     [Header("Facility Panels")]
@@ -71,6 +72,7 @@ public class BaseCampManager : MonoBehaviour
         EnsureCurrencyWallet();
         ConnectFacilities();
         EnsureDailyMissionManager();
+        EnsureMainGuideMissionManager();
     }
 
     private void Start()
@@ -140,6 +142,7 @@ public class BaseCampManager : MonoBehaviour
             int collectedCredits = energyRefinery.CollectCredits();
             AddCredits(collectedCredits);
             DailyMissionManager.ReportCreditsCollected(collectedCredits);
+            MainGuideMissionManager.ReportCreditsCollected(collectedCredits);
         }
     }
 
@@ -204,6 +207,7 @@ public class BaseCampManager : MonoBehaviour
         {
             SetCreditsForFacility(availableCredits);
             DailyMissionManager.ReportWeaponEnhanced();
+            MainGuideMissionManager.ReportWeaponEnhanced();
         }
     }
 
@@ -219,6 +223,7 @@ public class BaseCampManager : MonoBehaviour
         {
             SetCreditsForFacility(availableCredits);
             DailyMissionManager.ReportDroneEnhanced();
+            MainGuideMissionManager.ReportDroneEnhanced();
             SaveUnifiedGameIfReady();
         }
     }
@@ -240,6 +245,7 @@ public class BaseCampManager : MonoBehaviour
         if (coreCharger.TryConvertCurrentUnit(Inventory, player, playerLevel))
         {
             DailyMissionManager.ReportUnitEnhanced();
+            MainGuideMissionManager.ReportUnitEnhanced();
             SaveUnifiedGameIfReady();
         }
     }
@@ -379,6 +385,7 @@ public class BaseCampManager : MonoBehaviour
         {
             CurrencyWallet.TrySpend(CurrencyType.Credits, upgradeCost);
             DailyMissionManager.ReportFacilityUpgraded();
+            MainGuideMissionManager.ReportFacilityUpgraded();
         }
     }
 
@@ -525,6 +532,19 @@ public class BaseCampManager : MonoBehaviour
         return dailyMissionManager;
     }
 
+    private MainGuideMissionManager EnsureMainGuideMissionManager()
+    {
+        mainGuideMissionManager ??= MainGuideMissionManager.Instance
+            ?? FindFirstObjectByType<MainGuideMissionManager>();
+        if (mainGuideMissionManager == null)
+        {
+            // 가이드 미션이 없는 전투 씬에서도 동일한 저장 데이터를 유지한다.
+            mainGuideMissionManager = gameObject.AddComponent<MainGuideMissionManager>();
+        }
+
+        return mainGuideMissionManager;
+    }
+
     private void RegisterCurrencyWalletEvents()
     {
         if (currencyWallet == null)
@@ -563,6 +583,7 @@ public class BaseCampManager : MonoBehaviour
         EnsureCurrencyWallet().SetStandaloneSaveEnabled(false, true);
         assemblyFactory?.SetStandaloneSaveEnabled(false, true);
         EnsureDailyMissionManager().SetStandaloneSaveEnabled(false, true);
+        EnsureMainGuideMissionManager().SetStandaloneSaveEnabled(false, true);
 
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
@@ -589,6 +610,7 @@ public class BaseCampManager : MonoBehaviour
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
         DailyMissionManager resolvedDailyMissionManager = EnsureDailyMissionManager();
+        MainGuideMissionManager resolvedGuideMissionManager = EnsureMainGuideMissionManager();
 
         return new JinyouSaveData
         {
@@ -604,7 +626,8 @@ public class BaseCampManager : MonoBehaviour
             assemblyFactory = assemblyFactory != null ? assemblyFactory.CaptureState() : new JinyouAssemblyFactorySaveData(),
             coreCharger = coreCharger != null ? coreCharger.CaptureState() : new JinyouCoreChargerSaveData(),
             achievements = achievementManager != null ? achievementManager.CaptureState() : new JinyouAchievementSaveData(),
-            dailyMissions = resolvedDailyMissionManager.CaptureState()
+            dailyMissions = resolvedDailyMissionManager.CaptureState(),
+            guideMissions = resolvedGuideMissionManager.CaptureState()
         };
     }
 
@@ -636,6 +659,7 @@ public class BaseCampManager : MonoBehaviour
                 ?? FindFirstObjectByType<AchievementManager>();
             achievementManager?.RestoreState(data.achievements);
             EnsureDailyMissionManager().RestoreState(data.dailyMissions);
+            EnsureMainGuideMissionManager().RestoreState(data.guideMissions);
 
             ApplyOfflineRewards(data.lastSavedUnixTime);
             OnCommanderLevelChanged.Invoke(commanderLevel);
@@ -687,6 +711,7 @@ public class BaseCampManager : MonoBehaviour
         {
             OnOfflineRewardsClaimed.Invoke(lastOfflineReward);
             DailyMissionManager.ReportOfflineRewardClaimed();
+            MainGuideMissionManager.ReportOfflineRewardClaimed();
         }
     }
 
@@ -713,6 +738,11 @@ public class BaseCampManager : MonoBehaviour
         resolvedDailyMissionManager.OnDailyMissionsChanged.AddListener(HandleUnifiedSaveEvent);
         resolvedDailyMissionManager.OnDailyMissionCompleted.AddListener(HandleUnifiedSaveEvent);
         resolvedDailyMissionManager.OnDailyMissionRewardClaimed.AddListener(HandleUnifiedSaveEvent);
+
+        MainGuideMissionManager resolvedGuideMissionManager = EnsureMainGuideMissionManager();
+        resolvedGuideMissionManager.OnGuideMissionsChanged.AddListener(HandleUnifiedSaveEvent);
+        resolvedGuideMissionManager.OnGuideStepCompleted.AddListener(HandleUnifiedSaveEvent);
+        resolvedGuideMissionManager.OnGuideStepClaimed.AddListener(HandleUnifiedSaveEvent);
     }
 
     private void UnsubscribeUnifiedSaveEvents()
@@ -739,6 +769,13 @@ public class BaseCampManager : MonoBehaviour
             dailyMissionManager.OnDailyMissionsChanged.RemoveListener(HandleUnifiedSaveEvent);
             dailyMissionManager.OnDailyMissionCompleted.RemoveListener(HandleUnifiedSaveEvent);
             dailyMissionManager.OnDailyMissionRewardClaimed.RemoveListener(HandleUnifiedSaveEvent);
+        }
+
+        if (mainGuideMissionManager != null)
+        {
+            mainGuideMissionManager.OnGuideMissionsChanged.RemoveListener(HandleUnifiedSaveEvent);
+            mainGuideMissionManager.OnGuideStepCompleted.RemoveListener(HandleUnifiedSaveEvent);
+            mainGuideMissionManager.OnGuideStepClaimed.RemoveListener(HandleUnifiedSaveEvent);
         }
     }
 
@@ -778,6 +815,11 @@ public class BaseCampManager : MonoBehaviour
     }
 
     private void HandleUnifiedSaveEvent(DailyMissionManager.DailyMissionEntry mission)
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void HandleUnifiedSaveEvent(GuideMissionConfig.GuideStepData guideStep)
     {
         SaveUnifiedGameIfReady();
     }

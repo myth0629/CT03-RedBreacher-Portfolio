@@ -98,6 +98,7 @@ public class GachaPanel : MonoBehaviour
         if (succeeded)
         {
             DailyMissionManager.ReportWeaponGachaDrawn(count);
+            MainGuideMissionManager.ReportWeaponGachaDrawn(count);
             ShowResults(weaponGacha.LastResults);
         }
         else

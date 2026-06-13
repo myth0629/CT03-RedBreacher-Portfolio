@@ -30,6 +30,7 @@ public class PlayerProgression : MonoBehaviour
         initialExperienceToNextLevel = Mathf.Max(1f, experienceToNextLevel);
         Load();
         AchievementManager.ReportPlayerLevelReached(level);
+        MainGuideMissionManager.ReportPlayerLevelReached(level);
     }
 
     public void AddExperience(float amount)
@@ -109,6 +110,7 @@ public class PlayerProgression : MonoBehaviour
         statPoints++;
         experienceToNextLevel = Mathf.Max(1f, experienceToNextLevel * experienceGrowthRate);
         AchievementManager.ReportPlayerLevelReached(level);
+        MainGuideMissionManager.ReportPlayerLevelReached(level);
 
         Debug.Log($"플레이어 레벨업: Lv.{level}, 특성 포인트 {statPoints}");
     }

@@ -274,6 +274,7 @@ public class EnemySpawnManager : MonoBehaviour
 
         lastReportedStageClearRound = clearedRound;
         AchievementManager.ReportStageCleared();
+        MainGuideMissionManager.ReportStageCleared();
     }
 
     private void SpawnEnemy(int index)

@@ -69,6 +69,7 @@ public class BossSummonButton : MonoBehaviour
         {
             stateMessage = $"{GetBossName(boss)} - {difficulty.displayName} 소환";
             DailyMissionManager.ReportBossTicketUsed();
+            MainGuideMissionManager.ReportBossTicketUsed();
         }
         else
         {
