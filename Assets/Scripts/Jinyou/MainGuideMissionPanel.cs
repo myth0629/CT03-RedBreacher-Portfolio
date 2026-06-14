@@ -98,7 +98,20 @@ public class MainGuideMissionPanel : MonoBehaviour
 
     private void HandleClaimClicked()
     {
-        guideManager?.TryClaimCurrent();
+        if (guideManager == null)
+        {
+            return;
+        }
+
+        GuideMissionConfig.GuideStepData step = guideManager.CurrentStep;
+        Vector3 sourcePosition = rewardIcon != null
+            ? rewardIcon.rectTransform.position
+            : (claimButton != null ? claimButton.transform.position : transform.position);
+
+        if (guideManager.TryClaimCurrent() && step != null && step.rewardAmount > 0)
+        {
+            RewardFlyAnimator.Instance.PlayReward(sourcePosition, step.rewardCurrency, step.rewardAmount, 64f);
+        }
     }
 
     public void Refresh()

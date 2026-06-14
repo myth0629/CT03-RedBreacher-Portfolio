@@ -62,8 +62,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void Awake()
     {
+        // selectionRoot가 이 컴포넌트 자신의 GameObject인 구성에서는,
+        // Awake가 첫 OpenPanel(SetActive(true)) 직후에 지연 실행되며 패널을 즉시 닫아버려
+        // "처음엔 안 열리고 두 번째 클릭에야 열리는" 문제가 생긴다.
+        // 패널은 씬/프리팹에서 비활성으로 시작하므로 여기서 따로 끌 필요가 없다.
         ResolveSources();
-        selectionRoot?.SetActive(false);
     }
 
     private void Start()

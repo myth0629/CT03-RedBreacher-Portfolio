@@ -73,6 +73,43 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private Image experienceFillImage;
     [SerializeField] private Image roundProgressFillImage;
 
+    // 재화 표시값(애니메이션용). 보상 흡수 연출이 도착하면 카운트업되도록 hold 시점을 둔다.
+    private long shownCredits = -1;
+    private long shownCoreCrystals = -1;
+    private float creditHoldUntil;
+    private float coreCrystalHoldUntil;
+
+    /// <summary>지정 재화의 표시 숫자 갱신을 잠시 멈춘다(보상 비행 동안 숫자 고정 → 도착 시 카운트업).</summary>
+    public void HoldCurrencyDisplay(CurrencyType currency, float seconds)
+    {
+        float until = Time.unscaledTime + Mathf.Max(0f, seconds);
+        if (currency == CurrencyType.CoreCrystals)
+        {
+            coreCrystalHoldUntil = until;
+        }
+        else
+        {
+            creditHoldUntil = until;
+        }
+    }
+
+    // 표시값을 실제값으로 부드럽게 이동시킨다. 소비(감소)는 즉시, 획득(증가)은 hold 이후 카운트업.
+    private static string DisplayCurrency(ref long shown, long real, float holdUntil)
+    {
+        if (shown < 0 || real < shown)
+        {
+            shown = real;
+        }
+        else if (shown < real && Time.unscaledTime >= holdUntil)
+        {
+            long diff = real - shown;
+            long step = (long)Mathf.Max(1f, Mathf.Ceil(diff * 0.18f));
+            shown = System.Math.Min(real, shown + step);
+        }
+
+        return shown.ToString();
+    }
+
     private void Awake()
     {
         if (player == null)
@@ -124,8 +161,8 @@ public class PlayerStatusHud : MonoBehaviour
 
         if (currencyWallet != null)
         {
-            SetText(creditsText, $"{currencyWallet.Credits}");
-            SetText(coreCrystalsText, $"{currencyWallet.CoreCrystals}");
+            SetText(creditsText, DisplayCurrency(ref shownCredits, currencyWallet.Credits, creditHoldUntil));
+            SetText(coreCrystalsText, DisplayCurrency(ref shownCoreCrystals, currencyWallet.CoreCrystals, coreCrystalHoldUntil));
         }
 
         if (player == null)

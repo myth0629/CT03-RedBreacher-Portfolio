@@ -100,8 +100,21 @@ public class AchievementPopup : MonoBehaviour
 
             claimButton.targetGraphic = rewardClaim;
             claimButton.interactable = achievement.Completed;
+
+            RectTransform claimRect = rewardClaim.rectTransform;
+            string achievementId = achievement.Id;
+            CurrencyType rewardCurrency = achievement.RewardCurrency;
+            int rewardAmount = achievement.RewardAmount;
             claimButton.onClick.AddListener(() =>
-                achievementManager.TryClaimReward(achievement.Id));
+            {
+                // 클레임 성공 시 Rebuild로 이 아이템이 파괴되므로 위치를 먼저 캡처한다.
+                Vector3 sourcePosition = claimRect != null ? claimRect.position : Vector3.zero;
+                float iconSize = claimRect != null ? claimRect.rect.width : 56f;
+                if (achievementManager.TryClaimReward(achievementId))
+                {
+                    RewardFlyAnimator.Instance.PlayReward(sourcePosition, rewardCurrency, rewardAmount, iconSize);
+                }
+            });
         }
     }
 
