@@ -96,6 +96,12 @@ public class BossTrackerPanel : MonoBehaviour
         SetInteractable(nextDifficultyButton, bossTracker != null && bossTracker.Difficulties.Count > 1);
     }
 
+    /// <summary>
+    /// 난이도 정보를 표시하는 UI 로직
+    /// 난이도(일반>) | 해금, 미해금 | 권장 전투력
+    /// </summary>
+    /// <param name="difficulty"></param>
+    /// <returns></returns>
     private string BuildDifficultySummary(BossTracker.BossDifficulty difficulty)
     {
         if (bossTracker == null || difficulty == null)
@@ -109,6 +115,11 @@ public class BossTrackerPanel : MonoBehaviour
         return $"{difficulty.displayName} | {state} | 권장 전투력 {difficulty.recommendedPower:N0}";
     }
 
+    /// <summary>
+    /// 보스에 대한 정보
+    /// </summary>
+    /// <param name="boss"></param>
+    /// <param name="difficulty"></param>
     private void SetBossInfo(
         BossTracker.BossDefinition boss,
         BossTracker.BossDifficulty difficulty)
