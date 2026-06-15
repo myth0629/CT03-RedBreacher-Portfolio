@@ -4,7 +4,11 @@ using UnityEngine.UI;
 
 public class BossEncounterHud : MonoBehaviour
 {
+    [Header("Panels")]
     [SerializeField] private GameObject bossHudPanel;
+    [SerializeField] private GameObject guidMissionPanel;
+    
+    [Header("BoosUI")]
     [SerializeField] private TMP_Text bossNameText;
     [SerializeField] private Slider bossHealthSlider;
     [SerializeField] private TMP_Text bossHealthText;
@@ -37,6 +41,7 @@ public class BossEncounterHud : MonoBehaviour
         if (bossHudPanel != null)
         {
             bossHudPanel.SetActive(true);
+            guidMissionPanel.SetActive(false);
         }
 
         Refresh();
@@ -50,6 +55,7 @@ public class BossEncounterHud : MonoBehaviour
         if (bossHudPanel != null)
         {
             bossHudPanel.SetActive(false);
+            guidMissionPanel.SetActive(true);
         }
     }
 

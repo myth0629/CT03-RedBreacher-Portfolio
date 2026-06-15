@@ -96,6 +96,12 @@ public class BossTrackerPanel : MonoBehaviour
         SetInteractable(nextDifficultyButton, bossTracker != null && bossTracker.Difficulties.Count > 1);
     }
 
+    /// <summary>
+    /// 난이도 정보를 표시하는 UI 로직
+    /// 난이도(일반>) | 해금, 미해금 | 권장 전투력
+    /// </summary>
+    /// <param name="difficulty"></param>
+    /// <returns></returns>
     private string BuildDifficultySummary(BossTracker.BossDifficulty difficulty)
     {
         if (bossTracker == null || difficulty == null)
@@ -104,11 +110,16 @@ public class BossTrackerPanel : MonoBehaviour
         }
 
         string state = bossTracker.IsDifficultyUnlocked(difficulty)
-            ? "해금"
+            ? "해금됨"
             : $"사령부 Lv.{difficulty.requiredResearchLabLevel} 필요";
         return $"{difficulty.displayName} | {state} | 권장 전투력 {difficulty.recommendedPower:N0}";
     }
 
+    /// <summary>
+    /// 보스에 대한 정보
+    /// </summary>
+    /// <param name="boss"></param>
+    /// <param name="difficulty"></param>
     private void SetBossInfo(
         BossTracker.BossDefinition boss,
         BossTracker.BossDifficulty difficulty)
@@ -124,7 +135,7 @@ public class BossTrackerPanel : MonoBehaviour
 
         SetText(bossNameText, displayName);
         SetText(bossHealthText, config != null
-            ? $"{config.MaxHealth * healthMultiplier:0}"
+            ? $"{config.MaxHealth * healthMultiplier:0} <color=#ffffff>HP</color>"
             : string.Empty);
         SetText(rangedAttackText, config != null
             ? $"범위 공격 ({config.RangedAttackDamage * damageMultiplier:0})"

@@ -15,6 +15,7 @@ public class BossEncounterManager : MonoBehaviour
     private bool encounterActive;
 
     public bool IsEncounterActive => encounterActive;
+    public event Action EncounterStarted;
     public event Action<bool> EncounterEnded;
 
     private void Awake()
@@ -97,6 +98,7 @@ public class BossEncounterManager : MonoBehaviour
             rewardScale);
         encounterActive = true;
         bossEncounterHud?.Show(config, activeBossHealth);
+        EncounterStarted?.Invoke();
         return true;
     }
 

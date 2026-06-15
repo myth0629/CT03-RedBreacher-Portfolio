@@ -143,7 +143,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
         return facilityType switch
         {
             FacilityType.CommandCenter => baseCampManager?.CommandCenter?.Level ?? 1,
-            FacilityType.EnergyRefinery => baseCampManager?.EnergyRefinery?.Level ?? 1,
+            FacilityType.EnergyRefinery => baseCampManager?.CreditRefinery?.Level ?? 1,
             FacilityType.AssemblyFactory => baseCampManager?.AssemblyFactory?.Level ?? 1,
             FacilityType.CoreCharger => baseCampManager?.CoreCharger?.Level ?? 1,
             FacilityType.TraitPointFacility => 1,
@@ -214,11 +214,11 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
                 break;
             case FacilityType.EnergyRefinery:
                 SubscribeResearchLabUnlockEvents();
-                if (baseCampManager?.EnergyRefinery != null)
+                if (baseCampManager?.CreditRefinery != null)
                 {
-                    baseCampManager.EnergyRefinery.OnLevelChanged.AddListener(HandleLevelChanged);
-                    baseCampManager.EnergyRefinery.OnUpgradeStarted.AddListener(SyncView);
-                    baseCampManager.EnergyRefinery.OnUpgradeCompleted.AddListener(SyncView);
+                    baseCampManager.CreditRefinery.OnLevelChanged.AddListener(HandleLevelChanged);
+                    baseCampManager.CreditRefinery.OnUpgradeStarted.AddListener(SyncView);
+                    baseCampManager.CreditRefinery.OnUpgradeCompleted.AddListener(SyncView);
                 }
                 break;
             case FacilityType.AssemblyFactory:
@@ -266,11 +266,11 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
             baseCampManager.CommandCenter.OnUpgradeCompleted.RemoveListener(SyncView);
         }
 
-        if (baseCampManager.EnergyRefinery != null)
+        if (baseCampManager.CreditRefinery != null)
         {
-            baseCampManager.EnergyRefinery.OnLevelChanged.RemoveListener(HandleLevelChanged);
-            baseCampManager.EnergyRefinery.OnUpgradeStarted.RemoveListener(SyncView);
-            baseCampManager.EnergyRefinery.OnUpgradeCompleted.RemoveListener(SyncView);
+            baseCampManager.CreditRefinery.OnLevelChanged.RemoveListener(HandleLevelChanged);
+            baseCampManager.CreditRefinery.OnUpgradeStarted.RemoveListener(SyncView);
+            baseCampManager.CreditRefinery.OnUpgradeCompleted.RemoveListener(SyncView);
         }
 
         if (baseCampManager.AssemblyFactory != null)

@@ -2,25 +2,35 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class EnergyRefineryPanel : MonoBehaviour
+public class CreditRefineryPanel : MonoBehaviour
 {
-    [Header("Panels")]
+    private const string FacilityId = "energy_refinery";
+
     [SerializeField] private BaseCampManager baseCampManager;
+
+    [Header("Buttons")]
     [SerializeField] private Button collectButton;
     [SerializeField] private Button upgradeButton;
+
+    [Header("BaseLevel")]
     [SerializeField] private TMP_Text levelText;
+
+    [Header("Storage & Production")]
     [SerializeField] private TMP_Text storedCreditsText;
     [SerializeField] private Image refineryStorageFill;
     [SerializeField] private TMP_Text productionText;
-    [SerializeField] private TMP_Text upgradeText;
-    [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
-    
+
+    [Header("UpgradeProgress")]
+    [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text beforeUpgradeText;
+    [SerializeField] private TMP_Text afterUpgradeText;
+
     [Header("Visual")]
     [SerializeField] private Image facilityImage;
     [SerializeField] private Sprite[] levelSprites;
 
-    private EnergyRefinery refinery;
+    private CreditRefinery refinery;
     private float observedUpgradeDuration;
 
     private void OnEnable()
@@ -85,13 +95,21 @@ public class EnergyRefineryPanel : MonoBehaviour
 
         if (refinery == null)
         {
+            SetText(beforeUpgradeText, string.Empty);
+            SetText(afterUpgradeText, string.Empty);
             return;
         }
 
+        bool isStorageFull = refinery.StorageCapacity > 0 &&
+                             refinery.StoredCredits >= refinery.StorageCapacity;
+
         UpdateFacilityVisual();
         SetText(levelText, $"Lv. {refinery.Level}");
-        SetText(storedCreditsText, $"{refinery.StoredCredits}/{refinery.StorageCapacity}");
-        SetText(productionText, $"( 1분당 {refinery.CreditsPerMinute:0}개 수집 )");
+        SetText(storedCreditsText, isStorageFull
+            ? $"수집하기 (<b>{refinery.StorageCapacity}</b>)"
+            : $"수집하기 (<b>{refinery.StoredCredits}</b>/{refinery.StorageCapacity})");
+        SetText(productionText, $"1분 = {refinery.CreditsPerMinute:0}개 수집");
+        RefreshUpgradePreview();
         SetText(upgradeText, refinery.IsUpgrading
             ? $"완료까지 {refinery.UpgradeRemainingSeconds:0}초"
             : $"업그레이드 ({refinery.UpgradeCost} 크레딧)");
@@ -111,16 +129,11 @@ public class EnergyRefineryPanel : MonoBehaviour
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel);
-            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
-                refinery,
-                baseCampManager.Credits,
-                baseCampManager.CommanderLevel,
-                researchLabLevel));
         }
 
         BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, refinery, ref observedUpgradeDuration);
     }
-    
+
     private void UpdateFacilityVisual()
     {
         if (facilityImage == null || levelSprites == null || levelSprites.Length == 0 || refinery == null)
@@ -136,9 +149,43 @@ public class EnergyRefineryPanel : MonoBehaviour
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
-        refinery = baseCampManager != null ? baseCampManager.EnergyRefinery : null;
+        refinery = baseCampManager != null ? baseCampManager.CreditRefinery : null;
     }
 
+
+    // 업그레이드 미리보기 관련 로직 (beforeUpgradeText, afterUpgradeText)
+    private void RefreshUpgradePreview()
+    {
+        if (refinery == null)
+        {
+            SetText(beforeUpgradeText, string.Empty);
+            SetText(afterUpgradeText, string.Empty);
+            return;
+        }
+
+        BaseCampBalanceConfig.FacilityLevelData current = GetRefineryBalance(refinery.Level);
+        BaseCampBalanceConfig.FacilityLevelData next = GetRefineryBalance(refinery.Level + 1);
+
+        int currentStorage = current != null ? current.storageCapacity : refinery.StorageCapacity;
+        float currentProduction = current != null ? current.creditsPerMinute : refinery.CreditsPerMinute;
+
+        SetText(beforeUpgradeText, FormatUpgradePreview(currentStorage,
+            currentProduction));
+
+        SetText(afterUpgradeText, next != null
+            ? FormatUpgradePreview(next.storageCapacity, next.creditsPerMinute)
+            : "최대 레벨");
+    }
+
+    private static BaseCampBalanceConfig.FacilityLevelData GetRefineryBalance(int level)
+    {
+        return BaseCampBalanceConfig.Current?.GetLevel(FacilityId, level);
+    }
+
+    private static string FormatUpgradePreview(int storageCapacity, float creditsPerMinute)
+    {
+        return $"최대 용량: <b>{storageCapacity}</b>\n1분 = <b>{creditsPerMinute:0.##}</b>개 수집";
+    }
     private static void SetText(TMP_Text target, string value)
     {
         if (target != null)
@@ -146,7 +193,7 @@ public class EnergyRefineryPanel : MonoBehaviour
             target.text = value;
         }
     }
-    
+
     private static void SetFill(Image target, float value)
     {
         if (target != null)

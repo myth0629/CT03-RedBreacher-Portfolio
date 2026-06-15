@@ -9,7 +9,7 @@ public class BaseCampManager : MonoBehaviour
 
     [Header("Facilities")]
     [SerializeField] private CommandCenter commandCenter;
-    [SerializeField] private EnergyRefinery energyRefinery;
+    [SerializeField] private CreditRefinery creditRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
     [SerializeField] private InventoryFacility inventory;
@@ -49,7 +49,7 @@ public class BaseCampManager : MonoBehaviour
     private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
 
     public CommandCenter CommandCenter => commandCenter;
-    public EnergyRefinery EnergyRefinery => energyRefinery;
+    public CreditRefinery CreditRefinery => creditRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
     public InventoryFacility Inventory => ResolveInventory();
@@ -142,7 +142,7 @@ public class BaseCampManager : MonoBehaviour
         }
 
         commandCenter ??= FindFirstObjectByType<CommandCenter>();
-        energyRefinery ??= FindFirstObjectByType<EnergyRefinery>();
+        creditRefinery ??= FindFirstObjectByType<CreditRefinery>();
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
         coreCharger ??= FindFirstObjectByType<CoreCharger>();
         inventory ??= InventoryFacility.FindAny();
@@ -150,9 +150,9 @@ public class BaseCampManager : MonoBehaviour
 
     public void CollectRefineryCredits()
     {
-        if (energyRefinery != null)
+        if (creditRefinery != null)
         {
-            int collectedCredits = energyRefinery.CollectCredits();
+            int collectedCredits = creditRefinery.CollectCredits();
             AddCredits(collectedCredits);
             DailyMissionManager.ReportCreditsCollected(collectedCredits);
             MainGuideMissionManager.ReportCreditsCollected(collectedCredits);
@@ -166,7 +166,7 @@ public class BaseCampManager : MonoBehaviour
 
     public void UpgradeEnergyRefinery()
     {
-        TrySpendAndUpgrade(energyRefinery);
+        TrySpendAndUpgrade(creditRefinery);
     }
 
     public void UpgradeAssemblyFactory()
@@ -635,7 +635,7 @@ public class BaseCampManager : MonoBehaviour
             coreCrystals = wallet != null ? wallet.CoreCrystals : 0,
             lastOfflineReward = lastOfflineReward,
             researchLab = commandCenter != null ? commandCenter.CaptureState() : new JinyouCommandCenterSaveData(),
-            energyRefinery = energyRefinery != null ? energyRefinery.CaptureState() : new JinyouEnergyRefinerySaveData(),
+            energyRefinery = creditRefinery != null ? creditRefinery.CaptureState() : new JinyouEnergyRefinerySaveData(),
             assemblyFactory = assemblyFactory != null ? assemblyFactory.CaptureState() : new JinyouAssemblyFactorySaveData(),
             coreCharger = coreCharger != null ? coreCharger.CaptureState() : new JinyouCoreChargerSaveData(),
             achievements = achievementManager != null ? achievementManager.CaptureState() : new JinyouAchievementSaveData(),
@@ -664,7 +664,7 @@ public class BaseCampManager : MonoBehaviour
             wallet?.SetCredits(data.credits);
             wallet?.SetCoreCrystals(data.coreCrystals);
             commandCenter?.RestoreState(data.researchLab);
-            energyRefinery?.RestoreState(data.energyRefinery);
+            creditRefinery?.RestoreState(data.energyRefinery);
             assemblyFactory?.RestoreState(data.assemblyFactory);
             coreCharger?.RestoreState(data.coreCharger);
             coreCharger?.ApplyCompletedConversions(Inventory, FindFirstObjectByType<PlayerController>());
@@ -699,15 +699,15 @@ public class BaseCampManager : MonoBehaviour
 
         // 건설 시간은 전체 미접속 시간을 반영하고 생산 보상은 시설별 한도를 적용한다.
         commandCenter.AdvanceUpgradeOffline(elapsedSeconds);
-        energyRefinery?.AdvanceUpgradeOffline(elapsedSeconds);
+        creditRefinery?.AdvanceUpgradeOffline(elapsedSeconds);
         assemblyFactory?.AdvanceUpgradeOffline(elapsedSeconds);
         coreCharger?.AdvanceUpgradeOffline(elapsedSeconds);
 
         float maxOfflineSeconds = Mathf.Max(0f, commandCenter.OfflineRewardLimitHours) * 3600f;
         float appliedSeconds = Mathf.Min(elapsedSeconds, maxOfflineSeconds);
-        int storedCreditsBefore = energyRefinery != null ? energyRefinery.StoredCredits : 0;
-        energyRefinery?.Produce(appliedSeconds);
-        int storedCreditsAfter = energyRefinery != null ? energyRefinery.StoredCredits : storedCreditsBefore;
+        int storedCreditsBefore = creditRefinery != null ? creditRefinery.StoredCredits : 0;
+        creditRefinery?.Produce(appliedSeconds);
+        int storedCreditsAfter = creditRefinery != null ? creditRefinery.StoredCredits : storedCreditsBefore;
         float ticketOfflineSeconds = Mathf.Min(
             elapsedSeconds,
             Mathf.Max(0f, commandCenter.TicketOfflineLimitHours) * 3600f);
@@ -733,8 +733,8 @@ public class BaseCampManager : MonoBehaviour
         OnCommanderLevelChanged.AddListener(HandleUnifiedSaveEvent);
         commandCenter?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
         commandCenter?.OnBossTicketsChanged.AddListener(HandleUnifiedSaveEvent);
-        energyRefinery?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
-        energyRefinery?.OnCreditsChanged.AddListener(HandleUnifiedSaveEvent);
+        creditRefinery?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        creditRefinery?.OnCreditsChanged.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnMenuSelected.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnMenuUnlocked.AddListener(HandleUnifiedSaveEvent);
@@ -763,8 +763,8 @@ public class BaseCampManager : MonoBehaviour
         OnCommanderLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
         commandCenter?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
         commandCenter?.OnBossTicketsChanged.RemoveListener(HandleUnifiedSaveEvent);
-        energyRefinery?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
-        energyRefinery?.OnCreditsChanged.RemoveListener(HandleUnifiedSaveEvent);
+        creditRefinery?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        creditRefinery?.OnCreditsChanged.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnMenuSelected.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnMenuUnlocked.RemoveListener(HandleUnifiedSaveEvent);

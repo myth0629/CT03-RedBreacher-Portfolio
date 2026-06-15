@@ -376,10 +376,6 @@ PrefabInstance:
       propertyPath: baseCampManager
       value: 
       objectReference: {fileID: 1014545411}
-    - target: {fileID: 3687624786635746872, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
-      propertyPath: baseCampManager
-      value: 
-      objectReference: {fileID: 1014545411}
     - target: {fileID: 3798514534424420286, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: baseCampManager
       value: 
@@ -538,8 +534,9 @@ MonoBehaviour:
   energyRefinery: {fileID: 466445463}
   assemblyFactory: {fileID: 1813165568}
   coreCharger: {fileID: 1841532229}
-  traitPointFacility: {fileID: 0}
   inventory: {fileID: 2013227635}
+  dailyMissionManager: {fileID: 0}
+  mainGuideMissionManager: {fileID: 0}
   autoFindFacilities: 1
   facilityPanels:
   - {fileID: 1373390091}
@@ -549,16 +546,12 @@ MonoBehaviour:
   - {fileID: 0}
   closePanelsOnStart: 1
   commanderLevel: 100
-  syncCommanderLevelFromPlayerProgression: 1
   credits: 50000
   currencyWallet: {fileID: 0}
   playerProgression: {fileID: 0}
   useUnifiedSave: 1
   autoSaveUnifiedState: 1
   unifiedSaveKey: Jinyou.SaveData
-  enableAutomation: 1
-  autoCollectUnlockCommandCenterLevel: 2
-  autoCollectIntervalSeconds: 5
   showDebugPanel: 0
   debugPanelRect:
     serializedVersion: 2
