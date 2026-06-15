@@ -40,6 +40,19 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
 
     private void Awake()
     {
+        EnsureBalanceInitialized();
+        level = Mathf.Clamp(level, 1, maxLevel);
+        storedCredits = Mathf.Clamp(storedCredits, 0, StorageCapacity);
+    }
+
+    // 비활성 시설이 Awake 전에 RestoreState되어 maxLevel(기본 1)로 레벨이 클램프되는 문제 방지.
+    private void EnsureBalanceInitialized()
+    {
+        if (balanceReady)
+        {
+            return;
+        }
+
         BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
         string error = "기지 밸런스 설정을 찾을 수 없습니다.";
         if (config != null && config.ValidateFacility(FacilityId, out maxLevel, out error))
@@ -50,9 +63,6 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
         {
             Debug.LogError($"에너지 정제소 밸런스 초기화 실패: {error}", this);
         }
-
-        level = Mathf.Clamp(level, 1, maxLevel);
-        storedCredits = Mathf.Clamp(storedCredits, 0, StorageCapacity);
     }
 
     private void Update()
@@ -107,6 +117,7 @@ public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
             return;
         }
 
+        EnsureBalanceInitialized();
         level = Mathf.Clamp(data.level, 1, maxLevel);
         storedCredits = Mathf.Clamp(data.storedCredits, 0, StorageCapacity);
         isUpgrading = data.isUpgrading;

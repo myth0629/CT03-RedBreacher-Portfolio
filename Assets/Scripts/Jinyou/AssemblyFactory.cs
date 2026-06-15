@@ -259,6 +259,24 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
     private void Awake()
     {
+        EnsureBalanceInitialized();
+        level = Mathf.Clamp(level, 1, maxLevel);
+        NormalizeMenus();
+        ApplyFactoryEnhanceLevelCaps();
+        NormalizeWeaponEnhancements();
+        NormalizeDroneEnhancements();
+        LoadWeaponEnhancements();
+        RefreshUnlocks();
+    }
+
+    // 비활성 시설이 Awake 전에 RestoreState되어 maxLevel(기본 1)로 레벨이 클램프되는 문제 방지.
+    private void EnsureBalanceInitialized()
+    {
+        if (balanceReady)
+        {
+            return;
+        }
+
         BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
         string error = "기지 밸런스 설정을 찾을 수 없습니다.";
         if (config != null && config.ValidateFacility(FacilityId, out maxLevel, out error))
@@ -269,14 +287,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         {
             Debug.LogError($"조립 공장 밸런스 초기화 실패: {error}", this);
         }
-
-        level = Mathf.Clamp(level, 1, maxLevel);
-        NormalizeMenus();
-        ApplyFactoryEnhanceLevelCaps();
-        NormalizeWeaponEnhancements();
-        NormalizeDroneEnhancements();
-        LoadWeaponEnhancements();
-        RefreshUnlocks();
     }
 
     private void Update()
@@ -424,6 +434,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             return;
         }
 
+        EnsureBalanceInitialized();
         level = Mathf.Clamp(data.level, 1, maxLevel);
         selectedMenuId = data.selectedMenuId;
         selectedWeaponIndex = data.selectedWeaponIndex;

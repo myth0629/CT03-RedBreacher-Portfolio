@@ -75,6 +75,19 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     private void Awake()
     {
+        EnsureBalanceInitialized();
+        Normalize();
+        SyncUnlockedDrones(false);
+    }
+
+    // 비활성 시설이 Awake 전에 RestoreState되어 maxLevel(기본 1)로 레벨이 클램프되는 문제 방지.
+    private void EnsureBalanceInitialized()
+    {
+        if (balanceReady)
+        {
+            return;
+        }
+
         BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
         string error = "기지 밸런스 설정을 찾을 수 없습니다.";
         if (config != null && config.ValidateFacility(FacilityId, out maxLevel, out error))
@@ -85,9 +98,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         {
             Debug.LogError($"코어 충전소 밸런스 초기화 실패: {error}", this);
         }
-
-        Normalize();
-        SyncUnlockedDrones(false);
     }
 
     private void Update()
@@ -188,6 +198,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
     public void RestoreState(JinyouCoreChargerSaveData data)
     {
+        EnsureBalanceInitialized();
         level = Mathf.Clamp(data?.level ?? 1, 1, maxLevel);
         isUpgrading = data != null && data.isUpgrading;
         upgradeRemainingSeconds = Mathf.Max(0f, data?.upgradeRemainingSeconds ?? 0f);

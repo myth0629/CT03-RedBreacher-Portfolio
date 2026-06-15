@@ -64,14 +64,30 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
 
     private void Awake()
     {
+        EnsureBalanceInitialized();
+        if (balanceReady)
+        {
+            level = Mathf.Clamp(level, 1, maxLevel);
+            ApplyLevelBalance();
+            NormalizeFacilityUnlocks();
+        }
+    }
+
+    // maxLevel 등 밸런스 값을 설정에서 1회 로드한다. 비활성 시설(닫힌 팝업 내부)이
+    // BaseCampManager.Start에서 RestoreState될 때 Awake가 아직 실행되지 않아 maxLevel이
+    // 기본값(1)로 남아 저장 레벨이 1로 클램프되는 문제를 방지한다.
+    private void EnsureBalanceInitialized()
+    {
+        if (balanceReady)
+        {
+            return;
+        }
+
         BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
         string error = "기지 밸런스 설정을 찾을 수 없습니다.";
         if (config != null && config.ValidateFacility(FacilityId, out maxLevel, out error))
         {
             balanceReady = true;
-            level = Mathf.Clamp(level, 1, maxLevel);
-            ApplyLevelBalance();
-            NormalizeFacilityUnlocks();
         }
         else
         {
@@ -234,6 +250,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
             return;
         }
 
+        EnsureBalanceInitialized();
         level = Mathf.Clamp(data.level, 1, maxLevel);
         ApplyLevelBalance();
         bossTickets = Mathf.Clamp(data.bossTickets, 0, bossTicketCapacity);

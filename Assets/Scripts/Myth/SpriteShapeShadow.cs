@@ -1,25 +1,17 @@
-using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 유닛의 SpriteRenderer들에 드롭섀도 셰이더 머티리얼(Custom/SpriteDropShadow)을 적용한다.
+/// 셰이더가 그림자 프리패스를 함께 그리므로, 예전처럼 그림자용 SpriteRenderer를 따로 만들거나
+/// 매 프레임 동기화할 필요가 없다(추가 GameObject/LateUpdate 제거 → CPU·GC·드로우 절감).
+/// </summary>
 [DisallowMultipleComponent]
 public sealed class SpriteShapeShadow : MonoBehaviour
 {
-    private const string ShadowObjectName = "__SpriteShapeShadow";
+    private const string MaterialResourcePath = "SpriteDropShadow";
 
-    [Header("그림자")]
-    [SerializeField] private Color shadowColor = new Color(0f, 0f, 0f, 0.3f);
-    [SerializeField] private Vector3 worldOffset = new Vector3(0.16f, -0.02f, -0.16f);
-    [SerializeField] private int sortingOrderOffset = 10;
-    [SerializeField] private float hierarchyCheckInterval = 0.5f;
-
-    private readonly List<ShadowBinding> bindings = new List<ShadowBinding>();
-    private float nextHierarchyCheckTime;
-
-    private sealed class ShadowBinding
-    {
-        public SpriteRenderer source;
-        public SpriteRenderer shadow;
-    }
+    private static Material sharedShadowMaterial;
+    private static bool materialLoadAttempted;
 
     public static SpriteShapeShadow Ensure(GameObject owner)
     {
@@ -29,160 +21,48 @@ public sealed class SpriteShapeShadow : MonoBehaviour
             shadow = owner.AddComponent<SpriteShapeShadow>();
         }
 
-        shadow.Refresh();
+        shadow.Apply();
         return shadow;
     }
 
-    private void LateUpdate()
+    private void OnEnable()
     {
-        if (HasMissingSource())
-        {
-            Refresh();
-        }
-        else if (Time.unscaledTime >= nextHierarchyCheckTime)
-        {
-            nextHierarchyCheckTime = Time.unscaledTime + Mathf.Max(0.1f, hierarchyCheckInterval);
-            if (GetSourceRendererCount() != bindings.Count)
-            {
-                Refresh();
-            }
-        }
-
-        SyncShadows();
+        Apply();
     }
 
-    public void Refresh()
+    /// <summary>자식 SpriteRenderer 전체에 드롭섀도 머티리얼을 적용한다. 동적으로 스프라이트가
+    /// 추가된 경우 다시 호출하면 된다(평상시 매 프레임 호출 불필요).</summary>
+    public void Apply()
     {
-        ClearShadows();
+        Material material = GetSharedMaterial();
+        if (material == null)
+        {
+            return;
+        }
 
         SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
         for (int i = 0; i < renderers.Length; i++)
         {
-            SpriteRenderer source = renderers[i];
-            if (!IsValidSource(source))
+            SpriteRenderer renderer = renderers[i];
+            if (renderer != null && renderer.sharedMaterial != material)
             {
-                continue;
+                renderer.sharedMaterial = material;
             }
-
-            GameObject shadowObject = new GameObject(ShadowObjectName);
-            shadowObject.layer = source.gameObject.layer;
-            shadowObject.transform.SetParent(source.transform, false);
-
-            SpriteRenderer shadow = shadowObject.AddComponent<SpriteRenderer>();
-            bindings.Add(new ShadowBinding
-            {
-                source = source,
-                shadow = shadow
-            });
         }
-
-        nextHierarchyCheckTime = Time.unscaledTime + Mathf.Max(0.1f, hierarchyCheckInterval);
-        SyncShadows();
     }
 
-    private void SyncShadows()
+    private static Material GetSharedMaterial()
     {
-        int shadowSortingOrder = GetMinimumSortingOrder() - Mathf.Abs(sortingOrderOffset);
-
-        for (int i = 0; i < bindings.Count; i++)
+        if (sharedShadowMaterial == null && !materialLoadAttempted)
         {
-            ShadowBinding binding = bindings[i];
-            if (binding.source == null || binding.shadow == null)
+            materialLoadAttempted = true;
+            sharedShadowMaterial = Resources.Load<Material>(MaterialResourcePath);
+            if (sharedShadowMaterial == null)
             {
-                continue;
-            }
-
-            SpriteRenderer source = binding.source;
-            SpriteRenderer shadow = binding.shadow;
-
-            // 원본의 모양과 애니메이션 프레임을 그대로 따라간다.
-            shadow.sprite = source.sprite;
-            shadow.flipX = source.flipX;
-            shadow.flipY = source.flipY;
-            shadow.sharedMaterial = source.sharedMaterial;
-            shadow.sortingLayerID = source.sortingLayerID;
-            shadow.sortingOrder = shadowSortingOrder;
-            shadow.maskInteraction = source.maskInteraction;
-            shadow.color = new Color(shadowColor.r, shadowColor.g, shadowColor.b, shadowColor.a * source.color.a);
-            shadow.enabled = source.enabled && source.sprite != null;
-
-            if (source.drawMode != SpriteDrawMode.Simple)
-            {
-                shadow.drawMode = source.drawMode;
-                shadow.size = source.size;
-                shadow.tileMode = source.tileMode;
-            }
-
-            Transform shadowTransform = shadow.transform;
-            shadowTransform.localPosition = source.transform.InverseTransformVector(worldOffset);
-            shadowTransform.localRotation = Quaternion.identity;
-            shadowTransform.localScale = Vector3.one;
-        }
-    }
-
-    private int GetMinimumSortingOrder()
-    {
-        int minimumOrder = 0;
-        bool foundRenderer = false;
-
-        for (int i = 0; i < bindings.Count; i++)
-        {
-            SpriteRenderer source = bindings[i].source;
-            if (source == null)
-            {
-                continue;
-            }
-
-            minimumOrder = foundRenderer ? Mathf.Min(minimumOrder, source.sortingOrder) : source.sortingOrder;
-            foundRenderer = true;
-        }
-
-        return minimumOrder;
-    }
-
-    private bool HasMissingSource()
-    {
-        for (int i = 0; i < bindings.Count; i++)
-        {
-            if (bindings[i].source == null || bindings[i].shadow == null)
-            {
-                return true;
+                Debug.LogError($"드롭섀도 머티리얼을 찾을 수 없습니다: Resources/{MaterialResourcePath}");
             }
         }
 
-        return false;
-    }
-
-    private int GetSourceRendererCount()
-    {
-        int count = 0;
-        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            if (IsValidSource(renderers[i]))
-            {
-                count++;
-            }
-        }
-
-        return count;
-    }
-
-    private static bool IsValidSource(SpriteRenderer renderer)
-    {
-        return renderer != null && renderer.gameObject.name != ShadowObjectName;
-    }
-
-    private void ClearShadows()
-    {
-        for (int i = 0; i < bindings.Count; i++)
-        {
-            if (bindings[i].shadow != null)
-            {
-                Destroy(bindings[i].shadow.gameObject);
-            }
-        }
-
-        bindings.Clear();
+        return sharedShadowMaterial;
     }
 }
