@@ -608,8 +608,9 @@ public class BossEnemyController : EnemyController
         return null;
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         isDodging = false;
         if (laserRoutine != null)
         {

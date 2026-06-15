@@ -96,8 +96,18 @@ public class CombatHealth : MonoBehaviour
         // 체력 감소 후 사망 여부를 즉시 판정한다.
         lastDamageTime = Time.time;
         currentHealth = Mathf.Max(0f, currentHealth - damage);
+
+        // 데미지 숫자는 부수 연출이므로, 표시 실패가 데미지/사망 처리나 공격자 로직을 깨지 않게 격리한다.
         // 막타도 남은 체력이 아닌 공격이 계산한 원래 피해량을 표시한다.
-        ShowDamageNumber(damage, isCritical);
+        try
+        {
+            ShowDamageNumber(damage, isCritical);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception);
+        }
+
         if (currentHealth <= 0f)
         {
             Die();
@@ -233,10 +243,35 @@ public class DamageNumberVisual : MonoBehaviour
             sortingOrder);
     }
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetPool()
+    {
+        // 도메인 리로드 비활성 환경에서 이전 세션의 (파괴된) 풀 항목이 남아 터지는 것을 막는다.
+        Pool.Clear();
+        poolRoot = null;
+    }
+
     private static DamageNumberVisual Get()
     {
         EnsurePoolRoot();
-        DamageNumberVisual visual = Pool.Count > 0 ? Pool.Dequeue() : Create();
+
+        // 풀에 남은 항목이 외부에서 파괴됐을 수 있으므로 살아있는 인스턴스를 만날 때까지 건너뛴다.
+        DamageNumberVisual visual = null;
+        while (Pool.Count > 0)
+        {
+            DamageNumberVisual candidate = Pool.Dequeue();
+            if (candidate != null)
+            {
+                visual = candidate;
+                break;
+            }
+        }
+
+        if (visual == null)
+        {
+            visual = Create();
+        }
+
         visual.transform.SetParent(poolRoot, false);
         visual.gameObject.SetActive(true);
         return visual;

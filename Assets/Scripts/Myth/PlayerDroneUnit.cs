@@ -105,12 +105,17 @@ public class PlayerDroneUnit : MonoBehaviour
         CombatHealth closestTarget = null;
         float closestDistanceSqr = float.PositiveInfinity;
 
-        // 드론은 플레이어와 별도로 가장 가까운 적을 탐색한다.
-        EnemyController[] enemies = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
-        for (int i = 0; i < enemies.Length; i++)
+        // 드론은 플레이어와 별도로 가장 가까운 적을 탐색한다. (전 씬 스캔 대신 적 레지스트리 순회)
+        var enemies = EnemyController.Active;
+        for (int i = 0; i < enemies.Count; i++)
         {
-            CombatHealth targetHealth = enemies[i].GetComponent<CombatHealth>();
-            closestTarget = SelectCloserTarget(targetHealth, closestTarget, ref closestDistanceSqr);
+            EnemyController enemy = enemies[i];
+            if (enemy == null)
+            {
+                continue;
+            }
+
+            closestTarget = SelectCloserTarget(enemy.Health, closestTarget, ref closestDistanceSqr);
         }
 
         return closestTarget;

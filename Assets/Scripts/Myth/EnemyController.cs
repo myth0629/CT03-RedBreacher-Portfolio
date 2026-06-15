@@ -1,8 +1,20 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CombatHealth))]
 public class EnemyController : MonoBehaviour
 {
+    // 활성 적 레지스트리. 타깃 탐색이 FindObjectsByType(전 씬 스캔 + 배열 할당) 대신 이 리스트를 순회한다.
+    private static readonly List<EnemyController> active = new List<EnemyController>();
+    public static IReadOnlyList<EnemyController> Active => active;
+
+    /// <summary>이 적의 CombatHealth(캐싱). 탐색 시마다 GetComponent 비용을 없앤다.</summary>
+    public CombatHealth Health { get; private set; }
+
+    // 도메인 리로드 비활성(Enter Play Mode Options) 환경에서도 이전 세션 잔여 항목을 제거한다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRegistry() => active.Clear();
+
     [SerializeField] private EnemyConfig enemyConfig;
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float stopDistance = 1.1f;
@@ -32,15 +44,29 @@ public class EnemyController : MonoBehaviour
 
     protected virtual void Awake()
     {
-        if (GetComponent<CombatHealth>() == null)
+        Health = GetComponent<CombatHealth>();
+        if (Health == null)
         {
-            gameObject.AddComponent<CombatHealth>();
+            Health = gameObject.AddComponent<CombatHealth>();
         }
 
         EnsureEnemyComponents();
 
         // 적 스프라이트 모양을 그대로 사용하는 바닥 그림자를 생성한다.
         SpriteShapeShadow.Ensure(gameObject);
+    }
+
+    protected virtual void OnEnable()
+    {
+        if (!active.Contains(this))
+        {
+            active.Add(this);
+        }
+    }
+
+    protected virtual void OnDisable()
+    {
+        active.Remove(this);
     }
 
     protected virtual void Start()

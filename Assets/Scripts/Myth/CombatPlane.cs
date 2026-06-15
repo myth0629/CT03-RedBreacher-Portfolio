@@ -4,15 +4,47 @@ public static class CombatPlane
 {
     public const float FixedY = 0.1f;
 
+    // 전투 아레나(벽 안쪽) XZ 경계. CombatArena가 등록한다. 미설정 시 Y 평면 고정만 수행.
+    private static bool hasArenaBounds;
+    private static float arenaMinX, arenaMaxX, arenaMinZ, arenaMaxZ;
+
+    public static void SetArenaBounds(Vector3 center, Vector2 size, float padding)
+    {
+        Vector2 half = Vector2.Max(Vector2.zero, size * 0.5f - Vector2.one * Mathf.Max(0f, padding));
+        arenaMinX = center.x - half.x;
+        arenaMaxX = center.x + half.x;
+        arenaMinZ = center.z - half.y;
+        arenaMaxZ = center.z + half.y;
+        hasArenaBounds = true;
+    }
+
+    public static void ClearArenaBounds()
+    {
+        hasArenaBounds = false;
+    }
+
     public static Vector3 WithFixedY(Vector3 position)
     {
         position.y = FixedY;
         return position;
     }
 
+    /// <summary>Y 평면 고정 + (등록된 경우) 아레나 XZ 경계로 제한한다.</summary>
+    public static Vector3 ClampPosition(Vector3 position)
+    {
+        position.y = FixedY;
+        if (hasArenaBounds)
+        {
+            position.x = Mathf.Clamp(position.x, arenaMinX, arenaMaxX);
+            position.z = Mathf.Clamp(position.z, arenaMinZ, arenaMaxZ);
+        }
+
+        return position;
+    }
+
     public static void ClampTransform(Transform target)
     {
-        target.position = WithFixedY(target.position);
+        target.position = ClampPosition(target.position);
     }
 
     public static Vector3 ProjectDirection(Vector3 direction)

@@ -556,16 +556,16 @@ public class PlayerController : MonoBehaviour
 
     private void TryStartAutoReposition()
     {
-        EnemyController[] enemies = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+        IReadOnlyList<EnemyController> enemies = EnemyController.Active;
         Vector3 enemyCenter = Vector3.zero;
         int nearbyEnemyCount = 0;
         float detectionRadiusSqr = Mathf.Max(0.01f, repositionDetectionRadius)
             * Mathf.Max(0.01f, repositionDetectionRadius);
 
-        for (int i = 0; i < enemies.Length; i++)
+        for (int i = 0; i < enemies.Count; i++)
         {
             EnemyController enemy = enemies[i];
-            CombatHealth enemyHealth = enemy != null ? enemy.GetComponent<CombatHealth>() : null;
+            CombatHealth enemyHealth = enemy != null ? enemy.Health : null;
             if (enemyHealth == null || enemyHealth.IsDead)
             {
                 continue;
@@ -652,21 +652,14 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 ClampRepositionPosition(Vector3 position)
     {
-        position = CombatPlane.WithFixedY(position);
         if (!clampRepositionToBounds)
         {
-            return position;
+            return CombatPlane.WithFixedY(position);
         }
 
-        Vector3 center = repositionBoundsCenter != null
-            ? CombatPlane.WithFixedY(repositionBoundsCenter.position)
-            : fallbackRepositionBoundsCenter;
-        Vector2 halfSize = Vector2.Max(
-            Vector2.zero,
-            repositionBoundsSize * 0.5f - Vector2.one * Mathf.Max(0f, repositionBoundsPadding));
-        position.x = Mathf.Clamp(position.x, center.x - halfSize.x, center.x + halfSize.x);
-        position.z = Mathf.Clamp(position.z, center.z - halfSize.y, center.z + halfSize.y);
-        return CombatPlane.WithFixedY(position);
+        // 아레나 경계(CombatArena→CombatPlane)로 제한해 벽을 통과해 나가지 못하게 한다.
+        // 경계가 등록되지 않은 경우 Y 평면 고정만 수행한다.
+        return CombatPlane.ClampPosition(position);
     }
 
     private void FinishAutoReposition()
@@ -878,24 +871,17 @@ public class PlayerController : MonoBehaviour
         CombatHealth closestTarget = null;
         float closestDistanceSqr = float.PositiveInfinity;
 
-        // EnemyController가 붙은 적을 우선 탐색한다.
-        EnemyController[] enemies = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
-        for (int i = 0; i < enemies.Length; i++)
+        // 활성 적 레지스트리만 순회한다(보스 포함, 모든 적은 CombatHealth 보유).
+        IReadOnlyList<EnemyController> enemies = EnemyController.Active;
+        for (int i = 0; i < enemies.Count; i++)
         {
-            CombatHealth enemyHealth = enemies[i].GetComponent<CombatHealth>();
-            closestTarget = SelectCloserTarget(enemyHealth, closestTarget, ref closestDistanceSqr);
-        }
-
-        // 태그/프리팹 구성이 없어도 CombatHealth만 있으면 기본 타겟으로 취급한다.
-        CombatHealth[] healthTargets = FindObjectsByType<CombatHealth>(FindObjectsSortMode.None);
-        for (int i = 0; i < healthTargets.Length; i++)
-        {
-            if (healthTargets[i].GetComponent<PlayerController>() != null)
+            EnemyController enemy = enemies[i];
+            if (enemy == null)
             {
                 continue;
             }
 
-            closestTarget = SelectCloserTarget(healthTargets[i], closestTarget, ref closestDistanceSqr);
+            closestTarget = SelectCloserTarget(enemy.Health, closestTarget, ref closestDistanceSqr);
         }
 
         return closestTarget;
@@ -940,8 +926,8 @@ public class PlayerController : MonoBehaviour
         float remainingMoveDistance = Mathf.Max(0f, distance - AttackRangeValue);
         float moveDistance = Mathf.Min(MoveSpeedValue * Time.deltaTime, remainingMoveDistance);
 
-        // 사거리 경계까지만 이동해 타겟을 지나치지 않게 한다.
-        Vector3 nextPosition = CombatPlane.WithFixedY(transform.position + direction * moveDistance);
+        // 사거리 경계까지만 이동해 타겟을 지나치지 않게 한다. (아레나 경계로 제한해 벽 밖으로 못 나가게 함)
+        Vector3 nextPosition = ClampRepositionPosition(transform.position + direction * moveDistance);
         if (_rigidbody != null)
         {
             _rigidbody.MovePosition(nextPosition);

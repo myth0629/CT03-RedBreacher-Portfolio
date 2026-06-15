@@ -37,13 +37,13 @@ public static class PlayerSkillCombat
     public static List<CombatHealth> FindEnemies(Vector3 center, float radius)
     {
         List<CombatHealth> results = new List<CombatHealth>();
-        EnemyController[] enemies = Object.FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+        IReadOnlyList<EnemyController> enemies = EnemyController.Active;
         float radiusSqr = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
 
-        for (int i = 0; i < enemies.Length; i++)
+        for (int i = 0; i < enemies.Count; i++)
         {
             EnemyController enemy = enemies[i];
-            CombatHealth health = enemy != null ? enemy.GetComponent<CombatHealth>() : null;
+            CombatHealth health = enemy != null ? enemy.Health : null;
             if (health == null || health.IsDead)
             {
                 continue;
