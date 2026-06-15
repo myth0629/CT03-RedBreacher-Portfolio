@@ -18,6 +18,7 @@ public class BossEnemyController : EnemyController
     private float nextDodgeTime;
     private float nextDodgeCheckTime;
     private float attackDamageMultiplier = 1f;
+    private float encounterStartTime;
     private bool isDodging;
 
     protected override void Awake()
@@ -61,7 +62,28 @@ public class BossEnemyController : EnemyController
         nextLaserTime = Time.time + bossConfig.LaserCooldown;
         nextDodgeTime = Time.time;
         nextDodgeCheckTime = Time.time;
+        encounterStartTime = Time.time;
         isDodging = false;
+    }
+
+    // 방치형 DPS 체크: 일정 시간이 지나면 공격력/연사가 점점 강해진다.
+    // 제한시간 내에 못 죽이면 결국 패배 → "더 강해지라"는 신호로 동작한다.
+    private float GetEnrageMultiplier()
+    {
+        if (bossConfig == null || bossConfig.EnrageStartSeconds <= 0f)
+        {
+            return 1f;
+        }
+
+        float elapsed = Time.time - encounterStartTime - bossConfig.EnrageStartSeconds;
+        if (elapsed <= 0f)
+        {
+            return 1f;
+        }
+
+        return Mathf.Min(
+            bossConfig.EnrageMaxMultiplier,
+            1f + elapsed * bossConfig.EnrageRampPerSecond);
     }
 
     public override void ApplyKnockback(Vector3 knockbackDirection, float knockbackForce)
@@ -102,12 +124,15 @@ public class BossEnemyController : EnemyController
             return;
         }
 
-        TryStartDodge(player);
-        if (isDodging)
+        if (bossConfig.EnableProjectileDodge)
         {
-            UpdateDodge(targetDirection);
-            TryFireWhileInRange(targetDirection, targetDistance);
-            return;
+            TryStartDodge(player);
+            if (isDodging)
+            {
+                UpdateDodge(targetDirection);
+                TryFireWhileInRange(targetDirection, targetDistance);
+                return;
+            }
         }
 
         if (targetDistance > bossConfig.RangedAttackRange)
@@ -142,7 +167,7 @@ public class BossEnemyController : EnemyController
         }
 
         FireSpread(targetDirection);
-        nextRangedAttackTime = Time.time + bossConfig.RangedAttackInterval;
+        nextRangedAttackTime = Time.time + bossConfig.RangedAttackInterval / GetEnrageMultiplier();
     }
 
     private void FireSpread(Vector3 centerDirection)
@@ -152,6 +177,7 @@ public class BossEnemyController : EnemyController
         int totalProjectileCount = muzzleCount * projectilesPerMuzzle;
         float damagePerProjectile = bossConfig.RangedAttackDamage
             * attackDamageMultiplier
+            * GetEnrageMultiplier()
             / totalProjectileCount;
 
         for (int muzzleIndex = 0; muzzleIndex < muzzleCount; muzzleIndex++)
@@ -377,7 +403,7 @@ public class BossEnemyController : EnemyController
         }
 
         laserLine.enabled = false;
-        nextLaserTime = Time.time + bossConfig.LaserCooldown;
+        nextLaserTime = Time.time + bossConfig.LaserCooldown / GetEnrageMultiplier();
         laserRoutine = null;
     }
 
@@ -483,7 +509,7 @@ public class BossEnemyController : EnemyController
                 continue;
             }
 
-            player.Health.TakeDamage(bossConfig.LaserDamage * attackDamageMultiplier);
+            player.Health.TakeDamage(bossConfig.LaserDamage * attackDamageMultiplier * GetEnrageMultiplier());
             return;
         }
     }

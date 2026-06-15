@@ -37,7 +37,17 @@ public class BossEnemyConfig : EnemyConfig
     [SerializeField] private Color laserWarningColor = new Color(1f, 0.2f, 0.1f, 0.55f);
     [SerializeField] private Color laserActiveColor = Color.red;
 
+    [Header("Soft Enrage (방치형 DPS 체크)")]
+    [Tooltip("이 시간(초)이 지나면 보스 공격력/연사가 점점 강해진다. 0 이하면 비활성.")]
+    [SerializeField] private float enrageStartSeconds = 0f;
+    [Tooltip("엔레이지 시작 후 초당 증가율(0.04 = 초당 +4%).")]
+    [SerializeField] private float enrageRampPerSecond = 0.04f;
+    [Tooltip("엔레이지 배율 상한.")]
+    [SerializeField] private float enrageMaxMultiplier = 3f;
+
     [Header("Projectile Dodge")]
+    [Tooltip("방치형은 자동 발사라 보스가 투사체를 피하면 카운터플레이가 없어 답답함 → 기본 비활성.")]
+    [SerializeField] private bool enableProjectileDodge = false;
     [SerializeField] private float dodgeDetectionRadius = 4f;
     [SerializeField] private float dodgeDistance = 2f;
     [SerializeField] private float dodgeCooldown = 2.5f;
@@ -87,4 +97,8 @@ public class BossEnemyConfig : EnemyConfig
     public float DodgeCollisionRadius => Mathf.Max(0.01f, dodgeCollisionRadius);
     public float DodgeCheckInterval => Mathf.Max(0.02f, dodgeCheckInterval);
     public LayerMask DodgeObstacleMask => dodgeObstacleMask;
+    public bool EnableProjectileDodge => enableProjectileDodge;
+    public float EnrageStartSeconds => enrageStartSeconds;
+    public float EnrageRampPerSecond => Mathf.Max(0f, enrageRampPerSecond);
+    public float EnrageMaxMultiplier => Mathf.Max(1f, enrageMaxMultiplier);
 }

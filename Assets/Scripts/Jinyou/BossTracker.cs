@@ -242,9 +242,12 @@ public class BossTracker : MonoBehaviour
         float clearTime = Mathf.Max(0f, Time.unscaledTime - encounterStartTime);
         if (!cleared)
         {
+            // 방치형: 패배는 "더 강해져"라는 정상 신호 → 시간제 자원인 티켓을 돌려준다.
+            ResolveReferences();
+            cmdCenter?.RefundBossTicket();
             IncrementRecord(completedBoss, completedDifficulty, "Failures");
             bossEncounterManager.ShowResult(
-                "보스전 실패",
+                "보스전 실패 (티켓 반환)",
                 $"{completedDifficulty.displayName}\n{GetRecordSummary(completedBoss, completedDifficulty)}",
                 false);
             return;
