@@ -7,6 +7,7 @@ public class AutoTurretSkill : MonoBehaviour
     private PlayerController owner;
     private PlayerSkillConfig config;
     private Transform firePoint;
+    private float aimAngleDeg;
     private CombatHealth currentTarget;
     private float expireTime;
     private float nextAttackTime;
@@ -134,11 +135,15 @@ public class AutoTurretSkill : MonoBehaviour
             return;
         }
 
-        // 플레이어 터렛과 동일하게 로컬 X/Y는 유지하고 Z축만 목표 방향으로 회전한다.
-        CombatPlane.RotateZOnlyToward(
-            transform,
-            direction,
+        // Turret1 프리팹은 평면 구조(모든 시각 파츠가 X=90 루트의 직속 자식)라 회전시킬 별도 헤드가 없다.
+        // X=90 루트를 localEulerAngles로 돌리면 짐벌 락으로 튀므로, 조준 각도를 필드로 추적해
+        // 절대 회전(SkillSpawnRotation * Z회전)으로 적용한다. → 루트 아래 모든 시각 파츠가 함께 회전.
+        float targetAngle = CombatPlane.DirectionToZAngle(direction);
+        aimAngleDeg = Mathf.MoveTowardsAngle(
+            aimAngleDeg,
+            targetAngle,
             config.TurretRotationSpeed * Time.deltaTime);
+        transform.rotation = SkillSpawnRotation * Quaternion.Euler(0f, 0f, aimAngleDeg);
 
         if (Time.time < nextAttackTime)
         {
@@ -169,14 +174,16 @@ public class AutoTurretSkill : MonoBehaviour
             return;
         }
 
-        Vector3 fireDirection = CombatPlane.DirectionFromZRotation(transform);
+        // 발사 방향은 추적 중인 조준 각도에서 직접 구한다(시각 회전과 동일 소스 → 항상 일직선).
+        float aimRad = aimAngleDeg * Mathf.Deg2Rad;
+        Vector3 fireDirection = new Vector3(-Mathf.Sin(aimRad), 0f, Mathf.Cos(aimRad));
         if (fireDirection.sqrMagnitude <= 0f)
         {
             return;
         }
 
         PlayerProjectile projectile = CombatObjectPool.GetProjectile();
-        // X축 90도 프리팹의 FirePoint 로컬 좌표를 실제 X/Z 발사 위치로 변환한다.
+        // FirePoint 로컬 좌표를 루트 기준으로 실제 X/Z 발사 위치로 변환한다.
         projectile.transform.position = firePoint == transform
             ? CombatPlane.WithFixedY(transform.position)
             : CombatPlane.PositionFromZPlaneChild(transform, firePoint, fireDirection);

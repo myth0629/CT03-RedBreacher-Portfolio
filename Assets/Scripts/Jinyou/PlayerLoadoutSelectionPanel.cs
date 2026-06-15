@@ -75,6 +75,15 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         LoadEquippedLoadout();
     }
 
+    /// <summary>저장된 장착 무기/드론을 즉시 플레이어에 적용한다. 로드아웃 팝업이 비활성이라
+    /// Start가 늦게 실행되는 문제를 피하려고, 부팅 시 외부(BaseCampManager)에서 호출한다.
+    /// 비활성 상태에서도 동작한다.</summary>
+    public void ApplySavedLoadout()
+    {
+        ResolveSources();
+        LoadEquippedLoadout();
+    }
+
     private void LoadEquippedLoadout()
     {
         DroneConfig initialDrone = RegisterInitialDrone();

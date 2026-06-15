@@ -83,10 +83,23 @@ public class BaseCampManager : MonoBehaviour
         SubscribeUnifiedSaveEvents();
         unifiedSaveReady = true;
         SaveUnifiedGame();
+        ApplyEquippedLoadoutAtBoot();
 
         if (closePanelsOnStart)
         {
             CloseAllPanels();
+        }
+    }
+
+    // 저장된 장착 무기/드론을 부팅 시 적용한다. 로드아웃 패널이 닫힌 팝업 안에 있어
+    // 패널을 한 번 열기 전까지 적용되지 않던 문제를 막는다(현재 유닛은 CoreCharger가 복원).
+    private void ApplyEquippedLoadoutAtBoot()
+    {
+        PlayerLoadoutSelectionPanel loadout =
+            FindFirstObjectByType<PlayerLoadoutSelectionPanel>(FindObjectsInactive.Include);
+        if (loadout != null)
+        {
+            loadout.ApplySavedLoadout();
         }
     }
 
