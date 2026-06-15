@@ -9,7 +9,11 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private PlayerController player;
     [SerializeField] private EnemySpawnManager spawnManager;
     [SerializeField] private PlayerCurrencyWallet currencyWallet;
+    [SerializeField] private BossEncounterManager bossEncounterManager;
 
+    [Header("inGamePanels")]
+    [SerializeField] private GameObject stagePanel;
+    
     [Header("Text")]
     [SerializeField] private TMP_Text creditsText;
     [SerializeField] private TMP_Text coreCrystalsText;
@@ -126,6 +130,23 @@ public class PlayerStatusHud : MonoBehaviour
         {
             currencyWallet = ResolveCurrencyWallet();
         }
+
+        ResolveBossEncounterManager();
+    }
+
+    private void OnEnable()
+    {
+        SubscribeBossEncounter();
+        RefreshStagePanelVisibility();
+    }
+
+    private void OnDisable()
+    {
+        if (bossEncounterManager != null)
+        {
+            bossEncounterManager.EncounterStarted -= HandleBossEncounterStarted;
+            bossEncounterManager.EncounterEnded -= HandleBossEncounterEnded;
+        }
     }
 
     private void Update()
@@ -135,6 +156,8 @@ public class PlayerStatusHud : MonoBehaviour
 
     public void Refresh()
     {
+        RefreshStagePanelVisibility();
+
         if (spawnManager == null)
         {
             spawnManager = FindFirstObjectByType<EnemySpawnManager>();
@@ -332,5 +355,48 @@ public class PlayerStatusHud : MonoBehaviour
         }
 
         return FindFirstObjectByType<PlayerCurrencyWallet>();
+    }
+
+    private void SubscribeBossEncounter()
+    {
+        ResolveBossEncounterManager();
+        if (bossEncounterManager == null)
+        {
+            return;
+        }
+
+        bossEncounterManager.EncounterStarted -= HandleBossEncounterStarted;
+        bossEncounterManager.EncounterEnded -= HandleBossEncounterEnded;
+        bossEncounterManager.EncounterStarted += HandleBossEncounterStarted;
+        bossEncounterManager.EncounterEnded += HandleBossEncounterEnded;
+    }
+
+    private void ResolveBossEncounterManager()
+    {
+        bossEncounterManager ??= FindFirstObjectByType<BossEncounterManager>();
+    }
+
+    private void RefreshStagePanelVisibility()
+    {
+        ResolveBossEncounterManager();
+        SetActive(stagePanel, bossEncounterManager == null || !bossEncounterManager.IsEncounterActive);
+    }
+
+    private void HandleBossEncounterEnded(bool cleared)
+    {
+        SetActive(stagePanel, true);
+    }
+
+    private void HandleBossEncounterStarted()
+    {
+        SetActive(stagePanel, false);
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null && target.activeSelf != active)
+        {
+            target.SetActive(active);
+        }
     }
 }

@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class EnergyRefineryPanel : MonoBehaviour
+public class CreditRefineryPanel : MonoBehaviour
 {
     [Header("Panels")]
     [SerializeField] private BaseCampManager baseCampManager;
@@ -20,7 +20,7 @@ public class EnergyRefineryPanel : MonoBehaviour
     [SerializeField] private Image facilityImage;
     [SerializeField] private Sprite[] levelSprites;
 
-    private EnergyRefinery refinery;
+    private CreditRefinery refinery;
     private float observedUpgradeDuration;
 
     private void OnEnable()
@@ -136,7 +136,7 @@ public class EnergyRefineryPanel : MonoBehaviour
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
-        refinery = baseCampManager != null ? baseCampManager.EnergyRefinery : null;
+        refinery = baseCampManager != null ? baseCampManager.CreditRefinery : null;
     }
 
     private static void SetText(TMP_Text target, string value)

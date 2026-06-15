@@ -64,7 +64,7 @@ public class BaseCampHud : MonoBehaviour
         }
 
         CommandCenter researchLab = baseCampManager.CommandCenter;
-        EnergyRefinery refinery = baseCampManager.EnergyRefinery;
+        CreditRefinery refinery = baseCampManager.CreditRefinery;
         SetText(commanderLevelText, $"지휘관 Lv. {baseCampManager.CommanderLevel}");
 
         if (researchLab != null)
@@ -151,7 +151,7 @@ public class BaseCampHud : MonoBehaviour
         int requiredLevel = unlock.requiredLabLevel;
         bool unlocked = commandCenter.IsFacilityUnlocked(facilityId);
 
-        target.text = unlocked ? string.Empty : $"<color=#ED3724>잠금</color>사령부 Lv.{requiredLevel} 필요";
+        target.text = unlocked ? string.Empty : $"<color=#ED3724>잠금</color>\n사령부 Lv.{requiredLevel} 필요";
         SetActive(unlockPanel, !unlocked);
     }
 

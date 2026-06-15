@@ -65,7 +65,7 @@ public class baseOutlineView : MonoBehaviour
         return facilityType switch
         {
             FacilityType.CommandCenter => baseCampManager?.CommandCenter?.Level ?? 1,
-            FacilityType.EnergyRefinery => baseCampManager?.EnergyRefinery?.Level ?? 1,
+            FacilityType.EnergyRefinery => baseCampManager?.CreditRefinery?.Level ?? 1,
             FacilityType.AssemblyFactory => baseCampManager?.AssemblyFactory?.Level ?? 1,
             FacilityType.CoreCharger => baseCampManager?.CoreCharger?.Level ?? 1,
             FacilityType.TraitPointFacility => 1,
@@ -91,10 +91,10 @@ public class baseOutlineView : MonoBehaviour
                 }
                 break;
             case FacilityType.EnergyRefinery:
-                if (baseCampManager?.EnergyRefinery != null)
+                if (baseCampManager?.CreditRefinery != null)
                 {
-                    baseCampManager.EnergyRefinery.OnLevelChanged.AddListener(HandleLevelChanged);
-                    baseCampManager.EnergyRefinery.OnUpgradeCompleted.AddListener(UpdateVisual);
+                    baseCampManager.CreditRefinery.OnLevelChanged.AddListener(HandleLevelChanged);
+                    baseCampManager.CreditRefinery.OnUpgradeCompleted.AddListener(UpdateVisual);
                 }
                 break;
             case FacilityType.AssemblyFactory:
@@ -134,10 +134,10 @@ public class baseOutlineView : MonoBehaviour
             baseCampManager.CommandCenter.OnUpgradeCompleted.RemoveListener(UpdateVisual);
         }
 
-        if (baseCampManager.EnergyRefinery != null)
+        if (baseCampManager.CreditRefinery != null)
         {
-            baseCampManager.EnergyRefinery.OnLevelChanged.RemoveListener(HandleLevelChanged);
-            baseCampManager.EnergyRefinery.OnUpgradeCompleted.RemoveListener(UpdateVisual);
+            baseCampManager.CreditRefinery.OnLevelChanged.RemoveListener(HandleLevelChanged);
+            baseCampManager.CreditRefinery.OnUpgradeCompleted.RemoveListener(UpdateVisual);
         }
 
         if (baseCampManager.AssemblyFactory != null)

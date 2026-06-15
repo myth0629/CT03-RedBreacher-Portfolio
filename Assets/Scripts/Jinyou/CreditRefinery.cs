@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class EnergyRefinery : MonoBehaviour, IBaseCampFacility
+public class CreditRefinery : MonoBehaviour, IBaseCampFacility
 {
     private const string FacilityId = "energy_refinery";
 
