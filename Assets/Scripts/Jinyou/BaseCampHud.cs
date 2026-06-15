@@ -15,6 +15,13 @@ public class BaseCampHud : MonoBehaviour
     [Header("Refinery Storage")]
     [SerializeField] private TMP_Text refineryStorageText;
     [SerializeField] private Image refineryStorageFill;
+    [Header("BaseUnlockStatus")]
+    [SerializeField] private TMP_Text energyRefineryUnlockText;
+    [SerializeField] private TMP_Text assemblyFactoryUnlockText;
+    [SerializeField] private GameObject assemblyFactoryUnlockPanel;
+    [SerializeField] private TMP_Text coreChargerUnlockText;
+    [SerializeField] private GameObject coreChargerUnlockPanel;
+    [SerializeField] private TMP_Text controlTowerUnlockText;
 
     private void OnEnable()
     {
@@ -29,7 +36,6 @@ public class BaseCampHud : MonoBehaviour
 
     public void Configure(
         BaseCampManager manager,
-        TMP_Text credits,
         TMP_Text commanderLevel,
         TMP_Text bossTicket,
         TMP_Text refineryStorage,
@@ -53,6 +59,7 @@ public class BaseCampHud : MonoBehaviour
             SetText(bossTicketText, "티켓 --/--");
             SetText(refineryStorageText, "--/--");
             SetFill(refineryStorageFill, 0f);
+            RefreshBaseUnlockStatus();
             return;
         }
 
@@ -71,16 +78,24 @@ public class BaseCampHud : MonoBehaviour
 
         if (refinery != null)
         {
-            SetText(refineryStorageText, $"{refinery.StoredCredits}/{refinery.StorageCapacity}");
-            SetFill(refineryStorageFill, refinery.StorageCapacity > 0
+            float storageRate = refinery.StorageCapacity > 0
                 ? (float)refinery.StoredCredits / refinery.StorageCapacity
-                : 0f);
+                : 0f;
+            bool isStorageFull = refinery.StorageCapacity > 0 &&
+                                 refinery.StoredCredits >= refinery.StorageCapacity;
+
+            SetText(refineryStorageText, isStorageFull
+                ? $"가득참 ({refinery.StorageCapacity})"
+                : $"{refinery.StoredCredits}/{refinery.StorageCapacity}");
+            SetFill(refineryStorageFill, storageRate);
         }
         else
         {
-            SetText(refineryStorageText, "정제소 용량 --/--");
+            SetText(refineryStorageText, "--/--");
             SetFill(refineryStorageFill, 0f);
         }
+        
+        RefreshBaseUnlockStatus();
     }
 
     private void ResolveReferences()
@@ -102,5 +117,67 @@ public class BaseCampHud : MonoBehaviour
         {
             target.fillAmount = Mathf.Clamp01(value);
         }
+    }
+
+    private void RefreshBaseUnlockStatus()
+    {
+        CommandCenter commandCenter = baseCampManager != null ? baseCampManager.CommandCenter : null;
+        SetUnlockStatusText(energyRefineryUnlockText, commandCenter, "energy_refinery");
+        SetUnlockStatusText(assemblyFactoryUnlockText, commandCenter, "assembly_factory", assemblyFactoryUnlockPanel);
+        SetUnlockStatusText(coreChargerUnlockText, commandCenter, "core_charger", coreChargerUnlockPanel);
+        SetUnlockStatusText(controlTowerUnlockText, commandCenter, "boss_dungeon");
+    }
+
+    private void SetUnlockStatusText(
+        TMP_Text target,
+        CommandCenter commandCenter,
+        string facilityId,
+        GameObject unlockPanel = null)
+    {
+        if (target == null)
+        {
+            SetActive(unlockPanel, false);
+            return;
+        }
+
+        CommandCenter.FacilityUnlock unlock = FindFacilityUnlock(commandCenter, facilityId);
+        if (commandCenter == null || unlock == null)
+        {
+            target.text = string.Empty;
+            SetActive(unlockPanel, false);
+            return;
+        }
+
+        int requiredLevel = unlock.requiredLabLevel;
+        bool unlocked = commandCenter.IsFacilityUnlocked(facilityId);
+
+        target.text = unlocked ? string.Empty : $"<color=#ED3724>잠금</color>사령부 Lv.{requiredLevel} 필요";
+        SetActive(unlockPanel, !unlocked);
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null && target.activeSelf != active)
+        {
+            target.SetActive(active);
+        }
+    }
+
+    private static CommandCenter.FacilityUnlock FindFacilityUnlock(CommandCenter commandCenter, string facilityId)
+    {
+        if (commandCenter == null)
+        {
+            return null;
+        }
+
+        foreach (CommandCenter.FacilityUnlock item in commandCenter.FacilityUnlocks)
+        {
+            if (item != null && item.facilityId == facilityId)
+            {
+                return item;
+            }
+        }
+
+        return null;
     }
 }
