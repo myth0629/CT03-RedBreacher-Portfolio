@@ -104,7 +104,7 @@ public class BossTrackerPanel : MonoBehaviour
         }
 
         string state = bossTracker.IsDifficultyUnlocked(difficulty)
-            ? "해금"
+            ? "해금됨"
             : $"사령부 Lv.{difficulty.requiredResearchLabLevel} 필요";
         return $"{difficulty.displayName} | {state} | 권장 전투력 {difficulty.recommendedPower:N0}";
     }
@@ -124,7 +124,7 @@ public class BossTrackerPanel : MonoBehaviour
 
         SetText(bossNameText, displayName);
         SetText(bossHealthText, config != null
-            ? $"{config.MaxHealth * healthMultiplier:0}"
+            ? $"{config.MaxHealth * healthMultiplier:0} <color=#ffffff>HP</color>"
             : string.Empty);
         SetText(rangedAttackText, config != null
             ? $"범위 공격 ({config.RangedAttackDamage * damageMultiplier:0})"

@@ -8,6 +8,7 @@ public class BaseCampHud : MonoBehaviour
     
     [Header("Commander")]
     [SerializeField] private TMP_Text commanderLevelText;
+    [SerializeField] private TMP_Text commandCenterLevelText;
     
     [Header("Boss Ticket")]
     [SerializeField] private TMP_Text bossTicketText;
@@ -55,8 +56,9 @@ public class BaseCampHud : MonoBehaviour
 
         if (baseCampManager == null)
         {
-            SetText(commanderLevelText, "지휘관 Lv. --");
-            SetText(bossTicketText, "티켓 --/--");
+            SetText(commanderLevelText, "\uC9C0\uD718\uAD00 Lv. --");
+            SetText(commandCenterLevelText, "\uC0AC\uB839\uBD80 Lv. --");
+            SetText(bossTicketText, "\uD2F0\uCF13 --/--");
             SetText(refineryStorageText, "--/--");
             SetFill(refineryStorageFill, 0f);
             RefreshBaseUnlockStatus();
@@ -65,15 +67,18 @@ public class BaseCampHud : MonoBehaviour
 
         CommandCenter researchLab = baseCampManager.CommandCenter;
         CreditRefinery refinery = baseCampManager.CreditRefinery;
-        SetText(commanderLevelText, $"지휘관 Lv. {baseCampManager.CommanderLevel}");
+        SetText(commanderLevelText, $"\uC9C0\uD718\uAD00 Lv. {baseCampManager.CommanderLevel}");
+        SetText(commandCenterLevelText, researchLab != null
+            ? $"\uC0AC\uB839\uBD80 Lv. {researchLab.Level}"
+            : "\uC0AC\uB839\uBD80 Lv. --");
 
         if (researchLab != null)
         {
-            SetText(bossTicketText, $"티켓 {researchLab.BossTickets}/{researchLab.BossTicketCapacity}");
+            SetText(bossTicketText, $"\uD2F0\uCF13 {researchLab.BossTickets}/{researchLab.BossTicketCapacity}");
         }
         else
         {
-            SetText(bossTicketText, "티켓 --/--");
+            SetText(bossTicketText, "\uD2F0\uCF13 --/--");
         }
 
         if (refinery != null)
@@ -85,7 +90,7 @@ public class BaseCampHud : MonoBehaviour
                                  refinery.StoredCredits >= refinery.StorageCapacity;
 
             SetText(refineryStorageText, isStorageFull
-                ? $"가득참 ({refinery.StorageCapacity})"
+                ? $"\uAC00\uB4DD\uCC38 ({refinery.StorageCapacity})"
                 : $"{refinery.StoredCredits}/{refinery.StorageCapacity}");
             SetFill(refineryStorageFill, storageRate);
         }
@@ -151,7 +156,7 @@ public class BaseCampHud : MonoBehaviour
         int requiredLevel = unlock.requiredLabLevel;
         bool unlocked = commandCenter.IsFacilityUnlocked(facilityId);
 
-        target.text = unlocked ? string.Empty : $"<color=#ED3724>잠금</color>\n사령부 Lv.{requiredLevel} 필요";
+        target.text = unlocked ? string.Empty : $"<color=#ED3724>\uC7A0\uAE08</color>\n\uC0AC\uB839\uBD80 Lv.{requiredLevel} \uD544\uC694";
         SetActive(unlockPanel, !unlocked);
     }
 
