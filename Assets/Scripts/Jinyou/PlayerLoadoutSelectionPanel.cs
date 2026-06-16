@@ -373,25 +373,29 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void RefreshWeaponDetail(ProjectileConfig weapon)
     {
+        int weaponEnhanceLevel = weapon != null ? GetFactoryWeaponLevel(weapon) : 0;
+        float weaponEnhancedDamage = weaponEnhanceLevel > 0 ? GetEnhancedWeaponDamage(weapon) : 0f;
         SetIcon(detailIcon, weapon != null ? weapon.Icon : null);
         SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하세요.");
         SetText(detailCategoryText, weapon != null ? $"Type: {weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
-            ? $"공장강화 Lv. {GetFactoryWeaponLevel(weapon)}\n"
+            ? $"공장강화 Lv. {weaponEnhanceLevel}\n"
                 + $"수집강화 Lv. {GetCollectionWeaponLevel(weapon)}\n"
-                + $"피해량: {weapon.AttackDamage:0.##} (+ {GetEnhancedWeaponDamage(weapon):0.##})\n"
+                + $"피해량: {weapon.AttackDamage:0.##} (+ {weaponEnhancedDamage:0.##})\n"
                 + $"발사간격: {weapon.Speed:0.##}"
             : string.Empty);
     }
 
     private void RefreshDroneDetail(DroneConfig drone)
     {
+        int droneEnhanceLevel = drone != null ? GetFactoryDroneLevel(drone) : 0;
+        float droneEnhancedDamage = droneEnhanceLevel > 0 ? GetEnhancedDroneDamage(drone) : 0f;
         SetIcon(detailIcon, null);
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
         SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount}" : string.Empty);
         SetText(detailStatsText, drone != null
-            ? $"공장강화 Lv. {GetFactoryDroneLevel(drone)}\n"
-                + $"피해량: {drone.AttackDamage:0.##} (+ {GetEnhancedDroneDamage(drone):0.##})\n"
+            ? $"공장강화 Lv. {droneEnhanceLevel}\n"
+                + $"피해량: {drone.AttackDamage:0.##} (+ {droneEnhancedDamage:0.##})\n"
                 + $"사거리: {drone.AttackRange:0.##}\n"
                 + $"발사간격: {drone.AttackInterval:0.##}"
             : string.Empty);
