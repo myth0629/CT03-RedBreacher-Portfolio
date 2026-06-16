@@ -177,15 +177,16 @@ public class EnemyController : MonoBehaviour
 
     public void PlayDeathExplosionEffect()
     {
-        if (deathExplosionEffectPrefab == null)
+        GameObject effectPrefab = ResolveDeathExplosionEffectPrefab();
+        if (effectPrefab == null)
         {
             return;
         }
 
         // 적 본체가 바로 제거되므로 이펙트는 월드에 독립 생성하고 풀로 회수한다.
         GameObject effect = CombatObjectPool.GetEffect(
-            deathExplosionEffectPrefab,
-            transform.position + deathExplosionOffset,
+            effectPrefab,
+            transform.position + ResolveDeathExplosionOffset(effectPrefab),
             transform.rotation);
 
         if (effect == null)
@@ -193,8 +194,36 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        effect.transform.localScale = Vector3.one * Mathf.Max(0.01f, deathExplosionScale);
-        CombatObjectPool.ReleaseEffect(effect, deathExplosionCleanupDelay);
+        effect.transform.localScale = Vector3.one * ResolveDeathExplosionScale(effectPrefab);
+        CombatObjectPool.ReleaseEffect(effect, ResolveDeathExplosionCleanupDelay(effectPrefab));
+    }
+
+    private GameObject ResolveDeathExplosionEffectPrefab()
+    {
+        return enemyConfig != null && enemyConfig.DeathExplosionEffectPrefab != null
+            ? enemyConfig.DeathExplosionEffectPrefab
+            : deathExplosionEffectPrefab;
+    }
+
+    private Vector3 ResolveDeathExplosionOffset(GameObject effectPrefab)
+    {
+        return enemyConfig != null && effectPrefab == enemyConfig.DeathExplosionEffectPrefab
+            ? enemyConfig.DeathExplosionOffset
+            : deathExplosionOffset;
+    }
+
+    private float ResolveDeathExplosionScale(GameObject effectPrefab)
+    {
+        return enemyConfig != null && effectPrefab == enemyConfig.DeathExplosionEffectPrefab
+            ? enemyConfig.DeathExplosionScale
+            : Mathf.Max(0.01f, deathExplosionScale);
+    }
+
+    private float ResolveDeathExplosionCleanupDelay(GameObject effectPrefab)
+    {
+        return enemyConfig != null && effectPrefab == enemyConfig.DeathExplosionEffectPrefab
+            ? enemyConfig.DeathExplosionCleanupDelay
+            : Mathf.Max(0f, deathExplosionCleanupDelay);
     }
 
     protected bool UpdateKnockback()

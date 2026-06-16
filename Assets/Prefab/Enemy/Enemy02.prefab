@@ -146,6 +146,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Enemy02
       objectReference: {fileID: 0}
+    - target: {fileID: 2807220162844838606, guid: 912a4ab9df6c34b0992e2e89741007c6, type: 3}
+      propertyPath: deathExplosionEffectPrefab
+      value: 
+      objectReference: {fileID: 1221116321114522, guid: 13e7b1908d4d5094e9ba37c20eb5a0a0, type: 3}
     - target: {fileID: 2951990012053975487, guid: 912a4ab9df6c34b0992e2e89741007c6, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

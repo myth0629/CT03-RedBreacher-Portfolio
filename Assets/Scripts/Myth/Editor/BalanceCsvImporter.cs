@@ -202,6 +202,16 @@ public static class BalanceCsvImporter
             SetInt(serializedObject, "creditReward", row, "creditReward");
             SetInt(serializedObject, "coreCrystalReward", row, "coreCrystalReward");
             SetFloat(serializedObject, "partDropChance", row, "partDropChance");
+            SetObject(serializedObject, "deathExplosionEffectPrefab", GetAsset<GameObject>(row, "deathExplosionEffectPrefab"));
+            SetFloat(serializedObject, "deathExplosionCleanupDelay", row, "deathExplosionCleanupDelay");
+            SetVector3(
+                serializedObject,
+                "deathExplosionOffset",
+                row,
+                "deathExplosionOffsetX",
+                "deathExplosionOffsetY",
+                "deathExplosionOffsetZ");
+            SetFloat(serializedObject, "deathExplosionScale", row, "deathExplosionScale");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
@@ -438,7 +448,9 @@ public static class BalanceCsvImporter
         string[] headers =
         {
             "id", "displayName", "enemyPrefab", "maxHealth", "moveSpeed", "stopDistance", "contactDamage",
-            "contactInterval", "experienceReward", "creditReward", "coreCrystalReward", "partDropChance"
+            "contactInterval", "experienceReward", "creditReward", "coreCrystalReward", "partDropChance",
+            "deathExplosionEffectPrefab", "deathExplosionCleanupDelay", "deathExplosionOffsetX",
+            "deathExplosionOffsetY", "deathExplosionOffsetZ", "deathExplosionScale"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -457,7 +469,13 @@ public static class BalanceCsvImporter
                 FormatFloat(config.ExperienceReward),
                 config.CreditReward.ToString(CultureInfo.InvariantCulture),
                 config.CoreCrystalReward.ToString(CultureInfo.InvariantCulture),
-                FormatFloat(config.PartDropChance)
+                FormatFloat(config.PartDropChance),
+                GetAssetPath(config.DeathExplosionEffectPrefab),
+                FormatFloat(config.DeathExplosionCleanupDelay),
+                FormatFloat(config.DeathExplosionOffset.x),
+                FormatFloat(config.DeathExplosionOffset.y),
+                FormatFloat(config.DeathExplosionOffset.z),
+                FormatFloat(config.DeathExplosionScale)
             });
         }
 
@@ -987,6 +1005,53 @@ public static class BalanceCsvImporter
         {
             property.floatValue = parsed;
         }
+    }
+
+    private static void SetVector3(
+        SerializedObject serializedObject,
+        string propertyName,
+        Dictionary<string, string> row,
+        string xKey,
+        string yKey,
+        string zKey)
+    {
+        string xValue = Get(row, xKey);
+        string yValue = Get(row, yKey);
+        string zValue = Get(row, zKey);
+        if (string.IsNullOrWhiteSpace(xValue)
+            && string.IsNullOrWhiteSpace(yValue)
+            && string.IsNullOrWhiteSpace(zValue))
+        {
+            return;
+        }
+
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property == null)
+        {
+            return;
+        }
+
+        Vector3 current = property.vector3Value;
+        property.vector3Value = new Vector3(
+            ParseFloatOrCurrent(xValue, current.x, xKey),
+            ParseFloatOrCurrent(yValue, current.y, yKey),
+            ParseFloatOrCurrent(zValue, current.z, zKey));
+    }
+
+    private static float ParseFloatOrCurrent(string value, float currentValue, string key)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return currentValue;
+        }
+
+        if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed))
+        {
+            return parsed;
+        }
+
+        Debug.LogWarning($"숫자 파싱 실패: {key}={value}");
+        return currentValue;
     }
 
     private static void SetInt(SerializedObject serializedObject, string propertyName, Dictionary<string, string> row, string key)

@@ -21,6 +21,12 @@ public class EnemyConfig : ScriptableObject
     [SerializeField] private int coreCrystalReward;
     [SerializeField, Range(0f, 1f)] private float partDropChance = 0.05f;
 
+    [Header("Death Effect")]
+    [SerializeField] private GameObject deathExplosionEffectPrefab;
+    [SerializeField] private float deathExplosionCleanupDelay = 0.6f;
+    [SerializeField] private Vector3 deathExplosionOffset;
+    [SerializeField] private float deathExplosionScale = 1f;
+
     public string Id => id;
     public string DisplayName => displayName;
     public GameObject EnemyPrefab => enemyPrefab;
@@ -33,4 +39,8 @@ public class EnemyConfig : ScriptableObject
     public int CreditReward => creditReward;
     public int CoreCrystalReward => coreCrystalReward;
     public float PartDropChance => Mathf.Clamp01(partDropChance);
+    public GameObject DeathExplosionEffectPrefab => deathExplosionEffectPrefab;
+    public float DeathExplosionCleanupDelay => Mathf.Max(0f, deathExplosionCleanupDelay);
+    public Vector3 DeathExplosionOffset => deathExplosionOffset;
+    public float DeathExplosionScale => Mathf.Max(0.01f, deathExplosionScale);
 }
