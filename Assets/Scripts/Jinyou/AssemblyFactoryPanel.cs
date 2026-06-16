@@ -350,7 +350,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         AssemblyFactory.DroneEnhancement enhancement = assemblyFactory.SelectedDroneEnhancement;
         if (enhancement?.droneConfig == null)
         {
-            return "드론을 먼저 선택하십시오.";
+            return "드론 및 무기를 먼저 선택하십시오.";
         }
 
         return enhancement.IsMaxLevel

@@ -13,8 +13,17 @@ MonoBehaviour:
   m_Name: Weapon_16
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 16
-  displayName: "\uD3EC\uD0C416"
+  displayName: "DRK\uD50C\uB77C"
+  icon: {fileID: 21300000, guid: 69309097eaedfe44cb2c76e80ff5bab2, type: 3}
   attackDamage: 63
+  attackType: 0
+  areaRadius: 2
+  areaDamageMultiplier: 0.7
+  maxAreaTargets: 10
+  maxPierceTargets: 3
+  maxLevel: 10
+  damagePercentPerLevel: 0.1
+  maxLevelDuplicateCoreCrystalReward: 1
   speed: 20
   lifetime: 2
   collisionRadius: 0.2
