@@ -22,6 +22,12 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float contactInterval = 1f;
     [SerializeField] private float knockbackDamping = 10f;
 
+    [Header("Death Effect")]
+    [SerializeField] private GameObject deathExplosionEffectPrefab;
+    [SerializeField] private float deathExplosionCleanupDelay = 0.6f;
+    [SerializeField] private Vector3 deathExplosionOffset;
+    [SerializeField] private float deathExplosionScale = 1f;
+
     private PlayerController targetPlayer;
     private Rigidbody body;
     private float nextContactTime;
@@ -167,6 +173,28 @@ public class EnemyController : MonoBehaviour
 
         // 같은 프레임에 여러 발을 맞으면 더 강한 쪽이 우선 느껴지게 누적한다.
         knockbackVelocity += direction * knockbackForce;
+    }
+
+    public void PlayDeathExplosionEffect()
+    {
+        if (deathExplosionEffectPrefab == null)
+        {
+            return;
+        }
+
+        // 적 본체가 바로 제거되므로 이펙트는 월드에 독립 생성하고 풀로 회수한다.
+        GameObject effect = CombatObjectPool.GetEffect(
+            deathExplosionEffectPrefab,
+            transform.position + deathExplosionOffset,
+            transform.rotation);
+
+        if (effect == null)
+        {
+            return;
+        }
+
+        effect.transform.localScale = Vector3.one * Mathf.Max(0.01f, deathExplosionScale);
+        CombatObjectPool.ReleaseEffect(effect, deathExplosionCleanupDelay);
     }
 
     protected bool UpdateKnockback()

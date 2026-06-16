@@ -88,6 +88,24 @@ public class AchievementManager : MonoBehaviour
             this._rewardAmount = Mathf.Max(0, rewardAmount);
         }
 
+        public AchievementEntry(AchievementConfig.AchievementDefinition definition)
+        {
+            _id = definition.id;
+            _progressType = definition.progressType;
+            _title = definition.title;
+            _description = definition.description;
+            _iconSprite = definition.iconSprite;
+            _targetAmount = Mathf.Max(1, definition.targetAmount);
+            _nextTargetAmounts = definition.nextTargetAmounts != null
+                ? new List<int>(definition.nextTargetAmounts)
+                : new List<int>();
+            _repeatRequirementAmount = Mathf.Max(1, definition.repeatRequirementAmount);
+            _progressAmountPerEvent = Mathf.Max(1, definition.progressAmountPerEvent);
+            _rewardCurrency = definition.rewardCurrency;
+            _rewardAmount = Mathf.Max(0, definition.rewardAmount);
+            Validate();
+        }
+
         public bool AddProgress(int amount)
         {
             int positiveAmount = Mathf.Max(0, amount);
@@ -202,6 +220,9 @@ public class AchievementManager : MonoBehaviour
     public static AchievementManager Instance { get; private set; }
 
     [Header("Settings")]
+    [SerializeField, FormerlySerializedAs("achievementConfig")]
+    private AchievementConfig _achievementConfig;
+
     [SerializeField, FormerlySerializedAs("saveToPlayerPrefs")]
     private bool _saveToPlayerPrefs = true;
 
@@ -210,14 +231,7 @@ public class AchievementManager : MonoBehaviour
 
     [Header("Achievements")]
     [SerializeField, FormerlySerializedAs("achievements")]
-    private List<AchievementEntry> _achievements = new List<AchievementEntry>
-    {
-        new AchievementEntry("player_level", AchievementProgressType.PlayerLevel, "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 \uB2EC\uC131", "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 {0} \uB2EC\uC131", 5, 1, 5, CurrencyType.CoreCrystals, 10),
-        new AchievementEntry("enemy_kill", AchievementProgressType.EnemyKill, "\uC801 \uCC98\uCE58", "\uC801 {0}\uB9C8\uB9AC \uCC98\uCE58", 10, 1, 10, CurrencyType.CoreCrystals, 10),
-        new AchievementEntry("stage_clear", AchievementProgressType.StageClear, "\uC2A4\uD14C\uC774\uC9C0 \uD074\uB9AC\uC5B4", "\uC2A4\uD14C\uC774\uC9C0 {0}\uD68C \uD074\uB9AC\uC5B4", 3, 1, 3, CurrencyType.CoreCrystals, 10),
-        new AchievementEntry("weapon_collect", AchievementProgressType.WeaponCollect, "\uBB34\uAE30 \uC218\uC9D1", "\uBB34\uAE30 {0}\uAC1C \uC218\uC9D1", 5, 1, 5, CurrencyType.CoreCrystals, 10),
-        new AchievementEntry("drone_collect", AchievementProgressType.DroneCollect, "\uB4DC\uB860 \uC218\uC9D1", "\uB4DC\uB860 {0}\uAC1C \uC218\uC9D1", 3, 1, 3, CurrencyType.CoreCrystals, 10)
-    };
+    private List<AchievementEntry> _achievements = new List<AchievementEntry>();
 
     [Header("Events")]
     public UnityEvent OnAchievementsChanged = new UnityEvent();
@@ -234,6 +248,7 @@ public class AchievementManager : MonoBehaviour
         }
 
         Instance = this;
+        LoadAchievementDefinitions();
         ValidateAchievements();
         Load();
     }
@@ -485,6 +500,46 @@ public class AchievementManager : MonoBehaviour
     private void OnValidate()
     {
         ValidateAchievements();
+    }
+
+    private void LoadAchievementDefinitions()
+    {
+        AchievementConfig config = _achievementConfig != null
+            ? _achievementConfig
+            : AchievementConfig.Current;
+        if (config == null)
+        {
+            return;
+        }
+
+        Dictionary<string, AchievementEntry> previousEntries = new Dictionary<string, AchievementEntry>();
+        foreach (AchievementEntry achievement in _achievements)
+        {
+            if (achievement == null || string.IsNullOrWhiteSpace(achievement.Id))
+            {
+                continue;
+            }
+
+            previousEntries[achievement.Id] = achievement;
+        }
+
+        _achievements = new List<AchievementEntry>();
+        foreach (AchievementConfig.AchievementDefinition definition in config.Achievements)
+        {
+            if (definition == null || string.IsNullOrWhiteSpace(definition.id))
+            {
+                continue;
+            }
+
+            AchievementEntry entry = new AchievementEntry(definition);
+            if (previousEntries.TryGetValue(entry.Id, out AchievementEntry previousEntry))
+            {
+                // CSV/SO 정의로 갈아끼워도 기존 런타임 진행도는 id 기준으로 이어받는다.
+                entry.RestoreProgress(previousEntry.CurrentAmount, previousEntry.CompletedCount);
+            }
+
+            _achievements.Add(entry);
+        }
     }
 
     private void ValidateAchievements()

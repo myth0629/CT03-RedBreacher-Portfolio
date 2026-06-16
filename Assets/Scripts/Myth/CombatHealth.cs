@@ -200,6 +200,9 @@ public class CombatHealth : MonoBehaviour
             return;
         }
 
+        // 적 사망 연출은 제거 직전에 월드 이펙트로 분리해 재생한다.
+        GetComponent<EnemyController>()?.PlayDeathExplosionEffect();
+
         if (destroyOnDeath)
         {
             Destroy(gameObject);
