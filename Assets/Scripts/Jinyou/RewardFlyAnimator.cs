@@ -37,10 +37,19 @@ public class RewardFlyAnimator : MonoBehaviour
 
     public void PlayReward(Vector3 sourceWorldPosition, CurrencyType currency, int amount, float iconSize = 56f)
     {
-        if (amount <= 0 || !EnsureReferences())
+        if (amount <= 0)
         {
             return;
         }
+
+        if (!EnsureReferences())
+        {
+            Debug.LogWarning("[RewardFly] 참조(UI_Canvas_Game/재화 아이콘) 확보 실패 — 연출 재생 불가.");
+            return;
+        }
+
+        // 팝업(도전과제 등) 위로 항상 보이도록 매 재생마다 오버레이를 최상단으로 올린다.
+        overlayRoot.SetAsLastSibling();
 
         RectTransform target = currency == CurrencyType.CoreCrystals ? crystalIcon : creditIcon;
         if (target == null)
@@ -137,6 +146,7 @@ public class RewardFlyAnimator : MonoBehaviour
         GameObject canvasGo = GameObject.Find("UI_Canvas_Game");
         if (canvasGo == null)
         {
+            Debug.LogWarning("[RewardFly] 활성 'UI_Canvas_Game'을 찾지 못했습니다(이름/활성 상태 확인).");
             return false;
         }
 
@@ -156,10 +166,22 @@ public class RewardFlyAnimator : MonoBehaviour
             cg.interactable = false;
         }
 
-        Transform t = canvasGo.transform;
-        creditIcon = t.Find("Credits_Panel/Credit/Icon") as RectTransform;
-        crystalIcon = t.Find("Credits_Panel/Core Crystal/Icon") as RectTransform;
+        // Credits_Panel이 다른 부모(Top UI 등)로 옮겨져도 동작하도록 하드코딩 경로 대신 이름으로 탐색한다.
+        Transform creditsPanel = FindInScene("Credits_Panel");
+        if (creditsPanel != null)
+        {
+            creditIcon = creditsPanel.Find("Credit/Icon") as RectTransform;
+            crystalIcon = creditsPanel.Find("Core Crystal/Icon") as RectTransform;
+        }
+
         hud = FindFirstObjectByType<PlayerStatusHud>(FindObjectsInactive.Include);
+
+        if (creditIcon == null || crystalIcon == null)
+        {
+            Debug.LogWarning($"[RewardFly] 재화 아이콘 탐색 실패 (creditsPanel={creditsPanel != null}, "
+                + $"credit={creditIcon != null}, crystal={crystalIcon != null}). "
+                + "Credits_Panel 하위에 'Credit/Icon', 'Core Crystal/Icon'이 있는지 확인하세요.");
+        }
 
         return overlayRoot != null && creditIcon != null && crystalIcon != null;
     }
@@ -168,5 +190,27 @@ public class RewardFlyAnimator : MonoBehaviour
     {
         float u = 1f - t;
         return (u * u * a) + (2f * u * t * b) + (t * t * c);
+    }
+
+    // 씬 전체에서 이름으로 Transform을 찾는다(활성 우선, 비활성 폴백). 부모 경로에 의존하지 않는다.
+    private static Transform FindInScene(string objectName)
+    {
+        GameObject active = GameObject.Find(objectName);
+        if (active != null)
+        {
+            return active.transform;
+        }
+
+        Transform[] all = Resources.FindObjectsOfTypeAll<Transform>();
+        for (int i = 0; i < all.Length; i++)
+        {
+            Transform tr = all[i];
+            if (tr.name == objectName && tr.gameObject.scene.IsValid())
+            {
+                return tr;
+            }
+        }
+
+        return null;
     }
 }
