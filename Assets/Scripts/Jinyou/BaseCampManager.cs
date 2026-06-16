@@ -53,7 +53,7 @@ public class BaseCampManager : MonoBehaviour
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
     public InventoryFacility Inventory => ResolveInventory();
-    public int CommanderLevel => commanderLevel;
+    public int CommanderLevel => ResolveCommanderLevel();
     public int Credits => CurrencyWallet.Credits;
     public int CoreCrystals => CurrencyWallet.CoreCrystals;
     public PlayerCurrencyWallet CurrencyWallet => EnsureCurrencyWallet();
@@ -89,6 +89,11 @@ public class BaseCampManager : MonoBehaviour
         {
             CloseAllPanels();
         }
+    }
+
+    private void Update()
+    {
+        TickInactiveFacilities(Time.deltaTime);
     }
 
     // 저장된 장착 무기/드론을 부팅 시 적용한다. 로드아웃 패널이 닫힌 팝업 안에 있어
@@ -141,10 +146,10 @@ public class BaseCampManager : MonoBehaviour
             return;
         }
 
-        commandCenter ??= FindFirstObjectByType<CommandCenter>();
-        creditRefinery ??= FindFirstObjectByType<CreditRefinery>();
-        assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>();
-        coreCharger ??= FindFirstObjectByType<CoreCharger>();
+        commandCenter ??= FindFirstObjectByType<CommandCenter>(FindObjectsInactive.Include);
+        creditRefinery ??= FindFirstObjectByType<CreditRefinery>(FindObjectsInactive.Include);
+        assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
+        coreCharger ??= FindFirstObjectByType<CoreCharger>(FindObjectsInactive.Include);
         inventory ??= InventoryFacility.FindAny();
     }
 
@@ -301,7 +306,7 @@ public class BaseCampManager : MonoBehaviour
 
     public void AddCommanderLevel(int amount)
     {
-        SetCommanderLevel(commanderLevel + Mathf.Max(0, amount));
+        SetCommanderLevel(CommanderLevel + Mathf.Max(0, amount));
     }
 
     public void SetCreditsForFacility(int value)
@@ -312,7 +317,7 @@ public class BaseCampManager : MonoBehaviour
     public void SetCommanderLevel(int value)
     {
         commanderLevel = Mathf.Max(1, value);
-        OnCommanderLevelChanged.Invoke(commanderLevel);
+        OnCommanderLevelChanged.Invoke(CommanderLevel);
         SaveUnifiedGameIfReady();
     }
 
@@ -375,6 +380,18 @@ public class BaseCampManager : MonoBehaviour
         CurrencyWallet.SetCredits(value);
     }
 
+    private void TickInactiveFacilities(float deltaTime)
+    {
+        if (creditRefinery == null || creditRefinery.isActiveAndEnabled)
+        {
+            return;
+        }
+
+        // 정제소 UI 패널이 꺼져도 저장 생산/업그레이드 타이머는 계속 진행한다.
+        creditRefinery.Produce(deltaTime);
+        creditRefinery.AdvanceUpgradeOffline(deltaTime);
+    }
+
     private void TrySpendAndUpgrade(IBaseCampFacility facility)
     {
         if (facility == null)
@@ -383,10 +400,11 @@ public class BaseCampManager : MonoBehaviour
         }
 
         int availableCredits = Credits;
+        int effectiveCommanderLevel = CommanderLevel;
         int researchLabLevel = commandCenter != null ? commandCenter.Level : 1;
         int upgradeCost = facility.UpgradeCost;
 
-        if (!facility.CanStartUpgrade(availableCredits, commanderLevel, researchLabLevel))
+        if (!facility.CanStartUpgrade(availableCredits, effectiveCommanderLevel, researchLabLevel))
         {
             return;
         }
@@ -394,7 +412,7 @@ public class BaseCampManager : MonoBehaviour
         // 시설은 타이머만 시작하고, 실제 재화 차감은 wallet 한 곳에서 처리한다.
         int simulatedCredits = availableCredits;
         if (CurrencyWallet.CanSpend(CurrencyType.Credits, upgradeCost)
-            && facility.TryStartUpgrade(ref simulatedCredits, commanderLevel, researchLabLevel))
+            && facility.TryStartUpgrade(ref simulatedCredits, effectiveCommanderLevel, researchLabLevel))
         {
             CurrencyWallet.TrySpend(CurrencyType.Credits, upgradeCost);
             DailyMissionManager.ReportFacilityUpgraded();
@@ -415,7 +433,7 @@ public class BaseCampManager : MonoBehaviour
 
     private void DrawDebugPanel(int windowId)
     {
-        GUILayout.Label($"Commander Lv. {commanderLevel}");
+        GUILayout.Label($"Commander Lv. {CommanderLevel}");
         GUILayout.Label($"Credits: {Credits}");
         GUILayout.Label($"Core Crystals: {CoreCrystals}");
 
@@ -519,6 +537,18 @@ public class BaseCampManager : MonoBehaviour
 
         playerProgression = FindFirstObjectByType<PlayerProgression>();
         return playerProgression;
+    }
+
+    private int ResolveCommanderLevel()
+    {
+        PlayerProgression progression = ResolvePlayerProgression();
+        if (progression != null)
+        {
+            // 지휘관 레벨은 전투 플레이어 레벨을 기준으로 시설 해금/업그레이드 조건에 사용한다.
+            return Mathf.Max(1, progression.Level);
+        }
+
+        return Mathf.Max(1, commanderLevel);
     }
 
     private InventoryFacility ResolveInventory()
@@ -629,7 +659,7 @@ public class BaseCampManager : MonoBehaviour
         {
             version = 2,
             lastSavedUnixTime = GetCurrentUnixTime(),
-            commanderLevel = commanderLevel,
+            commanderLevel = CommanderLevel,
             mainBuildingLevel = commandCenter != null ? commandCenter.Level : 1,
             credits = wallet != null ? wallet.Credits : credits,
             coreCrystals = wallet != null ? wallet.CoreCrystals : 0,
@@ -675,7 +705,7 @@ public class BaseCampManager : MonoBehaviour
             EnsureMainGuideMissionManager().RestoreState(data.guideMissions);
 
             ApplyOfflineRewards(data.lastSavedUnixTime);
-            OnCommanderLevelChanged.Invoke(commanderLevel);
+            OnCommanderLevelChanged.Invoke(CommanderLevel);
         }
         finally
         {
