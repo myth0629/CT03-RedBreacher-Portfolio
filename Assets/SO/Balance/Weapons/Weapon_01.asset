@@ -14,7 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 01
   displayName: "\uD0C4\uD658"
+  icon: {fileID: 21300000, guid: a3536ffec29a4004697c06896b040312, type: 3}
   attackDamage: 5
+  attackType: 0
+  areaRadius: 2
+  areaDamageMultiplier: 0.7
+  maxAreaTargets: 10
+  maxPierceTargets: 3
+  maxLevel: 10
+  damagePercentPerLevel: 0.1
+  maxLevelDuplicateCoreCrystalReward: 1
   speed: 20
   lifetime: 2
   collisionRadius: 0.2

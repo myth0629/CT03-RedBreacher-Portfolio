@@ -7,6 +7,7 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
 {
     [SerializeField] private Button button;
     [SerializeField] private TMP_Text nameText;
+    [SerializeField] private Image icon;
     [SerializeField] private TMP_Text categoryText;
     [SerializeField] private TMP_Text summaryText;
     [SerializeField] private GameObject selectedMark;
@@ -31,12 +32,19 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
         button?.onClick.RemoveListener(HandleClick);
     }
 
-    public void Bind(string title, string category, string summary, bool selected, System.Action clickAction)
+    public void Bind(
+        string title,
+        string category,
+        string summary,
+        bool selected,
+        System.Action clickAction,
+        Sprite iconSprite = null)
     {
         onClick = clickAction;
         SetText(nameText, title);
         SetText(categoryText, category);
         SetText(summaryText, summary);
+        SetIcon(iconSprite);
         SetSelected(selected);
     }
 
@@ -59,5 +67,17 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
         {
             target.text = value;
         }
+    }
+
+    private void SetIcon(Sprite sprite)
+    {
+        if (icon == null)
+        {
+            return;
+        }
+
+        icon.sprite = sprite;
+        icon.enabled = sprite != null;
+        icon.preserveAspect = true;
     }
 }

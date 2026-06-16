@@ -31,7 +31,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [SerializeField] private Transform contentRoot;
     [SerializeField] private PlayerLoadoutOptionButton optionButtonPrefab;
 
-    [Header("Detail")]
+    [Header("Detail")] 
+    [SerializeField] private Image detailIcon;
     [SerializeField] private TMP_Text detailNameText;
     [SerializeField] private TMP_Text detailCategoryText;
     [SerializeField] private TMP_Text detailStatsText;
@@ -44,6 +45,19 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private AssemblyFactory assemblyFactory;
     private Action<ProjectileConfig> weaponSelectionCallback;
     private Action<DroneConfig> droneSelectionCallback;
+
+
+    private static void SetIcon(Image target, Sprite sprite)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        target.sprite = sprite;
+        target.enabled = sprite != null;
+        target.preserveAspect = true;
+    }
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -251,7 +265,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                 weapon.WeaponCategory,
                 $"Lv.{GetFactoryWeaponLevel(weapon)} / 피해량 {GetEnhancedWeaponDamage(weapon):0.##}",
                 weapon == selectedWeapon,
-                () => SelectWeapon(weapon));
+                () => SelectWeapon(weapon),
+                weapon.Icon);
         }
     }
 
@@ -358,6 +373,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void RefreshWeaponDetail(ProjectileConfig weapon)
     {
+        SetIcon(detailIcon, weapon != null ? weapon.Icon : null);
         SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하세요.");
         SetText(detailCategoryText, weapon != null ? $"Type: {weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
@@ -370,6 +386,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void RefreshDroneDetail(DroneConfig drone)
     {
+        SetIcon(detailIcon, null);
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
         SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount}" : string.Empty);
         SetText(detailStatsText, drone != null
