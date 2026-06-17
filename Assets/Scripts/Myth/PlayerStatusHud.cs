@@ -43,6 +43,8 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupWeaponSpeedText;
     [SerializeField] private TMP_Text tankPopupWeaponLifetimeText;
     [SerializeField] private TMP_Text tankPopupWeaponKnockbackText;
+    [SerializeField] private Image tankPopupEquipWeaponIcon;
+    [SerializeField] private RawImage tankPopupEquipDroneIcon;
 
     [Header("Stat Upgrade Popup")]
     [SerializeField] private TMP_Text statUpgradePointText;
@@ -264,6 +266,7 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
         SetText(tankPopupWeaponNameText, weapon != null ? weapon.DisplayName : "장착한 무기 없음");
         SetText(tankPopupWeaponCategoryText, weapon != null ? weapon.WeaponCategory : "무기 카테고리");
+        SetIcon(tankPopupEquipWeaponIcon, weapon != null ? weapon.Icon : null);
         SetText(tankPopupWeaponDamageText, $"{player.WeaponAttackDamage:0.##}");
         SetText(tankPopupWeaponRangeText, $"{player.AttackRange:0.##}");
         SetText(tankPopupWeaponFireIntervalText, $"{player.AttackInterval:0.##}");
@@ -328,6 +331,18 @@ public class PlayerStatusHud : MonoBehaviour
         {
             target.fillAmount = value;
         }
+    }
+
+    private static void SetIcon(Image target, Sprite sprite)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        target.sprite = sprite;
+        target.enabled = sprite != null;
+        target.preserveAspect = true;
     }
 
     private static void SetButtonInteractable(Button target, bool interactable)

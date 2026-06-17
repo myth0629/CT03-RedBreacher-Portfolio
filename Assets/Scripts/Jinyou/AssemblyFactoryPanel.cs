@@ -5,22 +5,32 @@ using UnityEngine.UI;
 public class AssemblyFactoryPanel : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
-    [SerializeField] private Button upgradeButton;
+    
+    [Header("Buttons")]
     [SerializeField] private Button weaponMenuButton;
     [SerializeField] private Button droneMenuButton;
     [SerializeField] private Button weaponEnhanceButton;
-    [SerializeField] private TMP_Text levelText;
+    
+    [Header("Base Upgrade")]
+    [SerializeField] private Button upgradeButton;
     [SerializeField] private TMP_Text upgradeText;
-    [SerializeField] private TMP_Text weaponEnhanceText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
-    [SerializeField] private TMP_Text selectedMenuText;
-    [SerializeField] private TMP_Text menuStateText;
-    [SerializeField] private InventoryPanel inventoryPanel;
-    [SerializeField] private GameObject weaponInventoryArea;
-    [SerializeField] private RectTransform weaponInventoryContentRoot;
-    [SerializeField] private Button inventoryWeaponButtonPrefab;
-    [SerializeField] private TMP_Text inventoryWeaponListText;
+    
+    [Header("WeaponEnhanceTexts")]
+    [SerializeField] private TMP_Text levelText;
+    [SerializeField] private TMP_Text pleasSelectText;
+    [SerializeField] private TMP_Text weaponCurrentAttackText;
+    [SerializeField] private TMP_Text weaponAttackLevelText;
+    [SerializeField] private TMP_Text weaponEnhanceCostText;
+    [SerializeField] private GameObject weaponCost;
+    
+    [Header("Selected")]
+    [SerializeField] private TMP_Text selectedWeaponNameText;
+    [SerializeField] private TMP_Text selectedWeaponLevelText;
+    [SerializeField] private Image selectedWeaponIcon;
+    
+    [Header("LoadoutSelection")]
     [SerializeField] private PlayerLoadoutSelectionPanel loadoutSelectionPanel;
 
     private AssemblyFactory assemblyFactory;
@@ -65,9 +75,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         Button skill,
         Button parts,
         TMP_Text level,
-        TMP_Text upgradeLabel,
-        TMP_Text selectedMenu,
-        TMP_Text menuState)
+        TMP_Text upgradeLabel)
     {
         baseCampManager = manager;
         upgradeButton = upgrade;
@@ -75,8 +83,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
         droneMenuButton = parts;
         levelText = level;
         upgradeText = upgradeLabel;
-        selectedMenuText = selectedMenu;
-        menuStateText = menuState;
         Refresh();
     }
 
@@ -89,12 +95,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
     public void SelectDrone(DroneConfig droneConfig)
     {
         baseCampManager?.SelectAssemblyDrone(droneConfig);
-        Refresh();
-    }
-
-    public void SelectWeaponByIndex(int weaponIndex)
-    {
-        baseCampManager?.SelectAssemblyWeapon(weaponIndex);
         Refresh();
     }
 
@@ -141,27 +141,22 @@ public class AssemblyFactoryPanel : MonoBehaviour
         Refresh();
     }
 
-    private void ClosePanel()
-    {
-        gameObject.SetActive(false);
-    }
-
     private void Refresh()
     {
         ResolveReferences();
         if (assemblyFactory == null)
         {
+            ClearEnhancementStatTexts();
             return;
         }
 
         bool droneMode = assemblyFactory.SelectedMenuId == "drone";
+        RefreshSelectedTargetDisplay(droneMode);
         SetText(levelText, $"Lv. {assemblyFactory.Level}");
         SetText(upgradeText, droneMode
             ? BuildSelectedDroneHeader()
             : BuildSelectedWeaponHeader());
-        SetText(selectedMenuText, droneMode ? "Selected Drone SO" : "Selected Weapon SO");
-        SetText(weaponEnhanceText, droneMode ? BuildDroneText() : BuildWeaponText());
-        SetText(menuStateText, BuildSummary());
+        SetText(pleasSelectText, droneMode ? BuildDroneText() : BuildWeaponText());
         if (baseCampManager != null)
         {
             int researchLabLevel = baseCampManager.CommandCenter != null
@@ -173,13 +168,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
                 baseCampManager.CommanderLevel,
                 researchLabLevel));
         }
-
-        SetButtonLabel(weaponMenuButton, assemblyFactory.SelectedWeaponConfig != null
-            ? $"{assemblyFactory.SelectedWeaponConfig.DisplayName}"
-            : "무기 선택");
-        SetButtonLabel(droneMenuButton, assemblyFactory.SelectedDroneConfig != null
-            ? $"{assemblyFactory.SelectedDroneConfig.DisplayName}"
-            : "드론 선택");
+        
         SetButtonLabel(weaponEnhanceButton, droneMode
             ? BuildDroneEnhanceButtonText()
             : BuildWeaponEnhanceButtonText());
@@ -193,7 +182,6 @@ public class AssemblyFactoryPanel : MonoBehaviour
         SetActive(upgradeButton != null ? upgradeButton.gameObject : null, true);
         SetActive(weaponMenuButton != null ? weaponMenuButton.gameObject : null, true);
         SetActive(droneMenuButton != null ? droneMenuButton.gameObject : null, true);
-        SetActive(weaponInventoryArea, false);
 
         if (weaponMenuButton != null)
         {
@@ -229,30 +217,66 @@ public class AssemblyFactoryPanel : MonoBehaviour
         }
     }
 
+    private void RefreshSelectedTargetDisplay(bool droneMode)
+    {
+        if (assemblyFactory == null)
+        {
+            SetText(selectedWeaponNameText, string.Empty);
+            SetText(selectedWeaponLevelText, string.Empty);
+            SetIcon(selectedWeaponIcon, null);
+            return;
+        }
+
+        if (droneMode)
+        {
+            AssemblyFactory.DroneEnhancement enhancement = assemblyFactory.SelectedDroneEnhancement;
+            DroneConfig drone = enhancement?.droneConfig;
+            SetText(selectedWeaponNameText, drone != null ? drone.DisplayName : string.Empty);
+            SetText(selectedWeaponLevelText, enhancement != null && drone != null
+                ? $"Lv. {enhancement.enhanceLevel}/{enhancement.maxEnhanceLevel}"
+                : string.Empty);
+            SetIcon(selectedWeaponIcon, null);
+            return;
+        }
+
+        AssemblyFactory.WeaponEnhancement weaponEnhancement = assemblyFactory.SelectedWeaponEnhancement;
+        ProjectileConfig weapon = weaponEnhancement?.weaponConfig;
+        SetText(selectedWeaponNameText, weapon != null ? weapon.DisplayName : string.Empty);
+        SetText(selectedWeaponLevelText, weaponEnhancement != null && weapon != null
+            ? $"Lv. {weaponEnhancement.enhanceLevel}/{weaponEnhancement.MaxEnhanceLevel}"
+            : string.Empty);
+        SetIcon(selectedWeaponIcon, weapon != null ? weapon.Icon : null);
+    }
+
     private string BuildWeaponText()
     {
         AssemblyFactory.WeaponEnhancement enhancement = assemblyFactory.SelectedWeaponEnhancement;
         ProjectileConfig weapon = enhancement?.weaponConfig;
         if (enhancement == null || weapon == null)
         {
+            ClearEnhancementStatTexts();
             return "강화하고자 하는 무기/드론을 선택하세요.";
         }
 
+        SetActive(weaponCost, true);
         float attackBonus = enhancement.GetStatBonus(AssemblyFactory.WeaponEnhancementStat.AttackDamage);
         float currentAttack = weapon.AttackDamage + attackBonus;
         float nextIncrease = GetNextWeaponAttackIncrease(enhancement);
         float nextAttack = currentAttack + nextIncrease;
 
+        SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0.##}</color>");
+
         if (enhancement.IsMaxLevel)
         {
-            return $"{weapon.DisplayName} (Lv.최대)\n"
-                + $"피해량 {weapon.AttackDamage:0.##} (강화 보너스 +{attackBonus:0.##})\n"
-                + $"종합 피해량 {currentAttack:0.##}";
+            SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0.##}</color>");
+            SetText(weaponAttackLevelText, "<color=#4AD787>최대치</color>");
+            SetText(weaponEnhanceCostText, "None");
+            return string.Empty;
         }
 
-        return $"{weapon.DisplayName} (Lv.{enhancement.enhanceLevel}/{enhancement.MaxEnhanceLevel})\n"
-            + $"피해량 {weapon.AttackDamage:0.##} (강화 전 {currentAttack:0.##}  ->  강화 후 {nextAttack:0.##})\n"
-            + $"다음 강화 피해량 +{nextIncrease:0.##} / {enhancement.NextEnhanceCost} 크레딧";
+        SetText(weaponAttackLevelText, $"{currentAttack:0.##}  ->  <color=#4AD787>{nextAttack:0.##}</color>");
+        SetText(weaponEnhanceCostText, $"{enhancement.NextEnhanceCost}");
+        return string.Empty;
     }
 
     private string BuildDroneText()
@@ -261,44 +285,41 @@ public class AssemblyFactoryPanel : MonoBehaviour
         DroneConfig drone = enhancement?.droneConfig;
         if (enhancement == null || drone == null)
         {
-            return "드론을 선택하세요.";
+            ClearEnhancementStatTexts();
+            return "강화하고자 하는 무기/드론을 선택하세요.";
         }
 
+        SetActive(weaponCost, true);
         float currentAttack = drone.AttackDamage + enhancement.AttackDamageBonus;
         float nextAttack = currentAttack + enhancement.attackDamagePerLevel;
 
+        SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0.##}</color>");
+
         if (enhancement.IsMaxLevel)
         {
-            return $"{drone.DisplayName}\n"
-                + $"강화 Lv.최대\n"
-                + $"피해량 {drone.AttackDamage:0.##}\n"
-                + $"강화 보너스 +{enhancement.AttackDamageBonus:0.##}\n"
-                + $"종합 피해량 {currentAttack:0.##}";
+            SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0.##}</color>");
+            SetText(weaponAttackLevelText, "<color=#4AD787>최대치</color>");
+            SetText(weaponEnhanceCostText, "None");
+            return string.Empty;
         }
 
-        return $"{drone.DisplayName}\n"
-            + $"강화 Lv.{enhancement.enhanceLevel}/{enhancement.maxEnhanceLevel}\n"
-            + $"피해량 {drone.AttackDamage:0.##}\n"
-            + $"강화 전 {currentAttack:0.##}  ->  강화 후 {nextAttack:0.##}\n"
-            + $"다음 강화 피해량 +{enhancement.attackDamagePerLevel:0.##} / {enhancement.costPerEnhancement} 크래딧";
-    }
-
-    private string BuildSummary()
-    {
-        string weaponName = assemblyFactory.SelectedWeaponConfig != null
-            ? assemblyFactory.SelectedWeaponConfig.DisplayName
-            : "None";
-        string droneName = assemblyFactory.SelectedDroneConfig != null
-            ? assemblyFactory.SelectedDroneConfig.DisplayName
-            : "None";
-        string activeTarget = assemblyFactory.SelectedMenuId == "drone" ? droneName : weaponName;
-        return $"Enhancing SO: {activeTarget}\nWeapon SO: {weaponName}\nDrone SO: {droneName}";
+        SetText(weaponAttackLevelText, $"{currentAttack:0.##}  ->  <color=#4AD787>{nextAttack:0.##}</color>");
+        SetText(weaponEnhanceCostText, $"{enhancement.costPerEnhancement}");
+        return string.Empty;
     }
 
     private string BuildSelectedWeaponHeader()
     {
         ProjectileConfig weapon = assemblyFactory.SelectedWeaponConfig;
         return weapon != null ? $"Enhancing Weapon SO: {weapon.DisplayName}" : "Select a Weapon SO";
+    }
+
+    private void ClearEnhancementStatTexts()
+    {
+        SetText(weaponCurrentAttackText, string.Empty);
+        SetText(weaponAttackLevelText, string.Empty);
+        SetText(weaponEnhanceCostText, string.Empty);
+        SetActive(weaponCost, false);
     }
 
     private string BuildSelectedDroneHeader()
@@ -329,7 +350,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         AssemblyFactory.DroneEnhancement enhancement = assemblyFactory.SelectedDroneEnhancement;
         if (enhancement?.droneConfig == null)
         {
-            return "드론을 먼저 선택하십시오.";
+            return "드론 및 무기를 먼저 선택하십시오.";
         }
 
         return enhancement.IsMaxLevel
@@ -406,6 +427,18 @@ public class AssemblyFactoryPanel : MonoBehaviour
         {
             target.text = value;
         }
+    }
+
+    private static void SetIcon(Image target, Sprite sprite)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        target.sprite = sprite;
+        target.enabled = sprite != null;
+        target.preserveAspect = true;
     }
 
     private static void SetActive(GameObject target, bool value)

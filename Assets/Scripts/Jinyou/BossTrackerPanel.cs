@@ -144,10 +144,10 @@ public class BossTrackerPanel : MonoBehaviour
             ? $"레이저 공격 ({config.LaserDamage * damageMultiplier:0})"
             : string.Empty);
         SetText(creditRewardText, config != null
-            ? $"크레딧 {Mathf.RoundToInt(config.CreditReward * rewardMultiplier):N0}"
+            ? $"{Mathf.RoundToInt(config.CreditReward * rewardMultiplier):N0}"
             : string.Empty);
         SetText(coreRewardText, config != null
-            ? $"코어 {Mathf.RoundToInt(config.CoreCrystalReward * rewardMultiplier):N0}"
+            ? $"{Mathf.RoundToInt(config.CoreCrystalReward * rewardMultiplier):N0}"
             : string.Empty);
 
         if (bossIcon != null)

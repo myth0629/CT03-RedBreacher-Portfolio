@@ -4,7 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="15840d39-87a5-4969-8d02-426a203d9e11" name="변경" comment="" />
+    <list default="true" id="15840d39-87a5-4969-8d02-426a203d9e11" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.CT03-RedBreacher-Dev/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.CT03-RedBreacher-Dev/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/External Assets/Fonts/NEXON Lv2 Gothic Bold SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/External Assets/Fonts/NEXON Lv2 Gothic Bold SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/External Assets/Fonts/NEXON Lv2 Gothic SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/External Assets/Fonts/NEXON Lv2 Gothic SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Prefabs/SEO_UI/Assembly Factory Panel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Prefabs/SEO_UI/Assembly Factory Panel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Prefabs/SEO_UI/Core Charger Panel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Prefabs/SEO_UI/Core Charger Panel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Prefabs/SEO_UI/UI_Canvas_Game.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Prefabs/SEO_UI/UI_Canvas_Game.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/Myth.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Myth.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Jinyou/CoreChargerPanel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Jinyou/CoreChargerPanel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Jinyou/PlayerLoadoutSelectionPanel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Jinyou/PlayerLoadoutSelectionPanel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Myth/PlayerStatusHud.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Myth/PlayerStatusHud.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/Fonts &amp; Materials/LiberationSans SDF - Fallback.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/Fonts &amp; Materials/LiberationSans SDF - Fallback.asset" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -17,6 +29,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Assets/Scripts/SEO/PlayerDroneIconBinder.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/UGUI/UI/Core/VertexModifiers/Outline.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
@@ -31,22 +44,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "SEO",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "File.Encoding",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;SEO&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;File.Encoding&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Unity 에디터에 연결.Unity 에디터에 연결">
     <configuration name="유닛 테스트(배치 모드)" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="B:\Unity\6000.3.10f1\Editor\Unity.exe" />
@@ -104,6 +117,9 @@
       <workItem from="1780995168896" duration="334000" />
       <workItem from="1781483795776" duration="1064000" />
       <workItem from="1781485649426" duration="18644000" />
+      <workItem from="1781577141285" duration="10801000" />
+      <workItem from="1781656422485" duration="9969000" />
+      <workItem from="1781669000676" duration="2203000" />
     </task>
     <servers />
   </component>

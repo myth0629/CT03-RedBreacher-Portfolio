@@ -13,13 +13,17 @@ MonoBehaviour:
   m_Name: Weapon_13
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 13
-  displayName: "\uD3EC\uD0C413"
-  weaponCategory: "\uD3EC\uD0C4"
+  displayName: "HE\uACE0\uD3ED\uD0C4"
+  icon: {fileID: 21300000, guid: 043a0db24e1ce54459ce8a52cf1194b3, type: 3}
   attackDamage: 46
   attackType: 1
   areaRadius: 1.5
   areaDamageMultiplier: 0.7
   maxAreaTargets: 10
+  maxPierceTargets: 3
+  maxLevel: 10
+  damagePercentPerLevel: 0.1
+  maxLevelDuplicateCoreCrystalReward: 1
   speed: 20
   lifetime: 2
   collisionRadius: 0.2

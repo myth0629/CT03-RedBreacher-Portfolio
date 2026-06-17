@@ -13,8 +13,17 @@ MonoBehaviour:
   m_Name: Weapon_22
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   id: 22
-  displayName: "\uD3EC\uD0C422"
+  displayName: "\uC804\uACA9\uBCFC\uD2B8"
+  icon: {fileID: 21300000, guid: 89bb013b3c84fc0489cbe3c531a43835, type: 3}
   attackDamage: 100
+  attackType: 2
+  areaRadius: 2
+  areaDamageMultiplier: 0.7
+  maxAreaTargets: 10
+  maxPierceTargets: 3
+  maxLevel: 10
+  damagePercentPerLevel: 0.1
+  maxLevelDuplicateCoreCrystalReward: 1
   speed: 20
   lifetime: 2
   collisionRadius: 0.2
