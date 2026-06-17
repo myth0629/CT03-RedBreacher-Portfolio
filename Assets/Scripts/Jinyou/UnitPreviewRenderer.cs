@@ -132,17 +132,65 @@ public class UnitPreviewRenderer : MonoBehaviour
         if (TryGetSpriteBounds(unit, out bounds))
         {
             center = bounds.center;
-            float halfExtent = Mathf.Max(bounds.extents.x, bounds.extents.z);
+            PreviewFrame frame = CalculatePreviewFrame(bounds);
+            float halfExtent = Mathf.Max(frame.horizontalExtent, frame.verticalExtent);
             previewCamera.orthographicSize = Mathf.Max(0.1f, halfExtent * 1.15f);
+            previewCamera.transform.position = center + frame.viewDirection * 100f;
+            previewCamera.transform.rotation = Quaternion.LookRotation(-frame.viewDirection, frame.upDirection);
+            return;
         }
         else
         {
             previewCamera.orthographicSize = 3f;
         }
 
-        // 톱다운: 위(+Y)에서 내려다보며, 차량 전방(+Z)이 아이콘 위쪽을 향하게 한다.
         previewCamera.transform.position = center + Vector3.up * 100f;
         previewCamera.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
+    }
+
+    private struct PreviewFrame
+    {
+        public Vector3 viewDirection;
+        public Vector3 upDirection;
+        public float horizontalExtent;
+        public float verticalExtent;
+    }
+
+    private static PreviewFrame CalculatePreviewFrame(Bounds bounds)
+    {
+        Vector3 extents = bounds.extents;
+
+        if (extents.z <= extents.x && extents.z <= extents.y)
+        {
+            // XY 평면 스프라이트는 정면(+Z)에서 본다.
+            return new PreviewFrame
+            {
+                viewDirection = Vector3.forward,
+                upDirection = Vector3.up,
+                horizontalExtent = extents.x,
+                verticalExtent = extents.y
+            };
+        }
+
+        if (extents.y <= extents.x && extents.y <= extents.z)
+        {
+            // XZ 평면 스프라이트는 위(+Y)에서 본다.
+            return new PreviewFrame
+            {
+                viewDirection = Vector3.up,
+                upDirection = Vector3.forward,
+                horizontalExtent = extents.x,
+                verticalExtent = extents.z
+            };
+        }
+
+        return new PreviewFrame
+        {
+            viewDirection = Vector3.right,
+            upDirection = Vector3.up,
+            horizontalExtent = extents.z,
+            verticalExtent = extents.y
+        };
     }
 
     private static bool TryGetSpriteBounds(GameObject root, out Bounds bounds)

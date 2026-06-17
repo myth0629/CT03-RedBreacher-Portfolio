@@ -45,6 +45,9 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupWeaponKnockbackText;
     [SerializeField] private Image tankPopupEquipWeaponIcon;
     [SerializeField] private RawImage tankPopupEquipDroneIcon;
+    private Image tankPopupEquipDronePlaceholderImage;
+    private PlayerDroneController droneController;
+    private GameObject renderedTankPopupDronePrefab;
 
     [Header("Stat Upgrade Popup")]
     [SerializeField] private TMP_Text statUpgradePointText;
@@ -134,6 +137,8 @@ public class PlayerStatusHud : MonoBehaviour
         }
 
         ResolveBossEncounterManager();
+        ResolveTankPopupIconReferences();
+        ResolveDroneController();
     }
 
     private void OnEnable()
@@ -254,6 +259,9 @@ public class PlayerStatusHud : MonoBehaviour
         }
 
         ProjectileConfig weapon = player.WeaponConfig;
+        ResolveTankPopupIconReferences();
+        ResolveDroneController();
+        DroneConfig drone = droneController != null ? droneController.DroneConfig : null;
 
         // 탱크 팝업은 연결된 텍스트만 선택적으로 갱신한다.
         SetText(tankPopupNameText, player.DisplayName);
@@ -267,6 +275,7 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupWeaponNameText, weapon != null ? weapon.DisplayName : "장착한 무기 없음");
         SetText(tankPopupWeaponCategoryText, weapon != null ? weapon.WeaponCategory : "무기 카테고리");
         SetIcon(tankPopupEquipWeaponIcon, weapon != null ? weapon.Icon : null);
+        SetDronePreview(tankPopupEquipDroneIcon, drone);
         SetText(tankPopupWeaponDamageText, $"{player.WeaponAttackDamage:0.##}");
         SetText(tankPopupWeaponRangeText, $"{player.AttackRange:0.##}");
         SetText(tankPopupWeaponFireIntervalText, $"{player.AttackInterval:0.##}");
@@ -345,6 +354,44 @@ public class PlayerStatusHud : MonoBehaviour
         target.preserveAspect = true;
     }
 
+    private void SetDronePreview(RawImage target, DroneConfig drone)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        GameObject prefab = drone != null ? drone.DronePrefab : null;
+        if (prefab == null)
+        {
+            target.texture = null;
+            target.color = Color.clear;
+            target.enabled = false;
+            if (tankPopupEquipDronePlaceholderImage != null)
+            {
+                tankPopupEquipDronePlaceholderImage.enabled = true;
+            }
+            renderedTankPopupDronePrefab = null;
+            return;
+        }
+
+        if (renderedTankPopupDronePrefab == prefab && target.texture != null)
+        {
+            return;
+        }
+
+        // 드론은 프리팹을 장착 정보로 쓰기 때문에 유닛 프리뷰 렌더러를 그대로 재사용한다.
+        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
+        target.texture = preview;
+        target.color = preview != null ? Color.white : Color.clear;
+        target.enabled = preview != null;
+        if (tankPopupEquipDronePlaceholderImage != null)
+        {
+            tankPopupEquipDronePlaceholderImage.enabled = preview == null;
+        }
+        renderedTankPopupDronePrefab = preview != null ? prefab : null;
+    }
+
     private static void SetButtonInteractable(Button target, bool interactable)
     {
         if (target != null)
@@ -370,6 +417,115 @@ public class PlayerStatusHud : MonoBehaviour
         }
 
         return FindFirstObjectByType<PlayerCurrencyWallet>();
+    }
+
+    private void ResolveDroneController()
+    {
+        if (droneController != null)
+        {
+            return;
+        }
+
+        droneController = player != null
+            ? player.GetComponent<PlayerDroneController>()
+            : FindFirstObjectByType<PlayerDroneController>(FindObjectsInactive.Include);
+    }
+
+    private void ResolveTankPopupIconReferences()
+    {
+        if (tankPopupEquipWeaponIcon == null)
+        {
+            Transform tankWeaponRoot = FindChildTransformByName(transform, "TankWeapon");
+            tankPopupEquipWeaponIcon = FindChildComponentByName<Image>(tankWeaponRoot, "Weapon_Icon");
+            tankPopupEquipWeaponIcon ??= FindChildComponentByName<Image>(transform, "Weapon_Icon");
+        }
+
+        if (tankPopupEquipDroneIcon != null)
+        {
+            return;
+        }
+
+        Transform tankDroneRoot = FindChildTransformByName(transform, "TankDrone");
+        tankPopupEquipDroneIcon = FindChildComponentByName<RawImage>(tankDroneRoot, "Drone_Icon");
+        if (tankPopupEquipDroneIcon != null)
+        {
+            return;
+        }
+
+        Image droneImage = FindChildComponentByName<Image>(tankDroneRoot, "Drone_Icon");
+        if (droneImage == null)
+        {
+            droneImage = FindChildComponentByName<Image>(transform, "Drone_Icon");
+        }
+
+        if (droneImage == null)
+        {
+            return;
+        }
+
+        // 기존 프리팹은 Image 슬롯이라, 같은 위치에 런타임 프리뷰용 RawImage 자식을 만든다.
+        tankPopupEquipDronePlaceholderImage = droneImage;
+        tankPopupEquipDroneIcon = droneImage.GetComponentInChildren<RawImage>(true);
+        tankPopupEquipDroneIcon ??= CreateDronePreviewImage(droneImage.rectTransform);
+    }
+
+    private static RawImage CreateDronePreviewImage(RectTransform parent)
+    {
+        if (parent == null)
+        {
+            return null;
+        }
+
+        GameObject previewObject = new GameObject("Drone_Icon_Preview", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+        RectTransform previewRect = previewObject.GetComponent<RectTransform>();
+        previewRect.SetParent(parent, false);
+        previewRect.anchorMin = Vector2.zero;
+        previewRect.anchorMax = Vector2.one;
+        previewRect.offsetMin = Vector2.zero;
+        previewRect.offsetMax = Vector2.zero;
+        previewRect.localScale = Vector3.one;
+
+        RawImage previewImage = previewObject.GetComponent<RawImage>();
+        previewImage.raycastTarget = false;
+        previewImage.color = Color.clear;
+        previewImage.enabled = false;
+        return previewImage;
+    }
+
+    private static Transform FindChildTransformByName(Transform root, string childName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == childName)
+            {
+                return child;
+            }
+        }
+
+        return null;
+    }
+
+    private static T FindChildComponentByName<T>(Transform root, string childName) where T : Component
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        foreach (T component in root.GetComponentsInChildren<T>(true))
+        {
+            if (component.name == childName)
+            {
+                return component;
+            }
+        }
+
+        return null;
     }
 
     private void SubscribeBossEncounter()

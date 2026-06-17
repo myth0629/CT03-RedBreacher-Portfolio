@@ -122,7 +122,18 @@ public class BaseCampHud : MonoBehaviour
 
     private void CollectCredits()
     {
+        CreditRefinery refinery = baseCampManager != null ? baseCampManager.CreditRefinery : null;
+        int collectedCredits = refinery != null ? refinery.StoredCredits : 0;
+        Vector3 sourcePosition = collectButton != null ? collectButton.transform.position : Vector3.zero;
+
         baseCampManager?.CollectRefineryCredits();
+
+        if (collectedCredits > 0)
+        {
+            // 기지 HUD의 Collection_Button에서도 수집 크레딧 흡수 연출을 재생한다.
+            RewardFlyAnimator.Instance.PlayReward(sourcePosition, CurrencyType.Credits, collectedCredits);
+        }
+
         Refresh();
     }
 

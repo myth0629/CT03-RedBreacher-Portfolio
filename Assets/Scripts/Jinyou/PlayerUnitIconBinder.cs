@@ -13,9 +13,16 @@ public class PlayerUnitIconBinder : MonoBehaviour
     [SerializeField] private RawImage targetImage;
     [SerializeField] private PlayerController player;
 
+    private GameObject renderedPrefab;
+
     private void Reset()
     {
         targetImage = GetComponent<RawImage>();
+    }
+
+    private void Awake()
+    {
+        ResolveTarget();
     }
 
     private void OnEnable()
@@ -23,19 +30,32 @@ public class PlayerUnitIconBinder : MonoBehaviour
         Sync();
     }
 
+    private void Update()
+    {
+        GameObject prefab = ResolveUnitPrefab();
+        if (prefab != null && (targetImage == null || targetImage.texture == null || renderedPrefab != prefab))
+        {
+            // 플레이어 유닛이 늦게 초기화되는 경우를 대비해 필요한 때만 다시 그린다.
+            Sync(prefab);
+        }
+    }
+
     public void Sync()
     {
+        Sync(ResolveUnitPrefab());
+    }
+
+    private void Sync(GameObject prefab)
+    {
+        ResolveTarget();
         if (targetImage == null)
         {
             return;
         }
 
-        player ??= FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
-
-        PlayerUnitConfig config = player != null ? player.UnitConfig : null;
-        GameObject prefab = config != null ? config.UnitPrefab : null;
         if (prefab == null)
         {
+            Clear();
             return;
         }
 
@@ -44,6 +64,32 @@ public class PlayerUnitIconBinder : MonoBehaviour
         {
             targetImage.texture = rt;
             targetImage.color = Color.white;
+            renderedPrefab = prefab;
         }
+    }
+
+    private void ResolveTarget()
+    {
+        targetImage ??= GetComponent<RawImage>();
+    }
+
+    private GameObject ResolveUnitPrefab()
+    {
+        player ??= FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
+
+        PlayerUnitConfig config = player != null ? player.UnitConfig : null;
+        return config != null ? config.UnitPrefab : null;
+    }
+
+    private void Clear()
+    {
+        if (targetImage == null)
+        {
+            return;
+        }
+
+        targetImage.texture = null;
+        targetImage.color = Color.clear;
+        renderedPrefab = null;
     }
 }

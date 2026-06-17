@@ -105,6 +105,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         // "처음엔 안 열리고 두 번째 클릭에야 열리는" 문제가 생긴다.
         // 패널은 씬/프리팹에서 비활성으로 시작하므로 여기서 따로 끌 필요가 없다.
         ResolveSources();
+        ResolveDetailIconReferences();
     }
 
     private void Start()
@@ -397,6 +398,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void RefreshWeaponDetail(ProjectileConfig weapon)
     {
+        ResolveDetailIconReferences();
+
         int weaponEnhanceLevel = weapon != null ? GetFactoryWeaponLevel(weapon) : 0;
         float weaponEnhancedDamage = weaponEnhanceLevel > 0 ? GetEnhancedWeaponDamage(weapon) : 0f;
         SetIcon(detailIconWeapon, weapon != null ? weapon.Icon : null);
@@ -413,6 +416,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void RefreshDroneDetail(DroneConfig drone)
     {
+        ResolveDetailIconReferences();
+
         int droneEnhanceLevel = drone != null ? GetFactoryDroneLevel(drone) : 0;
         float droneEnhancedDamage = droneEnhanceLevel > 0 ? GetEnhancedDroneDamage(drone) : 0f;
         SetIcon(detailIconWeapon, null);
@@ -452,6 +457,54 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         assemblyFactory ??= BaseCampManager.Instance != null
             ? BaseCampManager.Instance.AssemblyFactory
             : FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
+    }
+
+    private void ResolveDetailIconReferences()
+    {
+        if (detailIconWeapon != null)
+        {
+            return;
+        }
+
+        Transform detailRoot = FindChildTransformByName(transform, "Detail_WeaponIcon");
+        // 상세 프레임의 배경이 아니라 내부 아이콘 슬롯에 무기 스프라이트를 반영한다.
+        detailIconWeapon = FindChildComponentByName<Image>(detailRoot, "Icon");
+    }
+
+    private static Transform FindChildTransformByName(Transform root, string childName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == childName)
+            {
+                return child;
+            }
+        }
+
+        return null;
+    }
+
+    private static T FindChildComponentByName<T>(Transform root, string childName) where T : Component
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        foreach (T component in root.GetComponentsInChildren<T>(true))
+        {
+            if (component.name == childName)
+            {
+                return component;
+            }
+        }
+
+        return null;
     }
 
     private int GetCollectionWeaponLevel(ProjectileConfig weapon)

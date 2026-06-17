@@ -79,7 +79,20 @@ public class CreditRefineryPanel : MonoBehaviour
 
     private void CollectCredits()
     {
+        ResolveReferences();
+
+        // 수집 직전의 저장량과 버튼 위치를 캡처한다(수집 후 상태가 바뀌므로).
+        int collectedCredits = refinery != null ? refinery.StoredCredits : 0;
+        Vector3 sourcePosition = collectButton != null ? collectButton.transform.position : Vector3.zero;
+
         baseCampManager?.CollectRefineryCredits();
+
+        // 도전과제/임무와 동일하게, 수집한 크레딧 양에 따라 아이콘이 재화 표시로 날아가는 연출을 재생한다.
+        if (collectedCredits > 0)
+        {
+            RewardFlyAnimator.Instance.PlayReward(sourcePosition, CurrencyType.Credits, collectedCredits);
+        }
+
         Refresh();
     }
 
