@@ -25,6 +25,14 @@ MonoBehaviour:
   effectRadius: 3.5
   maxTargets: 20
   knockbackForce: 0
+  maxLevel: 10
+  damagePercentPerLevel: 0.1
+  cooldownReductionPercentPerLevel: 0.03
+  maxCooldownReductionPercent: 0.5
+  countIncreaseLevelInterval: 3
+  bombCountIncreasePerInterval: 0
+  turretCountIncreasePerInterval: 1
+  maxLevelDuplicateCoreCrystalReward: 1
   impactDelay: 0.5
   warningEffectPrefab: {fileID: 0}
   impactEffectPrefab: {fileID: 0}

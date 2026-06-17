@@ -111,6 +111,14 @@ public class InventoryFacility : MonoBehaviour
         }
     }
     public IReadOnlyList<PlayerUnitConfig> UnitConfigs => unitConfigs;
+    public IReadOnlyList<string> OwnedDroneIds
+    {
+        get
+        {
+            EnsureCollectionProgressInitialized();
+            return ownedDroneIds;
+        }
+    }
     public IReadOnlyList<EquipmentPartConfig> EquipmentPartConfigs
     {
         get

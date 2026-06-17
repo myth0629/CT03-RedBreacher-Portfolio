@@ -208,6 +208,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     [SerializeField] private int selectedWeaponIndex;
     [SerializeField] private bool saveWeaponEnhancementsToPlayerPrefs = true;
     [SerializeField, Min(0)] private int defaultWeaponEnhanceCost = 100;
+    [SerializeField, Min(0)] private int defaultWeaponEnhanceCostIncreasePerLevel = 50;
     [SerializeField, Min(0f)] private float defaultWeaponAttackIncrease = 1f;
 
     [Header("Drone Enhancement")]
@@ -973,9 +974,10 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         enhancement.enhancementLevels ??= new List<WeaponEnhancementLevel>();
         while (enhancement.enhancementLevels.Count < targetCount)
         {
+            int levelIndex = enhancement.enhancementLevels.Count;
             enhancement.enhancementLevels.Add(new WeaponEnhancementLevel
             {
-                cost = defaultWeaponEnhanceCost,
+                cost = GetDefaultWeaponEnhanceCost(levelIndex),
                 statIncreases = new List<WeaponStatIncrease>
                 {
                     new WeaponStatIncrease
@@ -986,6 +988,38 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
                 }
             });
         }
+
+        ApplyDefaultWeaponEnhanceCosts(enhancement);
+    }
+
+    private void ApplyDefaultWeaponEnhanceCosts(WeaponEnhancement enhancement)
+    {
+        if (enhancement?.enhancementLevels == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < enhancement.enhancementLevels.Count; i++)
+        {
+            WeaponEnhancementLevel levelData = enhancement.enhancementLevels[i];
+            if (levelData == null)
+            {
+                continue;
+            }
+
+            int defaultCostForLevel = GetDefaultWeaponEnhanceCost(i);
+            if (levelData.cost == defaultWeaponEnhanceCost || levelData.cost == defaultCostForLevel)
+            {
+                // 기본 비용으로 생성된 단계만 레벨별 비용 증가 규칙을 적용한다.
+                levelData.cost = defaultCostForLevel;
+            }
+        }
+    }
+
+    private int GetDefaultWeaponEnhanceCost(int levelIndex)
+    {
+        return Mathf.Max(0, defaultWeaponEnhanceCost)
+            + Mathf.Max(0, defaultWeaponEnhanceCostIncreasePerLevel) * Mathf.Max(0, levelIndex);
     }
 
     private int GetWeaponEnhanceLevelCap()
@@ -1089,6 +1123,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         NormalizeMenus();
         NormalizeWeaponEnhancements();
         defaultWeaponEnhanceCost = Mathf.Max(0, defaultWeaponEnhanceCost);
+        defaultWeaponEnhanceCostIncreasePerLevel = Mathf.Max(0, defaultWeaponEnhanceCostIncreasePerLevel);
         defaultWeaponAttackIncrease = Mathf.Max(0f, defaultWeaponAttackIncrease);
         defaultDroneEnhanceCost = Mathf.Max(0, defaultDroneEnhanceCost);
         defaultDroneAttackIncrease = Mathf.Max(0f, defaultDroneAttackIncrease);

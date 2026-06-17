@@ -26,13 +26,14 @@ public class PlayerAutoSkillController : MonoBehaviour
 
     public float GetCooldownProgress01(PlayerSkillConfig skill)
     {
-        if (skill == null || skill.Cooldown <= 0f)
+        float cooldown = GetCooldown(skill);
+        if (skill == null || cooldown <= 0f)
         {
             return 0f;
         }
 
         float remaining = GetRemainingCooldown(skill);
-        return Mathf.Clamp01(remaining / skill.Cooldown);
+        return Mathf.Clamp01(remaining / cooldown);
     }
 
     public void Initialize(PlayerController owner, IReadOnlyList<PlayerSkillConfig> skills)
@@ -57,7 +58,7 @@ public class PlayerAutoSkillController : MonoBehaviour
             }
 
             equippedSkills.Add(skill);
-            nextCastTimes[skill] = Time.time + skill.Cooldown;
+            nextCastTimes[skill] = Time.time + GetCooldown(skill);
             nextSearchTimes[skill] = 0f;
         }
     }
@@ -114,8 +115,14 @@ public class PlayerAutoSkillController : MonoBehaviour
             float cooldownStartDelay = skill.SkillType == PlayerSkillType.AutoTurret
                 ? skill.TurretDuration
                 : 0f;
-            nextCastTimes[skill] = Time.time + cooldownStartDelay + skill.Cooldown;
+            nextCastTimes[skill] = Time.time + cooldownStartDelay + GetCooldown(skill);
             nextSearchTimes[skill] = 0f;
         }
+    }
+
+    private float GetCooldown(PlayerSkillConfig skill)
+    {
+        int level = player != null ? player.GetSkillLevel(skill) : 1;
+        return skill != null ? skill.GetCooldown(level) : 0f;
     }
 }

@@ -116,6 +116,13 @@ public class AchievementPopup : MonoBehaviour
                 }
             });
         }
+
+        GameObject alertIcon = FindDeepChild(item.transform, "alert")?.gameObject;
+        if (alertIcon != null)
+        {
+            // 보상 수령 가능한 완료 상태일 때만 알림 아이콘을 노출한다.
+            alertIcon.SetActive(achievement.Completed);
+        }
     }
 
     private void ClearSpawnedItems()

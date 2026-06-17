@@ -151,6 +151,11 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "knockbackForce", row, "knockbackForce");
             SetInt(serializedObject, "maxLevel", row, "maxLevel");
             SetFloat(serializedObject, "damagePercentPerLevel", row, "damagePercentPerLevel");
+            SetFloat(serializedObject, "cooldownReductionPercentPerLevel", row, "cooldownReductionPercentPerLevel");
+            SetFloat(serializedObject, "maxCooldownReductionPercent", row, "maxCooldownReductionPercent");
+            SetInt(serializedObject, "countIncreaseLevelInterval", row, "countIncreaseLevelInterval");
+            SetInt(serializedObject, "bombCountIncreasePerInterval", row, "bombCountIncreasePerInterval");
+            SetInt(serializedObject, "turretCountIncreasePerInterval", row, "turretCountIncreasePerInterval");
             SetInt(serializedObject, "maxLevelDuplicateCoreCrystalReward", row, "maxLevelDuplicateCoreCrystalReward");
             SetFloat(serializedObject, "impactDelay", row, "impactDelay");
             SetObject(serializedObject, "warningEffectPrefab", GetAsset<GameObject>(row, "warningEffect"));
@@ -382,7 +387,9 @@ public static class BalanceCsvImporter
         {
             "id", "displayName", "icon", "skillType", "cooldown", "castRange", "minimumEnemyCount",
             "attackPowerMultiplier", "flatDamage", "canCritical", "effectRadius", "maxTargets", "knockbackForce",
-            "maxLevel", "damagePercentPerLevel", "maxLevelDuplicateCoreCrystalReward",
+            "maxLevel", "damagePercentPerLevel", "cooldownReductionPercentPerLevel", "maxCooldownReductionPercent",
+            "countIncreaseLevelInterval", "bombCountIncreasePerInterval", "turretCountIncreasePerInterval",
+            "maxLevelDuplicateCoreCrystalReward",
             "impactDelay", "warningEffect", "impactEffect", "effectCleanupDelay",
             "airplanePrefab", "airplaneSpeed", "airplaneSpawnOffset", "airplaneHeight",
             "bombProjectilePrefab", "bombEffectScale", "bombCount", "bombInterval",
@@ -411,6 +418,11 @@ public static class BalanceCsvImporter
                 FormatFloat(config.KnockbackForce),
                 config.MaxLevel.ToString(CultureInfo.InvariantCulture),
                 FormatFloat(config.DamagePercentPerLevel),
+                FormatFloat(config.CooldownReductionPercentPerLevel),
+                FormatFloat(config.MaxCooldownReductionPercent),
+                config.CountIncreaseLevelInterval.ToString(CultureInfo.InvariantCulture),
+                config.BombCountIncreasePerInterval.ToString(CultureInfo.InvariantCulture),
+                config.TurretCountIncreasePerInterval.ToString(CultureInfo.InvariantCulture),
                 config.MaxLevelDuplicateCoreCrystalReward.ToString(CultureInfo.InvariantCulture),
                 FormatFloat(config.ImpactDelay),
                 GetAssetPath(config.WarningEffectPrefab),
