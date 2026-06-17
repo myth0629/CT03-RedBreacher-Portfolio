@@ -39,8 +39,17 @@ public class EquipmentPartsPanel : MonoBehaviour
     [SerializeField] private Button unequipButton;
     [SerializeField] private Button sellButton;
 
+    [Header("Filter")]
+    [SerializeField] private Button armorFilterButton;
+    [SerializeField] private Button engineFilterButton;
+    [SerializeField] private Button chipFilterButton;
+    [SerializeField] private Button allFilterButton;
+
     private readonly List<Button> spawnedButtons = new List<Button>();
     private string selectedInstanceId;
+
+    // null이면 전체 표시, 값이 있으면 해당 슬롯 파츠만 표시한다.
+    private EquipmentPartSlot? slotFilter;
 
     private void OnEnable()
     {
@@ -49,6 +58,10 @@ public class EquipmentPartsPanel : MonoBehaviour
         equipButton?.onClick.AddListener(EquipSelected);
         unequipButton?.onClick.AddListener(UnequipSelected);
         sellButton?.onClick.AddListener(SellSelected);
+        armorFilterButton?.onClick.AddListener(FilterByArmor);
+        engineFilterButton?.onClick.AddListener(FilterByEngine);
+        chipFilterButton?.onClick.AddListener(FilterByChip);
+        allFilterButton?.onClick.AddListener(ShowAllParts);
         Rebuild();
     }
 
@@ -58,6 +71,10 @@ public class EquipmentPartsPanel : MonoBehaviour
         equipButton?.onClick.RemoveListener(EquipSelected);
         unequipButton?.onClick.RemoveListener(UnequipSelected);
         sellButton?.onClick.RemoveListener(SellSelected);
+        armorFilterButton?.onClick.RemoveListener(FilterByArmor);
+        engineFilterButton?.onClick.RemoveListener(FilterByEngine);
+        chipFilterButton?.onClick.RemoveListener(FilterByChip);
+        allFilterButton?.onClick.RemoveListener(ShowAllParts);
         ClearButtons();
     }
 
@@ -70,12 +87,51 @@ public class EquipmentPartsPanel : MonoBehaviour
         {
             foreach (EquipmentPartInstance part in inventory.EquipmentParts)
             {
+                // 필터가 설정된 경우 해당 슬롯의 파츠만 목록에 표시한다.
+                if (slotFilter.HasValue && (part == null || part.slot != slotFilter.Value))
+                {
+                    continue;
+                }
+
                 CreatePartButton(part);
             }
         }
 
+        RefreshFilterButtons();
         RefreshEquippedSlots();
         RefreshDetail();
+    }
+
+    public void FilterByArmor() => SetSlotFilter(EquipmentPartSlot.Armor);
+
+    public void FilterByEngine() => SetSlotFilter(EquipmentPartSlot.Engine);
+
+    public void FilterByChip() => SetSlotFilter(EquipmentPartSlot.Chip);
+
+    public void ShowAllParts() => SetSlotFilter(null);
+
+    private void SetSlotFilter(EquipmentPartSlot? slot)
+    {
+        // 활성화된 필터 버튼을 다시 누르면 전체 표시로 토글한다.
+        slotFilter = slotFilter == slot ? null : slot;
+        Rebuild();
+    }
+
+    private void RefreshFilterButtons()
+    {
+        SetFilterButtonActive(armorFilterButton, slotFilter == EquipmentPartSlot.Armor);
+        SetFilterButtonActive(engineFilterButton, slotFilter == EquipmentPartSlot.Engine);
+        SetFilterButtonActive(chipFilterButton, slotFilter == EquipmentPartSlot.Chip);
+        SetFilterButtonActive(allFilterButton, slotFilter == null);
+    }
+
+    private static void SetFilterButtonActive(Button button, bool active)
+    {
+        // 현재 선택된 필터 버튼은 비활성(눌린 상태)으로 표시해 시각적으로 구분한다.
+        if (button != null)
+        {
+            button.interactable = !active;
+        }
     }
 
     public void EquipSelected()
