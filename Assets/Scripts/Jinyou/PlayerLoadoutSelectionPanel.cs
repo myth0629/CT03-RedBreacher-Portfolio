@@ -321,7 +321,9 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                 $"갯수 {drone.DroneCount}",
                 $"Lv.{GetFactoryDroneLevel(drone)} / 피해량 {GetEnhancedDroneDamage(drone):0.##}",
                 drone == selectedDrone,
-                () => SelectDrone(drone));
+                () => SelectDrone(drone),
+                null,
+                drone);
         }
     }
 

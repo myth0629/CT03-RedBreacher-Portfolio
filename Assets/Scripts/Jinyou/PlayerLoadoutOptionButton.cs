@@ -7,7 +7,8 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
 {
     [SerializeField] private Button button;
     [SerializeField] private TMP_Text nameText;
-    [SerializeField] private Image icon;
+    [SerializeField] private Image weaponIcon;
+    [SerializeField] private RawImage droneIcon;
     [SerializeField] private TMP_Text categoryText;
     [SerializeField] private TMP_Text summaryText;
     [SerializeField] private GameObject selectedMark;
@@ -38,13 +39,15 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
         string summary,
         bool selected,
         System.Action clickAction,
-        Sprite iconSprite = null)
+        Sprite iconSprite = null,
+        DroneConfig droneConfig = null)
     {
         onClick = clickAction;
         SetText(nameText, title);
         SetText(categoryText, category);
         SetText(summaryText, summary);
-        SetIcon(iconSprite);
+        SetWeaponIcon(iconSprite);
+        SetDroneIcon(droneConfig);
         SetSelected(selected);
     }
 
@@ -69,15 +72,40 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
         }
     }
 
-    private void SetIcon(Sprite sprite)
+    // 무기는 스프라이트 이미지로 동기화
+    private void SetWeaponIcon(Sprite sprite)
     {
-        if (icon == null)
+        if (weaponIcon == null)
         {
             return;
         }
 
-        icon.sprite = sprite;
-        icon.enabled = sprite != null;
-        icon.preserveAspect = true;
+        weaponIcon.sprite = sprite;
+        weaponIcon.enabled = sprite != null;
+        weaponIcon.preserveAspect = true;
+        weaponIcon.gameObject.SetActive(sprite != null);
+    }
+
+    // 드론은 프리팹으로 렌더링헤서 이미지 동기화
+    private void SetDroneIcon(DroneConfig droneConfig)
+    {
+        if (droneIcon == null)
+        {
+            return;
+        }
+
+        GameObject prefab = droneConfig != null ? droneConfig.DronePrefab : null;
+        if (prefab == null)
+        {
+            droneIcon.texture = null;
+            droneIcon.color = Color.clear;
+            droneIcon.gameObject.SetActive(false);
+            return;
+        }
+
+        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
+        droneIcon.texture = preview;
+        droneIcon.color = preview != null ? Color.white : Color.clear;
+        droneIcon.gameObject.SetActive(preview != null);
     }
 }
