@@ -32,7 +32,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [SerializeField] private PlayerLoadoutOptionButton optionButtonPrefab;
 
     [Header("Detail")] 
-    [SerializeField] private Image detailIcon;
+    [SerializeField] private Image detailIconWeapon;
+    [SerializeField] private RawImage detailIconDrone;
     [SerializeField] private TMP_Text detailNameText;
     [SerializeField] private TMP_Text detailCategoryText;
     [SerializeField] private TMP_Text detailStatsText;
@@ -57,6 +58,29 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         target.sprite = sprite;
         target.enabled = sprite != null;
         target.preserveAspect = true;
+        target.gameObject.SetActive(sprite != null);
+    }
+
+    private static void SetDroneIcon(RawImage target, DroneConfig drone)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        GameObject prefab = drone != null ? drone.DronePrefab : null;
+        if (prefab == null)
+        {
+            target.texture = null;
+            target.color = Color.clear;
+            target.gameObject.SetActive(false);
+            return;
+        }
+
+        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
+        target.texture = preview;
+        target.color = preview != null ? Color.white : Color.clear;
+        target.gameObject.SetActive(preview != null);
     }
 
 #if UNITY_EDITOR
@@ -375,7 +399,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     {
         int weaponEnhanceLevel = weapon != null ? GetFactoryWeaponLevel(weapon) : 0;
         float weaponEnhancedDamage = weaponEnhanceLevel > 0 ? GetEnhancedWeaponDamage(weapon) : 0f;
-        SetIcon(detailIcon, weapon != null ? weapon.Icon : null);
+        SetIcon(detailIconWeapon, weapon != null ? weapon.Icon : null);
+        SetDroneIcon(detailIconDrone, null);
         SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하세요.");
         SetText(detailCategoryText, weapon != null ? $"Type: {weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
@@ -390,7 +415,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     {
         int droneEnhanceLevel = drone != null ? GetFactoryDroneLevel(drone) : 0;
         float droneEnhancedDamage = droneEnhanceLevel > 0 ? GetEnhancedDroneDamage(drone) : 0f;
-        SetIcon(detailIcon, null);
+        SetIcon(detailIconWeapon, null);
+        SetDroneIcon(detailIconDrone, drone);
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
         SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount}" : string.Empty);
         SetText(detailStatsText, drone != null
