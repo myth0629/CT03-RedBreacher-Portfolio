@@ -68,6 +68,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     public int CurrentStageIndex => FindFirstIncompleteStage();
     public IReadOnlyList<UnitConversionStage> ConversionStages => conversionStages;
     public UnitConversionStage CurrentConversionStage => GetConversionStageAt(CurrentStageIndex);
+    public IReadOnlyList<DroneUnlock> DroneUnlocks => droneUnlocks;
     public float DroneAttackDamageBonus => Mathf.Max(0f, GetCurrentBalance()?.droneAttackDamageBonus ?? 0f);
     public float DroneAttackRangeBonus => Mathf.Max(0f, GetCurrentBalance()?.droneAttackRangeBonus ?? 0f);
     public float DroneAttackIntervalReduction => Mathf.Max(0f, GetCurrentBalance()?.droneAttackIntervalReduction ?? 0f);
@@ -77,7 +78,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     {
         EnsureBalanceInitialized();
         Normalize();
-        SyncUnlockedDrones(false);
     }
 
     // 비활성 시설이 Awake 전에 RestoreState되어 maxLevel(기본 1)로 레벨이 클램프되는 문제 방지.
@@ -208,13 +208,54 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             : new List<int>();
 
         Normalize();
-        SyncUnlockedDrones(false);
         OnLevelChanged.Invoke(Level);
     }
 
     public int GetRequiredCoreChargerLevel(int stageIndex)
     {
         return Mathf.Clamp(stageIndex + 2, 2, maxLevel);
+    }
+
+    public DroneUnlock GetNextLockedDroneUnlock(InventoryFacility inventory)
+    {
+        if (droneUnlocks == null)
+        {
+            return null;
+        }
+
+        foreach (DroneUnlock droneUnlock in droneUnlocks)
+        {
+            if (droneUnlock?.droneConfig == null)
+            {
+                continue;
+            }
+
+            if (inventory == null || !inventory.ContainsDrone(droneUnlock.droneConfig))
+            {
+                return droneUnlock;
+            }
+        }
+
+        return null;
+    }
+
+    public bool CanUnlockNextDrone(InventoryFacility inventory)
+    {
+        DroneUnlock nextUnlock = GetNextLockedDroneUnlock(inventory);
+        return nextUnlock?.droneConfig != null
+            && inventory != null
+            && level >= Mathf.Max(1, nextUnlock.requiredCoreChargerLevel);
+    }
+
+    public bool TryUnlockNextDrone(InventoryFacility inventory)
+    {
+        if (!CanUnlockNextDrone(inventory))
+        {
+            return false;
+        }
+
+        DroneUnlock nextUnlock = GetNextLockedDroneUnlock(inventory);
+        return nextUnlock?.droneConfig != null && inventory.AddDrone(nextUnlock.droneConfig);
     }
 
     public bool CanUpgrade(int credits, int commanderLevel)
@@ -337,8 +378,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         upgradeRemainingSeconds = 0f;
         currentUpgradeDurationSeconds = 0f;
         level++;
-        // 코어 충전소 레벨에 맞는 드론을 인벤토리에 해금한다.
-        SyncUnlockedDrones(true);
         OnLevelChanged.Invoke(level);
         OnUpgradeCompleted.Invoke();
     }
@@ -361,35 +400,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     private BaseCampBalanceConfig.FacilityLevelData GetCurrentBalance()
     {
         return BaseCampBalanceConfig.Current?.GetLevel(FacilityId, level);
-    }
-
-    private void SyncUnlockedDrones(bool reportCollection)
-    {
-        InventoryFacility inventory = BaseCampManager.Instance != null
-            ? BaseCampManager.Instance.Inventory
-            : InventoryFacility.FindAny();
-        if (inventory == null || droneUnlocks == null)
-        {
-            return;
-        }
-
-        foreach (DroneUnlock droneUnlock in droneUnlocks)
-        {
-            if (droneUnlock?.droneConfig == null
-                || level < Mathf.Max(1, droneUnlock.requiredCoreChargerLevel))
-            {
-                continue;
-            }
-
-            if (reportCollection)
-            {
-                inventory.AddDrone(droneUnlock.droneConfig);
-            }
-            else
-            {
-                inventory.RegisterInitialDrone(droneUnlock.droneConfig);
-            }
-        }
     }
 
     private void Normalize()

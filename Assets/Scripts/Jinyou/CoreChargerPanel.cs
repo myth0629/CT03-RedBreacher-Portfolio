@@ -10,6 +10,10 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text levelText;
+
+    [Header("Panels")] 
+    [SerializeField] private GameObject tankUnitSubPanel;
+    [SerializeField] private GameObject droneUnlockSubPanel;
     
     [Header("TankUnit subPanel")]
     [SerializeField] private Button enhanceUnitButton;
@@ -18,26 +22,46 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private TMP_Text currentUnitText;
     [SerializeField] private RawImage enhanceUnitPreviewImage;
     [SerializeField] private TMP_Text enhanceUnitText;
-    
+
     [Header("TankUnit subPanel Status")]
     [SerializeField] private TMP_Text enhanceUnitHealthText;
     [SerializeField] private TMP_Text enhanceUnitDamageText;
     [SerializeField] private TMP_Text enhanceUnitSpeedText;
     [SerializeField] private TMP_Text enhanceUnitCritChanceText;
-    
+
     [Header("TankUnit DetailStatus")]
     [SerializeField] private TMP_Text unitStatusDetailText;
+
+    [Header("DroneUnlock subPanel")]
+    [SerializeField] private Button unlockDroneButton;
+    [SerializeField] private TMP_Text unlockDroneButtonStateText;
+    [SerializeField] private RawImage unlockDronePreviewImage;
+    [SerializeField] private TMP_Text unlockDroneText;
+
+    [Header("DroneUnlock subPanel")]
+    [SerializeField] private TMP_Text unlockDroneDamageText;
+    [SerializeField] private TMP_Text unlockDroneProjSpeedText;
+    [SerializeField] private TMP_Text unlockDroneMoveSpeedText;
 
     private CoreCharger coreCharger;
     private InventoryFacility inventory;
     private PlayerController player;
     private float observedUpgradeDuration;
 
+    // 상점의 무기/스킬 서브패널처럼 감춰야 할 패널을 감추지 못하고
+    // 다른 패널이 나오는 꼬이는 문제를 방지하기 위해 스크립트로 강제제어
+    void Start()
+    {
+        tankUnitSubPanel.SetActive(true);
+        droneUnlockSubPanel.SetActive(false);
+    }
+    
     private void OnEnable()
     {
         ResolveReferences();
         upgradeButton?.onClick.AddListener(UpgradeCoreCharger);
         enhanceUnitButton?.onClick.AddListener(ConvertCurrentUnit);
+        unlockDroneButton?.onClick.AddListener(UnlockNextDrone);
         Refresh();
     }
 
@@ -45,6 +69,7 @@ public class CoreChargerPanel : MonoBehaviour
     {
         upgradeButton?.onClick.RemoveListener(UpgradeCoreCharger);
         enhanceUnitButton?.onClick.RemoveListener(ConvertCurrentUnit);
+        unlockDroneButton?.onClick.RemoveListener(UnlockNextDrone);
     }
 
     private void Update()
@@ -79,18 +104,26 @@ public class CoreChargerPanel : MonoBehaviour
         Refresh();
     }
 
+    private void UnlockNextDrone()
+    {
+        ResolveReferences();
+        coreCharger?.TryUnlockNextDrone(inventory);
+        Refresh();
+    }
+
     private void Refresh()
     {
         ResolveReferences();
 
         if (coreCharger == null)
         {
-            SetText(enhanceUnitButtonStateText, "코어 충전소가 연결되지 않았습니다.");
+            SetText(enhanceUnitButtonStateText, "코어 차저가 연결되지 않았습니다.");
             SetText(currentUnitText, string.Empty);
             SetText(enhanceUnitText, string.Empty);
             RefreshEnhanceUnitStatTexts(null);
             SetUnitPreview(currentUnitPreviewImage, null);
             SetUnitPreview(enhanceUnitPreviewImage, null);
+            RefreshDroneUnlockPanel();
             SetInteractable(upgradeButton, false);
             SetInteractable(enhanceUnitButton, false);
             return;
@@ -118,6 +151,7 @@ public class CoreChargerPanel : MonoBehaviour
         SetInteractable(enhanceUnitButton, canConvert);
         SetText(enhanceUnitButtonStateText, BuildEnhanceUnitButtonStateText(stage, playerLevel));
         SetEnhanceUnitButtonLabel(stage != null ? "유닛 강화" : "완료");
+        RefreshDroneUnlockPanel();
 
         BaseCampUpgradeStatus.SetUpgradeProgress(
             upgradeProgressFill,
@@ -133,7 +167,7 @@ public class CoreChargerPanel : MonoBehaviour
     {
         if (coreCharger == null)
         {
-            return "코어 충전소가 연결되지 않았습니다.";
+            return "코어 차저가 연결되지 않았습니다.";
         }
 
         if (stage == null)
@@ -167,7 +201,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         if (coreCharger.Level < requiredCoreLevel)
         {
-            message += $"\n- 코어 충전소 Lv.{requiredCoreLevel} 필요 (현재 Lv.{coreCharger.Level})";
+            message += $"\n- 코어 차저 Lv.{requiredCoreLevel} 필요 (현재 Lv.{coreCharger.Level})";
         }
 
         if (!ownsCurrentUnit && !hasCurrentUnitEquipped)
@@ -178,6 +212,80 @@ public class CoreChargerPanel : MonoBehaviour
         return message;
     }
 
+    private void RefreshDroneUnlockPanel()
+    {
+        if (coreCharger == null)
+        {
+            SetInteractable(unlockDroneButton, false);
+            SetText(unlockDroneButtonStateText, "코어 차저가 연결되지 않았습니다.");
+            SetText(unlockDroneText, string.Empty);
+            SetDronePreview(unlockDronePreviewImage, null);
+            RefreshUnlockDroneStatTexts(null);
+            return;
+        }
+
+        CoreCharger.DroneUnlock nextUnlock = coreCharger.GetNextLockedDroneUnlock(inventory);
+        DroneConfig nextDrone = nextUnlock?.droneConfig;
+
+        SetInteractable(unlockDroneButton, coreCharger.CanUnlockNextDrone(inventory));
+        SetText(unlockDroneButtonStateText, BuildUnlockDroneButtonStateText(nextUnlock));
+        SetText(unlockDroneText, nextDrone != null ? nextDrone.DisplayName : "모든 드론 해금 완료");
+        SetDronePreview(unlockDronePreviewImage, nextDrone);
+        RefreshUnlockDroneStatTexts(nextDrone);
+    }
+
+    /// <summary>
+    /// unlockDroneButtonStateText를 통해서 탱크 유닛을 강화할 때 필요한 조건이 무엇인지 확인할 수 있으며,
+    /// 현재로는 코어 차저 레벨에 따라 드론 해금하기로 조건을 걸어놨음.
+    /// 예: 드론 해금 조건 \n 코어 차저 Lv. 3 필요 (현재 Lv. 1)
+    /// </summary>
+    /// <param name="nextUnlock"></param>
+    /// <returns></returns>
+    private string BuildUnlockDroneButtonStateText(CoreCharger.DroneUnlock nextUnlock)
+    {
+        if (coreCharger == null)
+        {
+            return "코어 차저가 연결되지 않았습니다.";
+        }
+
+        if (inventory == null)
+        {
+            return "인벤토리가 연결되지 않았습니다.";
+        }
+
+        if (nextUnlock?.droneConfig == null)
+        {
+            return coreCharger.DroneUnlocks == null || coreCharger.DroneUnlocks.Count == 0
+                ? "드론 해금 목록이 설정되지 않았습니다."
+                : "모든 드론이 해금되었습니다.";
+        }
+
+        int requiredLevel = Mathf.Max(1, nextUnlock.requiredCoreChargerLevel);
+        if (coreCharger.Level < requiredLevel)
+        {
+            return $"드론 해금 조건\n- 코어 차저 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})";
+        }
+
+        return $"{nextUnlock.droneConfig.DisplayName} 해금하기";
+    }
+
+    // UnlockDrone 스텟 관련 텍스트에 연결
+    private void RefreshUnlockDroneStatTexts(DroneConfig drone)
+    {
+        if (drone == null)
+        {
+            SetText(unlockDroneDamageText, string.Empty);
+            SetText(unlockDroneProjSpeedText, string.Empty);
+            SetText(unlockDroneMoveSpeedText, string.Empty);
+            return;
+        }
+
+        SetText(unlockDroneDamageText, $"{drone.AttackDamage:0.##}");
+        SetText(unlockDroneProjSpeedText, $"{drone.ProjectileSpeed:0.##}");
+        SetText(unlockDroneMoveSpeedText, $"{drone.FollowSpeed:0.##}");
+    }
+
+    // TankUnit subPanel Status에 연결
     private void RefreshEnhanceUnitStatTexts(CoreCharger.UnitConversionStage stage)
     {
         if (stage == null || stage.currentUnit == null || stage.nextUnit == null)
@@ -197,6 +305,7 @@ public class CoreChargerPanel : MonoBehaviour
         SetText(enhanceUnitCritChanceText, FormatPlainPercentChange(current.CritChance, next.CritChance));
     }
 
+    // TankUnit DetailStatus에 연결
     private static string BuildUnitDetailStatusText(CoreCharger.UnitConversionStage stage)
     {
         if (stage == null)
@@ -222,6 +331,7 @@ public class CoreChargerPanel : MonoBehaviour
             + $"{FormatPercentChange(current.CritChance, next.CritChance)}\n";
     }
 
+    // 탱크 유닛 유/무 판별
     private static string FormatUnitName(PlayerUnitConfig unitConfig)
     {
         return unitConfig != null
@@ -252,6 +362,7 @@ public class CoreChargerPanel : MonoBehaviour
             + $"({nextPercent - currentPercent:+0.##;-0.##;0}%p)</color>";
     }
 
+    // 탱크 유닛강화 조건을 담아내기 위해 플레이어 레벨 가져오기
     private int GetPlayerLevel()
     {
         if (baseCampManager?.PlayerProgression != null)
@@ -305,6 +416,7 @@ public class CoreChargerPanel : MonoBehaviour
         }
     }
 
+    // 탱크 Raw이미지 연동
     private static void SetUnitPreview(RawImage target, PlayerUnitConfig unitConfig)
     {
         if (target == null)
@@ -327,4 +439,26 @@ public class CoreChargerPanel : MonoBehaviour
         target.gameObject.SetActive(preview != null);
     }
 
+    // 드론 Raw이미지 연동
+    private static void SetDronePreview(RawImage target, DroneConfig droneConfig)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        GameObject prefab = droneConfig != null ? droneConfig.DronePrefab : null;
+        if (prefab == null)
+        {
+            target.texture = null;
+            target.color = Color.clear;
+            target.gameObject.SetActive(false);
+            return;
+        }
+
+        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
+        target.texture = preview;
+        target.color = preview != null ? Color.white : Color.clear;
+        target.gameObject.SetActive(preview != null);
+    }
 }
