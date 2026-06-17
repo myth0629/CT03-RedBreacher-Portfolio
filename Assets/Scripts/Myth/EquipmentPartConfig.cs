@@ -125,6 +125,8 @@ public class EquipmentPartInstance
     public float mainStatValue;
     public int salePrice;
     public List<EquipmentSubStat> subStats = new List<EquipmentSubStat>();
+    // 획득 후 아직 인벤토리에서 확인하지 않은 신규 파츠 여부.
+    public bool isNew;
 
     // 드롭 시점의 레벨에 따라 적용/표시되는 최종 수치를 계산한다.
     public float LevelMultiplier => EquipmentPartLeveling.GetMultiplier(level);
@@ -192,15 +194,27 @@ public static class EquipmentPartGenerator
         return instance;
     }
 
-    public static EquipmentPartRarity RollRarity()
+    // 레벨에 따라 고희귀도 확률이 완만히 증가한다(상한 적용). 필요하면 이 상수만 조정한다.
+    private const float BaseEpicChance = 0.05f;
+    private const float BaseRareChance = 0.20f;
+    private const float EpicChancePerLevel = 0.005f; // 레벨당 +0.5%
+    private const float RareChancePerLevel = 0.01f;  // 레벨당 +1%
+    private const float MaxEpicChance = 0.25f;
+    private const float MaxRareChance = 0.45f;
+
+    public static EquipmentPartRarity RollRarity(int level = 1)
     {
+        int steps = Mathf.Max(0, level - 1);
+        float epicChance = Mathf.Min(MaxEpicChance, BaseEpicChance + steps * EpicChancePerLevel);
+        float rareChance = Mathf.Min(MaxRareChance, BaseRareChance + steps * RareChancePerLevel);
+
         float roll = UnityEngine.Random.value;
-        if (roll < 0.05f)
+        if (roll < epicChance)
         {
             return EquipmentPartRarity.Epic;
         }
 
-        return roll < 0.25f ? EquipmentPartRarity.Rare : EquipmentPartRarity.Common;
+        return roll < epicChance + rareChance ? EquipmentPartRarity.Rare : EquipmentPartRarity.Common;
     }
 
     private static float RollSubStatValue(EquipmentStatType statType, EquipmentPartRarity rarity)

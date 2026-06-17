@@ -74,7 +74,7 @@ public static class CombatRewardService
         int dropLevel = player != null && player.Progression != null ? player.Progression.Level : 1;
         EquipmentPartInstance part = EquipmentPartGenerator.Create(
             config,
-            EquipmentPartGenerator.RollRarity(),
+            EquipmentPartGenerator.RollRarity(dropLevel),
             dropLevel);
         PlayerEquipmentPartLoadout loadout = player != null
             ? player.EquipmentPartLoadout

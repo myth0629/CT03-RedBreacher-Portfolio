@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
 {
     private const string EquippedWeaponIdKey = "PlayerController.EquippedWeaponId";
     private const string EquippedSkillIdsKey = "PlayerController.EquippedSkillIds";
+    private const string EquippedUnitIdKey = "PlayerController.EquippedUnitId";
     private const int SkillSlotCount = 3;
 
     [System.Serializable]
@@ -237,6 +238,9 @@ public class PlayerController : MonoBehaviour
         }
 
         unitConfig = config;
+        // 장착 유닛을 저장해 다음 플레이 세션에서도 업그레이드된 유닛을 유지한다.
+        PlayerPrefs.SetString(EquippedUnitIdKey, config.Id);
+        PlayerPrefs.Save();
         ApplyUnitConfig();
         return true;
     }
@@ -350,6 +354,18 @@ public class PlayerController : MonoBehaviour
             PlayerPrefs.SetString(EquippedWeaponIdKey, weaponConfig.Id);
         }
 
+        // 코어 변환소로 업그레이드한 장착 유닛을 다음 세션에서도 복원한다.
+        string savedUnitId = PlayerPrefs.GetString(EquippedUnitIdKey, string.Empty);
+        PlayerUnitConfig savedUnit = FindUnitById(savedUnitId);
+        if (savedUnit != null && inventory.ContainsUnit(savedUnit))
+        {
+            unitConfig = savedUnit;
+        }
+        else if (unitConfig != null)
+        {
+            PlayerPrefs.SetString(EquippedUnitIdKey, unitConfig.Id);
+        }
+
         string skillJson = PlayerPrefs.GetString(EquippedSkillIdsKey, string.Empty);
         if (!string.IsNullOrWhiteSpace(skillJson))
         {
@@ -408,6 +424,25 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < inventory.WeaponConfigs.Count; i++)
         {
             ProjectileConfig config = inventory.WeaponConfigs[i];
+            if (config != null && config.Id == configId)
+            {
+                return config;
+            }
+        }
+
+        return null;
+    }
+
+    private PlayerUnitConfig FindUnitById(string configId)
+    {
+        if (inventory == null || string.IsNullOrWhiteSpace(configId))
+        {
+            return null;
+        }
+
+        for (int i = 0; i < inventory.UnitConfigs.Count; i++)
+        {
+            PlayerUnitConfig config = inventory.UnitConfigs[i];
             if (config != null && config.Id == configId)
             {
                 return config;

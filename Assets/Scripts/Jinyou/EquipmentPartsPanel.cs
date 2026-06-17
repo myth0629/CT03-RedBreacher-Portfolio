@@ -46,6 +46,7 @@ public class EquipmentPartsPanel : MonoBehaviour
     [SerializeField] private Button allFilterButton;
 
     private readonly List<Button> spawnedButtons = new List<Button>();
+    private readonly Dictionary<string, GameObject> newBadges = new Dictionary<string, GameObject>();
     private string selectedInstanceId;
 
     // null이면 전체 표시, 값이 있으면 해당 슬롯 파츠만 표시한다.
@@ -85,21 +86,68 @@ public class EquipmentPartsPanel : MonoBehaviour
 
         if (inventory != null && partContentRoot != null && partButtonPrefab != null)
         {
-            foreach (EquipmentPartInstance part in inventory.EquipmentParts)
+            List<EquipmentPartInstance> parts = CollectSortedParts();
+            for (int i = 0; i < parts.Count; i++)
             {
-                // 필터가 설정된 경우 해당 슬롯의 파츠만 목록에 표시한다.
-                if (slotFilter.HasValue && (part == null || part.slot != slotFilter.Value))
-                {
-                    continue;
-                }
-
-                CreatePartButton(part);
+                CreatePartButton(parts[i]);
             }
         }
 
         RefreshFilterButtons();
         RefreshEquippedSlots();
         RefreshDetail();
+    }
+
+    private List<EquipmentPartInstance> CollectSortedParts()
+    {
+        List<EquipmentPartInstance> parts = new List<EquipmentPartInstance>();
+        foreach (EquipmentPartInstance part in inventory.EquipmentParts)
+        {
+            if (part == null)
+            {
+                continue;
+            }
+
+            // 필터가 설정된 경우 해당 슬롯의 파츠만 목록에 표시한다.
+            if (slotFilter.HasValue && part.slot != slotFilter.Value)
+            {
+                continue;
+            }
+
+            parts.Add(part);
+        }
+
+        // 장착 중 → 희귀도 내림차순 → 레벨 내림차순 → 이름 순으로 정렬한다.
+        parts.Sort(ComparePartsForDisplay);
+        return parts;
+    }
+
+    private int ComparePartsForDisplay(EquipmentPartInstance a, EquipmentPartInstance b)
+    {
+        bool equippedA = loadout != null && loadout.IsEquipped(a.instanceId);
+        bool equippedB = loadout != null && loadout.IsEquipped(b.instanceId);
+        if (equippedA != equippedB)
+        {
+            return equippedA ? -1 : 1;
+        }
+
+        if (a.rarity != b.rarity)
+        {
+            return b.rarity.CompareTo(a.rarity);
+        }
+
+        if (a.level != b.level)
+        {
+            return b.level.CompareTo(a.level);
+        }
+
+        return string.Compare(GetSortName(a), GetSortName(b), System.StringComparison.Ordinal);
+    }
+
+    private string GetSortName(EquipmentPartInstance part)
+    {
+        EquipmentPartConfig config = inventory != null ? inventory.ResolveEquipmentPartConfig(part.configId) : null;
+        return GetDisplayName(config, part);
     }
 
     public void FilterByArmor() => SetSlotFilter(EquipmentPartSlot.Armor);
@@ -198,9 +246,44 @@ public class EquipmentPartsPanel : MonoBehaviour
             label.text = $"{GetDisplayName(config, part)} / Lv.{part.level} / {GetRarityName(part.rarity)}{equipped}";
         }
 
+        // 아직 확인하지 않은 신규 파츠에는 "New" 뱃지를 표시한다(프리팹에 "New" 자식이 있을 때만).
+        Transform newBadge = FindChildObject(button.transform, "New");
+        if (newBadge != null)
+        {
+            newBadge.gameObject.SetActive(part.isNew);
+            if (!string.IsNullOrEmpty(part.instanceId))
+            {
+                newBadges[part.instanceId] = newBadge.gameObject;
+            }
+        }
+
         string capturedId = part.instanceId;
         button.onClick.AddListener(() => Select(capturedId));
         spawnedButtons.Add(button);
+    }
+
+    private static Transform FindChildObject(Transform root, string childName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindChildObject(root.GetChild(i), childName);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private static Image FindChildImage(Transform root, string childName)
@@ -240,6 +323,20 @@ public class EquipmentPartsPanel : MonoBehaviour
     private void Select(string instanceId)
     {
         selectedInstanceId = instanceId;
+
+        // 선택한 파츠는 확인 처리하여 신규 뱃지를 해제한다(목록 전체 리빌드 없이 해당 뱃지만 끈다).
+        if (inventory != null)
+        {
+            inventory.MarkEquipmentPartSeen(instanceId);
+        }
+
+        if (!string.IsNullOrEmpty(instanceId)
+            && newBadges.TryGetValue(instanceId, out GameObject badge)
+            && badge != null)
+        {
+            badge.SetActive(false);
+        }
+
         RefreshDetail();
     }
 
@@ -367,6 +464,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         }
 
         spawnedButtons.Clear();
+        newBadges.Clear();
     }
 
     private static string GetDisplayName(EquipmentPartConfig config, EquipmentPartInstance part)
