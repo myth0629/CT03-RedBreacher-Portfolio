@@ -31,6 +31,11 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [Header("Collection Level")]
     [SerializeField] private int maxLevel = 10;
     [SerializeField] private float damagePercentPerLevel = 0.1f;
+    [SerializeField] private float cooldownReductionPercentPerLevel = 0.03f;
+    [SerializeField] private float maxCooldownReductionPercent = 0.5f;
+    [SerializeField] private int countIncreaseLevelInterval = 3;
+    [SerializeField] private int bombCountIncreasePerInterval = 1;
+    [SerializeField] private int turretCountIncreasePerInterval = 1;
     [SerializeField] private int maxLevelDuplicateCoreCrystalReward = 1;
 
     [Header("Bombardment")]
@@ -75,6 +80,11 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float KnockbackForce => Mathf.Max(0f, knockbackForce);
     public int MaxLevel => Mathf.Max(1, maxLevel);
     public float DamagePercentPerLevel => Mathf.Max(0f, damagePercentPerLevel);
+    public float CooldownReductionPercentPerLevel => Mathf.Max(0f, cooldownReductionPercentPerLevel);
+    public float MaxCooldownReductionPercent => Mathf.Clamp(maxCooldownReductionPercent, 0f, 0.95f);
+    public int CountIncreaseLevelInterval => Mathf.Max(1, countIncreaseLevelInterval);
+    public int BombCountIncreasePerInterval => Mathf.Max(0, bombCountIncreasePerInterval);
+    public int TurretCountIncreasePerInterval => Mathf.Max(0, turretCountIncreasePerInterval);
     public int MaxLevelDuplicateCoreCrystalReward => Mathf.Max(0, maxLevelDuplicateCoreCrystalReward);
     public float ImpactDelay => Mathf.Max(0f, impactDelay);
     public GameObject WarningEffectPrefab => warningEffectPrefab;
@@ -99,4 +109,33 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float TurretRotationSpeed => Mathf.Max(0f, turretRotationSpeed);
     public float TurretPlacementDistance => Mathf.Max(0f, turretPlacementDistance);
     public string TurretFirePointName => turretFirePointName;
+
+    public float GetCooldown(int level)
+    {
+        // 수집 레벨이 오를수록 쿨타임을 줄이되 0초에 가까워지지 않도록 상한을 둔다.
+        float reduction = Mathf.Min(
+            MaxCooldownReductionPercent,
+            CooldownReductionPercentPerLevel * GetLevelBonusCount(level));
+        return Mathf.Max(0.1f, Cooldown * (1f - reduction));
+    }
+
+    public int GetBombCount(int level)
+    {
+        return BombCount + GetCountIncreaseStepCount(level) * BombCountIncreasePerInterval;
+    }
+
+    public int GetTurretCount(int level)
+    {
+        return 1 + GetCountIncreaseStepCount(level) * TurretCountIncreasePerInterval;
+    }
+
+    private static int GetLevelBonusCount(int level)
+    {
+        return Mathf.Max(1, level) - 1;
+    }
+
+    private int GetCountIncreaseStepCount(int level)
+    {
+        return GetLevelBonusCount(level) / CountIncreaseLevelInterval;
+    }
 }

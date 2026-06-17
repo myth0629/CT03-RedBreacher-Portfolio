@@ -111,6 +111,14 @@ public class InventoryFacility : MonoBehaviour
         }
     }
     public IReadOnlyList<PlayerUnitConfig> UnitConfigs => unitConfigs;
+    public IReadOnlyList<string> OwnedDroneIds
+    {
+        get
+        {
+            EnsureCollectionProgressInitialized();
+            return ownedDroneIds;
+        }
+    }
     public IReadOnlyList<EquipmentPartConfig> EquipmentPartConfigs
     {
         get
@@ -478,11 +486,26 @@ public class InventoryFacility : MonoBehaviour
         }
 
         part.subStats ??= new List<EquipmentSubStat>();
+        // 새로 보관되는 파츠는 인벤토리에서 확인하기 전까지 신규로 표시한다.
+        part.isNew = true;
         equipmentParts.Add(part);
         SaveEquipmentParts();
         OnEquipmentPartsChanged.Invoke();
         OnInventoryChanged.Invoke();
         return true;
+    }
+
+    public void MarkEquipmentPartSeen(string instanceId)
+    {
+        EquipmentPartInstance part = FindEquipmentPart(instanceId);
+        if (part == null || !part.isNew)
+        {
+            return;
+        }
+
+        // 신규 뱃지는 해당 파츠를 한 번 확인(선택)하면 해제하고 저장만 한다(목록 리빌드는 하지 않음).
+        part.isNew = false;
+        SaveEquipmentParts();
     }
 
     public bool AcquireEquipmentPart(
@@ -1061,6 +1084,7 @@ public class InventoryFacility : MonoBehaviour
                 instanceIds.Add(part.instanceId);
             }
 
+            part.level = Mathf.Max(1, part.level);
             part.mainStatValue = Mathf.Max(0f, part.mainStatValue);
             part.salePrice = Mathf.Max(0, part.salePrice);
             part.subStats ??= new List<EquipmentSubStat>();

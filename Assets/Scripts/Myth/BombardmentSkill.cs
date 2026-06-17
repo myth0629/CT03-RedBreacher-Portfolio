@@ -8,6 +8,7 @@ public class BombardmentSkill : MonoBehaviour
     private PlayerController _owner;
     private PlayerSkillConfig _config;
     private Vector3 _impactPosition;
+    private int _bombCount;
 
     public static bool Cast(PlayerController player, PlayerSkillConfig skillConfig, Vector3 targetPosition)
     {
@@ -21,6 +22,8 @@ public class BombardmentSkill : MonoBehaviour
         skill._owner = player;
         skill._config = skillConfig;
         skill._impactPosition = CombatPlane.WithFixedY(targetPosition);
+        // 중복 획득으로 오른 스킬 레벨에 따라 실제 투하 폭탄 수를 계산한다.
+        skill._bombCount = skillConfig.GetBombCount(player.GetSkillLevel(skillConfig));
         skill.StartCoroutine(skill.Execute());
         return true;
     }
@@ -42,7 +45,7 @@ public class BombardmentSkill : MonoBehaviour
             warning.transform.localScale = Vector3.one * _config.BombEffectScale;
 
             // 연속 폭격을 고려해 장판의 유효 시간을 계산하여 릴리즈
-            float totalDuration = _config.ImpactDelay + (_config.BombCount - 1) * _config.BombInterval;
+            float totalDuration = _config.ImpactDelay + (_bombCount - 1) * _config.BombInterval;
             CombatObjectPool.ReleaseEffect(warning, totalDuration);
         }
 
@@ -70,7 +73,7 @@ public class BombardmentSkill : MonoBehaviour
         float fallDuration = bombSpeed > 0f ? fallDistance / bombSpeed : 0.3f;
         float delayBeforeFirstFall = Mathf.Max(0f, _config.ImpactDelay - fallDuration);
 
-        for (int i = 0; i < _config.BombCount; i++)
+        for (int i = 0; i < _bombCount; i++)
         {
             Vector3 bombTargetPos = _impactPosition;
             if (i > 0)
@@ -86,7 +89,7 @@ public class BombardmentSkill : MonoBehaviour
         }
 
         // 전체 연출 소요 시간에 맞춰 컴포넌트 라이프타임 유지
-        float totalProcessTime = delayBeforeFirstFall + (_config.BombCount - 1) * _config.BombInterval + fallDuration + 0.5f;
+        float totalProcessTime = delayBeforeFirstFall + (_bombCount - 1) * _config.BombInterval + fallDuration + 0.5f;
         yield return new WaitForSeconds(totalProcessTime);
 
         // 비행기의 최대 비행시간 고려해 대기 후 제거
@@ -141,7 +144,7 @@ public class BombardmentSkill : MonoBehaviour
         {
             // 폭격 시점의 최종 플레이어 공격력 / 폭격 횟수를 1발당 데미지로 분할 적용
             float damage = PlayerSkillCombat.CalculateDamage(_owner, _config, out bool isCritical);
-            float damagePerBomb = damage / Mathf.Max(1, _config.BombCount);
+            float damagePerBomb = damage / Mathf.Max(1, _bombCount);
 
             PlayerSkillCombat.ApplyAreaDamage(
                 _owner,

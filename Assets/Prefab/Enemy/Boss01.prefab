@@ -84,6 +84,10 @@ MonoBehaviour:
   contactDamage: 5
   contactInterval: 1
   knockbackDamping: 10
+  deathExplosionEffectPrefab: {fileID: 0}
+  deathExplosionCleanupDelay: 0.6
+  deathExplosionOffset: {x: 0, y: 0, z: 0}
+  deathExplosionScale: 1
   bossConfig: {fileID: 11400000, guid: a1ffffd30eecc4c6fac1fb56a049d363, type: 2}
   firePoint: {fileID: 6524246871943562647}
 --- !u!65 &5428613678110022158

@@ -33,23 +33,55 @@ public class AutoTurretSkill : MonoBehaviour
             placementDirection = CombatPlane.DirectionFromYRotation(player.transform);
         }
 
-        Vector3 placementPosition = CombatPlane.WithFixedY(
-            player.transform.position + placementDirection * skillConfig.TurretPlacementDistance);
-        GameObject turretObject = skillConfig.TurretPrefab != null
-            ? Instantiate(skillConfig.TurretPrefab, placementPosition, SkillSpawnRotation)
-            : new GameObject($"AutoTurret_{skillConfig.Id}");
-        turretObject.transform.position = placementPosition;
-        // 탑뷰 스프라이트가 바닥을 향하도록 생성 시 X축을 90도로 고정한다.
-        turretObject.transform.rotation = SkillSpawnRotation;
-
-        AutoTurretSkill turret = turretObject.GetComponent<AutoTurretSkill>();
-        if (turret == null)
+        int turretCount = skillConfig.GetTurretCount(player.GetSkillLevel(skillConfig));
+        bool spawnedAny = false;
+        for (int i = 0; i < turretCount; i++)
         {
-            turret = turretObject.AddComponent<AutoTurretSkill>();
+            Vector3 placementPosition = GetPlacementPosition(
+                player,
+                skillConfig,
+                placementDirection,
+                i,
+                turretCount);
+            GameObject turretObject = skillConfig.TurretPrefab != null
+                ? Instantiate(skillConfig.TurretPrefab, placementPosition, SkillSpawnRotation)
+                : new GameObject($"AutoTurret_{skillConfig.Id}");
+            turretObject.transform.position = placementPosition;
+            // 탑뷰 스프라이트가 바닥을 향하도록 생성 시 X축을 90도로 고정한다.
+            turretObject.transform.rotation = SkillSpawnRotation;
+
+            AutoTurretSkill turret = turretObject.GetComponent<AutoTurretSkill>();
+            if (turret == null)
+            {
+                turret = turretObject.AddComponent<AutoTurretSkill>();
+            }
+
+            turret.Initialize(player, skillConfig);
+            spawnedAny = true;
         }
 
-        turret.Initialize(player, skillConfig);
-        return true;
+        return spawnedAny;
+    }
+
+    private static Vector3 GetPlacementPosition(
+        PlayerController player,
+        PlayerSkillConfig skillConfig,
+        Vector3 placementDirection,
+        int index,
+        int count)
+    {
+        if (count <= 1)
+        {
+            return CombatPlane.WithFixedY(
+                player.transform.position + placementDirection * skillConfig.TurretPlacementDistance);
+        }
+
+        // 여러 포탑은 진행 방향을 기준으로 부채꼴 배치해 서로 겹치지 않게 한다.
+        float spreadAngle = Mathf.Min(120f, 30f * (count - 1));
+        float offsetAngle = Mathf.Lerp(-spreadAngle * 0.5f, spreadAngle * 0.5f, index / (float)(count - 1));
+        Vector3 rotatedDirection = Quaternion.Euler(0f, offsetAngle, 0f) * placementDirection;
+        return CombatPlane.WithFixedY(
+            player.transform.position + rotatedDirection * skillConfig.TurretPlacementDistance);
     }
 
     private void Initialize(PlayerController player, PlayerSkillConfig skillConfig)

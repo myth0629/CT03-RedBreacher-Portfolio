@@ -106,7 +106,7 @@ GameObject:
   - component: {fileID: 2421075610840562408}
   - component: {fileID: 3325100126612599426}
   - component: {fileID: 37404869335228815}
-  - component: {fileID: 1767878642600871842}
+  - component: {fileID: 8227087991541125668}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -175,8 +175,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 476576e4865e143768d3a9fd83b9de3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  unitConfig: {fileID: 11400000, guid: 394620a82606b4a9a9a23b4cc72a1abd, type: 2}
-  weaponConfig: {fileID: 11400000, guid: 7eb1b98301c03438e9df49bfd1f36277, type: 2}
+  unitConfig: {fileID: 11400000, guid: 8a3270d70f9b8495d9fcff64b4b83ab1, type: 2}
+  weaponConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
   unitRoot: {fileID: 1065801000117078494}
   displayName: Player
   maxHealth: 100
@@ -247,7 +247,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDroneController
   player: {fileID: 7644490488002421366}
-  droneConfig: {fileID: 11400000, guid: 927676cb259ef4cd5bf3a0cb603a7426, type: 2}
+  droneConfig: {fileID: 11400000, guid: 5faadff3b83884b2089d0f1ad60e50e0, type: 2}
   droneSpawnParent: {fileID: 1322240335075145229}
   spawnOnStart: 1
 --- !u!114 &3325100126612599426
@@ -295,7 +295,7 @@ MonoBehaviour:
   OnLoadoutChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1767878642600871842
+--- !u!114 &8227087991541125668
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

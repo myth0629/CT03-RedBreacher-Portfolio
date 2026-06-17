@@ -27,6 +27,11 @@ MonoBehaviour:
   knockbackForce: 0
   maxLevel: 10
   damagePercentPerLevel: 0.1
+  cooldownReductionPercentPerLevel: 0.03
+  maxCooldownReductionPercent: 0.5
+  countIncreaseLevelInterval: 3
+  bombCountIncreasePerInterval: 1
+  turretCountIncreasePerInterval: 0
   maxLevelDuplicateCoreCrystalReward: 1
   impactDelay: 1
   warningEffectPrefab: {fileID: 9179389450710726649, guid: 0309f63716c8a4a4e84bead042662d12, type: 3}

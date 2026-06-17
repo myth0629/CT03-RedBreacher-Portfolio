@@ -136,7 +136,6 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
 
         int stageIndex = CurrentStageIndex;
         UnitConversionStage stage = conversionStages[stageIndex];
-        bool wasEquipped = player != null && player.UnitConfig == stage.currentUnit;
         bool inventoryChanged = inventory != null && inventory.ReplaceUnit(stage.currentUnit, stage.nextUnit);
 
         if (!inventoryChanged && inventory != null && !inventory.ContainsUnit(stage.nextUnit))
@@ -144,10 +143,8 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             inventory.AddUnit(stage.nextUnit);
         }
 
-        if (wasEquipped)
-        {
-            player.SetUnitConfig(stage.nextUnit);
-        }
+        // 코어 변환은 현재 전투 유닛을 다음 단계 SO로 즉시 교체해 런타임 스탯/프리팹에 반영한다.
+        player?.SetUnitConfig(stage.nextUnit);
 
         convertedStageIndices.Add(stageIndex);
         Normalize();

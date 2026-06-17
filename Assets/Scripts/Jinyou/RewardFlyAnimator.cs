@@ -37,10 +37,19 @@ public class RewardFlyAnimator : MonoBehaviour
 
     public void PlayReward(Vector3 sourceWorldPosition, CurrencyType currency, int amount, float iconSize = 56f)
     {
-        if (amount <= 0 || !EnsureReferences())
+        if (amount <= 0)
         {
             return;
         }
+
+        if (!EnsureReferences())
+        {
+            Debug.LogWarning("[RewardFly] 참조(UI_Canvas_Game/재화 아이콘) 확보 실패 — 연출 재생 불가.");
+            return;
+        }
+
+        // 팝업(도전과제 등) 위로 항상 보이도록 매 재생마다 오버레이를 최상단으로 올린다.
+        overlayRoot.SetAsLastSibling();
 
         RectTransform target = currency == CurrencyType.CoreCrystals ? crystalIcon : creditIcon;
         if (target == null)
@@ -86,8 +95,10 @@ public class RewardFlyAnimator : MonoBehaviour
         img.preserveAspect = true;
         rect.sizeDelta = new Vector2(iconSize, iconSize);
 
-        Vector3 start = overlayRoot.InverseTransformPoint(startWorld);
-        Vector3 end = overlayRoot.InverseTransformPoint(endWorld);
+        // 시작(다른 캔버스의 버튼 등)과 끝(재화 아이콘) 좌표를 스크린 경유로 오버레이 로컬로 변환한다.
+        // 캔버스 스케일 모드가 달라도 어긋나지 않는다.
+        Vector3 start = WorldToOverlayLocal(startWorld);
+        Vector3 end = WorldToOverlayLocal(endWorld);
 
         // 분출: 시작 지점에서 링 형태로 튕겨 나갔다가 타깃으로 모이는 제어점.
         float angle = (index / (float)IconCount) * Mathf.PI * 2f;
@@ -134,9 +145,45 @@ public class RewardFlyAnimator : MonoBehaviour
             return true;
         }
 
-        GameObject canvasGo = GameObject.Find("UI_Canvas_Game");
-        if (canvasGo == null)
+        // Credits_Panel이 다른 부모(Top UI 등)로 옮겨져도 동작하도록 하드코딩 경로 대신 이름으로 탐색한다.
+        Transform creditsPanel = FindInScene("Credits_Panel");
+        if (creditsPanel != null)
         {
+            if (creditIcon == null)
+            {
+                creditIcon = creditsPanel.Find("Credit/Icon") as RectTransform;
+            }
+
+            if (crystalIcon == null)
+            {
+                crystalIcon = creditsPanel.Find("Core Crystal/Icon") as RectTransform;
+            }
+        }
+
+        if (creditIcon == null || crystalIcon == null)
+        {
+            Debug.LogWarning($"[RewardFly] 재화 아이콘 탐색 실패 (creditsPanel={creditsPanel != null}, "
+                + $"credit={creditIcon != null}, crystal={crystalIcon != null}). "
+                + "Credits_Panel 하위에 'Credit/Icon', 'Core Crystal/Icon'이 있는지 확인하세요.");
+            return false;
+        }
+
+        // 연출 오버레이는 재화 아이콘이 속한 (루트)캔버스에 붙인다. Credits_Panel이 Top UI 등
+        // 다른 캔버스(스케일 모드/정렬순서가 다름)로 옮겨가도 타깃과 같은 캔버스에 그려져
+        // 좌표·렌더 순서가 어긋나지 않는다.
+        Canvas iconCanvas = creditIcon.GetComponentInParent<Canvas>();
+        RectTransform canvasRect = iconCanvas != null && iconCanvas.rootCanvas != null
+            ? iconCanvas.rootCanvas.transform as RectTransform
+            : null;
+        if (canvasRect == null)
+        {
+            GameObject fallbackCanvas = GameObject.Find("UI_Canvas_Game");
+            canvasRect = fallbackCanvas != null ? fallbackCanvas.transform as RectTransform : null;
+        }
+
+        if (canvasRect == null)
+        {
+            Debug.LogWarning("[RewardFly] 연출을 붙일 캔버스를 찾지 못했습니다.");
             return false;
         }
 
@@ -144,29 +191,69 @@ public class RewardFlyAnimator : MonoBehaviour
         {
             GameObject go = new GameObject("RewardFlyOverlay", typeof(RectTransform), typeof(CanvasGroup));
             overlayRoot = (RectTransform)go.transform;
-            overlayRoot.SetParent(canvasGo.GetComponent<RectTransform>(), false);
-            overlayRoot.anchorMin = Vector2.zero;
-            overlayRoot.anchorMax = Vector2.one;
-            overlayRoot.offsetMin = Vector2.zero;
-            overlayRoot.offsetMax = Vector2.zero;
-            overlayRoot.localScale = Vector3.one;
-            overlayRoot.SetAsLastSibling();
             CanvasGroup cg = go.GetComponent<CanvasGroup>();
             cg.blocksRaycasts = false;
             cg.interactable = false;
         }
 
-        Transform t = canvasGo.transform;
-        creditIcon = t.Find("Credits_Panel/Credit/Icon") as RectTransform;
-        crystalIcon = t.Find("Credits_Panel/Core Crystal/Icon") as RectTransform;
+        if (overlayRoot.parent != canvasRect)
+        {
+            overlayRoot.SetParent(canvasRect, false);
+            overlayRoot.anchorMin = Vector2.zero;
+            overlayRoot.anchorMax = Vector2.one;
+            overlayRoot.offsetMin = Vector2.zero;
+            overlayRoot.offsetMax = Vector2.zero;
+            overlayRoot.localScale = Vector3.one;
+        }
+
+        overlayRoot.SetAsLastSibling();
+
         hud = FindFirstObjectByType<PlayerStatusHud>(FindObjectsInactive.Include);
 
         return overlayRoot != null && creditIcon != null && crystalIcon != null;
+    }
+
+    private Vector3 WorldToOverlayLocal(Vector3 world)
+    {
+        if (overlayRoot == null)
+        {
+            return Vector3.zero;
+        }
+
+        Canvas canvas = overlayRoot.GetComponentInParent<Canvas>();
+        Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+        Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, world);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(overlayRoot, screen, cam, out Vector2 local);
+        return local;
     }
 
     private static Vector3 Quadratic(Vector3 a, Vector3 b, Vector3 c, float t)
     {
         float u = 1f - t;
         return (u * u * a) + (2f * u * t * b) + (t * t * c);
+    }
+
+    // 씬 전체에서 이름으로 Transform을 찾는다(활성 우선, 비활성 폴백). 부모 경로에 의존하지 않는다.
+    private static Transform FindInScene(string objectName)
+    {
+        GameObject active = GameObject.Find(objectName);
+        if (active != null)
+        {
+            return active.transform;
+        }
+
+        Transform[] all = Resources.FindObjectsOfTypeAll<Transform>();
+        for (int i = 0; i < all.Length; i++)
+        {
+            Transform tr = all[i];
+            if (tr.name == objectName && tr.gameObject.scene.IsValid())
+            {
+                return tr;
+            }
+        }
+
+        return null;
     }
 }
