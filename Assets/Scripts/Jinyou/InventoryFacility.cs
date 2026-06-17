@@ -1069,6 +1069,7 @@ public class InventoryFacility : MonoBehaviour
                 instanceIds.Add(part.instanceId);
             }
 
+            part.level = Mathf.Max(1, part.level);
             part.mainStatValue = Mathf.Max(0f, part.mainStatValue);
             part.salePrice = Mathf.Max(0, part.salePrice);
             part.subStats ??= new List<EquipmentSubStat>();

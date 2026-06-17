@@ -195,7 +195,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         if (label != null)
         {
             string equipped = loadout != null && loadout.IsEquipped(part.instanceId) ? " [장착]" : string.Empty;
-            label.text = $"{GetDisplayName(config, part)} / {GetRarityName(part.rarity)}{equipped}";
+            label.text = $"{GetDisplayName(config, part)} / Lv.{part.level} / {GetRarityName(part.rarity)}{equipped}";
         }
 
         string capturedId = part.instanceId;
@@ -259,7 +259,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         }
 
         EquipmentPartConfig config = inventory != null ? inventory.ResolveEquipmentPartConfig(part.configId) : null;
-        return $"{GetDisplayName(config, part)} ({GetRarityName(part.rarity)})";
+        return $"{GetDisplayName(config, part)} Lv.{part.level} ({GetRarityName(part.rarity)})";
     }
 
     private void RefreshDetail()
@@ -271,9 +271,9 @@ public class EquipmentPartsPanel : MonoBehaviour
 
         SetText(beforeSelectText, part != null ? string.Empty : "파츠를 선택하세요");
         SetText(partNameText, part != null ? GetDisplayName(config, part) : string.Empty);
-        SetText(rarityText, part != null ? $"/ {GetRarityName(part.rarity)}" : string.Empty);
+        SetText(rarityText, part != null ? $"/ Lv.{part.level} {GetRarityName(part.rarity)}" : string.Empty);
         SetText(mainStatTitle, part != null ? "주 옵션" : string.Empty);
-        SetText(mainStatText, part != null ? FormatStat(part.mainStatType, part.mainStatValue) : string.Empty);
+        SetText(mainStatText, part != null ? FormatStat(part.mainStatType, part.GetScaledMainValue()) : string.Empty);
         SetText(subStatTitle, part != null ? "부가 옵션" : string.Empty);
         SetText(subStatText, part != null ? BuildSubStatText(part) : string.Empty);
         SetText(salePriceText, part != null ? $"판매\n{part.salePrice:N0} 크레딧" : string.Empty);
@@ -322,7 +322,7 @@ public class EquipmentPartsPanel : MonoBehaviour
                 builder.AppendLine();
             }
 
-            builder.Append(FormatStat(subStat.statType, subStat.value));
+            builder.Append(FormatStat(subStat.statType, part.GetScaledSubStatValue(subStat)));
         }
 
         return builder.ToString();

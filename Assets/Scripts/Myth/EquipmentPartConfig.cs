@@ -120,10 +120,28 @@ public class EquipmentPartInstance
     public string configId;
     public EquipmentPartSlot slot;
     public EquipmentPartRarity rarity;
+    public int level = 1;
     public EquipmentStatType mainStatType;
     public float mainStatValue;
     public int salePrice;
     public List<EquipmentSubStat> subStats = new List<EquipmentSubStat>();
+
+    // 드롭 시점의 레벨에 따라 적용/표시되는 최종 수치를 계산한다.
+    public float LevelMultiplier => EquipmentPartLeveling.GetMultiplier(level);
+    public float GetScaledMainValue() => Mathf.Max(0f, mainStatValue) * LevelMultiplier;
+    public float GetScaledSubStatValue(EquipmentSubStat subStat)
+        => subStat != null ? Mathf.Max(0f, subStat.value) * LevelMultiplier : 0f;
+}
+
+public static class EquipmentPartLeveling
+{
+    // 레벨 1을 기준으로 레벨이 오를 때마다 기본 수치가 이 비율만큼 추가로 붙는다(레벨당 +5%).
+    public const float GrowthPerLevel = 0.05f;
+
+    public static float GetMultiplier(int level)
+    {
+        return 1f + Mathf.Max(0, level - 1) * GrowthPerLevel;
+    }
 }
 
 public static class EquipmentPartGenerator
@@ -137,7 +155,7 @@ public static class EquipmentPartGenerator
         EquipmentStatType.CritDamage
     };
 
-    public static EquipmentPartInstance Create(EquipmentPartConfig config, EquipmentPartRarity rarity)
+    public static EquipmentPartInstance Create(EquipmentPartConfig config, EquipmentPartRarity rarity, int level = 1)
     {
         if (config == null)
         {
@@ -150,6 +168,7 @@ public static class EquipmentPartGenerator
             configId = config.Id,
             slot = config.Slot,
             rarity = rarity,
+            level = Mathf.Max(1, level),
             mainStatType = config.MainStatType,
             mainStatValue = config.GetMainValue(rarity),
             salePrice = config.GetSalePrice(rarity)

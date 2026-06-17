@@ -782,6 +782,9 @@ public class PlayerController : MonoBehaviour
     {
         if (spawnedUnitObject != null)
         {
+            // Destroy는 프레임 끝에야 실행되므로, 같은 프레임의 GetComponentInChildren가
+            // 곧 파괴될 옛 유닛의 Vehicle/Turret을 잡지 않도록 먼저 비활성화한다.
+            spawnedUnitObject.SetActive(false);
             Destroy(spawnedUnitObject);
             spawnedUnitObject = null;
         }

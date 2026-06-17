@@ -100,7 +100,9 @@ public class PlayerEquipmentPartLoadout : MonoBehaviour
             return;
         }
 
-        ApplyStat(part.mainStatType, part.mainStatValue);
+        // 파츠 레벨에 비례해 주옵/부옵 수치를 함께 키운다.
+        float levelMultiplier = part.LevelMultiplier;
+        ApplyStat(part.mainStatType, part.mainStatValue * levelMultiplier);
         if (part.subStats == null)
         {
             return;
@@ -111,7 +113,7 @@ public class PlayerEquipmentPartLoadout : MonoBehaviour
             EquipmentSubStat subStat = part.subStats[i];
             if (subStat != null)
             {
-                ApplyStat(subStat.statType, subStat.value);
+                ApplyStat(subStat.statType, subStat.value * levelMultiplier);
             }
         }
     }

@@ -70,9 +70,12 @@ public static class CombatRewardService
 
         EquipmentPartConfig config = inventory.EquipmentPartConfigs[
             Random.Range(0, inventory.EquipmentPartConfigs.Count)];
+        // 드롭되는 파츠 레벨은 현재 플레이어 레벨을 따른다.
+        int dropLevel = player != null && player.Progression != null ? player.Progression.Level : 1;
         EquipmentPartInstance part = EquipmentPartGenerator.Create(
             config,
-            EquipmentPartGenerator.RollRarity());
+            EquipmentPartGenerator.RollRarity(),
+            dropLevel);
         PlayerEquipmentPartLoadout loadout = player != null
             ? player.EquipmentPartLoadout
             : null;
@@ -100,8 +103,8 @@ public static class CombatRewardService
         }
 
         Debug.Log(
-            $"[파츠 드롭] {config.DisplayName} / {GetRarityName(part.rarity)} / "
-            + $"{GetSlotName(part.slot)} / 주옵 {part.mainStatValue * 100f:0.##}% / "
+            $"[파츠 드롭] {config.DisplayName} / Lv.{part.level} / {GetRarityName(part.rarity)} / "
+            + $"{GetSlotName(part.slot)} / 주옵 {part.GetScaledMainValue() * 100f:0.##}% / "
             + $"보유 {inventory.EquipmentParts.Count}개",
             enemy.gameObject);
     }
