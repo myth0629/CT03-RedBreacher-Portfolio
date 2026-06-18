@@ -11,6 +11,7 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text levelText;
+    [SerializeField] private Image coinIcon;
 
     [Header("Panels")] 
     [SerializeField] private GameObject tankUnitSubPanel;
@@ -118,6 +119,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         if (coreCharger == null)
         {
+            SetActive(coinIcon != null ? coinIcon.gameObject : null, false);
             SetText(enhanceUnitButtonStateText, "코어 차저가 연결되지 않았습니다.");
             SetText(currentUnitText, string.Empty);
             SetText(enhanceUnitText, string.Empty);
@@ -144,6 +146,7 @@ public class CoreChargerPanel : MonoBehaviour
             coreCharger.IsUpgrading ? $"완료까지 {coreCharger.UpgradeRemainingSeconds:0}초" : "기지 업그레이드",
             coreCharger.UpgradeCost,
             !coreCharger.IsUpgrading && coreCharger.Level < coreCharger.MaxLevel);
+        SetActive(coinIcon != null ? coinIcon.gameObject : null, !coreCharger.IsUpgrading);
         SetText(currentUnitText, stage != null ? FormatUnitName(stage.currentUnit) : "모든 변환 완료");
         SetText(enhanceUnitText, stage != null ? FormatUnitName(stage.nextUnit) : string.Empty);
         SetUnitPreview(currentUnitPreviewImage, stage?.currentUnit);
@@ -399,6 +402,14 @@ public class CoreChargerPanel : MonoBehaviour
         if (target != null)
         {
             target.text = value;
+        }
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null && target.activeSelf != active)
+        {
+            target.SetActive(active);
         }
     }
 

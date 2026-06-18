@@ -26,6 +26,7 @@ public class CreditRefineryPanel : MonoBehaviour
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text beforeUpgradeText;
     [SerializeField] private TMP_Text afterUpgradeText;
+    [SerializeField] private Image coinIcon;
 
     [Header("Visual")]
     [SerializeField] private Image facilityImage;
@@ -109,6 +110,7 @@ public class CreditRefineryPanel : MonoBehaviour
 
         if (refinery == null)
         {
+            SetActive(coinIcon != null ? coinIcon.gameObject : null, false);
             SetText(beforeUpgradeText, string.Empty);
             SetText(afterUpgradeText, string.Empty);
             return;
@@ -130,6 +132,7 @@ public class CreditRefineryPanel : MonoBehaviour
             refinery.IsUpgrading ? $"완료까지 {refinery.UpgradeRemainingSeconds:0}초" : "업그레이드",
             refinery.UpgradeCost,
             !refinery.IsUpgrading && refinery.Level < refinery.MaxLevel);
+        SetActive(coinIcon != null ? coinIcon.gameObject : null, !refinery.IsUpgrading);
         SetFill(refineryStorageFill, refinery.StorageCapacity > 0
             ? (float)refinery.StoredCredits / refinery.StorageCapacity
             : 0f);
@@ -216,6 +219,14 @@ public class CreditRefineryPanel : MonoBehaviour
         if (target != null)
         {
             target.fillAmount = Mathf.Clamp01(value);
+        }
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null && target.activeSelf != active)
+        {
+            target.SetActive(active);
         }
     }
 }

@@ -27,6 +27,7 @@ public class CommandCenterPanel : MonoBehaviour
     [SerializeField] private TMP_Text upgradeText;
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private Image upgradeProgressFill;
+    [SerializeField] private Image coinIcon;
 
     [Header("Visual")]
     [SerializeField] private Image facilityImage;
@@ -100,6 +101,7 @@ public class CommandCenterPanel : MonoBehaviour
             cmdCenter.IsUpgrading ? $"완료까지 {cmdCenter.UpgradeRemainingSeconds:0}초" : "업그레이드",
             cmdCenter.UpgradeCost,
             !cmdCenter.IsUpgrading && cmdCenter.Level < cmdCenter.MaxLevel);
+        SetActive(coinIcon != null ? coinIcon.gameObject : null, !cmdCenter.IsUpgrading);
         SetText(unlockDetailText, BuildUnlockSummary());
         RefreshBaseUnlockStatuses();
 
@@ -267,6 +269,14 @@ public class CommandCenterPanel : MonoBehaviour
         if (target != null)
         {
             target.fillAmount = Mathf.Clamp01(value);
+        }
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null && target.activeSelf != active)
+        {
+            target.SetActive(active);
         }
     }
 }

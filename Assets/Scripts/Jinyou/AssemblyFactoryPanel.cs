@@ -17,6 +17,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
+    [SerializeField] private Image coinIcon;
     
     [Header("WeaponEnhanceTexts")]
     [SerializeField] private TMP_Text levelText;
@@ -30,6 +31,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [SerializeField] private TMP_Text selectedWeaponNameText;
     [SerializeField] private TMP_Text selectedWeaponLevelText;
     [SerializeField] private Image selectedWeaponIcon;
+    [SerializeField] private RawImage selectedDroneIcon;
     
     [Header("LoadoutSelection")]
     [SerializeField] private PlayerLoadoutSelectionPanel loadoutSelectionPanel;
@@ -147,6 +149,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         ResolveReferences();
         if (assemblyFactory == null)
         {
+            SetActive(coinIcon != null ? coinIcon.gameObject : null, false);
             ClearEnhancementStatTexts();
             return;
         }
@@ -183,6 +186,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
                     : "기지 업그레이드",
             assemblyFactory.UpgradeCost,
             !assemblyFactory.IsUpgrading && assemblyFactory.Level < assemblyFactory.MaxLevel);
+        SetActive(coinIcon != null ? coinIcon.gameObject : null, !assemblyFactory.IsUpgrading);
 
         SetActive(weaponEnhanceButton != null ? weaponEnhanceButton.gameObject : null, true);
         SetActive(upgradeButton != null ? upgradeButton.gameObject : null, true);
@@ -230,6 +234,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
             SetText(selectedWeaponNameText, string.Empty);
             SetText(selectedWeaponLevelText, string.Empty);
             SetIcon(selectedWeaponIcon, null);
+            SetDroneIcon(selectedDroneIcon, null);
             return;
         }
 
@@ -242,6 +247,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
                 ? $"Lv. {enhancement.enhanceLevel}/{enhancement.maxEnhanceLevel}"
                 : string.Empty);
             SetIcon(selectedWeaponIcon, null);
+            SetDroneIcon(selectedDroneIcon, drone);
             return;
         }
 
@@ -252,6 +258,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
             ? $"Lv. {weaponEnhancement.enhanceLevel}/{weaponEnhancement.MaxEnhanceLevel}"
             : string.Empty);
         SetIcon(selectedWeaponIcon, weapon != null ? weapon.Icon : null);
+        SetDroneIcon(selectedDroneIcon, null);
     }
 
     private string BuildWeaponText()
@@ -445,6 +452,29 @@ public class AssemblyFactoryPanel : MonoBehaviour
         target.sprite = sprite;
         target.enabled = sprite != null;
         target.preserveAspect = true;
+        target.gameObject.SetActive(sprite != null);
+    }
+
+    private static void SetDroneIcon(RawImage target, DroneConfig drone)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        GameObject prefab = drone != null ? drone.DronePrefab : null;
+        if (prefab == null)
+        {
+            target.texture = null;
+            target.color = Color.clear;
+            target.gameObject.SetActive(false);
+            return;
+        }
+
+        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
+        target.texture = preview;
+        target.color = preview != null ? Color.white : Color.clear;
+        target.gameObject.SetActive(preview != null);
     }
 
     private static void SetActive(GameObject target, bool value)
