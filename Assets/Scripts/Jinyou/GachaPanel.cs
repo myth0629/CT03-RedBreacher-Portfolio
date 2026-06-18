@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class GachaPanel : MonoBehaviour
@@ -21,6 +22,18 @@ public class GachaPanel : MonoBehaviour
     [SerializeField] private TMP_Text skillDrawOnceCostText;
     [SerializeField] private TMP_Text skillDrawMultiCostText;
 
+    // 기존의 Odd슬롯 프리팹 삭제를 까먹고 그대로 코드에 구현하는 바람에 연결 대상이 불명확해져
+    // FormerlySerializedAs로 명시적 구현
+    [Header("WeaponGachaDetailPopup_Slot")]
+    [SerializeField] private Transform weaponOddRoot;
+    [FormerlySerializedAs("weaponOddPrefab")]
+    [SerializeField] private WeaponItemOdd weaponItemOddSlot;
+
+    [Header("SkillGachaDetailPopup_Slot")]
+    [SerializeField] private Transform skillOddRoot;
+    [FormerlySerializedAs("skillOddPrefab")]
+    [SerializeField] private SkillItemOdd skillItemOddSlot;
+
     [Header("Labels")]
     [SerializeField] private TMP_Text currencyText;
     [SerializeField] private TMP_Text costText;
@@ -33,6 +46,9 @@ public class GachaPanel : MonoBehaviour
 
     [Header("Result Panels")]
     [SerializeField] private GameObject _resultPanel;
+
+    private readonly List<WeaponItemOdd> _weaponItemOdds = new List<WeaponItemOdd>();
+    private readonly List<SkillItemOdd> _skillItemOdds = new List<SkillItemOdd>();
 
     private readonly List<GachaResultSlot> resultSlots = new List<GachaResultSlot>();
     private GachaCategory selectedCategory = GachaCategory.Weapon;
@@ -126,6 +142,8 @@ public class GachaPanel : MonoBehaviour
                 : "뽑기 시설이 연결되지 않았습니다.");
         RefreshDrawCostTexts(connected, multiCount);
         SetText(tableText, BuildTableText());
+        RefreshWeaponOddList();
+        RefreshSkillOddList();
 
         SetButton(
             weaponDrawOnceButton,
@@ -139,6 +157,126 @@ public class GachaPanel : MonoBehaviour
         SetButton(
             skillDrawMultiButton,
             connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Skill, multiCount));
+    }
+
+    private void RefreshWeaponOddList()
+    {
+        if (weaponGacha == null || weaponOddRoot == null || weaponItemOddSlot == null)
+        {
+            return;
+        }
+
+        IReadOnlyList<WeaponGachaFacility.WeaponGachaEntry> entries = weaponGacha.GetWeaponEntries();
+        float totalWeight = 0f;
+        int validCount = 0;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            WeaponGachaFacility.WeaponGachaEntry entry = entries[i];
+            if (!IsValidWeaponOddEntry(entry))
+            {
+                continue;
+            }
+
+            totalWeight += entry.weight;
+            validCount++;
+        }
+
+        while (_weaponItemOdds.Count < validCount)
+        {
+            WeaponItemOdd slot = Instantiate(weaponItemOddSlot, weaponOddRoot);
+            slot.gameObject.SetActive(true);
+            _weaponItemOdds.Add(slot);
+        }
+
+        int slotIndex = 0;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            WeaponGachaFacility.WeaponGachaEntry entry = entries[i];
+            if (!IsValidWeaponOddEntry(entry))
+            {
+                continue;
+            }
+
+            WeaponItemOdd slot = _weaponItemOdds[slotIndex++];
+            slot.gameObject.SetActive(true);
+            slot.Setup(entry, totalWeight);
+        }
+
+        for (int i = slotIndex; i < _weaponItemOdds.Count; i++)
+        {
+            if (_weaponItemOdds[i] != null)
+            {
+                _weaponItemOdds[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private static bool IsValidWeaponOddEntry(WeaponGachaFacility.WeaponGachaEntry entry)
+    {
+        return entry != null
+            && entry.enabled
+            && entry.weaponConfig != null
+            && entry.weight > 0f;
+    }
+
+    private void RefreshSkillOddList()
+    {
+        if (weaponGacha == null || skillOddRoot == null || skillItemOddSlot == null)
+        {
+            return;
+        }
+
+        IReadOnlyList<WeaponGachaFacility.SkillGachaEntry> entries = weaponGacha.GetSkillEntries();
+        float totalWeight = 0f;
+        int validCount = 0;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            WeaponGachaFacility.SkillGachaEntry entry = entries[i];
+            if (!IsValidSkillOddEntry(entry))
+            {
+                continue;
+            }
+
+            totalWeight += entry.weight;
+            validCount++;
+        }
+
+        while (_skillItemOdds.Count < validCount)
+        {
+            SkillItemOdd slot = Instantiate(skillItemOddSlot, skillOddRoot);
+            slot.gameObject.SetActive(true);
+            _skillItemOdds.Add(slot);
+        }
+
+        int slotIndex = 0;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            WeaponGachaFacility.SkillGachaEntry entry = entries[i];
+            if (!IsValidSkillOddEntry(entry))
+            {
+                continue;
+            }
+
+            SkillItemOdd slot = _skillItemOdds[slotIndex++];
+            slot.gameObject.SetActive(true);
+            slot.Setup(entry, totalWeight);
+        }
+
+        for (int i = slotIndex; i < _skillItemOdds.Count; i++)
+        {
+            if (_skillItemOdds[i] != null)
+            {
+                _skillItemOdds[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private static bool IsValidSkillOddEntry(WeaponGachaFacility.SkillGachaEntry entry)
+    {
+        return entry != null
+            && entry.enabled
+            && entry.skillConfig != null
+            && entry.weight > 0f;
     }
 
     private void RefreshDrawCostTexts(bool connected, int multiCount)

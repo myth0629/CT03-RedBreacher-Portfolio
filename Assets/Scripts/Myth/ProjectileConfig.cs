@@ -114,7 +114,7 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     public string WeaponCategory => attackType switch
     {
         WeaponAttackType.Area => "폭발탄",
-        WeaponAttackType.Piercing => "관통탄",
+        WeaponAttackType.Piercing => "철갑탄",
         _ => "일반탄"
     };
     public float AttackDamage => attackDamage;
