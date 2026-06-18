@@ -32,6 +32,9 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 
     private int lastSelectFrame = -1;
 
+    public string FacilityId => GetFacilityId();
+    public Sprite FacilitySprite => facilityImage != null ? facilityImage.sprite : null;
+
     private void Awake()
     {
         ResolveReferences();
