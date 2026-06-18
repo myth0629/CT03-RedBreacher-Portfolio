@@ -7,6 +7,7 @@ public class CoreChargerPanel : MonoBehaviour
     [Header("Base")]
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private TMP_Text levelText;
@@ -137,9 +138,12 @@ public class CoreChargerPanel : MonoBehaviour
             : 1;
 
         SetText(levelText, $"Lv. {coreCharger.Level}");
-        SetText(upgradeText, coreCharger.IsUpgrading
-            ? $"완료까지 {coreCharger.UpgradeRemainingSeconds:0}초"
-            : $"기지 업그레이드 ({coreCharger.UpgradeCost} 크레딧)");
+        BaseCampUpgradeButtonText.Set(
+            upgradeText,
+            upgradeCostText,
+            coreCharger.IsUpgrading ? $"완료까지 {coreCharger.UpgradeRemainingSeconds:0}초" : "기지 업그레이드",
+            coreCharger.UpgradeCost,
+            !coreCharger.IsUpgrading && coreCharger.Level < coreCharger.MaxLevel);
         SetText(currentUnitText, stage != null ? FormatUnitName(stage.currentUnit) : "모든 변환 완료");
         SetText(enhanceUnitText, stage != null ? FormatUnitName(stage.nextUnit) : string.Empty);
         SetUnitPreview(currentUnitPreviewImage, stage?.currentUnit);

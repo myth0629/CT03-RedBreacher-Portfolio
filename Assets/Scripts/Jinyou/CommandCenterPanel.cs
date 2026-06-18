@@ -25,6 +25,7 @@ public class CommandCenterPanel : MonoBehaviour
     [SerializeField] private TMP_Text commandNextLevelText;
     [SerializeField] private TMP_Text unlockDetailText;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private Image upgradeProgressFill;
 
     [Header("Visual")]
@@ -93,9 +94,12 @@ public class CommandCenterPanel : MonoBehaviour
             ? $"사령부 Lv. {cmdCenter.Level + 1}"
             : "최대 레벨");
         UpdateFacilityVisual();
-        SetText(upgradeText, cmdCenter.IsUpgrading
-            ? $"완료까지 {cmdCenter.UpgradeRemainingSeconds:0}초"
-            : $"업그레이드 ({cmdCenter.UpgradeCost} 크레딧)");
+        BaseCampUpgradeButtonText.Set(
+            upgradeText,
+            upgradeCostText,
+            cmdCenter.IsUpgrading ? $"완료까지 {cmdCenter.UpgradeRemainingSeconds:0}초" : "업그레이드",
+            cmdCenter.UpgradeCost,
+            !cmdCenter.IsUpgrading && cmdCenter.Level < cmdCenter.MaxLevel);
         SetText(unlockDetailText, BuildUnlockSummary());
         RefreshBaseUnlockStatuses();
 

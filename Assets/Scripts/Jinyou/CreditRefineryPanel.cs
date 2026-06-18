@@ -23,6 +23,7 @@ public class CreditRefineryPanel : MonoBehaviour
 
     [Header("UpgradeProgress")]
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text beforeUpgradeText;
     [SerializeField] private TMP_Text afterUpgradeText;
 
@@ -123,9 +124,12 @@ public class CreditRefineryPanel : MonoBehaviour
             : $"수집하기 (<b>{refinery.StoredCredits}</b>/{refinery.StorageCapacity})");
         SetText(productionText, $"1분 = {refinery.CreditsPerMinute:0}개 수집");
         RefreshUpgradePreview();
-        SetText(upgradeText, refinery.IsUpgrading
-            ? $"완료까지 {refinery.UpgradeRemainingSeconds:0}초"
-            : $"업그레이드 ({refinery.UpgradeCost} 크레딧)");
+        BaseCampUpgradeButtonText.Set(
+            upgradeText,
+            upgradeCostText,
+            refinery.IsUpgrading ? $"완료까지 {refinery.UpgradeRemainingSeconds:0}초" : "업그레이드",
+            refinery.UpgradeCost,
+            !refinery.IsUpgrading && refinery.Level < refinery.MaxLevel);
         SetFill(refineryStorageFill, refinery.StorageCapacity > 0
             ? (float)refinery.StoredCredits / refinery.StorageCapacity
             : 0f);

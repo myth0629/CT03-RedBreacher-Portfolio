@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -82,5 +83,27 @@ public static class BaseCampUpgradeStatus
 
         float remainingRatio = facility.UpgradeRemainingSeconds / observedUpgradeDuration;
         progressFill.fillAmount = Mathf.Clamp01(1f - remainingRatio);
+    }
+}
+
+public static class BaseCampUpgradeButtonText
+{
+    public static void Set(
+        TMP_Text labelText,
+        TMP_Text costText,
+        string label,
+        int cost,
+        bool showCost)
+    {
+        SetText(labelText, label);
+        SetText(costText, showCost ? cost.ToString() : string.Empty);
+    }
+
+    private static void SetText(TMP_Text target, string value)
+    {
+        if (target != null)
+        {
+            target.text = value;
+        }
     }
 }

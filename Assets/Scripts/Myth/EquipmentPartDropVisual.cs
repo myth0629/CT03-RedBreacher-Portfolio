@@ -40,7 +40,24 @@ public class EquipmentPartDropVisual : MonoBehaviour
     private static EquipmentPartDropVisual Get()
     {
         EnsurePoolRoot();
-        EquipmentPartDropVisual visual = Pool.Count > 0 ? Pool.Dequeue() : Create();
+
+        // 이전 재생 세션에서 파괴된(도메인 리로드 비활성 시 정적 풀에 남는) 항목은 건너뛴다.
+        EquipmentPartDropVisual visual = null;
+        while (Pool.Count > 0)
+        {
+            EquipmentPartDropVisual candidate = Pool.Dequeue();
+            if (candidate != null)
+            {
+                visual = candidate;
+                break;
+            }
+        }
+
+        if (visual == null)
+        {
+            visual = Create();
+        }
+
         visual.transform.SetParent(poolRoot, false);
         visual.gameObject.SetActive(true);
         return visual;
@@ -63,6 +80,8 @@ public class EquipmentPartDropVisual : MonoBehaviour
             return;
         }
 
+        // poolRoot가 없거나 재생 종료로 파괴된 경우, 풀에 남은 파괴된 참조도 함께 비운다.
+        Pool.Clear();
         GameObject rootObject = new GameObject("EquipmentPartDropVisualPool");
         DontDestroyOnLoad(rootObject);
         poolRoot = rootObject.transform;

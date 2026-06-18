@@ -14,6 +14,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [Header("Base Upgrade")]
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
     
@@ -172,11 +173,16 @@ public class AssemblyFactoryPanel : MonoBehaviour
         SetButtonLabel(weaponEnhanceButton, droneMode
             ? BuildDroneEnhanceButtonText()
             : BuildWeaponEnhanceButtonText());
-        SetButtonLabel(upgradeButton, assemblyFactory.IsUpgrading
-            ? $"완료까지 {assemblyFactory.UpgradeRemainingSeconds:0}초"
-            : assemblyFactory.Level >= assemblyFactory.MaxLevel
-                ? "최대레벨"
-                : $"기지 업그레이드 ({assemblyFactory.UpgradeCost} 크레딧)");
+        BaseCampUpgradeButtonText.Set(
+            upgradeText,
+            upgradeCostText,
+            assemblyFactory.IsUpgrading
+                ? $"완료까지 {assemblyFactory.UpgradeRemainingSeconds:0}초"
+                : assemblyFactory.Level >= assemblyFactory.MaxLevel
+                    ? "최대레벨"
+                    : "기지 업그레이드",
+            assemblyFactory.UpgradeCost,
+            !assemblyFactory.IsUpgrading && assemblyFactory.Level < assemblyFactory.MaxLevel);
 
         SetActive(weaponEnhanceButton != null ? weaponEnhanceButton.gameObject : null, true);
         SetActive(upgradeButton != null ? upgradeButton.gameObject : null, true);
@@ -255,7 +261,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         if (enhancement == null || weapon == null)
         {
             ClearEnhancementStatTexts();
-            return "강화하고자 하는 무기/드론을 선택하세요.";
+            return "강화할 무기/드론을 선택하세요.";
         }
 
         SetActive(weaponCost, true);

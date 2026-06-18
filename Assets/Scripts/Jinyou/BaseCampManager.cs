@@ -382,14 +382,34 @@ public class BaseCampManager : MonoBehaviour
 
     private void TickInactiveFacilities(float deltaTime)
     {
-        if (creditRefinery == null || creditRefinery.isActiveAndEnabled)
+        if (deltaTime <= 0f)
         {
             return;
         }
 
-        // 정제소 UI 패널이 꺼져도 저장 생산/업그레이드 타이머는 계속 진행한다.
-        creditRefinery.Produce(deltaTime);
-        creditRefinery.AdvanceUpgradeOffline(deltaTime);
+        if (commandCenter != null && !commandCenter.isActiveAndEnabled)
+        {
+            // Base Popup이 꺼져 시설 Update가 멈춰도 기지 시간은 계속 흐르게 한다.
+            commandCenter.AdvanceUpgradeOffline(deltaTime);
+            commandCenter.ProduceBossTicketsOffline(deltaTime);
+        }
+
+        if (creditRefinery != null && !creditRefinery.isActiveAndEnabled)
+        {
+            // 정제소 UI 패널이 꺼져도 저장 생산/업그레이드 타이머는 계속 진행한다.
+            creditRefinery.Produce(deltaTime);
+            creditRefinery.AdvanceUpgradeOffline(deltaTime);
+        }
+
+        if (assemblyFactory != null && !assemblyFactory.isActiveAndEnabled)
+        {
+            assemblyFactory.AdvanceUpgradeOffline(deltaTime);
+        }
+
+        if (coreCharger != null && !coreCharger.isActiveAndEnabled)
+        {
+            coreCharger.AdvanceUpgradeOffline(deltaTime);
+        }
     }
 
     private void TrySpendAndUpgrade(IBaseCampFacility facility)
