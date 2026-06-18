@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,19 +7,33 @@ public class CommandCenterPanel : MonoBehaviour
 {
     [Header("Panels")]
     [SerializeField] private BaseCampManager baseCampManager;
+
+    [Header("Base CMD")]
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TMP_Text levelText;
-    [SerializeField] private TMP_Text offlineRewardText;
+
+    [Header("PlayerLevel")]
+    [SerializeField] private TMP_Text playerLevelText;
+    [SerializeField] private TMP_Text playerEXPText;
+    [SerializeField] private Image playerEXPProgressFill;
+
+    [Header("BaseUnlockStatus")]
+    [SerializeField] private baseUnlockStatus baseUnlockStatusPrefab;
+    [SerializeField] private Transform statusList;
+
+    [Header("Base CMD Upgrade")]
+    [SerializeField] private TMP_Text commandNextLevelText;
+    [SerializeField] private TMP_Text unlockDetailText;
     [SerializeField] private TMP_Text upgradeText;
-    [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
-    [SerializeField] private TMP_Text unlockText;
-    
+
     [Header("Visual")]
     [SerializeField] private Image facilityImage;
     [SerializeField] private Sprite[] levelSprites;
 
+    private readonly List<baseUnlockStatus> _baseUnlockStatusList = new List<baseUnlockStatus>();
     private CommandCenter cmdCenter;
+    private PlayerProgression progression;
     private float observedUpgradeDuration;
 
     private void OnEnable()
@@ -42,7 +57,6 @@ public class CommandCenterPanel : MonoBehaviour
         BaseCampManager manager,
         Button upgrade,
         TMP_Text level,
-        TMP_Text offlineReward,
         TMP_Text upgradeLabel,
         TMP_Text unlock,
         Image targetImage,
@@ -51,9 +65,8 @@ public class CommandCenterPanel : MonoBehaviour
         baseCampManager = manager;
         upgradeButton = upgrade;
         levelText = level;
-        offlineRewardText = offlineReward;
         upgradeText = upgradeLabel;
-        unlockText = unlock;
+        unlockDetailText = unlock;
         facilityImage = targetImage;
         levelSprites = sprites;
         Refresh();
@@ -68,6 +81,7 @@ public class CommandCenterPanel : MonoBehaviour
     private void Refresh()
     {
         ResolveReferences();
+        RefreshPlayerProgression();
 
         if (cmdCenter == null)
         {
@@ -75,12 +89,15 @@ public class CommandCenterPanel : MonoBehaviour
         }
 
         SetText(levelText, $"Lv. {cmdCenter.Level}");
+        SetText(commandNextLevelText, cmdCenter.Level < cmdCenter.MaxLevel
+            ? $"사령부 Lv. {cmdCenter.Level + 1}"
+            : "최대 레벨");
         UpdateFacilityVisual();
-        SetText(offlineRewardText, $"* 1일당 {cmdCenter.BossTicketsProducedPerDay}티켓 지급 *");
         SetText(upgradeText, cmdCenter.IsUpgrading
             ? $"완료까지 {cmdCenter.UpgradeRemainingSeconds:0}초"
             : $"업그레이드 ({cmdCenter.UpgradeCost} 크레딧)");
-        SetText(unlockText, BuildUnlockSummary());
+        SetText(unlockDetailText, BuildUnlockSummary());
+        RefreshBaseUnlockStatuses();
 
         if (upgradeButton != null && baseCampManager != null)
         {
@@ -89,29 +106,91 @@ public class CommandCenterPanel : MonoBehaviour
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel);
-            SetText(upgradeConditionText, BaseCampUpgradeStatus.BuildConditionText(
-                cmdCenter,
-                baseCampManager.Credits,
-                baseCampManager.CommanderLevel,
-                researchLabLevel));
         }
 
         BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, cmdCenter, ref observedUpgradeDuration);
     }
 
-    private CommandCenter.FacilityUnlock FindFacilityUnlock(string facilityId)
+    // baseUnlockStatusPrefab을 연결하여 기지명(displayName), 레벨(requiredLabLevel), 언락상태(bool unlocked)를
+    // FacilityUnlock에 연결해서 동기화.
+    private void RefreshBaseUnlockStatuses()
     {
-        foreach (CommandCenter.FacilityUnlock item in cmdCenter.FacilityUnlocks)
+        if (baseUnlockStatusPrefab == null || statusList == null || cmdCenter == null)
         {
-            if (item != null && item.facilityId == facilityId)
+            return;
+        }
+
+        if (_baseUnlockStatusList.Count != cmdCenter.FacilityUnlocks.Count)
+        {
+            RebuildBaseUnlockStatuses();
+        }
+
+        foreach (CommandCenter.FacilityUnlock unlock in cmdCenter.FacilityUnlocks)
+        {
+            if (unlock != null)
             {
-                return item;
+                cmdCenter.IsFacilityUnlocked(unlock.facilityId);
+            }
+        }
+
+        foreach (baseUnlockStatus status in _baseUnlockStatusList)
+        {
+            status?.Refresh();
+        }
+    }
+
+    private void RebuildBaseUnlockStatuses()
+    {
+        foreach (baseUnlockStatus status in _baseUnlockStatusList)
+        {
+            if (status != null)
+            {
+                Destroy(status.gameObject);
+            }
+        }
+
+        _baseUnlockStatusList.Clear();
+        BaseCampFacilityView[] facilityViews = FindObjectsByType<BaseCampFacilityView>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        foreach (CommandCenter.FacilityUnlock unlock in cmdCenter.FacilityUnlocks)
+        {
+            if (unlock == null)
+            {
+                continue;
+            }
+
+            cmdCenter.IsFacilityUnlocked(unlock.facilityId);
+            BaseCampFacilityView facilityView = FindFacilityView(facilityViews, unlock.facilityId);
+            baseUnlockStatus status = Instantiate(baseUnlockStatusPrefab, statusList);
+            status.Configure(facilityView, unlock);
+            _baseUnlockStatusList.Add(status);
+        }
+    }
+
+    // baseUnlockStatusPrefab에 있는 Base_icon을 BaseCampFacilityView를 통해서 동기화
+    private static BaseCampFacilityView FindFacilityView(
+        BaseCampFacilityView[] facilityViews,
+        string facilityId)
+    {
+        if (facilityViews == null)
+        {
+            return null;
+        }
+
+        foreach (BaseCampFacilityView facilityView in facilityViews)
+        {
+            if (facilityView != null && facilityView.FacilityId == facilityId)
+            {
+                return facilityView;
             }
         }
 
         return null;
     }
 
+    // 사령부 기지 이미지 전용 비주얼 업그레이드
     private void UpdateFacilityVisual()
     {
         if (facilityImage == null || levelSprites == null || levelSprites.Length == 0 || cmdCenter == null)
@@ -137,16 +216,38 @@ public class CommandCenterPanel : MonoBehaviour
                 continue;
             }
 
-            summary += $"{item.displayName}: 해금됨.\n";
+            summary += $"{item.displayName} 해금\n";
         }
 
-        return summary.TrimEnd();
+        summary = summary.TrimEnd();
+        return string.IsNullOrEmpty(summary)
+            ? "해금 요소 없음"
+            : summary;
     }
 
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
         cmdCenter = baseCampManager != null ? baseCampManager.CommandCenter : null;
+        progression = baseCampManager != null
+            ? baseCampManager.PlayerProgression
+            : FindFirstObjectByType<PlayerProgression>();
+    }
+
+    private void RefreshPlayerProgression()
+    {
+        if (progression == null)
+        {
+            SetText(playerLevelText, string.Empty);
+            SetText(playerEXPText, string.Empty);
+            SetFill(playerEXPProgressFill, 0f);
+            return;
+        }
+
+        SetText(playerLevelText, $"Lv. {progression.Level}");
+        SetText(playerEXPText,
+            $"{progression.CurrentExperience:0} / {progression.ExperienceToNextLevel:0}");
+        SetFill(playerEXPProgressFill, progression.ExperienceProgress01);
     }
 
     private static void SetText(TMP_Text target, string value)
@@ -154,6 +255,14 @@ public class CommandCenterPanel : MonoBehaviour
         if (target != null)
         {
             target.text = value;
+        }
+    }
+
+    private static void SetFill(Image target, float value)
+    {
+        if (target != null)
+        {
+            target.fillAmount = Mathf.Clamp01(value);
         }
     }
 }
