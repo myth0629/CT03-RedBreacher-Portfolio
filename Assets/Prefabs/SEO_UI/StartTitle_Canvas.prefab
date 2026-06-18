@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 8789753550735813020}
   - component: {fileID: 1271473247893535838}
   - component: {fileID: 1193517051893606440}
+  - component: {fileID: 1580077006731967263}
+  - component: {fileID: 1336008835498277523}
   m_Layer: 5
   m_Name: StartTitle_Canvas
   m_TagString: Untagged
@@ -102,6 +104,41 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &1580077006731967263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2327244486052406821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3818d59255de3d64a968711d6ce1299d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  TitlePanel: {fileID: 6850518980982194375}
+--- !u!95 &1336008835498277523
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2327244486052406821}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 60d63b9b7b897254dbfba43a46952f20, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &2473711917267366496
 GameObject:
   m_ObjectHideFlags: 0
