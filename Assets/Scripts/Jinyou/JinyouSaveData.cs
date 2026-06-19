@@ -4,7 +4,7 @@ using System.Collections.Generic;
 [Serializable]
 public class JinyouSaveData
 {
-    public int version = 2;
+    public int version = 3;
     public long lastSavedUnixTime;
     public int commanderLevel = 1;
     public int mainBuildingLevel = 1;
@@ -18,6 +18,35 @@ public class JinyouSaveData
     public JinyouAchievementSaveData achievements = new JinyouAchievementSaveData();
     public JinyouDailyMissionSaveData dailyMissions = new JinyouDailyMissionSaveData();
     public JinyouGuideMissionSaveData guideMissions = new JinyouGuideMissionSaveData();
+    public JinyouInventorySaveData inventory = new JinyouInventorySaveData();
+    public JinyouPlayerLoadoutSaveData playerLoadout = new JinyouPlayerLoadoutSaveData();
+    public JinyouEquipmentLoadoutSaveData equipmentLoadout = new JinyouEquipmentLoadoutSaveData();
+}
+
+[Serializable]
+public class JinyouInventorySaveData
+{
+    public List<InventoryFacility.CollectionProgress> weapons = new List<InventoryFacility.CollectionProgress>();
+    public List<InventoryFacility.CollectionProgress> skills = new List<InventoryFacility.CollectionProgress>();
+    public List<string> drones = new List<string>();
+    public List<EquipmentPartInstance> equipmentParts = new List<EquipmentPartInstance>();
+}
+
+[Serializable]
+public class JinyouPlayerLoadoutSaveData
+{
+    public string unitId;
+    public string weaponId;
+    public string droneId;
+    public List<string> skillIds = new List<string>();
+}
+
+[Serializable]
+public class JinyouEquipmentLoadoutSaveData
+{
+    public string armorInstanceId;
+    public string engineInstanceId;
+    public string chipInstanceId;
 }
 
 [Serializable]

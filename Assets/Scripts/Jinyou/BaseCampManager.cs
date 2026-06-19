@@ -45,7 +45,9 @@ public class BaseCampManager : MonoBehaviour
     private PlayerCurrencyWallet registeredCurrencyWallet;
     private bool unifiedSaveReady;
     private bool isRestoringUnifiedSave;
+    private int loadedUnifiedSaveVersion;
     private bool confirmPlayerPrefsReset;
+    private bool skipNextBackupRotation;
     private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
 
     public CommandCenter CommandCenter => commandCenter;
@@ -59,6 +61,7 @@ public class BaseCampManager : MonoBehaviour
     public PlayerCurrencyWallet CurrencyWallet => EnsureCurrencyWallet();
     public PlayerProgression PlayerProgression => ResolvePlayerProgression();
     public JinyouOfflineRewardSaveData LastOfflineReward => lastOfflineReward;
+    private string UnifiedSaveBackupKey => $"{unifiedSaveKey}.Backup";
 
     private void Awake()
     {
@@ -79,11 +82,19 @@ public class BaseCampManager : MonoBehaviour
     {
         ConnectFacilities();
         LoadUnifiedGame();
+        if (loadedUnifiedSaveVersion < 3)
+        {
+            ApplyEquippedLoadoutAtBoot();
+        }
         ConfigureUnifiedPersistence();
         SubscribeUnifiedSaveEvents();
         unifiedSaveReady = true;
         SaveUnifiedGame();
-        ApplyEquippedLoadoutAtBoot();
+        ClearLegacyStandaloneData();
+        if (loadedUnifiedSaveVersion >= 3)
+        {
+            ApplyEquippedLoadoutAtBoot();
+        }
 
         if (closePanelsOnStart)
         {
@@ -333,6 +344,16 @@ public class BaseCampManager : MonoBehaviour
 
         // 준비된 시설 상태를 하나의 JSON으로 저장해 시스템 간 시점을 맞춘다.
         JinyouSaveData data = CaptureUnifiedSaveData();
+        if (!skipNextBackupRotation && PlayerPrefs.HasKey(unifiedSaveKey))
+        {
+            string previousJson = PlayerPrefs.GetString(unifiedSaveKey, string.Empty);
+            if (!string.IsNullOrWhiteSpace(previousJson))
+            {
+                PlayerPrefs.SetString(UnifiedSaveBackupKey, previousJson);
+            }
+        }
+
+        skipNextBackupRotation = false;
         PlayerPrefs.SetString(unifiedSaveKey, JsonUtility.ToJson(data));
         PlayerPrefs.Save();
     }
@@ -355,11 +376,31 @@ public class BaseCampManager : MonoBehaviour
 
         try
         {
-            RestoreUnifiedSaveData(JsonUtility.FromJson<JinyouSaveData>(json));
+            JinyouSaveData data = JsonUtility.FromJson<JinyouSaveData>(json);
+            loadedUnifiedSaveVersion = data != null ? data.version : 0;
+            RestoreUnifiedSaveData(data);
         }
         catch (ArgumentException exception)
         {
             Debug.LogWarning($"통합 저장 데이터를 읽지 못했습니다: {exception.Message}", this);
+            string backupJson = PlayerPrefs.GetString(UnifiedSaveBackupKey, string.Empty);
+            if (string.IsNullOrWhiteSpace(backupJson))
+            {
+                return;
+            }
+
+            try
+            {
+                JinyouSaveData backupData = JsonUtility.FromJson<JinyouSaveData>(backupJson);
+                loadedUnifiedSaveVersion = backupData != null ? backupData.version : 0;
+                RestoreUnifiedSaveData(backupData);
+                skipNextBackupRotation = true;
+                Debug.LogWarning("통합 저장 데이터가 손상되어 백업 데이터로 복구했습니다.", this);
+            }
+            catch (ArgumentException backupException)
+            {
+                Debug.LogWarning($"통합 백업 데이터도 읽지 못했습니다: {backupException.Message}", this);
+            }
         }
     }
 
@@ -372,6 +413,7 @@ public class BaseCampManager : MonoBehaviour
         }
 
         PlayerPrefs.DeleteKey(unifiedSaveKey);
+        PlayerPrefs.DeleteKey(UnifiedSaveBackupKey);
         PlayerPrefs.Save();
     }
 
@@ -643,10 +685,54 @@ public class BaseCampManager : MonoBehaviour
         }
 
         // 개별 저장을 통합 저장으로 한 번 마이그레이션한 뒤 중복 키를 제거한다.
+        EnsureCurrencyWallet().SetStandaloneSaveEnabled(false, false);
+        assemblyFactory?.SetStandaloneSaveEnabled(false, false);
+        EnsureDailyMissionManager().SetStandaloneSaveEnabled(false, false);
+        EnsureMainGuideMissionManager().SetStandaloneSaveEnabled(false, false);
+        Inventory?.SetStandaloneSaveEnabled(false, false);
+
+        PlayerLoadoutSelectionPanel playerLoadout =
+            FindFirstObjectByType<PlayerLoadoutSelectionPanel>(FindObjectsInactive.Include);
+        playerLoadout?.SetStandaloneSaveEnabled(false, false);
+
+        PlayerEquipmentPartLoadout equipmentLoadout =
+            FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
+        equipmentLoadout?.SetStandaloneSaveEnabled(false, false);
+        FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include)
+            ?.SetStandaloneLoadoutSaveEnabled(false, false);
+
+        AchievementManager achievementManager = AchievementManager.Instance
+            ?? FindFirstObjectByType<AchievementManager>();
+        achievementManager?.SetStandaloneSaveEnabled(false, false);
+    }
+
+    public void RequestUnifiedSave()
+    {
+        SaveUnifiedGameIfReady();
+    }
+
+    private void ClearLegacyStandaloneData()
+    {
+        if (!useUnifiedSave || !PlayerPrefs.HasKey(unifiedSaveKey))
+        {
+            return;
+        }
+
         EnsureCurrencyWallet().SetStandaloneSaveEnabled(false, true);
         assemblyFactory?.SetStandaloneSaveEnabled(false, true);
         EnsureDailyMissionManager().SetStandaloneSaveEnabled(false, true);
         EnsureMainGuideMissionManager().SetStandaloneSaveEnabled(false, true);
+        Inventory?.SetStandaloneSaveEnabled(false, true);
+
+        PlayerLoadoutSelectionPanel playerLoadout =
+            FindFirstObjectByType<PlayerLoadoutSelectionPanel>(FindObjectsInactive.Include);
+        playerLoadout?.SetStandaloneSaveEnabled(false, true);
+
+        PlayerEquipmentPartLoadout equipmentLoadout =
+            FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
+        equipmentLoadout?.SetStandaloneSaveEnabled(false, true);
+        FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include)
+            ?.SetStandaloneLoadoutSaveEnabled(false, true);
 
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
@@ -674,10 +760,24 @@ public class BaseCampManager : MonoBehaviour
             ?? FindFirstObjectByType<AchievementManager>();
         DailyMissionManager resolvedDailyMissionManager = EnsureDailyMissionManager();
         MainGuideMissionManager resolvedGuideMissionManager = EnsureMainGuideMissionManager();
+        PlayerLoadoutSelectionPanel playerLoadout =
+            FindFirstObjectByType<PlayerLoadoutSelectionPanel>(FindObjectsInactive.Include);
+        PlayerEquipmentPartLoadout equipmentLoadout =
+            FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
+        PlayerController player = FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
+        JinyouPlayerLoadoutSaveData playerLoadoutData = player != null
+            ? player.CaptureLoadoutState()
+            : playerLoadout != null
+                ? playerLoadout.CaptureState()
+                : new JinyouPlayerLoadoutSaveData();
+        if (playerLoadout != null)
+        {
+            playerLoadoutData.droneId = playerLoadout.CaptureState().droneId;
+        }
 
         return new JinyouSaveData
         {
-            version = 2,
+            version = 3,
             lastSavedUnixTime = GetCurrentUnixTime(),
             commanderLevel = CommanderLevel,
             mainBuildingLevel = commandCenter != null ? commandCenter.Level : 1,
@@ -690,7 +790,12 @@ public class BaseCampManager : MonoBehaviour
             coreCharger = coreCharger != null ? coreCharger.CaptureState() : new JinyouCoreChargerSaveData(),
             achievements = achievementManager != null ? achievementManager.CaptureState() : new JinyouAchievementSaveData(),
             dailyMissions = resolvedDailyMissionManager.CaptureState(),
-            guideMissions = resolvedGuideMissionManager.CaptureState()
+            guideMissions = resolvedGuideMissionManager.CaptureState(),
+            inventory = Inventory != null ? Inventory.CaptureState() : new JinyouInventorySaveData(),
+            playerLoadout = playerLoadoutData,
+            equipmentLoadout = equipmentLoadout != null
+                ? equipmentLoadout.CaptureState()
+                : new JinyouEquipmentLoadoutSaveData()
         };
     }
 
@@ -723,6 +828,23 @@ public class BaseCampManager : MonoBehaviour
             achievementManager?.RestoreState(data.achievements);
             EnsureDailyMissionManager().RestoreState(data.dailyMissions);
             EnsureMainGuideMissionManager().RestoreState(data.guideMissions);
+
+            if (data.version >= 3)
+            {
+                Inventory?.RestoreState(data.inventory);
+
+                PlayerController player =
+                    FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
+                player?.RestoreLoadoutState(data.playerLoadout);
+
+                PlayerLoadoutSelectionPanel playerLoadout =
+                    FindFirstObjectByType<PlayerLoadoutSelectionPanel>(FindObjectsInactive.Include);
+                playerLoadout?.RestoreState(data.playerLoadout);
+
+                PlayerEquipmentPartLoadout equipmentLoadout =
+                    FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
+                equipmentLoadout?.RestoreState(data.equipmentLoadout);
+            }
 
             ApplyOfflineRewards(data.lastSavedUnixTime);
             OnCommanderLevelChanged.Invoke(CommanderLevel);
@@ -792,6 +914,10 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.OnDroneEnhanced.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnUnitEnhanced.AddListener(HandleUnifiedSaveEvent);
+        Inventory?.OnInventoryChanged.AddListener(HandleUnifiedSaveEvent);
+        PlayerEquipmentPartLoadout equipmentLoadout =
+            FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
+        equipmentLoadout?.OnLoadoutChanged.AddListener(HandleUnifiedSaveEvent);
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.OnAchievementsChanged.AddListener(HandleUnifiedSaveEvent);
@@ -822,6 +948,10 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.OnDroneEnhanced.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnUnitEnhanced.RemoveListener(HandleUnifiedSaveEvent);
+        Inventory?.OnInventoryChanged.RemoveListener(HandleUnifiedSaveEvent);
+        PlayerEquipmentPartLoadout equipmentLoadout =
+            FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
+        equipmentLoadout?.OnLoadoutChanged.RemoveListener(HandleUnifiedSaveEvent);
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.OnAchievementsChanged.RemoveListener(HandleUnifiedSaveEvent);
