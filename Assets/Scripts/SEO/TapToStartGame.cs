@@ -13,6 +13,10 @@ public class TapToStartGame : MonoBehaviour
     [SerializeField] private float startDelay = 0.1f;
     [SerializeField] private float fadeDuration = 0.4f;
 
+    [Header("Gate")]
+    [Tooltip("켜면 Firebase 로그인 완료 전에는 탭을 무시한다.")]
+    [SerializeField] private bool requireSignIn = true;
+
     [Header("Optional - 'Tap to Start' 깜빡임")]
     [SerializeField] private TMP_Text tapText;
     [SerializeField] private float blinkSpeed = 2f;
@@ -30,6 +34,12 @@ public class TapToStartGame : MonoBehaviour
 
         if (WasTapped())
         {
+            // 로그인 전이면 탭 무시(그룹이 활성 상태여도 게임으로 안 넘어감).
+            if (requireSignIn && !(FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsSignedIn))
+            {
+                return;
+            }
+
             starting = true;
             if (startDelay > 0f)
             {
