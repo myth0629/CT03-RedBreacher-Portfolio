@@ -39,6 +39,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [SerializeField] private TMP_Text detailStatsText;
 
     private readonly List<PlayerLoadoutOptionButton> spawnedOptions = new List<PlayerLoadoutOptionButton>();
+    private bool saveToPlayerPrefs = true;
     private LoadoutMode currentMode;
     private ProjectileConfig selectedWeapon;
     private DroneConfig selectedDrone;
@@ -111,7 +112,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private void Start()
     {
         ResolveSources();
-        LoadEquippedLoadout();
+        ApplySavedLoadout();
     }
 
     /// <summary>저장된 장착 무기/드론을 즉시 플레이어에 적용한다. 로드아웃 팝업이 비활성이라
@@ -120,7 +121,75 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     public void ApplySavedLoadout()
     {
         ResolveSources();
-        LoadEquippedLoadout();
+        if (saveToPlayerPrefs)
+        {
+            LoadEquippedLoadout();
+            return;
+        }
+
+        if (selectedWeapon != null)
+        {
+            player?.SetWeaponConfig(selectedWeapon);
+        }
+
+        if (selectedDrone != null)
+        {
+            droneController?.SetDroneConfig(selectedDrone);
+        }
+    }
+
+    public JinyouPlayerLoadoutSaveData CaptureState()
+    {
+        return new JinyouPlayerLoadoutSaveData
+        {
+            weaponId = selectedWeapon != null
+                ? selectedWeapon.Id
+                : PlayerPrefs.GetString(SelectedWeaponKey, string.Empty),
+            droneId = selectedDrone != null
+                ? selectedDrone.Id
+                : PlayerPrefs.GetString(SelectedDroneKey, string.Empty)
+        };
+    }
+
+    public void RestoreState(JinyouPlayerLoadoutSaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        ResolveSources();
+        ApplyLoadoutIds(data.weaponId, data.droneId);
+    }
+
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveToPlayerPrefs = enabled;
+        if (!clearStoredData)
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(SelectedWeaponKey);
+        PlayerPrefs.DeleteKey(SelectedDroneKey);
+        PlayerPrefs.Save();
+    }
+
+    private void ApplyLoadoutIds(string weaponId, string droneId)
+    {
+        ProjectileConfig weapon = FindWeaponById(weaponId);
+        if (weapon != null && (inventory == null || inventory.ContainsWeapon(weapon)))
+        {
+            selectedWeapon = weapon;
+            player?.SetWeaponConfig(weapon);
+        }
+
+        DroneConfig drone = FindDroneById(droneId);
+        if (drone != null && (inventory == null || inventory.ContainsDrone(drone)))
+        {
+            selectedDrone = drone;
+            droneController?.SetDroneConfig(drone);
+        }
     }
 
     private void LoadEquippedLoadout()
@@ -154,8 +223,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         droneController?.SetDroneConfig(initialDrone);
         if (initialDrone != null)
         {
-            PlayerPrefs.SetString(SelectedDroneKey, initialDrone.Id);
-            PlayerPrefs.Save();
+            SaveSelectedId(SelectedDroneKey, initialDrone.Id);
         }
     }
 
@@ -371,8 +439,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             player?.SetWeaponConfig(selectedWeapon);
             if (selectedWeapon != null)
             {
-                PlayerPrefs.SetString(SelectedWeaponKey, selectedWeapon.Id);
-                PlayerPrefs.Save();
+                SaveSelectedId(SelectedWeaponKey, selectedWeapon.Id);
             }
             RebuildWeaponList();
             RefreshWeaponDetail(selectedWeapon);
@@ -391,11 +458,21 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         if (selectedDrone != null && (inventory == null || inventory.ContainsDrone(selectedDrone)))
         {
             droneController?.SetDroneConfig(selectedDrone);
-            PlayerPrefs.SetString(SelectedDroneKey, selectedDrone.Id);
-            PlayerPrefs.Save();
+            SaveSelectedId(SelectedDroneKey, selectedDrone.Id);
         }
         RebuildDroneList();
         RefreshDroneDetail(selectedDrone);
+    }
+
+    private void SaveSelectedId(string key, string value)
+    {
+        if (saveToPlayerPrefs)
+        {
+            PlayerPrefs.SetString(key, value);
+            PlayerPrefs.Save();
+        }
+
+        BaseCampManager.Instance?.RequestUnifiedSave();
     }
 
     private void RefreshWeaponDetail(ProjectileConfig weapon)
