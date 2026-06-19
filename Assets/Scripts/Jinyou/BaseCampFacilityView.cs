@@ -8,13 +8,12 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
     public enum FacilityType
     {
         CommandCenter,
-        EnergyRefinery,
+        CreditRefinery,
         AssemblyFactory,
         CoreCharger,
         TraitPointFacility,
-        Inventory,
-        WeaponGacha,
-        BossDungeon
+        SkillHanger,
+        BossTracker
     }
 
     [Header("Facility")]
@@ -146,13 +145,12 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
         return facilityType switch
         {
             FacilityType.CommandCenter => baseCampManager?.CommandCenter?.Level ?? 1,
-            FacilityType.EnergyRefinery => baseCampManager?.CreditRefinery?.Level ?? 1,
+            FacilityType.CreditRefinery => baseCampManager?.CreditRefinery?.Level ?? 1,
             FacilityType.AssemblyFactory => baseCampManager?.AssemblyFactory?.Level ?? 1,
             FacilityType.CoreCharger => baseCampManager?.CoreCharger?.Level ?? 1,
             FacilityType.TraitPointFacility => 1,
-            FacilityType.Inventory => 1,
-            FacilityType.WeaponGacha => 1,
-            FacilityType.BossDungeon => baseCampManager?.CommandCenter?.Level ?? 1,
+            FacilityType.SkillHanger => 1,
+            FacilityType.BossTracker => baseCampManager?.CommandCenter?.Level ?? 1,
             _ => 1
         };
     }
@@ -162,8 +160,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
         ResolveReferences();
 
         if (facilityType == FacilityType.CommandCenter
-            || facilityType == FacilityType.Inventory
-            || facilityType == FacilityType.WeaponGacha)
+            || facilityType == FacilityType.SkillHanger)
         {
             return true;
         }
@@ -181,13 +178,12 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
     {
         return facilityType switch
         {
-            FacilityType.EnergyRefinery => "energy_refinery",
+            FacilityType.CreditRefinery => "energy_refinery",
             FacilityType.AssemblyFactory => "assembly_factory",
             FacilityType.CoreCharger => "core_charger",
             FacilityType.TraitPointFacility => "trait_point_facility",
-            FacilityType.Inventory => "inventory",
-            FacilityType.WeaponGacha => "weapon_gacha",
-            FacilityType.BossDungeon => "boss_dungeon",
+            FacilityType.SkillHanger => "skill_hanger",
+            FacilityType.BossTracker => "boss_tracker",
             _ => string.Empty
         };
     }
@@ -215,7 +211,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
                     baseCampManager.CommandCenter.OnUpgradeCompleted.AddListener(SyncView);
                 }
                 break;
-            case FacilityType.EnergyRefinery:
+            case FacilityType.CreditRefinery:
                 SubscribeResearchLabUnlockEvents();
                 if (baseCampManager?.CreditRefinery != null)
                 {
@@ -245,11 +241,9 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
             case FacilityType.TraitPointFacility:
                 SubscribeResearchLabUnlockEvents();
                 break;
-            case FacilityType.Inventory:
+            case FacilityType.SkillHanger:
                 break;
-            case FacilityType.WeaponGacha:
-                break;
-            case FacilityType.BossDungeon:
+            case FacilityType.BossTracker:
                 SubscribeResearchLabUnlockEvents();
                 break;
         }
