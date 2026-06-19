@@ -11,13 +11,14 @@ public class AttackHelicopterSkill : MonoBehaviour
     private float nextAttackTime;
     private float nextTargetSearchTime;
     private bool leaving;
+    private bool entering;
+    private Vector3 lastFacing = Vector3.forward;
 
     public static bool Spawn(PlayerController player, PlayerSkillConfig skillConfig, Vector3 targetPosition)
     {
         if (player == null
             || skillConfig == null
-            || skillConfig.AttackHelicopterPrefab == null
-            || skillConfig.HelicopterRocketPrefab == null)
+            || skillConfig.AttackHelicopterPrefab == null)
         {
             return false;
         }
@@ -39,13 +40,22 @@ public class AttackHelicopterSkill : MonoBehaviour
         transform.position = GetSpawnPosition(owner, config);
 
         // 헬기가 보이기 전에 목표 주변에 로켓을 먼저 떨어뜨려 지원 등장을 예고한다.
-        for (int i = 0; i < config.HelicopterOpeningRocketCount; i++)
+        // 로켓이 실제로 착탄한 뒤 헬기가 등장하도록 비행시간 기준으로 등장 지연을 잡는다.
+        float openingTime = 0.35f;
+        if (config.HelicopterRocketPrefab != null)
         {
-            Vector3 offset = GetOpeningRocketOffset(i, config.HelicopterOpeningRocketCount);
-            StartCoroutine(LaunchRocket(transform.position, CombatPlane.WithFixedY(targetPosition + offset), i * 0.15f));
+            for (int i = 0; i < config.HelicopterOpeningRocketCount; i++)
+            {
+                Vector3 impact = CombatPlane.WithFixedY(targetPosition + GetOpeningRocketOffset(i, config.HelicopterOpeningRocketCount));
+                float launchDelay = i * 0.15f;
+                StartCoroutine(LaunchRocket(transform.position, impact, launchDelay));
+
+                float flightTime = Mathf.Sqrt(CombatPlane.DistanceSqr(transform.position, impact)) / config.HelicopterRocketSpeed;
+                openingTime = Mathf.Max(openingTime, launchDelay + flightTime);
+            }
         }
 
-        StartCoroutine(SpawnHelicopterAfterOpening());
+        StartCoroutine(SpawnHelicopterAfterOpening(openingTime + 0.1f));
     }
 
     private void Update()
@@ -66,46 +76,141 @@ public class AttackHelicopterSkill : MonoBehaviour
             return;
         }
 
+        if (entering)
+        {
+            // 진입 연출 중에는 EntryRoutine이 이동을 제어한다.
+            transform.position = helicopterVisual.transform.position;
+            return;
+        }
+
         if (Time.time >= expireTime)
         {
             LeaveAndDestroy();
             return;
         }
 
-        FollowOwner();
+        AcquireTarget();
+        MoveAndFace();
         TryAttack();
+        transform.position = helicopterVisual.transform.position;
     }
 
-    private void FollowOwner()
+    // 플레이어 위치/회전에 종속되지 않고, 스스로 타겟을 찾아 움직이는 독립 유닛처럼 동작한다.
+    private void AcquireTarget()
     {
-        Vector3 desiredPosition = GetSpawnPosition(owner, config);
+        if (HasValidTarget())
+        {
+            return;
+        }
+
+        currentTarget = null;
+        if (Time.time >= nextTargetSearchTime)
+        {
+            currentTarget = PlayerSkillCombat.FindClosestEnemy(helicopterVisual.transform.position, config.AttackHelicopterAttackRange);
+            nextTargetSearchTime = currentTarget == null ? Time.time + 0.2f : 0f;
+        }
+    }
+
+    private void MoveAndFace()
+    {
+        Vector3 heliPosition = helicopterVisual.transform.position;
+        Vector3 playerPosition = CombatPlane.WithFixedY(owner.transform.position);
+        float leash = config.AttackHelicopterMaxDistanceFromPlayer;
+
+        Vector3 destination = heliPosition;
+        Vector3 faceDir = Vector3.zero;
+
+        if (currentTarget != null)
+        {
+            Vector3 toTarget = CombatPlane.Direction(heliPosition, currentTarget.transform.position);
+            if (toTarget.sqrMagnitude > 0f)
+            {
+                // 사거리의 일정 비율까지 접근 후 정지(스탠드오프)하되, 플레이어 범위를 벗어나는 추격은 막는다.
+                float engageDistance = config.AttackHelicopterAttackRange * 0.7f;
+                float distance = Mathf.Sqrt(CombatPlane.DistanceSqr(heliPosition, currentTarget.transform.position));
+                Vector3 standoff = distance > engageDistance
+                    ? CombatPlane.WithFixedY(currentTarget.transform.position - toTarget * engageDistance)
+                    : heliPosition;
+                destination = ClampToRadius(standoff, playerPosition, leash);
+                faceDir = toTarget;
+            }
+        }
+        else if (CombatPlane.DistanceSqr(heliPosition, playerPosition) > (leash * 0.8f) * (leash * 0.8f))
+        {
+            // 타겟이 없고 플레이어와 멀어졌으면 범위 안으로 복귀한다.
+            destination = playerPosition;
+            faceDir = CombatPlane.Direction(heliPosition, playerPosition);
+        }
+
         helicopterVisual.transform.position = Vector3.MoveTowards(
-            helicopterVisual.transform.position,
-            desiredPosition,
+            heliPosition,
+            destination,
             config.AttackHelicopterMoveSpeed * Time.deltaTime);
-        helicopterVisual.transform.rotation = GetHelicopterRotation(owner);
-        transform.position = helicopterVisual.transform.position;
+
+        // 어떤 경우에도 플레이어 기준 leash 밖으로 나가지 않게 최종 제한(플레이어가 빨리 멀어져도 가장자리에 붙어 따라감).
+        helicopterVisual.transform.position = ClampToRadius(
+            helicopterVisual.transform.position, playerPosition, leash);
+
+        if (faceDir.sqrMagnitude > 0f)
+        {
+            lastFacing = faceDir;
+            helicopterVisual.transform.rotation = FaceRotation(faceDir);
+        }
+    }
+
+    private static Vector3 ClampToRadius(Vector3 position, Vector3 center, float radius)
+    {
+        Vector3 offset = position - center;
+        offset.y = 0f;
+        float distance = offset.magnitude;
+        if (distance > radius && distance > 0.0001f)
+        {
+            position = center + offset * (radius / distance);
+        }
+
+        return CombatPlane.WithFixedY(position);
     }
 
     private void TryAttack()
     {
-        if (!HasValidTarget())
-        {
-            currentTarget = null;
-            if (Time.time >= nextTargetSearchTime)
-            {
-                currentTarget = PlayerSkillCombat.FindClosestEnemy(helicopterVisual.transform.position, config.AttackHelicopterAttackRange);
-                nextTargetSearchTime = currentTarget == null ? Time.time + 0.2f : 0f;
-            }
-        }
-
         if (currentTarget == null || Time.time < nextAttackTime)
         {
             return;
         }
 
-        StartCoroutine(LaunchRocket(helicopterVisual.transform.position, CombatPlane.WithFixedY(currentTarget.transform.position), 0f));
+        FireProjectile(currentTarget);
         nextAttackTime = Time.time + config.AttackHelicopterAttackInterval;
+    }
+
+    // 헬기 공격도 일반/미사일 터렛처럼 ProjectileConfig 기반 PlayerProjectile을 사용한다.
+    private void FireProjectile(CombatHealth target)
+    {
+        ProjectileConfig projectileConfig = config.HelicopterProjectileConfig;
+        if (projectileConfig == null || target == null)
+        {
+            return;
+        }
+
+        Vector3 startPosition = CombatPlane.WithFixedY(helicopterVisual.transform.position);
+        Vector3 fireDirection = CombatPlane.Direction(startPosition, target.transform.position);
+        if (fireDirection.sqrMagnitude <= 0f)
+        {
+            return;
+        }
+
+        float damage = PlayerSkillCombat.CalculateDamage(owner, config, out bool isCritical);
+        PlayerProjectile projectile = CombatObjectPool.GetProjectile();
+        projectile.transform.position = startPosition;
+        projectile.Configure(projectileConfig);
+        projectile.ConfigureRuntimeStats(projectileConfig.CollisionRadius, config.KnockbackForce);
+        projectile.ConfigureRuntimeAreaStats(config.HelicopterRocketRadius, 1f, config.MaxTargets);
+        projectile.Launch(
+            fireDirection,
+            damage,
+            projectileConfig.Speed,
+            projectileConfig.Lifetime,
+            owner.Health,
+            isCritical);
     }
 
     private bool HasValidTarget()
@@ -117,9 +222,9 @@ public class AttackHelicopterSkill : MonoBehaviour
                 <= config.AttackHelicopterAttackRange * config.AttackHelicopterAttackRange;
     }
 
-    private IEnumerator SpawnHelicopterAfterOpening()
+    private IEnumerator SpawnHelicopterAfterOpening(float delay)
     {
-        yield return new WaitForSeconds(0.35f);
+        yield return new WaitForSeconds(Mathf.Max(0f, delay));
 
         if (owner == null || owner.Health == null || owner.Health.IsDead || config == null)
         {
@@ -127,9 +232,60 @@ public class AttackHelicopterSkill : MonoBehaviour
             yield break;
         }
 
-        Vector3 spawnPosition = GetSpawnPosition(owner, config);
-        helicopterVisual = Instantiate(config.AttackHelicopterPrefab, spawnPosition, GetHelicopterRotation(owner));
+        // 화면 밖 먼 곳에서 등장해 운용 위치(플레이어 옆)로 날아 들어온다.
+        Vector3 operatingPosition = GetSpawnPosition(owner, config);
+        Vector3 playerPosition = CombatPlane.WithFixedY(owner.transform.position);
+        Vector3 entryDirection = CombatPlane.Direction(playerPosition, operatingPosition);
+        if (entryDirection.sqrMagnitude <= 0f)
+        {
+            entryDirection = Vector3.right;
+        }
+
+        Vector3 entryStart = CombatPlane.WithFixedY(playerPosition + entryDirection * 30f);
+        helicopterVisual = Instantiate(config.AttackHelicopterPrefab, entryStart, FaceRotation(-entryDirection));
         transform.position = helicopterVisual.transform.position;
+        lastFacing = -entryDirection;
+        EnsureRotorSpin(helicopterVisual);
+
+        // 진입이 끝난 뒤부터 체류시간을 센다.
+        expireTime = float.PositiveInfinity;
+        entering = true;
+        StartCoroutine(EntryRoutine());
+    }
+
+    private IEnumerator EntryRoutine()
+    {
+        float entrySpeed = Mathf.Max(config.AttackHelicopterMoveSpeed * 2.5f, 14f);
+        while (helicopterVisual != null)
+        {
+            if (owner == null || owner.Health == null || owner.Health.IsDead)
+            {
+                Destroy(helicopterVisual);
+                Destroy(gameObject);
+                yield break;
+            }
+
+            Vector3 position = helicopterVisual.transform.position;
+            Vector3 destination = GetSpawnPosition(owner, config); // 플레이어 이동 반영
+            Vector3 direction = CombatPlane.Direction(position, destination);
+            if (direction.sqrMagnitude > 0f)
+            {
+                lastFacing = direction;
+                helicopterVisual.transform.rotation = FaceRotation(direction);
+            }
+
+            helicopterVisual.transform.position = Vector3.MoveTowards(position, destination, entrySpeed * Time.deltaTime);
+            transform.position = helicopterVisual.transform.position;
+
+            if (CombatPlane.DistanceSqr(helicopterVisual.transform.position, destination) <= 0.25f)
+            {
+                break;
+            }
+
+            yield return null;
+        }
+
+        entering = false;
         expireTime = Time.time + config.AttackHelicopterDuration;
     }
 
@@ -201,19 +357,29 @@ public class AttackHelicopterSkill : MonoBehaviour
 
     private IEnumerator LeaveRoutine()
     {
-        Vector3 forward = owner != null
-            ? CombatPlane.DirectionFromYRotation(owner.transform)
-            : Vector3.forward;
+        // 자신이 향하던 방향으로, 화면 밖까지 충분히 멀리 빠르게 날아간 뒤 사라진다(사라짐이 화면에 안 보이게).
+        Vector3 forward = lastFacing.sqrMagnitude > 0f ? lastFacing.normalized : Vector3.forward;
         Transform visualTransform = helicopterVisual != null ? helicopterVisual.transform : transform;
-        Vector3 endPosition = CombatPlane.WithFixedY(visualTransform.position - forward * 5f);
-        float duration = 0.8f;
+        visualTransform.rotation = FaceRotation(forward);
+
+        const float exitTravel = 30f; // 화면 밖까지 충분한 거리
+        float exitSpeed = Mathf.Max(config.AttackHelicopterMoveSpeed * 2.5f, 14f);
+        float travelled = 0f;
+        float safetyTimeout = 4f;
         float elapsed = 0f;
-        Vector3 startPosition = visualTransform.position;
-        while (elapsed < duration)
+
+        while (travelled < exitTravel && elapsed < safetyTimeout)
         {
-            elapsed += Time.deltaTime;
-            visualTransform.position = CombatPlane.WithFixedY(Vector3.Lerp(startPosition, endPosition, Mathf.Clamp01(elapsed / duration)));
+            if (helicopterVisual == null)
+            {
+                break;
+            }
+
+            float step = exitSpeed * Time.deltaTime;
+            visualTransform.position = CombatPlane.WithFixedY(visualTransform.position + forward * step);
             transform.position = visualTransform.position;
+            travelled += step;
+            elapsed += Time.deltaTime;
             yield return null;
         }
 
@@ -245,7 +411,63 @@ public class AttackHelicopterSkill : MonoBehaviour
             forward = Vector3.forward;
         }
 
-        return Quaternion.LookRotation(forward, Vector3.up) * Quaternion.Euler(90f, 0f, 0f);
+        return FaceRotation(forward);
+    }
+
+    private static Quaternion FaceRotation(Vector3 direction)
+    {
+        if (direction.sqrMagnitude <= 0f)
+        {
+            direction = Vector3.forward;
+        }
+
+        return Quaternion.LookRotation(direction, Vector3.up) * Quaternion.Euler(90f, 0f, 0f);
+    }
+
+    private void EnsureRotorSpin(GameObject visual)
+    {
+        if (visual == null || string.IsNullOrWhiteSpace(config.HelicopterRotorName))
+        {
+            return;
+        }
+
+        Transform rotor = FindChildByName(visual.transform, config.HelicopterRotorName);
+        if (rotor == null)
+        {
+            return;
+        }
+
+        RotorSpin spin = rotor.GetComponent<RotorSpin>();
+        if (spin == null)
+        {
+            spin = rotor.gameObject.AddComponent<RotorSpin>();
+        }
+
+        spin.Configure(config.HelicopterRotorSpeed);
+    }
+
+    private static Transform FindChildByName(Transform root, string childName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(childName))
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindChildByName(root.GetChild(i), childName);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private static Vector3 GetOpeningRocketOffset(int index, int count)

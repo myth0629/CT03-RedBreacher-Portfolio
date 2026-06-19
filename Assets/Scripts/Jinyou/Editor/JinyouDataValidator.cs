@@ -150,8 +150,8 @@ public class JinyouDataValidator : EditorWindow
             Add(Severity.Error, $"Skill '{asset.Id}': 터렛 프리팹이 없습니다.", asset);
         if (asset.SkillType == PlayerSkillType.MissileTurret && asset.MissileTurretPrefab == null)
             Add(Severity.Error, $"Skill '{asset.Id}': 미사일 터렛 프리팹이 없습니다.", asset);
-        if (asset.SkillType == PlayerSkillType.MissileTurret && asset.MissileProjectilePrefab == null)
-            Add(Severity.Error, $"Skill '{asset.Id}': 미사일 투사체 프리팹이 없습니다.", asset);
+        if (asset.SkillType == PlayerSkillType.MissileTurret && asset.MissileProjectileConfig == null)
+            Add(Severity.Error, $"Skill '{asset.Id}': 미사일 투사체 설정이 없습니다.", asset);
         if (asset.SkillType == PlayerSkillType.StealthBomber && asset.StealthBomberPrefab == null)
             Add(Severity.Error, $"Skill '{asset.Id}': 스텔스 폭격기 프리팹이 없습니다.", asset);
         if (asset.SkillType == PlayerSkillType.AttackHelicopter && asset.AttackHelicopterPrefab == null)

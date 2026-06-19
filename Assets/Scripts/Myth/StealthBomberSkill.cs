@@ -43,6 +43,14 @@ public class StealthBomberSkill : MonoBehaviour
         bomber.transform.position = startPosition;
         bomber.transform.rotation = GetFlightRotation();
 
+        // 비행체를 따라다니는 짙은 바닥 그림자(스프라이트 미지정 시 절차적 생성).
+        GroundShadowDecal shadow = GroundShadowDecal.Create(
+            bomber.transform,
+            config.StealthBomberShadowSize,
+            config.StealthBomberShadowDarkness,
+            -10,
+            config.StealthBomberShadowSprite);
+
         StartCoroutine(MoveBomber(bomber, startPosition, endPosition));
 
         Vector3[] impactPoints = BuildImpactPoints();
@@ -56,6 +64,11 @@ public class StealthBomberSkill : MonoBehaviour
             + config.ImpactDelay
             + 0.2f;
         yield return new WaitForSeconds(Mathf.Max(flightDuration, strikeDuration));
+
+        if (shadow != null)
+        {
+            Destroy(shadow.gameObject);
+        }
 
         if (bomber != null)
         {

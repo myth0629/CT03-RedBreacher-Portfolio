@@ -180,6 +180,18 @@ public class PlayerProjectile : MonoBehaviour
         ApplyCollisionRadius();
     }
 
+    public void ConfigureRuntimeAreaStats(
+        float runtimeAreaRadius,
+        float runtimeAreaDamageMultiplier,
+        int runtimeMaxAreaTargets)
+    {
+        // 스킬 투사체는 무기 SO의 비주얼을 쓰되 스킬 밸런스의 범위값을 적용한다.
+        attackType = WeaponAttackType.Area;
+        areaRadius = Mathf.Max(0f, runtimeAreaRadius);
+        areaDamageMultiplier = Mathf.Max(0f, runtimeAreaDamageMultiplier);
+        maxAreaTargets = Mathf.Max(1, runtimeMaxAreaTargets);
+    }
+
     private void EnsureProjectileComponents()
     {
         CombatPlane.ClampTransform(transform);

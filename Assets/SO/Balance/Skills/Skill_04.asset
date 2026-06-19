@@ -35,18 +35,18 @@ MonoBehaviour:
   maxLevelDuplicateCoreCrystalReward: 1
   impactDelay: 0.25
   warningEffectPrefab: {fileID: 9179389450710726649, guid: 0309f63716c8a4a4e84bead042662d12, type: 3}
-  impactEffectPrefab: {fileID: 1320533090949476, guid: f20077a0be0f3fa4495d97be6faa09bc, type: 3}
+  impactEffectPrefab: {fileID: 1221116321114522, guid: 13e7b1908d4d5094e9ba37c20eb5a0a0, type: 3}
   effectCleanupDelay: 2
   _airplanePrefab: {fileID: 0}
   _airplaneSpeed: 15
   _airplaneSpawnOffset: 15
   _airplaneHeight: 6
   _bombProjectilePrefab: {fileID: 0}
-  _bombEffectScale: 1
+  _bombEffectScale: 5
   _bombCount: 1
   _bombInterval: 0.15
   _screenShakeDuration: 0.28
-  _screenShakeStrength: 0.55
+  _screenShakeStrength: 0.8
   _screenShakeFrequency: 1.8
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 0}
@@ -66,15 +66,19 @@ MonoBehaviour:
   missileExplosionRadius: 2.2
   missileProjectileSpeed: 12
   missileTurretFirePointName: FirePoint
+  missileImpactEffectPrefab: {fileID: 0}
   stealthBomberPrefab: {fileID: 214164098778057125, guid: 8fd535507b2293c479d0b5d315d95e60, type: 3}
-  stealthBomberSpeed: 24
+  stealthBomberSpeed: 18
   stealthBomberTravelDistance: 18
   stealthBomberHeight: 6
-  stealthBomberRows: 1
+  stealthBomberRows: 3
   stealthBomberColumns: 3
-  stealthBomberSpacing: 2.2
-  stealthBomberBombInterval: 0.12
-  stealthBomberExplosionRadius: 2.5
+  stealthBomberSpacing: 2.5
+  stealthBomberBombInterval: 0.08
+  stealthBomberExplosionRadius: 2
+  stealthBomberShadowSprite: {fileID: 0}
+  stealthBomberShadowSize: 7
+  stealthBomberShadowDarkness: 0.55
   attackHelicopterPrefab: {fileID: 0}
   helicopterRocketPrefab: {fileID: 0}
   attackHelicopterDuration: 15

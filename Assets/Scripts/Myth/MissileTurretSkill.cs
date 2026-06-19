@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 public class MissileTurretSkill : MonoBehaviour
@@ -19,7 +18,7 @@ public class MissileTurretSkill : MonoBehaviour
         if (player == null
             || skillConfig == null
             || skillConfig.MissileTurretPrefab == null
-            || skillConfig.MissileProjectilePrefab == null)
+            || skillConfig.MissileProjectileConfig == null)
         {
             return false;
         }
@@ -128,58 +127,30 @@ public class MissileTurretSkill : MonoBehaviour
             return;
         }
 
-        // 미사일은 발사 시점의 적 위치로 느리게 날아가 착탄 지점에 범위 피해를 준다.
+        // 미사일 터렛도 일반 터렛처럼 PlayerProjectile을 사용하고, 충돌 시 범위 피해만 적용한다.
         Vector3 startPosition = firePoint == transform
             ? CombatPlane.WithFixedY(transform.position)
             : CombatPlane.PositionFromZPlaneChild(transform, firePoint, CombatPlane.Direction(transform.position, target.transform.position));
-        Vector3 impactPosition = CombatPlane.WithFixedY(target.transform.position);
-        StartCoroutine(LaunchMissile(startPosition, impactPosition));
-    }
-
-    private IEnumerator LaunchMissile(Vector3 startPosition, Vector3 impactPosition)
-    {
-        GameObject missile = Instantiate(config.MissileProjectilePrefab, startPosition, Quaternion.identity);
-        missile.transform.position = startPosition;
-
-        Vector3 direction = CombatPlane.Direction(startPosition, impactPosition);
-        if (direction.sqrMagnitude > 0f)
+        Vector3 fireDirection = CombatPlane.Direction(startPosition, target.transform.position);
+        if (fireDirection.sqrMagnitude <= 0f)
         {
-            missile.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            return;
         }
 
-        float distance = Mathf.Sqrt(CombatPlane.DistanceSqr(startPosition, impactPosition));
-        float duration = distance / Mathf.Max(0.1f, config.MissileProjectileSpeed);
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            if (missile == null)
-            {
-                yield break;
-            }
-
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            missile.transform.position = CombatPlane.WithFixedY(Vector3.Lerp(startPosition, impactPosition, t));
-            yield return null;
-        }
-
-        if (missile != null)
-        {
-            Destroy(missile);
-        }
-
-        if (owner != null && owner.Health != null && !owner.Health.IsDead)
-        {
-            float damage = PlayerSkillCombat.CalculateDamage(owner, config, out bool isCritical);
-            PlayerSkillCombat.ApplyAreaDamage(
-                owner,
-                impactPosition,
-                config.MissileExplosionRadius,
-                damage,
-                config.MaxTargets,
-                config.KnockbackForce,
-                isCritical);
-        }
+        ProjectileConfig projectileConfig = config.MissileProjectileConfig;
+        float damage = PlayerSkillCombat.CalculateDamage(owner, config, out bool isCritical);
+        PlayerProjectile projectile = CombatObjectPool.GetProjectile();
+        projectile.transform.position = startPosition;
+        projectile.Configure(projectileConfig);
+        projectile.ConfigureRuntimeStats(projectileConfig.CollisionRadius, config.KnockbackForce);
+        projectile.ConfigureRuntimeAreaStats(config.MissileExplosionRadius, 1f, config.MaxTargets);
+        projectile.Launch(
+            fireDirection,
+            damage,
+            projectileConfig.Speed,
+            projectileConfig.Lifetime,
+            owner.Health,
+            isCritical);
     }
 
     private static Transform FindChildByName(Transform root, string childName)

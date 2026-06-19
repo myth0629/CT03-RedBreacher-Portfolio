@@ -35,7 +35,7 @@ MonoBehaviour:
   maxLevelDuplicateCoreCrystalReward: 1
   impactDelay: 0.5
   warningEffectPrefab: {fileID: 0}
-  impactEffectPrefab: {fileID: 1320533090949476, guid: f20077a0be0f3fa4495d97be6faa09bc, type: 3}
+  impactEffectPrefab: {fileID: 0}
   effectCleanupDelay: 2
   _airplanePrefab: {fileID: 0}
   _airplaneSpeed: 15
@@ -66,6 +66,7 @@ MonoBehaviour:
   missileExplosionRadius: 2.2
   missileProjectileSpeed: 12
   missileTurretFirePointName: FirePoint
+  missileImpactEffectPrefab: {fileID: 0}
   stealthBomberPrefab: {fileID: 0}
   stealthBomberSpeed: 24
   stealthBomberTravelDistance: 18
@@ -75,13 +76,20 @@ MonoBehaviour:
   stealthBomberSpacing: 2.2
   stealthBomberBombInterval: 0.12
   stealthBomberExplosionRadius: 2.5
+  stealthBomberShadowSprite: {fileID: 0}
+  stealthBomberShadowSize: 7
+  stealthBomberShadowDarkness: 0.55
   attackHelicopterPrefab: {fileID: 214164098778057125, guid: 402a7cb78ddd1794ea4bffc598e0bb89, type: 3}
-  helicopterRocketPrefab: {fileID: 1678767144466112, guid: e2ba727a17e461d44b33e480e2f56d18, type: 3}
+  helicopterProjectileConfig: {fileID: 11400000, guid: 7eb1b98301c03438e9df49bfd1f36277, type: 2}
+  helicopterRocketPrefab: {fileID: 0}
   attackHelicopterDuration: 15
   attackHelicopterAttackInterval: 0.9
-  attackHelicopterAttackRange: 7
+  attackHelicopterAttackRange: 8
   attackHelicopterMoveSpeed: 6
   attackHelicopterFollowOffset: 2.5
+  attackHelicopterMaxDistanceFromPlayer: 6
   helicopterOpeningRocketCount: 2
   helicopterRocketRadius: 2
   helicopterRocketSpeed: 16
+  helicopterRotorName: Propeller
+  helicopterRotorSpeed: 900

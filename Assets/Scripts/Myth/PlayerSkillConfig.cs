@@ -79,6 +79,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float missileExplosionRadius = 2.2f;
     [SerializeField] private float missileProjectileSpeed = 12f;
     [SerializeField] private string missileTurretFirePointName = "FirePoint";
+    [SerializeField] private GameObject missileImpactEffectPrefab;
 
     [Header("Stealth Bomber")]
     [SerializeField] private GameObject stealthBomberPrefab;
@@ -90,18 +91,25 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float stealthBomberSpacing = 2.2f;
     [SerializeField] private float stealthBomberBombInterval = 0.12f;
     [SerializeField] private float stealthBomberExplosionRadius = 2.5f;
+    [SerializeField] private Sprite stealthBomberShadowSprite; // 비우면 절차적 그림자 사용
+    [SerializeField] private float stealthBomberShadowSize = 7f;
+    [SerializeField] private float stealthBomberShadowDarkness = 0.55f;
 
     [Header("Attack Helicopter")]
     [SerializeField] private GameObject attackHelicopterPrefab;
-    [SerializeField] private GameObject helicopterRocketPrefab;
+    [SerializeField] private ProjectileConfig helicopterProjectileConfig; // 헬기 공격 투사체(터렛과 동일 방식)
+    [SerializeField] private GameObject helicopterRocketPrefab;           // 오프닝 예고 로켓(지정 지점 착탄)
     [SerializeField] private float attackHelicopterDuration = 15f;
     [SerializeField] private float attackHelicopterAttackInterval = 0.8f;
     [SerializeField] private float attackHelicopterAttackRange = 7f;
     [SerializeField] private float attackHelicopterMoveSpeed = 5f;
     [SerializeField] private float attackHelicopterFollowOffset = 2.5f;
+    [SerializeField] private float attackHelicopterMaxDistanceFromPlayer = 6f; // 이 반경 밖으로는 안 나감
     [SerializeField] private int helicopterOpeningRocketCount = 2;
     [SerializeField] private float helicopterRocketRadius = 2f;
     [SerializeField] private float helicopterRocketSpeed = 16f;
+    [SerializeField] private string helicopterRotorName = "Propeller"; // 회전시킬 자식 이름(비우면 비활성)
+    [SerializeField] private float helicopterRotorSpeed = 900f;
 
     public string Id => id;
     public string DisplayName => displayName;
@@ -141,6 +149,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float ScreenShakeFrequency => Mathf.Max(0.01f, _screenShakeFrequency);
     public GameObject TurretPrefab => turretPrefab;
     public ProjectileConfig TurretProjectileConfig => turretProjectileConfig;
+    public ProjectileConfig MissileProjectileConfig => turretProjectileConfig;
     public float TurretDuration => Mathf.Max(0.1f, turretDuration);
     public float TurretAttackInterval => Mathf.Max(0.1f, turretAttackInterval);
     public float TurretAttackRange => Mathf.Max(0f, turretAttackRange);
@@ -157,6 +166,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float MissileExplosionRadius => Mathf.Max(0.1f, missileExplosionRadius);
     public float MissileProjectileSpeed => Mathf.Max(0.1f, missileProjectileSpeed);
     public string MissileTurretFirePointName => missileTurretFirePointName;
+    public GameObject MissileImpactEffectPrefab => missileImpactEffectPrefab;
     public GameObject StealthBomberPrefab => stealthBomberPrefab;
     public float StealthBomberSpeed => Mathf.Max(0.1f, stealthBomberSpeed);
     public float StealthBomberTravelDistance => Mathf.Max(1f, stealthBomberTravelDistance);
@@ -166,16 +176,23 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float StealthBomberSpacing => Mathf.Max(0.1f, stealthBomberSpacing);
     public float StealthBomberBombInterval => Mathf.Max(0f, stealthBomberBombInterval);
     public float StealthBomberExplosionRadius => Mathf.Max(0.1f, stealthBomberExplosionRadius);
+    public Sprite StealthBomberShadowSprite => stealthBomberShadowSprite;
+    public float StealthBomberShadowSize => Mathf.Max(0.1f, stealthBomberShadowSize);
+    public float StealthBomberShadowDarkness => Mathf.Clamp01(stealthBomberShadowDarkness);
     public GameObject AttackHelicopterPrefab => attackHelicopterPrefab;
+    public ProjectileConfig HelicopterProjectileConfig => helicopterProjectileConfig;
     public GameObject HelicopterRocketPrefab => helicopterRocketPrefab;
     public float AttackHelicopterDuration => Mathf.Max(0.1f, attackHelicopterDuration);
     public float AttackHelicopterAttackInterval => Mathf.Max(0.1f, attackHelicopterAttackInterval);
     public float AttackHelicopterAttackRange => Mathf.Max(0f, attackHelicopterAttackRange);
     public float AttackHelicopterMoveSpeed => Mathf.Max(0.1f, attackHelicopterMoveSpeed);
     public float AttackHelicopterFollowOffset => Mathf.Max(0f, attackHelicopterFollowOffset);
+    public float AttackHelicopterMaxDistanceFromPlayer => Mathf.Max(1f, attackHelicopterMaxDistanceFromPlayer);
     public int HelicopterOpeningRocketCount => Mathf.Max(0, helicopterOpeningRocketCount);
     public float HelicopterRocketRadius => Mathf.Max(0.1f, helicopterRocketRadius);
     public float HelicopterRocketSpeed => Mathf.Max(0.1f, helicopterRocketSpeed);
+    public string HelicopterRotorName => helicopterRotorName;
+    public float HelicopterRotorSpeed => helicopterRotorSpeed;
 
     public float GetCooldown(int level)
     {
