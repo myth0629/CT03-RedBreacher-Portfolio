@@ -14,6 +14,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [Header("Base Upgrade")]
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeRemainingText;
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private Image upgradeProgressFill;
@@ -150,6 +151,8 @@ public class AssemblyFactoryPanel : MonoBehaviour
         if (assemblyFactory == null)
         {
             SetActive(coinIcon != null ? coinIcon.gameObject : null, false);
+            SetUpgradeRemainingText(upgradeRemainingText, false, 0f);
+            SetActive(upgradeText != null ? upgradeText.gameObject : null, true);
             ClearEnhancementStatTexts();
             return;
         }
@@ -179,13 +182,16 @@ public class AssemblyFactoryPanel : MonoBehaviour
         BaseCampUpgradeButtonText.Set(
             upgradeText,
             upgradeCostText,
-            assemblyFactory.IsUpgrading
-                ? $"완료까지 {assemblyFactory.UpgradeRemainingSeconds:0}초"
-                : assemblyFactory.Level >= assemblyFactory.MaxLevel
-                    ? "최대레벨"
-                    : "기지 업그레이드",
+            assemblyFactory.Level >= assemblyFactory.MaxLevel
+                ? "최대레벨"
+                : "기지 업그레이드",
             assemblyFactory.UpgradeCost,
             !assemblyFactory.IsUpgrading && assemblyFactory.Level < assemblyFactory.MaxLevel);
+        SetUpgradeRemainingText(
+            upgradeRemainingText,
+            assemblyFactory.IsUpgrading,
+            assemblyFactory.UpgradeRemainingSeconds);
+        SetActive(upgradeText != null ? upgradeText.gameObject : null, !assemblyFactory.IsUpgrading);
         SetActive(coinIcon != null ? coinIcon.gameObject : null, !assemblyFactory.IsUpgrading);
 
         SetActive(weaponEnhanceButton != null ? weaponEnhanceButton.gameObject : null, true);
@@ -483,5 +489,11 @@ public class AssemblyFactoryPanel : MonoBehaviour
         {
             target.SetActive(value);
         }
+    }
+
+    private static void SetUpgradeRemainingText(TMP_Text target, bool isUpgrading, float remainingSeconds)
+    {
+        SetText(target, isUpgrading ? $"완료까지 {remainingSeconds:0}초" : string.Empty);
+        SetActive(target != null ? target.gameObject : null, isUpgrading);
     }
 }

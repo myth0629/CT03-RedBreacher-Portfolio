@@ -254,7 +254,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 740, y: 140}
+  m_SizeDelta: {x: 700, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8407644260700042367
 CanvasRenderer:
@@ -321,7 +321,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillItemOdd
   icon: {fileID: 8139969028263696768}
   skillItemName: {fileID: 8646751770070483844}
-  skillItemType: {fileID: 0}
   skillItemOddNum: {fileID: 4509894756527663743}
 --- !u!1 &1890923741037664066
 GameObject:

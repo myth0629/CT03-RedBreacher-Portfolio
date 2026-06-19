@@ -7,6 +7,7 @@ public class CoreChargerPanel : MonoBehaviour
     [Header("Base")]
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeRemainingText;
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Image upgradeProgressFill;
@@ -20,6 +21,7 @@ public class CoreChargerPanel : MonoBehaviour
     [Header("TankUnit subPanel")]
     [SerializeField] private Button enhanceUnitButton;
     [SerializeField] private TMP_Text enhanceUnitButtonStateText;
+    [SerializeField] private TMP_Text enhanceUnitEmptyText;
     [SerializeField] private RawImage currentUnitPreviewImage;
     [SerializeField] private TMP_Text currentUnitText;
     [SerializeField] private RawImage enhanceUnitPreviewImage;
@@ -39,6 +41,7 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private TMP_Text unlockDroneButtonStateText;
     [SerializeField] private RawImage unlockDronePreviewImage;
     [SerializeField] private TMP_Text unlockDroneText;
+    [SerializeField] private TMP_Text unlockDroneEmptyText;
 
     [Header("DroneUnlock subPanel")]
     [SerializeField] private TMP_Text unlockDroneDamageText;
@@ -120,7 +123,10 @@ public class CoreChargerPanel : MonoBehaviour
         if (coreCharger == null)
         {
             SetActive(coinIcon != null ? coinIcon.gameObject : null, false);
+            SetUpgradeRemainingText(upgradeRemainingText, false, 0f);
+            SetActive(upgradeText != null ? upgradeText.gameObject : null, true);
             SetText(enhanceUnitButtonStateText, "코어 차저가 연결되지 않았습니다.");
+            SetEnhanceUnitConditionText(string.Empty);
             SetText(currentUnitText, string.Empty);
             SetText(enhanceUnitText, string.Empty);
             RefreshEnhanceUnitStatTexts(null);
@@ -143,9 +149,14 @@ public class CoreChargerPanel : MonoBehaviour
         BaseCampUpgradeButtonText.Set(
             upgradeText,
             upgradeCostText,
-            coreCharger.IsUpgrading ? $"완료까지 {coreCharger.UpgradeRemainingSeconds:0}초" : "기지 업그레이드",
+            "기지 업그레이드",
             coreCharger.UpgradeCost,
             !coreCharger.IsUpgrading && coreCharger.Level < coreCharger.MaxLevel);
+        SetUpgradeRemainingText(
+            upgradeRemainingText,
+            coreCharger.IsUpgrading,
+            coreCharger.UpgradeRemainingSeconds);
+        SetActive(upgradeText != null ? upgradeText.gameObject : null, !coreCharger.IsUpgrading);
         SetActive(coinIcon != null ? coinIcon.gameObject : null, !coreCharger.IsUpgrading);
         SetText(currentUnitText, stage != null ? FormatUnitName(stage.currentUnit) : "모든 변환 완료");
         SetText(enhanceUnitText, stage != null ? FormatUnitName(stage.nextUnit) : string.Empty);
@@ -157,6 +168,7 @@ public class CoreChargerPanel : MonoBehaviour
         bool canConvert = coreCharger.CanConvertCurrentUnit(inventory, player, playerLevel);
         SetInteractable(enhanceUnitButton, canConvert);
         SetText(enhanceUnitButtonStateText, BuildEnhanceUnitButtonStateText(stage, playerLevel));
+        SetEnhanceUnitConditionText(BuildEnhanceUnitConditionText(stage, playerLevel));
         SetEnhanceUnitButtonLabel(stage != null ? "유닛 강화" : "완료");
         RefreshDroneUnlockPanel();
 
@@ -200,23 +212,47 @@ public class CoreChargerPanel : MonoBehaviour
             return "강화 가능";
         }
 
-        string message = "강화 조건";
+        return string.Empty;
+    }
+
+    private string BuildEnhanceUnitConditionText(CoreCharger.UnitConversionStage stage, int playerLevel)
+    {
+        if (coreCharger == null || stage == null || !stage.IsConfigured)
+        {
+            return string.Empty;
+        }
+
+        int requiredCoreLevel = coreCharger.GetRequiredCoreChargerLevel(coreCharger.CurrentStageIndex);
+        bool ownsCurrentUnit = inventory != null && inventory.ContainsUnit(stage.currentUnit);
+        bool hasCurrentUnitEquipped = player != null && player.UnitConfig == stage.currentUnit;
+
+        string message = string.Empty;
         if (playerLevel < stage.requiredPlayerLevel)
         {
-            message += $"\n- 플레이어 Lv.{stage.requiredPlayerLevel} 필요 (현재 Lv.{playerLevel})";
+            message += $"- 플레이어 Lv.{stage.requiredPlayerLevel} 필요 (현재 Lv.{playerLevel})";
         }
 
         if (coreCharger.Level < requiredCoreLevel)
         {
-            message += $"\n- 코어 차저 Lv.{requiredCoreLevel} 필요 (현재 Lv.{coreCharger.Level})";
+            message += $"{(message.Length > 0 ? "\n" : string.Empty)}"
+                + $"- 코어 차저 Lv.{requiredCoreLevel} 필요 (현재 Lv.{coreCharger.Level})";
         }
 
         if (!ownsCurrentUnit && !hasCurrentUnitEquipped)
         {
-            message += $"\n- {stage.currentUnit.DisplayName} 보유 또는 장착 필요";
+            message += $"{(message.Length > 0 ? "\n" : string.Empty)}"
+                + $"- {stage.currentUnit.DisplayName} 보유 또는 장착 필요";
         }
 
         return message;
+    }
+
+    private void SetEnhanceUnitConditionText(string message)
+    {
+        SetText(enhanceUnitEmptyText, message);
+        SetActive(
+            enhanceUnitEmptyText != null ? enhanceUnitEmptyText.gameObject : null,
+            !string.IsNullOrEmpty(message));
     }
 
     private void RefreshDroneUnlockPanel()
@@ -224,7 +260,8 @@ public class CoreChargerPanel : MonoBehaviour
         if (coreCharger == null)
         {
             SetInteractable(unlockDroneButton, false);
-            SetText(unlockDroneButtonStateText, "코어 차저가 연결되지 않았습니다.");
+            SetText(unlockDroneButtonStateText, "해금 불가");
+            SetUnlockDroneConditionText("코어 차저가 연결되지 않았습니다.");
             SetText(unlockDroneText, string.Empty);
             SetDronePreview(unlockDronePreviewImage, null);
             RefreshUnlockDroneStatTexts(null);
@@ -236,6 +273,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         SetInteractable(unlockDroneButton, coreCharger.CanUnlockNextDrone(inventory));
         SetText(unlockDroneButtonStateText, BuildUnlockDroneButtonStateText(nextUnlock));
+        SetUnlockDroneConditionText(BuildUnlockDroneConditionText(nextUnlock));
         SetText(unlockDroneText, nextDrone != null ? nextDrone.DisplayName : "모든 드론 해금 완료");
         SetDronePreview(unlockDronePreviewImage, nextDrone);
         RefreshUnlockDroneStatTexts(nextDrone);
@@ -249,6 +287,13 @@ public class CoreChargerPanel : MonoBehaviour
     /// <param name="nextUnlock"></param>
     /// <returns></returns>
     private string BuildUnlockDroneButtonStateText(CoreCharger.DroneUnlock nextUnlock)
+    {
+        return string.IsNullOrEmpty(BuildUnlockDroneConditionText(nextUnlock))
+            ? $"{nextUnlock.droneConfig.DisplayName} 해금하기"
+            : string.Empty;
+    }
+
+    private string BuildUnlockDroneConditionText(CoreCharger.DroneUnlock nextUnlock)
     {
         if (coreCharger == null)
         {
@@ -268,12 +313,17 @@ public class CoreChargerPanel : MonoBehaviour
         }
 
         int requiredLevel = Mathf.Max(1, nextUnlock.requiredCoreChargerLevel);
-        if (coreCharger.Level < requiredLevel)
-        {
-            return $"드론 해금 조건\n- 코어 차저 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})";
-        }
+        return coreCharger.Level < requiredLevel
+            ? $"코어 차저 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})"
+            : string.Empty;
+    }
 
-        return $"{nextUnlock.droneConfig.DisplayName} 해금하기";
+    private void SetUnlockDroneConditionText(string message)
+    {
+        SetText(unlockDroneEmptyText, message);
+        SetActive(
+            unlockDroneEmptyText != null ? unlockDroneEmptyText.gameObject : null,
+            !string.IsNullOrEmpty(message));
     }
 
     // UnlockDrone 스텟 관련 텍스트에 연결
@@ -413,6 +463,12 @@ public class CoreChargerPanel : MonoBehaviour
         }
     }
 
+    private static void SetUpgradeRemainingText(TMP_Text target, bool isUpgrading, float remainingSeconds)
+    {
+        SetText(target, isUpgrading ? $"완료까지 {remainingSeconds:0}초" : string.Empty);
+        SetActive(target != null ? target.gameObject : null, isUpgrading);
+    }
+
     private void SetEnhanceUnitButtonLabel(string value)
     {
         if (enhanceUnitButton == null)
@@ -423,7 +479,9 @@ public class CoreChargerPanel : MonoBehaviour
         TMP_Text[] labels = enhanceUnitButton.GetComponentsInChildren<TMP_Text>(true);
         foreach (TMP_Text label in labels)
         {
-            if (label != null && label != enhanceUnitButtonStateText)
+            if (label != null
+                && label != enhanceUnitButtonStateText
+                && label != enhanceUnitEmptyText)
             {
                 label.text = value;
                 return;

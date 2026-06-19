@@ -122,6 +122,8 @@ public class UnitPreviewRenderer : MonoBehaviour
         previewCamera.Render();
         previewCamera.targetTexture = previous;
 
+        // Destroy는 프레임 끝까지 지연되므로 다음 프리뷰 렌더에 이전 유닛이 섞이지 않게 즉시 비활성화한다.
+        stage.SetActive(false);
         Destroy(stage);
     }
 
