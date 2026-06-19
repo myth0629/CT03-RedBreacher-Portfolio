@@ -30,6 +30,7 @@ public class TitleScreenController : MonoBehaviour
         if (googleLoginButton != null)
         {
             googleLoginButton.onClick.AddListener(OnLoginClicked);
+            googleLoginButton.interactable = false;
         }
 
         // FirebaseAuthManager.Awake는 이 시점 이전에 실행됨(같은 씬). 준비/상태 변화를 구독.
@@ -64,6 +65,13 @@ public class TitleScreenController : MonoBehaviour
         if (manager != null && manager.IsSignedIn)
         {
             ShowTapToStart();
+            return;
+        }
+
+        if (!busy && googleLoginButton != null)
+        {
+            // Firebase 준비 전 터치는 무반응처럼 보이므로, 준비된 뒤에만 버튼을 활성화한다.
+            googleLoginButton.interactable = manager != null && manager.IsReady;
         }
     }
 
@@ -78,9 +86,11 @@ public class TitleScreenController : MonoBehaviour
         if (manager == null || !manager.IsReady)
         {
             Debug.LogWarning("[Title] 인증이 아직 준비되지 않았습니다.");
+            HandleAuthState();
             return;
         }
 
+        Debug.Log("[Title] 구글 로그인 버튼 클릭");
         busy = true;
         googleLoginButton.interactable = false;
 

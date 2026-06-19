@@ -32,14 +32,39 @@ public class NativeGoogleSignIn : IGoogleSignIn
         }
 
         pending = new TaskCompletionSource<string>();
+        Task<string> signInTask = pending.Task;
         EnsureBridge();
 
 #if UNITY_ANDROID && !UNITY_EDITOR
         try
         {
-            using (var plugin = new AndroidJavaClass("com.yourcompany.googlesignin.GoogleSignInPlugin"))
+            using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
             {
-                plugin.CallStatic("signIn", BridgeObjectName, WebClientId);
+                if (activity == null)
+                {
+                    Debug.LogError("[NativeGoogleSignIn] Android Activity를 찾을 수 없습니다.");
+                    Complete(null);
+                    return signInTask;
+                }
+
+                Debug.Log("[NativeGoogleSignIn] Android 구글 로그인 UI 호출");
+                // Credential Manager UI는 Android Activity UI thread에서 실행한다.
+                activity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
+                {
+                    try
+                    {
+                        using (var plugin = new AndroidJavaClass("com.yourcompany.googlesignin.GoogleSignInPlugin"))
+                        {
+                            plugin.CallStatic("signIn", BridgeObjectName, WebClientId);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError($"[NativeGoogleSignIn] Android 호출 실패: {e}");
+                        Complete(null);
+                    }
+                }));
             }
         }
         catch (Exception e)
@@ -61,7 +86,7 @@ public class NativeGoogleSignIn : IGoogleSignIn
         Debug.LogWarning("[NativeGoogleSignIn] 에디터에서는 동작하지 않습니다. 실기기에서 테스트하세요.");
         Complete(null);
 #endif
-        return pending.Task;
+        return signInTask;
     }
 
     public void SignOut()
