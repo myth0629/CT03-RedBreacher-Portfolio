@@ -23,9 +23,11 @@ public class CreditRefineryPanel : MonoBehaviour
 
     [Header("UpgradeProgress")]
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeRemainingText;
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text beforeUpgradeText;
     [SerializeField] private TMP_Text afterUpgradeText;
+    [SerializeField] private Image coinIcon;
 
     [Header("Visual")]
     [SerializeField] private Image facilityImage;
@@ -109,6 +111,9 @@ public class CreditRefineryPanel : MonoBehaviour
 
         if (refinery == null)
         {
+            SetActive(coinIcon != null ? coinIcon.gameObject : null, false);
+            SetUpgradeRemainingText(upgradeRemainingText, false, 0f);
+            SetActive(upgradeText != null ? upgradeText.gameObject : null, true);
             SetText(beforeUpgradeText, string.Empty);
             SetText(afterUpgradeText, string.Empty);
             return;
@@ -127,9 +132,15 @@ public class CreditRefineryPanel : MonoBehaviour
         BaseCampUpgradeButtonText.Set(
             upgradeText,
             upgradeCostText,
-            refinery.IsUpgrading ? $"완료까지 {refinery.UpgradeRemainingSeconds:0}초" : "업그레이드",
+            "업그레이드",
             refinery.UpgradeCost,
             !refinery.IsUpgrading && refinery.Level < refinery.MaxLevel);
+        SetUpgradeRemainingText(
+            upgradeRemainingText,
+            refinery.IsUpgrading,
+            refinery.UpgradeRemainingSeconds);
+        SetActive(upgradeText != null ? upgradeText.gameObject : null, !refinery.IsUpgrading);
+        SetActive(coinIcon != null ? coinIcon.gameObject : null, !refinery.IsUpgrading);
         SetFill(refineryStorageFill, refinery.StorageCapacity > 0
             ? (float)refinery.StoredCredits / refinery.StorageCapacity
             : 0f);
@@ -217,5 +228,19 @@ public class CreditRefineryPanel : MonoBehaviour
         {
             target.fillAmount = Mathf.Clamp01(value);
         }
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null && target.activeSelf != active)
+        {
+            target.SetActive(active);
+        }
+    }
+
+    private static void SetUpgradeRemainingText(TMP_Text target, bool isUpgrading, float remainingSeconds)
+    {
+        SetText(target, isUpgrading ? $"완료까지 {remainingSeconds:0}초" : string.Empty);
+        SetActive(target != null ? target.gameObject : null, isUpgrading);
     }
 }

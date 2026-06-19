@@ -67,6 +67,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Auto Skills")]
     [SerializeField] private List<PlayerSkillConfig> autoSkills = new List<PlayerSkillConfig>();
+    [SerializeField] private bool saveLoadoutToPlayerPrefs = true;
 
     private readonly List<Transform> fireMuzzles = new List<Transform>();
     private CombatHealth health;
@@ -239,9 +240,13 @@ public class PlayerController : MonoBehaviour
 
         unitConfig = config;
         // 장착 유닛을 저장해 다음 플레이 세션에서도 업그레이드된 유닛을 유지한다.
-        PlayerPrefs.SetString(EquippedUnitIdKey, config.Id);
-        PlayerPrefs.Save();
+        if (saveLoadoutToPlayerPrefs)
+        {
+            PlayerPrefs.SetString(EquippedUnitIdKey, config.Id);
+            PlayerPrefs.Save();
+        }
         ApplyUnitConfig();
+        BaseCampManager.Instance?.RequestUnifiedSave();
         return true;
     }
 
@@ -254,10 +259,14 @@ public class PlayerController : MonoBehaviour
 
         // 로드아웃 UI에서 선택한 무기를 런타임 전투 설정에 즉시 반영한다.
         weaponConfig = config;
-        PlayerPrefs.SetString(EquippedWeaponIdKey, config != null ? config.Id : string.Empty);
-        PlayerPrefs.Save();
+        if (saveLoadoutToPlayerPrefs)
+        {
+            PlayerPrefs.SetString(EquippedWeaponIdKey, config != null ? config.Id : string.Empty);
+            PlayerPrefs.Save();
+        }
         nextAttackTime = Time.time;
         RefreshUnitReferences();
+        BaseCampManager.Instance?.RequestUnifiedSave();
     }
 
     public bool EquipSkill(int slotIndex, PlayerSkillConfig config)
@@ -308,6 +317,74 @@ public class PlayerController : MonoBehaviour
     public int GetSkillLevel(PlayerSkillConfig config)
     {
         return inventory != null ? inventory.GetSkillLevel(config) : config != null ? 1 : 0;
+    }
+
+    public JinyouPlayerLoadoutSaveData CaptureLoadoutState()
+    {
+        EnsureSkillSlotCount();
+        JinyouPlayerLoadoutSaveData data = new JinyouPlayerLoadoutSaveData
+        {
+            unitId = unitConfig != null ? unitConfig.Id : string.Empty,
+            weaponId = weaponConfig != null ? weaponConfig.Id : string.Empty
+        };
+        for (int i = 0; i < SkillSlotCount; i++)
+        {
+            data.skillIds.Add(autoSkills[i] != null ? autoSkills[i].Id : string.Empty);
+        }
+
+        return data;
+    }
+
+    public void RestoreLoadoutState(JinyouPlayerLoadoutSaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        ResolveCollectionSystems();
+        PlayerUnitConfig restoredUnit = FindUnitById(data.unitId);
+        if (restoredUnit != null && (inventory == null || inventory.ContainsUnit(restoredUnit)))
+        {
+            unitConfig = restoredUnit;
+        }
+
+        ProjectileConfig restoredWeapon = FindWeaponById(data.weaponId);
+        if (restoredWeapon != null && (inventory == null || inventory.ContainsWeapon(restoredWeapon)))
+        {
+            weaponConfig = restoredWeapon;
+        }
+
+        EnsureSkillSlotCount();
+        for (int i = 0; i < SkillSlotCount; i++)
+        {
+            string skillId = data.skillIds != null && i < data.skillIds.Count
+                ? data.skillIds[i]
+                : string.Empty;
+            PlayerSkillConfig skill = FindSkillById(skillId);
+            autoSkills[i] = skill != null && (inventory == null || inventory.ContainsSkill(skill))
+                ? skill
+                : null;
+        }
+
+        autoSkillController?.Initialize(this, autoSkills);
+        ApplyUnitConfig();
+        ApplyHealthStats();
+        RefreshUnitReferences();
+    }
+
+    public void SetStandaloneLoadoutSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveLoadoutToPlayerPrefs = enabled;
+        if (!clearStoredData)
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(EquippedUnitIdKey);
+        PlayerPrefs.DeleteKey(EquippedWeaponIdKey);
+        PlayerPrefs.DeleteKey(EquippedSkillIdsKey);
+        PlayerPrefs.Save();
     }
 
     private void EnsureAutoSkillController()
@@ -410,8 +487,13 @@ public class PlayerController : MonoBehaviour
             saveData.skillIds.Add(autoSkills[i] != null ? autoSkills[i].Id : string.Empty);
         }
 
-        PlayerPrefs.SetString(EquippedSkillIdsKey, JsonUtility.ToJson(saveData));
-        PlayerPrefs.Save();
+        if (saveLoadoutToPlayerPrefs)
+        {
+            PlayerPrefs.SetString(EquippedSkillIdsKey, JsonUtility.ToJson(saveData));
+            PlayerPrefs.Save();
+        }
+
+        BaseCampManager.Instance?.RequestUnifiedSave();
     }
 
     private ProjectileConfig FindWeaponById(string configId)

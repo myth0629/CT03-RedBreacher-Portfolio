@@ -25,8 +25,10 @@ public class CommandCenterPanel : MonoBehaviour
     [SerializeField] private TMP_Text commandNextLevelText;
     [SerializeField] private TMP_Text unlockDetailText;
     [SerializeField] private TMP_Text upgradeText;
+    [SerializeField] private TMP_Text upgradeRemainingText;
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private Image upgradeProgressFill;
+    [SerializeField] private Image coinIcon;
 
     [Header("Visual")]
     [SerializeField] private Image facilityImage;
@@ -86,6 +88,8 @@ public class CommandCenterPanel : MonoBehaviour
 
         if (cmdCenter == null)
         {
+            SetUpgradeRemainingText(upgradeRemainingText, false, 0f);
+            SetActive(upgradeText != null ? upgradeText.gameObject : null, true);
             return;
         }
 
@@ -97,9 +101,15 @@ public class CommandCenterPanel : MonoBehaviour
         BaseCampUpgradeButtonText.Set(
             upgradeText,
             upgradeCostText,
-            cmdCenter.IsUpgrading ? $"완료까지 {cmdCenter.UpgradeRemainingSeconds:0}초" : "업그레이드",
+            "업그레이드",
             cmdCenter.UpgradeCost,
             !cmdCenter.IsUpgrading && cmdCenter.Level < cmdCenter.MaxLevel);
+        SetUpgradeRemainingText(
+            upgradeRemainingText,
+            cmdCenter.IsUpgrading,
+            cmdCenter.UpgradeRemainingSeconds);
+        SetActive(upgradeText != null ? upgradeText.gameObject : null, !cmdCenter.IsUpgrading);
+        SetActive(coinIcon != null ? coinIcon.gameObject : null, !cmdCenter.IsUpgrading);
         SetText(unlockDetailText, BuildUnlockSummary());
         RefreshBaseUnlockStatuses();
 
@@ -268,5 +278,19 @@ public class CommandCenterPanel : MonoBehaviour
         {
             target.fillAmount = Mathf.Clamp01(value);
         }
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null && target.activeSelf != active)
+        {
+            target.SetActive(active);
+        }
+    }
+
+    private static void SetUpgradeRemainingText(TMP_Text target, bool isUpgrading, float remainingSeconds)
+    {
+        SetText(target, isUpgrading ? $"완료까지 {remainingSeconds:0}초" : string.Empty);
+        SetActive(target != null ? target.gameObject : null, isUpgrading);
     }
 }

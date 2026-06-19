@@ -65,6 +65,7 @@ public class InventoryFacility : MonoBehaviour
     [SerializeField] private List<EquipmentPartConfig> equipmentPartConfigs = new List<EquipmentPartConfig>();
     [SerializeField] private List<EquipmentPartInstance> equipmentParts = new List<EquipmentPartInstance>();
     [SerializeField] private bool saveEquipmentPartsToPlayerPrefs = true;
+    [SerializeField] private bool saveCollectionProgressToPlayerPrefs = true;
 
     [Header("Equipment Part Drop Visual")]
     [SerializeField] private bool playEquipmentPartDropVisual = true;
@@ -147,6 +148,81 @@ public class InventoryFacility : MonoBehaviour
     {
         // 기지 UI가 비활성 상태여도 파츠 보상 저장소를 찾을 수 있어야 한다.
         return FindFirstObjectByType<InventoryFacility>(FindObjectsInactive.Include);
+    }
+
+    public JinyouInventorySaveData CaptureState()
+    {
+        EnsureCollectionProgressInitialized();
+        EnsureEquipmentPartsInitialized();
+        return new JinyouInventorySaveData
+        {
+            weapons = CloneProgressList(weaponProgress),
+            skills = CloneProgressList(skillProgress),
+            drones = new List<string>(ownedDroneIds),
+            equipmentParts = new List<EquipmentPartInstance>(equipmentParts)
+        };
+    }
+
+    public void RestoreState(JinyouInventorySaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        collectionProgressInitialized = true;
+        equipmentPartsInitialized = true;
+        weaponProgress = CloneProgressList(data.weapons);
+        skillProgress = CloneProgressList(data.skills);
+        ownedDroneIds = data.drones != null ? new List<string>(data.drones) : new List<string>();
+        equipmentParts = data.equipmentParts != null
+            ? new List<EquipmentPartInstance>(data.equipmentParts)
+            : new List<EquipmentPartInstance>();
+
+        NormalizeCollectionProgress();
+        NormalizeEquipmentParts();
+        SyncWeaponConfigsFromProgress();
+        SyncSkillConfigsFromProgress();
+        NotifyCollectionChanged();
+        OnEquipmentPartsChanged.Invoke();
+    }
+
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveCollectionProgressToPlayerPrefs = enabled;
+        saveEquipmentPartsToPlayerPrefs = enabled;
+        if (!clearStoredData)
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(CollectionProgressKey);
+        PlayerPrefs.DeleteKey(EquipmentPartsKey);
+        PlayerPrefs.Save();
+    }
+
+    private static List<CollectionProgress> CloneProgressList(List<CollectionProgress> source)
+    {
+        List<CollectionProgress> result = new List<CollectionProgress>();
+        if (source == null)
+        {
+            return result;
+        }
+
+        foreach (CollectionProgress progress in source)
+        {
+            if (progress != null)
+            {
+                result.Add(new CollectionProgress
+                {
+                    configId = progress.configId,
+                    level = progress.level,
+                    duplicateProgress = progress.duplicateProgress
+                });
+            }
+        }
+
+        return result;
     }
 
     public bool ContainsWeapon(ProjectileConfig weaponConfig)
@@ -866,6 +942,15 @@ public class InventoryFacility : MonoBehaviour
 
     private void SyncWeaponConfigsFromProgress()
     {
+        foreach (CollectionProgress progress in weaponProgress)
+        {
+            ProjectileConfig config = ResolveLoadedConfig<ProjectileConfig>(progress.configId);
+            if (config != null && !weaponConfigs.Contains(config))
+            {
+                weaponConfigs.Add(config);
+            }
+        }
+
         weaponConfigs.RemoveAll(config => config == null);
         for (int i = weaponConfigs.Count - 1; i >= 0; i--)
         {
@@ -878,6 +963,15 @@ public class InventoryFacility : MonoBehaviour
 
     private void SyncSkillConfigsFromProgress()
     {
+        foreach (CollectionProgress progress in skillProgress)
+        {
+            PlayerSkillConfig config = ResolveLoadedConfig<PlayerSkillConfig>(progress.configId);
+            if (config != null && !skillConfigs.Contains(config))
+            {
+                skillConfigs.Add(config);
+            }
+        }
+
         ownedSkillConfigs.Clear();
         for (int i = 0; i < skillConfigs.Count; i++)
         {
@@ -889,6 +983,25 @@ public class InventoryFacility : MonoBehaviour
                 ownedSkillConfigs.Add(config);
             }
         }
+    }
+
+    private static T ResolveLoadedConfig<T>(string configId) where T : ScriptableObject, IDuplicateLevelConfig
+    {
+        if (string.IsNullOrWhiteSpace(configId))
+        {
+            return null;
+        }
+
+        T[] configs = Resources.FindObjectsOfTypeAll<T>();
+        for (int i = 0; i < configs.Length; i++)
+        {
+            if (configs[i] != null && configs[i].Id == configId)
+            {
+                return configs[i];
+            }
+        }
+
+        return null;
     }
 
     private void NormalizeCollectionProgress()
@@ -958,6 +1071,11 @@ public class InventoryFacility : MonoBehaviour
 
     private void SaveCollectionProgress()
     {
+        if (!saveCollectionProgressToPlayerPrefs)
+        {
+            return;
+        }
+
         CollectionProgressSaveData saveData = new CollectionProgressSaveData
         {
             weapons = weaponProgress,

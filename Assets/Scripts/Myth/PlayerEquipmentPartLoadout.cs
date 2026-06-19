@@ -80,6 +80,46 @@ public class PlayerEquipmentPartLoadout : MonoBehaviour
         return inventory != null ? inventory.FindEquipmentPart(GetEquippedId(slot)) : null;
     }
 
+    public JinyouEquipmentLoadoutSaveData CaptureState()
+    {
+        return new JinyouEquipmentLoadoutSaveData
+        {
+            armorInstanceId = armorInstanceId,
+            engineInstanceId = engineInstanceId,
+            chipInstanceId = chipInstanceId
+        };
+    }
+
+    public void RestoreState(JinyouEquipmentLoadoutSaveData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        armorInstanceId = data.armorInstanceId;
+        engineInstanceId = data.engineInstanceId;
+        chipInstanceId = data.chipInstanceId;
+        ResolveInventory();
+        ValidateEquippedParts();
+        RecalculateStats();
+        OnLoadoutChanged.Invoke();
+    }
+
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveToPlayerPrefs = enabled;
+        if (!clearStoredData)
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(ArmorKey);
+        PlayerPrefs.DeleteKey(EngineKey);
+        PlayerPrefs.DeleteKey(ChipKey);
+        PlayerPrefs.Save();
+    }
+
     private void RecalculateStats()
     {
         AttackPercent = 0f;
