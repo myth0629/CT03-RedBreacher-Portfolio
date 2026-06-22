@@ -26,6 +26,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     [Header("Buttons")]
     [SerializeField] private Button equipButton;
+    [SerializeField] private Button closeButton;
 
     [Header("Panel")]
     [SerializeField] private GameObject selectionRoot;
@@ -51,6 +52,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private Action<ProjectileConfig> weaponSelectionCallback;
     private Action<DroneConfig> droneSelectionCallback;
     private Action<PlayerSkillConfig> skillSelectionCallback;
+    private Action selectionClosedCallback;
     private PanelTweenTransition panelTransition;
 
 
@@ -335,12 +337,16 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         RefreshDroneDetail(selectedDrone);
     }
 
-    public void OpenSkillsForSelection(Action<PlayerSkillConfig> onSelected, PlayerSkillConfig currentSkill = null)
+    public void OpenSkillsForSelection(
+        Action<PlayerSkillConfig> onSelected,
+        PlayerSkillConfig currentSkill = null,
+        Action onClosed = null)
     {
         ResolveSources();
         skillSelectionCallback = onSelected;
         weaponSelectionCallback = null;
         droneSelectionCallback = null;
+        selectionClosedCallback = onClosed;
         currentMode = LoadoutMode.Skill;
         selectedSkill = currentSkill;
         OpenPanel("교체할 스킬을 선택하세요.");
@@ -350,6 +356,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     public void Close()
     {
+        NotifySelectionClosed();
+
         GameObject root = ResolveSelectionRoot();
         if (root != null)
         {
@@ -362,6 +370,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
             root.SetActive(false);
         }
+    }
+
+    private void NotifySelectionClosed()
+    {
+        Action callback = selectionClosedCallback;
+        selectionClosedCallback = null;
+        callback?.Invoke();
     }
 
     private void OpenPanel(string title)

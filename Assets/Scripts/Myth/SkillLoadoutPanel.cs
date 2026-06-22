@@ -27,7 +27,8 @@ public class SkillLoadoutPanel : MonoBehaviour
     [SerializeField] private Image detailSkillIcon;
     [SerializeField] private TMP_Text skillNameText;
     [SerializeField] private TMP_Text skillLevelText;
-    [SerializeField] private TMP_Text duplicateProgressText;
+    [SerializeField] private TMP_Text skillCooldownText;
+    [SerializeField] private TMP_Text skillDescriptionText;
 
     [Header("Commands")]
     [SerializeField] private Button closeButton;
@@ -39,6 +40,7 @@ public class SkillLoadoutPanel : MonoBehaviour
     [SerializeField] private TMP_Text upgradeCostText;
     [SerializeField] private TMP_Text upgradeConditionText;
     [SerializeField] private TMP_Text upgradeRemainingText;
+    [SerializeField] private Image coinIcon;
     [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private PlayerLoadoutSelectionPanel loadoutSelectionPanel;
     [SerializeField] private Button[] equipSlotButtons = new Button[3];
@@ -65,6 +67,7 @@ public class SkillLoadoutPanel : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
+        SetMainCloseButtonVisible(true);
         SubscribeButtons();
         SubscribeInventory();
         SubscribeFactory();
@@ -73,6 +76,7 @@ public class SkillLoadoutPanel : MonoBehaviour
 
     private void OnDisable()
     {
+        SetMainCloseButtonVisible(true);
         UnsubscribeButtons();
         UnsubscribeInventory();
         UnsubscribeFactory();
@@ -124,7 +128,16 @@ public class SkillLoadoutPanel : MonoBehaviour
             return;
         }
 
-        loadoutSelectionPanel?.OpenSkillsForSelection(EquipSelectedSkillToSelectedSlot, GetSelectedSlotSkill());
+        if (loadoutSelectionPanel == null)
+        {
+            return;
+        }
+
+        SetMainCloseButtonVisible(false);
+        loadoutSelectionPanel.OpenSkillsForSelection(
+            EquipSelectedSkillToSelectedSlot,
+            GetSelectedSlotSkill(),
+            () => SetMainCloseButtonVisible(true));
     }
 
     public void UpgradeSkillHanger()
@@ -222,7 +235,7 @@ public class SkillLoadoutPanel : MonoBehaviour
         {
             bool unlocked = player == null || player.IsSkillSlotUnlocked(i);
             PlayerSkillConfig equipped = player != null ? player.GetEquippedSkill(i) : null;
-            SetInteractable(slotButtons[i], true);
+            SetInteractable(slotButtons[i], unlocked);
             SetSkillIcon(slotSkillIcons, i, equipped);
             SetActive(slotLockedObjects, i, !unlocked);
         }
@@ -255,15 +268,21 @@ public class SkillLoadoutPanel : MonoBehaviour
                 : detailSkill != null
                 ? detailSkill.DisplayName
                 : "스킬 없음");
-        SetText(skillLevelText, selectedSlotUnlocked && detailSkill != null ? $"Lv.{GetSkillLevel(detailSkill)}" : string.Empty);
+        SetText(skillLevelText, selectedSlotUnlocked && detailSkill != null ? $"Lv.{GetSkillLevel(detailSkill)}" : "--");
 
         if (!selectedSlotUnlocked || detailSkill == null)
         {
-            SetText(duplicateProgressText, string.Empty);
+            SetText(skillCooldownText, "--");
+            SetText(
+                skillDescriptionText,
+                selectedSlotUnlocked
+                    ? "'교체하기' 버튼을 눌러\n 원하는 스킬을 선택하세요."
+                    : "우선 교체할 스킬을 선택하세요.");
             return;
         }
 
-        SetText(duplicateProgressText, $"{detailSkill.GetCooldown(GetSkillLevel(detailSkill)):0.##}");
+        SetText(skillCooldownText, $"{detailSkill.GetCooldown(GetSkillLevel(detailSkill)):0.##}");
+        SetText(skillDescriptionText, detailSkill.Description);
     }
 
     private int GetSkillLevel(PlayerSkillConfig skill)
@@ -608,7 +627,11 @@ public class SkillLoadoutPanel : MonoBehaviour
         {
             SetText(facilityLevelText, string.Empty);
             SetText(upgradeConditionText, "스킬 격납고 시설 참조 없음");
-            SetText(upgradeRemainingText, upgradeConditionText == null ? "스킬 격납고 시설 참조 없음" : string.Empty);
+            SetUpgradeRemainingText(upgradeRemainingText, false, 0f);
+            SetActive(upgradeText != null ? upgradeText.gameObject : null, true);
+            SetActive(upgradeCostText != null ? upgradeCostText.gameObject : null, true);
+            SetActive(upgradeConditionText != null ? upgradeConditionText.gameObject : null, true);
+            SetActive(coinIcon != null ? coinIcon.gameObject : null, false);
             BaseCampUpgradeStatus.SetUpgradeProgress(upgradeProgressFill, null, ref observedUpgradeDuration);
             SetInteractable(upgradeButton, false);
             return;
@@ -623,6 +646,10 @@ public class SkillLoadoutPanel : MonoBehaviour
             skillHanger.Level >= skillHanger.MaxLevel ? "최대레벨" : "시설 업그레이드",
             skillHanger.UpgradeCost,
             canShowCost);
+        if (skillHanger.Level >= skillHanger.MaxLevel)
+        {
+            SetText(upgradeCostText, "--");
+        }
 
         if (baseCampManager != null)
         {
@@ -639,16 +666,19 @@ public class SkillLoadoutPanel : MonoBehaviour
                 baseCampManager.Credits,
                 baseCampManager.CommanderLevel,
                 researchLabLevel));
-            SetText(upgradeRemainingText, skillHanger.IsUpgrading
-                ? $"{skillHanger.UpgradeRemainingSeconds:0}s"
-                : upgradeConditionText == null ? conditionText : string.Empty);
         }
         else
         {
             SetText(upgradeConditionText, "BaseCampManager 참조 없음");
-            SetText(upgradeRemainingText, upgradeConditionText == null ? "BaseCampManager 참조 없음" : string.Empty);
             SetInteractable(upgradeButton, false);
         }
+
+        bool isUpgrading = skillHanger.IsUpgrading;
+        SetUpgradeRemainingText(upgradeRemainingText, isUpgrading, skillHanger.UpgradeRemainingSeconds);
+        SetActive(upgradeText != null ? upgradeText.gameObject : null, !isUpgrading);
+        SetActive(upgradeCostText != null ? upgradeCostText.gameObject : null, !isUpgrading);
+        SetActive(upgradeConditionText != null ? upgradeConditionText.gameObject : null, !isUpgrading);
+        SetActive(coinIcon != null ? coinIcon.gameObject : null, !isUpgrading);
 
         BaseCampUpgradeStatus.SetUpgradeProgress(
             upgradeProgressFill,
@@ -740,6 +770,25 @@ public class SkillLoadoutPanel : MonoBehaviour
         }
 
         targets[index].SetActive(active);
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null && target.activeSelf != active)
+        {
+            target.SetActive(active);
+        }
+    }
+
+    private void SetMainCloseButtonVisible(bool visible)
+    {
+        SetActive(closeButton != null ? closeButton.gameObject : null, visible);
+    }
+
+    private static void SetUpgradeRemainingText(TMP_Text target, bool isUpgrading, float remainingSeconds)
+    {
+        SetText(target, isUpgrading ? $"완료까지 {remainingSeconds:0}초" : string.Empty);
+        SetActive(target != null ? target.gameObject : null, isUpgrading);
     }
 
     private static Transform FindChildTransformByName(Transform root, string childName)
