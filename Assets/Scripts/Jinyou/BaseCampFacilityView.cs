@@ -149,7 +149,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
             FacilityType.AssemblyFactory => baseCampManager?.AssemblyFactory?.Level ?? 1,
             FacilityType.CoreCharger => baseCampManager?.CoreCharger?.Level ?? 1,
             FacilityType.TraitPointFacility => 1,
-            FacilityType.SkillHanger => 1,
+            FacilityType.SkillHanger => baseCampManager?.SkillHanger?.Level ?? 1,
             FacilityType.BossTracker => baseCampManager?.CommandCenter?.Level ?? 1,
             _ => 1
         };
@@ -159,8 +159,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
     {
         ResolveReferences();
 
-        if (facilityType == FacilityType.CommandCenter
-            || facilityType == FacilityType.SkillHanger)
+        if (facilityType == FacilityType.CommandCenter)
         {
             return true;
         }
@@ -242,6 +241,13 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
                 SubscribeResearchLabUnlockEvents();
                 break;
             case FacilityType.SkillHanger:
+                SubscribeResearchLabUnlockEvents();
+                if (baseCampManager?.SkillHanger != null)
+                {
+                    baseCampManager.SkillHanger.OnLevelChanged.AddListener(HandleLevelChanged);
+                    baseCampManager.SkillHanger.OnUpgradeStarted.AddListener(SyncView);
+                    baseCampManager.SkillHanger.OnUpgradeCompleted.AddListener(SyncView);
+                }
                 break;
             case FacilityType.BossTracker:
                 SubscribeResearchLabUnlockEvents();
@@ -282,6 +288,13 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
             baseCampManager.CoreCharger.OnLevelChanged.RemoveListener(HandleLevelChanged);
             baseCampManager.CoreCharger.OnUpgradeStarted.RemoveListener(SyncView);
             baseCampManager.CoreCharger.OnUpgradeCompleted.RemoveListener(SyncView);
+        }
+
+        if (baseCampManager.SkillHanger != null)
+        {
+            baseCampManager.SkillHanger.OnLevelChanged.RemoveListener(HandleLevelChanged);
+            baseCampManager.SkillHanger.OnUpgradeStarted.RemoveListener(SyncView);
+            baseCampManager.SkillHanger.OnUpgradeCompleted.RemoveListener(SyncView);
         }
     }
 

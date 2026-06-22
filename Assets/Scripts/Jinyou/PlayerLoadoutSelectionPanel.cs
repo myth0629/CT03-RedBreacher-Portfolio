@@ -13,7 +13,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private enum LoadoutMode
     {
         Weapon,
-        Drone
+        Drone,
+        Skill
     }
 
     [Header("Source")]
@@ -21,6 +22,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [SerializeField] private PlayerDroneController droneController;
     [SerializeField] private ProjectileConfig[] weaponOptions;
     [SerializeField] private DroneConfig[] droneOptions;
+    [SerializeField] private PlayerSkillConfig[] skillOptions;
 
     [Header("Buttons")]
     [SerializeField] private Button equipButton;
@@ -43,10 +45,12 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private LoadoutMode currentMode;
     private ProjectileConfig selectedWeapon;
     private DroneConfig selectedDrone;
+    private PlayerSkillConfig selectedSkill;
     private InventoryFacility inventory;
     private AssemblyFactory assemblyFactory;
     private Action<ProjectileConfig> weaponSelectionCallback;
     private Action<DroneConfig> droneSelectionCallback;
+    private Action<PlayerSkillConfig> skillSelectionCallback;
 
 
     private static void SetIcon(Image target, Sprite sprite)
@@ -95,6 +99,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         if (droneOptions == null || droneOptions.Length <= 1)
         {
             droneOptions = LoadAssetsInEditor<DroneConfig>("Assets/SO/Balance/Drones");
+        }
+
+        if (skillOptions == null || skillOptions.Length == 0)
+        {
+            skillOptions = LoadAssetsInEditor<PlayerSkillConfig>("Assets/SO/Balance/Skills");
         }
     }
 #endif
@@ -278,6 +287,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         ResolveSources();
         weaponSelectionCallback = null;
         droneSelectionCallback = null;
+        skillSelectionCallback = null;
         currentMode = LoadoutMode.Weapon;
         selectedWeapon = player != null ? player.WeaponConfig : null;
         OpenPanel("무기 로드아웃");
@@ -290,6 +300,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         ResolveSources();
         weaponSelectionCallback = null;
         droneSelectionCallback = null;
+        skillSelectionCallback = null;
         currentMode = LoadoutMode.Drone;
         selectedDrone = droneController != null ? droneController.DroneConfig : null;
         OpenPanel("드론 로드아웃");
@@ -302,6 +313,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         ResolveSources();
         weaponSelectionCallback = onSelected;
         droneSelectionCallback = null;
+        skillSelectionCallback = null;
         currentMode = LoadoutMode.Weapon;
         selectedWeapon = assemblyFactory != null ? assemblyFactory.SelectedWeaponConfig : null;
         OpenPanel("강화하고자 하는 무기를 선택하세요.");
@@ -314,6 +326,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         ResolveSources();
         droneSelectionCallback = onSelected;
         weaponSelectionCallback = null;
+        skillSelectionCallback = null;
         currentMode = LoadoutMode.Drone;
         selectedDrone = assemblyFactory != null ? assemblyFactory.SelectedDroneConfig : null;
         OpenPanel("강화하고자 하는 드론을 선택하세요.");
@@ -321,14 +334,36 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         RefreshDroneDetail(selectedDrone);
     }
 
+    public void OpenSkillsForSelection(Action<PlayerSkillConfig> onSelected, PlayerSkillConfig currentSkill = null)
+    {
+        ResolveSources();
+        skillSelectionCallback = onSelected;
+        weaponSelectionCallback = null;
+        droneSelectionCallback = null;
+        currentMode = LoadoutMode.Skill;
+        selectedSkill = currentSkill;
+        OpenPanel("교체할 스킬을 선택하세요.");
+        RebuildSkillList();
+        RefreshSkillDetail(selectedSkill);
+    }
+
     public void Close()
     {
-        selectionRoot?.SetActive(false);
+        GameObject root = ResolveSelectionRoot();
+        if (root != null)
+        {
+            root.SetActive(false);
+        }
     }
 
     private void OpenPanel(string title)
     {
-        selectionRoot?.SetActive(true);
+        GameObject root = ResolveSelectionRoot();
+        if (root != null)
+        {
+            root.SetActive(true);
+        }
+
         SetText(titleText, title);
     }
 
@@ -395,6 +430,40 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         }
     }
 
+    private void RebuildSkillList()
+    {
+        ClearOptions();
+
+        IReadOnlyList<PlayerSkillConfig> source = inventory != null ? inventory.SkillConfigs : skillOptions;
+        if (source == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < source.Count; i++)
+        {
+            PlayerSkillConfig skill = source[i];
+            if (skill == null)
+            {
+                continue;
+            }
+
+            PlayerLoadoutOptionButton option = CreateOption();
+            if (option == null)
+            {
+                continue;
+            }
+
+            option.Bind(
+                $"{skill.DisplayName} Lv.{GetCollectionSkillLevel(skill)}",
+                "스킬",
+                BuildSkillSummary(skill),
+                skill == selectedSkill,
+                () => SelectSkill(skill),
+                skill.Icon);
+        }
+    }
+
     private PlayerLoadoutOptionButton CreateOption()
     {
         if (optionButtonPrefab == null || contentRoot == null)
@@ -422,6 +491,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         RebuildDroneList();
     }
 
+    private void SelectSkill(PlayerSkillConfig skill)
+    {
+        selectedSkill = skill;
+        RefreshSkillDetail(skill);
+        RebuildSkillList();
+    }
+
     private void ConfirmSelected()
     {
         ResolveSources();
@@ -443,6 +519,19 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             }
             RebuildWeaponList();
             RefreshWeaponDetail(selectedWeapon);
+            return;
+        }
+
+        if (currentMode == LoadoutMode.Skill)
+        {
+            if (skillSelectionCallback != null)
+            {
+                Action<PlayerSkillConfig> callback = skillSelectionCallback;
+                skillSelectionCallback = null;
+                callback.Invoke(selectedSkill);
+                Close();
+            }
+
             return;
         }
 
@@ -511,6 +600,22 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             : string.Empty);
     }
 
+    private void RefreshSkillDetail(PlayerSkillConfig skill)
+    {
+        ResolveDetailIconReferences();
+
+        SetIcon(detailIconWeapon, skill != null ? skill.Icon : null);
+        SetDroneIcon(detailIconDrone, null);
+        SetText(detailNameText, skill != null ? skill.DisplayName : "스킬을 선택하세요.");
+        SetText(detailCategoryText, skill != null ? "Type: 스킬" : string.Empty);
+        SetText(detailStatsText, skill != null
+            ? $"수집강화 Lv. {GetCollectionSkillLevel(skill)}\n"
+                + $"쿨타임: {skill.GetCooldown(GetCollectionSkillLevel(skill)):0.##}\n"
+                + $"범위: {skill.EffectRadius:0.##}\n"
+                + BuildSkillSummary(skill)
+            : string.Empty);
+    }
+
     private void ClearOptions()
     {
         for (int i = spawnedOptions.Count - 1; i >= 0; i--)
@@ -536,6 +641,18 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         assemblyFactory ??= BaseCampManager.Instance != null
             ? BaseCampManager.Instance.AssemblyFactory
             : FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
+        ResolveSelectionRoot();
+    }
+
+    private GameObject ResolveSelectionRoot()
+    {
+        // Inspector 미지정 시 이 컴포넌트가 붙은 오브젝트를 패널 루트로 사용한다.
+        if (selectionRoot == null)
+        {
+            selectionRoot = gameObject;
+        }
+
+        return selectionRoot;
     }
 
     private void ResolveDetailIconReferences()
@@ -589,6 +706,24 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private int GetCollectionWeaponLevel(ProjectileConfig weapon)
     {
         return inventory != null ? Mathf.Max(1, inventory.GetWeaponLevel(weapon)) : 1;
+    }
+
+    private int GetCollectionSkillLevel(PlayerSkillConfig skill)
+    {
+        return inventory != null ? Mathf.Max(1, inventory.GetSkillLevel(skill)) : 1;
+    }
+
+    private string BuildSkillSummary(PlayerSkillConfig skill)
+    {
+        if (skill == null || inventory == null)
+        {
+            return string.Empty;
+        }
+
+        int required = inventory.GetRequiredDuplicates(skill);
+        return required > 0
+            ? $"중복 {inventory.GetDuplicateProgress(skill)} / {required}"
+            : "MAX";
     }
 
     private DroneConfig RegisterInitialDrone()

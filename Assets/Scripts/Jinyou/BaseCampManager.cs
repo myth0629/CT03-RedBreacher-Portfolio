@@ -12,6 +12,7 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private CreditRefinery creditRefinery;
     [SerializeField] private AssemblyFactory assemblyFactory;
     [SerializeField] private CoreCharger coreCharger;
+    [SerializeField] private SkillHangerFacility skillHanger;
     [SerializeField] private InventoryFacility inventory;
     [SerializeField] private DailyMissionManager dailyMissionManager;
     [SerializeField] private MainGuideMissionManager mainGuideMissionManager;
@@ -54,6 +55,7 @@ public class BaseCampManager : MonoBehaviour
     public CreditRefinery CreditRefinery => creditRefinery;
     public AssemblyFactory AssemblyFactory => assemblyFactory;
     public CoreCharger CoreCharger => coreCharger;
+    public SkillHangerFacility SkillHanger => ResolveSkillHanger();
     public InventoryFacility Inventory => ResolveInventory();
     public int CommanderLevel => ResolveCommanderLevel();
     public int Credits => CurrencyWallet.Credits;
@@ -161,6 +163,7 @@ public class BaseCampManager : MonoBehaviour
         creditRefinery ??= FindFirstObjectByType<CreditRefinery>(FindObjectsInactive.Include);
         assemblyFactory ??= FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
         coreCharger ??= FindFirstObjectByType<CoreCharger>(FindObjectsInactive.Include);
+        ResolveSkillHanger();
         inventory ??= InventoryFacility.FindAny();
     }
 
@@ -193,6 +196,11 @@ public class BaseCampManager : MonoBehaviour
     public void UpgradeCoreCharger()
     {
         TrySpendAndUpgrade(coreCharger);
+    }
+
+    public void UpgradeSkillHanger()
+    {
+        TrySpendAndUpgrade(skillHanger);
     }
 
     public void SelectAssemblyMenu(string menuId)
@@ -452,6 +460,11 @@ public class BaseCampManager : MonoBehaviour
         {
             coreCharger.AdvanceUpgradeOffline(deltaTime);
         }
+
+        if (skillHanger != null && !skillHanger.isActiveAndEnabled)
+        {
+            skillHanger.AdvanceUpgradeOffline(deltaTime);
+        }
     }
 
     private void TrySpendAndUpgrade(IBaseCampFacility facility)
@@ -599,6 +612,19 @@ public class BaseCampManager : MonoBehaviour
 
         playerProgression = FindFirstObjectByType<PlayerProgression>();
         return playerProgression;
+    }
+
+    private SkillHangerFacility ResolveSkillHanger()
+    {
+        if (skillHanger != null)
+        {
+            return skillHanger;
+        }
+
+        skillHanger = FindFirstObjectByType<SkillHangerFacility>(FindObjectsInactive.Include);
+        // 프리팹에 독립 시설 컴포넌트가 아직 없으면 저장/업그레이드용 런타임 시설을 생성한다.
+        skillHanger ??= gameObject.GetComponent<SkillHangerFacility>() ?? gameObject.AddComponent<SkillHangerFacility>();
+        return skillHanger;
     }
 
     private int ResolveCommanderLevel()
@@ -788,6 +814,7 @@ public class BaseCampManager : MonoBehaviour
             energyRefinery = creditRefinery != null ? creditRefinery.CaptureState() : new JinyouEnergyRefinerySaveData(),
             assemblyFactory = assemblyFactory != null ? assemblyFactory.CaptureState() : new JinyouAssemblyFactorySaveData(),
             coreCharger = coreCharger != null ? coreCharger.CaptureState() : new JinyouCoreChargerSaveData(),
+            skillHanger = skillHanger != null ? skillHanger.CaptureState() : new JinyouSkillHangerSaveData(),
             achievements = achievementManager != null ? achievementManager.CaptureState() : new JinyouAchievementSaveData(),
             dailyMissions = resolvedDailyMissionManager.CaptureState(),
             guideMissions = resolvedGuideMissionManager.CaptureState(),
@@ -822,6 +849,8 @@ public class BaseCampManager : MonoBehaviour
             creditRefinery?.RestoreState(data.energyRefinery);
             assemblyFactory?.RestoreState(data.assemblyFactory);
             coreCharger?.RestoreState(data.coreCharger);
+            data.skillHanger ??= new JinyouSkillHangerSaveData();
+            skillHanger?.RestoreState(data.skillHanger);
             coreCharger?.ApplyCompletedConversions(Inventory, FindFirstObjectByType<PlayerController>());
             AchievementManager achievementManager = AchievementManager.Instance
                 ?? FindFirstObjectByType<AchievementManager>();
@@ -874,6 +903,7 @@ public class BaseCampManager : MonoBehaviour
         creditRefinery?.AdvanceUpgradeOffline(elapsedSeconds);
         assemblyFactory?.AdvanceUpgradeOffline(elapsedSeconds);
         coreCharger?.AdvanceUpgradeOffline(elapsedSeconds);
+        skillHanger?.AdvanceUpgradeOffline(elapsedSeconds);
 
         float maxOfflineSeconds = Mathf.Max(0f, commandCenter.OfflineRewardLimitHours) * 3600f;
         float appliedSeconds = Mathf.Min(elapsedSeconds, maxOfflineSeconds);
@@ -914,6 +944,8 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.OnDroneEnhanced.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnUnitEnhanced.AddListener(HandleUnifiedSaveEvent);
+        skillHanger?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        skillHanger?.OnUpgradeCompleted.AddListener(HandleUnifiedSaveEvent);
         Inventory?.OnInventoryChanged.AddListener(HandleUnifiedSaveEvent);
         PlayerEquipmentPartLoadout equipmentLoadout =
             FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
@@ -948,6 +980,8 @@ public class BaseCampManager : MonoBehaviour
         assemblyFactory?.OnDroneEnhanced.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnUnitEnhanced.RemoveListener(HandleUnifiedSaveEvent);
+        skillHanger?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        skillHanger?.OnUpgradeCompleted.RemoveListener(HandleUnifiedSaveEvent);
         Inventory?.OnInventoryChanged.RemoveListener(HandleUnifiedSaveEvent);
         PlayerEquipmentPartLoadout equipmentLoadout =
             FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);

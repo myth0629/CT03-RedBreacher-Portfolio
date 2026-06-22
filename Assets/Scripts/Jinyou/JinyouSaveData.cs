@@ -15,6 +15,7 @@ public class JinyouSaveData
     public JinyouEnergyRefinerySaveData energyRefinery = new JinyouEnergyRefinerySaveData();
     public JinyouAssemblyFactorySaveData assemblyFactory = new JinyouAssemblyFactorySaveData();
     public JinyouCoreChargerSaveData coreCharger = new JinyouCoreChargerSaveData();
+    public JinyouSkillHangerSaveData skillHanger = new JinyouSkillHangerSaveData();
     public JinyouAchievementSaveData achievements = new JinyouAchievementSaveData();
     public JinyouDailyMissionSaveData dailyMissions = new JinyouDailyMissionSaveData();
     public JinyouGuideMissionSaveData guideMissions = new JinyouGuideMissionSaveData();
@@ -120,6 +121,15 @@ public class JinyouCoreChargerSaveData
     public float upgradeRemainingSeconds;
     public float currentUpgradeDurationSeconds;
     public List<int> convertedStageIndices = new List<int>();
+}
+
+[Serializable]
+public class JinyouSkillHangerSaveData
+{
+    public int level = 1;
+    public bool isUpgrading;
+    public float upgradeRemainingSeconds;
+    public float currentUpgradeDurationSeconds;
 }
 
 [Serializable]

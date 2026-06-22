@@ -172,22 +172,22 @@ public class BaseCampBalanceConfig : ScriptableObject
 
     private static BaseCampBalanceConfig LoadFromResources()
     {
+        TextAsset levelCsv = Resources.Load<TextAsset>(LevelCsvResourcePath);
+        TextAsset unlockCsv = Resources.Load<TextAsset>(UnlockCsvResourcePath);
+        if (levelCsv != null && unlockCsv != null)
+        {
+            // 런타임 밸런스의 단일 원본은 CSV로 둔다.
+            return CreateFromCsv(levelCsv.text, unlockCsv.text);
+        }
+
         BaseCampBalanceConfig asset = Resources.Load<BaseCampBalanceConfig>("BaseCamp/BaseCampBalanceConfig");
         if (asset != null)
         {
             return asset;
         }
 
-        TextAsset levelCsv = Resources.Load<TextAsset>(LevelCsvResourcePath);
-        TextAsset unlockCsv = Resources.Load<TextAsset>(UnlockCsvResourcePath);
-        if (levelCsv == null || unlockCsv == null)
-        {
-            Debug.LogError("기지 밸런스 CSV를 찾을 수 없습니다. Assets/Resources/BaseCamp 경로를 확인하세요.");
-            return null;
-        }
-
-        // SO 에셋을 아직 임포트하지 않은 경우에도 동일한 CSV를 런타임에서 사용한다.
-        return CreateFromCsv(levelCsv.text, unlockCsv.text);
+        Debug.LogError("기지 밸런스 CSV를 찾을 수 없습니다. Assets/Resources/BaseCamp 경로를 확인하세요.");
+        return null;
     }
 
     private static List<FacilityLevelData> ParseLevels(string csv)

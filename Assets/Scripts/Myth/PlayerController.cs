@@ -13,7 +13,7 @@ public class PlayerController : MonoBehaviour
     private const string EquippedWeaponIdKey = "PlayerController.EquippedWeaponId";
     private const string EquippedSkillIdsKey = "PlayerController.EquippedSkillIds";
     private const string EquippedUnitIdKey = "PlayerController.EquippedUnitId";
-    private const int DefaultSkillSlotCount = 3;
+    private const int DefaultSkillSlotCount = 4;
 
     [System.Serializable]
     private class SkillLoadoutSaveData
@@ -67,6 +67,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Auto Skills")]
     [SerializeField] private List<PlayerSkillConfig> autoSkills = new List<PlayerSkillConfig>();
+    [SerializeField, FormerlySerializedAs("skillSlotRequiredAssemblyFactoryLevels")]
+    private List<int> skillSlotRequiredSkillHangerLevels = new List<int> { 0, 2, 3, 4 };
     [SerializeField] private bool saveLoadoutToPlayerPrefs = true;
 
     private readonly List<Transform> fireMuzzles = new List<Transform>();
@@ -80,6 +82,8 @@ public class PlayerController : MonoBehaviour
     private PlayerDebugModeController debugModeController;
     private InventoryFacility inventory;
     private AssemblyFactory assemblyFactory;
+    private SkillHangerFacility skillHanger;
+    private SkillHangerFacility subscribedSkillHanger;
     private Vehicle vehicle;
     private Turret turret;
     private CombatHealth currentTarget;
@@ -171,7 +175,26 @@ public class PlayerController : MonoBehaviour
         ? unitConfig.RepositionCooldown
         : repositionCooldown;
     private ProjectileConfig ProjectileConfigValue => weaponConfig;
-    private int SkillSlotCount => Mathf.Max(DefaultSkillSlotCount, autoSkills?.Count ?? 0);
+    public int SkillSlotCount => Mathf.Max(
+        DefaultSkillSlotCount,
+        autoSkills?.Count ?? 0,
+        skillSlotRequiredSkillHangerLevels?.Count ?? 0);
+    public int UnlockedSkillSlotCount
+    {
+        get
+        {
+            int count = 0;
+            for (int i = 0; i < SkillSlotCount; i++)
+            {
+                if (IsSkillSlotUnlocked(i))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+    }
 
     private void Awake()
     {
@@ -225,6 +248,7 @@ public class PlayerController : MonoBehaviour
     private void OnDestroy()
     {
         equipmentPartLoadout?.OnLoadoutChanged.RemoveListener(HandleEquipmentPartLoadoutChanged);
+        UnsubscribeSkillHanger();
     }
 
     public bool SetUnitConfig(PlayerUnitConfig config)
@@ -273,6 +297,7 @@ public class PlayerController : MonoBehaviour
     public bool EquipSkill(int slotIndex, PlayerSkillConfig config)
     {
         if (slotIndex < 0 || slotIndex >= SkillSlotCount
+            || !IsSkillSlotUnlocked(slotIndex)
             || config == null
             || inventory == null
             || !inventory.ContainsSkill(config))
@@ -291,7 +316,7 @@ public class PlayerController : MonoBehaviour
 
         autoSkills[slotIndex] = config;
         SaveSkillLoadout();
-        autoSkillController?.Initialize(this, autoSkills);
+        RefreshAutoSkillController();
         return true;
     }
 
@@ -305,14 +330,53 @@ public class PlayerController : MonoBehaviour
         EnsureSkillSlotCount();
         autoSkills[slotIndex] = null;
         SaveSkillLoadout();
-        autoSkillController?.Initialize(this, autoSkills);
+        RefreshAutoSkillController();
         return true;
     }
 
     public PlayerSkillConfig GetEquippedSkill(int slotIndex)
     {
         EnsureSkillSlotCount();
-        return slotIndex >= 0 && slotIndex < autoSkills.Count ? autoSkills[slotIndex] : null;
+        return slotIndex >= 0 && slotIndex < autoSkills.Count && IsSkillSlotUnlocked(slotIndex)
+            ? autoSkills[slotIndex]
+            : null;
+    }
+
+    public bool IsSkillSlotUnlocked(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= SkillSlotCount)
+        {
+            return false;
+        }
+
+        // 첫 번째 스킬 슬롯은 시설 레벨과 관계없이 기본 해금 상태다.
+        if (slotIndex == 0)
+        {
+            return true;
+        }
+
+        return GetCurrentSkillHangerLevel() >= GetSkillSlotRequiredSkillHangerLevel(slotIndex);
+    }
+
+    public int GetSkillSlotRequiredSkillHangerLevel(int slotIndex)
+    {
+        if (slotIndex < 0)
+        {
+            return 1;
+        }
+
+        if (skillSlotRequiredSkillHangerLevels != null
+            && slotIndex < skillSlotRequiredSkillHangerLevels.Count)
+        {
+            return Mathf.Max(0, skillSlotRequiredSkillHangerLevels[slotIndex]);
+        }
+
+        return Mathf.Max(1, slotIndex + 1);
+    }
+
+    public int GetSkillSlotRequiredAssemblyFactoryLevel(int slotIndex)
+    {
+        return GetSkillSlotRequiredSkillHangerLevel(slotIndex);
     }
 
     public int GetSkillLevel(PlayerSkillConfig config)
@@ -369,7 +433,7 @@ public class PlayerController : MonoBehaviour
             autoSkills[i] = ResolveSavedSkillOrFallback(skillId, inspectorSkill, allowInspectorFallback);
         }
 
-        autoSkillController?.Initialize(this, autoSkills);
+        RefreshAutoSkillController();
         ApplyUnitConfig();
         ApplyHealthStats();
         RefreshUnitReferences();
@@ -397,8 +461,8 @@ public class PlayerController : MonoBehaviour
             autoSkillController = gameObject.AddComponent<PlayerAutoSkillController>();
         }
 
-        // PlayerController에 연결한 스킬 SO 목록을 자동 시전기에 전달한다.
-        autoSkillController.Initialize(this, autoSkills);
+        // 해금된 슬롯만 자동 시전기에 전달해 잠긴 슬롯의 스킬이 실행되지 않게 한다.
+        RefreshAutoSkillController();
     }
 
     private void ResolveCollectionSystems()
@@ -409,6 +473,10 @@ public class PlayerController : MonoBehaviour
         assemblyFactory = BaseCampManager.Instance != null
             ? BaseCampManager.Instance.AssemblyFactory
             : FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
+        skillHanger = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.SkillHanger
+            : FindFirstObjectByType<SkillHangerFacility>(FindObjectsInactive.Include);
+        SubscribeSkillHanger();
     }
 
     private void InitializeCollectionLoadout()
@@ -476,6 +544,71 @@ public class PlayerController : MonoBehaviour
         {
             autoSkills.Add(null);
         }
+    }
+
+    private void RefreshAutoSkillController()
+    {
+        autoSkillController?.Initialize(this, BuildRuntimeAutoSkills());
+    }
+
+    private List<PlayerSkillConfig> BuildRuntimeAutoSkills()
+    {
+        EnsureSkillSlotCount();
+        List<PlayerSkillConfig> runtimeSkills = new List<PlayerSkillConfig>(autoSkills.Count);
+        for (int i = 0; i < autoSkills.Count; i++)
+        {
+            runtimeSkills.Add(IsSkillSlotUnlocked(i) ? autoSkills[i] : null);
+        }
+
+        return runtimeSkills;
+    }
+
+    private int GetCurrentSkillHangerLevel()
+    {
+        if (skillHanger == null)
+        {
+            skillHanger = BaseCampManager.Instance != null
+                ? BaseCampManager.Instance.SkillHanger
+                : FindFirstObjectByType<SkillHangerFacility>(FindObjectsInactive.Include);
+            SubscribeSkillHanger();
+        }
+
+        return skillHanger != null ? Mathf.Max(1, skillHanger.Level) : 1;
+    }
+
+    private void SubscribeSkillHanger()
+    {
+        if (skillHanger == null || subscribedSkillHanger == skillHanger)
+        {
+            return;
+        }
+
+        UnsubscribeSkillHanger();
+        subscribedSkillHanger = skillHanger;
+        subscribedSkillHanger.OnLevelChanged.AddListener(HandleSkillHangerLevelChanged);
+        subscribedSkillHanger.OnUpgradeCompleted.AddListener(HandleSkillHangerUpgradeCompleted);
+    }
+
+    private void UnsubscribeSkillHanger()
+    {
+        if (subscribedSkillHanger == null)
+        {
+            return;
+        }
+
+        subscribedSkillHanger.OnLevelChanged.RemoveListener(HandleSkillHangerLevelChanged);
+        subscribedSkillHanger.OnUpgradeCompleted.RemoveListener(HandleSkillHangerUpgradeCompleted);
+        subscribedSkillHanger = null;
+    }
+
+    private void HandleSkillHangerLevelChanged(int level)
+    {
+        RefreshAutoSkillController();
+    }
+
+    private void HandleSkillHangerUpgradeCompleted()
+    {
+        RefreshAutoSkillController();
     }
 
     private void SaveSkillLoadout()
