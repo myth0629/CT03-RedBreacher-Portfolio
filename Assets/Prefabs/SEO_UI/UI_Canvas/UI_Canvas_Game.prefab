@@ -22962,7 +22962,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2698279669758345535
 RectTransform:
   m_ObjectHideFlags: 0
@@ -26272,6 +26272,7 @@ MonoBehaviour:
   commonFrameColor: {r: 1, g: 1, b: 1, a: 1}
   rareFrameColor: {r: 0.25, g: 0.55, b: 1, a: 1}
   epicFrameColor: {r: 0.75, g: 0.3, b: 1, a: 1}
+  legendaryFrameColor: {r: 1, g: 0.72, b: 0.18, a: 1}
   armorSlotText: {fileID: 7974137380041267823}
   engineSlotText: {fileID: 410321612985954864}
   chipSlotText: {fileID: 7417089092103120074}
@@ -43586,8 +43587,11 @@ MonoBehaviour:
   - weaponConfig: {fileID: 11400000, guid: f2f70023aad27461fbc14781bd370d24, type: 2}
     quantity: 1
   skillConfigs:
-  - {fileID: 11400000, guid: ade7c23ee0ef94de58b64675613a20d6, type: 2}
-  - {fileID: 11400000, guid: f37875bbd6023431e90ef1a693f06d5b, type: 2}
+  - {fileID: 11400000, guid: 73defaf86166b48fcbe8f5a77de1db3a, type: 2}
+  - {fileID: 11400000, guid: 517fc1aefca3743219be5549e67a0486, type: 2}
+  - {fileID: 11400000, guid: d270cf4ae8f6d4d3985dd40c3803af2d, type: 2}
+  - {fileID: 11400000, guid: ee6c5a9fbfaf54d36af61c2c6dfabb7c, type: 2}
+  - {fileID: 11400000, guid: baf3bf57f208049c39b8a4f439238bdb, type: 2}
   unitConfigs:
   - {fileID: 11400000, guid: a3b7befadd4964e5b9ee9048889e72fb, type: 2}
   - {fileID: 11400000, guid: b535319339de54f20b16ab7ad83876b4, type: 2}
@@ -44666,10 +44670,6 @@ PrefabInstance:
     - target: {fileID: 4978027644592991303, guid: bcdc7aface20c9d4db0a23f2e85c21c6, type: 3}
       propertyPath: m_Name
       value: Skill Hangar Panel
-      objectReference: {fileID: 0}
-    - target: {fileID: 4978027644592991303, guid: bcdc7aface20c9d4db0a23f2e85c21c6, type: 3}
-      propertyPath: m_IsActive
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5217926469332886795, guid: bcdc7aface20c9d4db0a23f2e85c21c6, type: 3}
       propertyPath: m_Pivot.x

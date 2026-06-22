@@ -17,6 +17,8 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private string displayName = "자동 스킬";
     [SerializeField] private Sprite icon;
     [SerializeField] private PlayerSkillType skillType;
+    [TextArea(4, 8)]
+    [SerializeField] private string description;
 
     [Header("Auto Cast")]
     [SerializeField] private float cooldown = 10f;
