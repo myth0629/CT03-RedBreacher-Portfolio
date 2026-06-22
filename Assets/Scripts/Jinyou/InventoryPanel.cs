@@ -30,10 +30,12 @@ public class InventoryPanel : MonoBehaviour
     private Func<PlayerUnitConfig, bool> unitSelectablePredicate;
     private readonly List<Button> spawnedWeaponButtons = new List<Button>();
     private readonly List<Button> spawnedUnitButtons = new List<Button>();
+    private PanelTweenTransition panelTransition;
 
     private void OnEnable()
     {
         ResolveReferences();
+        EnsurePanelTransition();
         closeButton?.onClick.AddListener(ClosePanel);
         weaponTabButton?.onClick.AddListener(ShowWeaponWindow);
         unitTabButton?.onClick.AddListener(ShowUnitWindow);
@@ -192,6 +194,13 @@ public class InventoryPanel : MonoBehaviour
     private void ClosePanel()
     {
         ClearSelectionMode();
+        EnsurePanelTransition();
+        if (panelTransition != null)
+        {
+            panelTransition.Close();
+            return;
+        }
+
         gameObject.SetActive(false);
     }
 
@@ -404,6 +413,16 @@ public class InventoryPanel : MonoBehaviour
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
         inventory = baseCampManager != null ? baseCampManager.Inventory : FindFirstObjectByType<InventoryFacility>();
+    }
+
+    private void EnsurePanelTransition()
+    {
+        // 인벤토리/기체 패널은 코드에서 열고 닫으므로 공통 패널 연출 컴포넌트를 보장한다.
+        panelTransition ??= GetComponent<PanelTweenTransition>();
+        if (panelTransition == null)
+        {
+            panelTransition = gameObject.AddComponent<PanelTweenTransition>();
+        }
     }
 
     private static void SetText(TMP_Text target, string value)

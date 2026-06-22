@@ -1404,6 +1404,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3666472196055000809, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3678917802658657019, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: player
       value: 
@@ -1791,6 +1795,10 @@ MonoBehaviour:
   autoFindFacilities: 1
   facilityPanels: []
   closePanelsOnStart: 1
+  animateFacilityPanels: 1
+  facilityPanelOpenDuration: 0.16
+  facilityPanelCloseDuration: 0.12
+  facilityPanelOpenStartScale: 0.92
   commanderLevel: 1
   credits: 500
   currencyWallet: {fileID: 0}

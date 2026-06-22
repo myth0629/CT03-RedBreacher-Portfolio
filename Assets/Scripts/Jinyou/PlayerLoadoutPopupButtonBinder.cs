@@ -11,8 +11,11 @@ public class PlayerLoadoutPopupButtonBinder : MonoBehaviour
     [Header("Target")]
     [SerializeField] private PlayerLoadoutSelectionPanel selectionPanel;
 
+    private PanelTweenTransition panelTransition;
+
     private void OnEnable()
     {
+        EnsurePanelTransition();
         weaponButton?.onClick.AddListener(OpenWeapons);
         droneButton?.onClick.AddListener(OpenDrones);
     }
@@ -31,5 +34,15 @@ public class PlayerLoadoutPopupButtonBinder : MonoBehaviour
     private void OpenDrones()
     {
         selectionPanel?.OpenDrones();
+    }
+
+    private void EnsurePanelTransition()
+    {
+        // 플레이어 팝업도 prefab 수정 없이 공통 패널 연출을 적용한다.
+        panelTransition ??= GetComponent<PanelTweenTransition>();
+        if (panelTransition == null)
+        {
+            panelTransition = gameObject.AddComponent<PanelTweenTransition>();
+        }
     }
 }

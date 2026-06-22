@@ -51,6 +51,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private Action<ProjectileConfig> weaponSelectionCallback;
     private Action<DroneConfig> droneSelectionCallback;
     private Action<PlayerSkillConfig> skillSelectionCallback;
+    private PanelTweenTransition panelTransition;
 
 
     private static void SetIcon(Image target, Sprite sprite)
@@ -352,6 +353,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         GameObject root = ResolveSelectionRoot();
         if (root != null)
         {
+            PanelTweenTransition transition = EnsurePanelTransition(root);
+            if (transition != null)
+            {
+                transition.Close();
+                return;
+            }
+
             root.SetActive(false);
         }
     }
@@ -361,6 +369,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         GameObject root = ResolveSelectionRoot();
         if (root != null)
         {
+            EnsurePanelTransition(root);
             root.SetActive(true);
         }
 
@@ -653,6 +662,26 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         }
 
         return selectionRoot;
+    }
+
+    private PanelTweenTransition EnsurePanelTransition(GameObject root)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        // 로드아웃 선택 패널도 공통 열림/닫힘 연출을 적용한다.
+        if (panelTransition == null || panelTransition.gameObject != root)
+        {
+            panelTransition = root.GetComponent<PanelTweenTransition>();
+            if (panelTransition == null)
+            {
+                panelTransition = root.AddComponent<PanelTweenTransition>();
+            }
+        }
+
+        return panelTransition;
     }
 
     private void ResolveDetailIconReferences()

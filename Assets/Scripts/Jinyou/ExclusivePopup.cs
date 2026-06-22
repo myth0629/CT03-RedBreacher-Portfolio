@@ -11,6 +11,8 @@ public class ExclusivePopup : MonoBehaviour
 {
     private void OnEnable()
     {
+        EnsureTransitionForSlidePopup(gameObject);
+
         Transform parent = transform.parent;
         if (parent == null)
         {
@@ -28,8 +30,29 @@ public class ExclusivePopup : MonoBehaviour
             // 같은 그룹의 다른 배타 팝업만 닫는다(HUD/일반 패널은 영향 없음).
             if (sibling.GetComponent<ExclusivePopup>() != null)
             {
+                PanelTweenTransition transition = sibling.GetComponent<PanelTweenTransition>();
+                if (transition != null)
+                {
+                    transition.Close();
+                    continue;
+                }
+
                 sibling.gameObject.SetActive(false);
             }
+        }
+    }
+
+    private static void EnsureTransitionForSlidePopup(GameObject popup)
+    {
+        if (popup == null || (popup.name != "Shop_Popup" && popup.name != "Base_Popup"))
+        {
+            return;
+        }
+
+        // 상점/기지는 전용 패널 스크립트가 없어 여기서 공통 슬라이드 연출을 보장한다.
+        if (popup.GetComponent<PanelTweenTransition>() == null)
+        {
+            popup.AddComponent<PanelTweenTransition>();
         }
     }
 }

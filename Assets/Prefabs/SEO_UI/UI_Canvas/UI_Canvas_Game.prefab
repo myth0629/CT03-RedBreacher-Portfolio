@@ -19105,7 +19105,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4517695049898385595
 RectTransform:
   m_ObjectHideFlags: 0
@@ -46754,6 +46754,12 @@ MonoBehaviour:
   - {fileID: 390434674735249074}
   unequipSlotButtons:
   - {fileID: 0}
+  slotSelectPunchScale: 0.08
+  slotSelectTweenDuration: 0.16
+  equipChangedPunchScale: 0.12
+  equipChangedTweenDuration: 0.18
+  invalidSlotShakeDuration: 0.18
+  invalidSlotShakeStrength: {x: 12, y: 0}
 --- !u!224 &1415507020384651227 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6360508978735861733, guid: bcdc7aface20c9d4db0a23f2e85c21c6, type: 3}

@@ -49,6 +49,7 @@ public class EquipmentPartsPanel : MonoBehaviour
     private readonly List<Button> spawnedButtons = new List<Button>();
     private readonly Dictionary<string, GameObject> newBadges = new Dictionary<string, GameObject>();
     private string selectedInstanceId;
+    private PanelTweenTransition panelTransition;
 
     // null이면 전체 표시, 값이 있으면 해당 슬롯 파츠만 표시한다.
     private EquipmentPartSlot? slotFilter;
@@ -56,6 +57,7 @@ public class EquipmentPartsPanel : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
+        EnsurePanelTransition();
         SubscribeEvents();
         equipButton?.onClick.AddListener(EquipSelected);
         unequipButton?.onClick.AddListener(UnequipSelected);
@@ -441,6 +443,16 @@ public class EquipmentPartsPanel : MonoBehaviour
         currencyWallet ??= BaseCampManager.Instance != null
             ? BaseCampManager.Instance.CurrencyWallet
             : FindFirstObjectByType<PlayerCurrencyWallet>();
+    }
+
+    private void EnsurePanelTransition()
+    {
+        // 장비 패널의 ExitButton 직접 SetActive 연결을 공통 닫힘 연출로 대체한다.
+        panelTransition ??= GetComponent<PanelTweenTransition>();
+        if (panelTransition == null)
+        {
+            panelTransition = gameObject.AddComponent<PanelTweenTransition>();
+        }
     }
 
     private void SubscribeEvents()

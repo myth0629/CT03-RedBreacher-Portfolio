@@ -11,15 +11,18 @@ public class AchievementPopup : MonoBehaviour
     [SerializeField] private GameObject achievementItemTemplate;
 
     private readonly List<GameObject> spawnedItems = new List<GameObject>();
+    private PanelTweenTransition panelTransition;
 
     private void Awake()
     {
         ResolveReferences();
+        EnsurePanelTransition();
     }
 
     private void OnEnable()
     {
         ResolveReferences();
+        EnsurePanelTransition();
         if (achievementManager != null)
         {
             achievementManager.OnAchievementsChanged.AddListener(Rebuild);
@@ -143,6 +146,16 @@ public class AchievementPopup : MonoBehaviour
         achievementManager ??= AchievementManager.Instance ?? FindFirstObjectByType<AchievementManager>();
         contentRoot ??= FindDeepChild(transform, "Content");
         achievementItemTemplate ??= FindDeepChild(transform, "Achievement_Button")?.gameObject;
+    }
+
+    private void EnsurePanelTransition()
+    {
+        // 도전과제 팝업도 prefab 수정 없이 공통 열림/닫힘 연출을 적용한다.
+        panelTransition ??= GetComponent<PanelTweenTransition>();
+        if (panelTransition == null)
+        {
+            panelTransition = gameObject.AddComponent<PanelTweenTransition>();
+        }
     }
 
     private static void SetText(GameObject root, string childName, string value)
