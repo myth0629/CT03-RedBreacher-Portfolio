@@ -17,6 +17,8 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private string displayName = "자동 스킬";
     [SerializeField] private Sprite icon;
     [SerializeField] private PlayerSkillType skillType;
+    [TextArea(4, 8)]
+    [SerializeField] private string description;
 
     [Header("Auto Cast")]
     [SerializeField] private float cooldown = 10f;
@@ -115,6 +117,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public string DisplayName => displayName;
     public Sprite Icon => icon;
     public PlayerSkillType SkillType => skillType;
+    public string Description => description;
     public float Cooldown => Mathf.Max(0.1f, cooldown);
     public float CastRange => Mathf.Max(0f, castRange);
     public int MinimumEnemyCount => Mathf.Max(1, minimumEnemyCount);

@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
   id: 04
   displayName: "\uC2A4\uD154\uC2A4 \uD3ED\uACA9\uAE30"
-  icon: {fileID: 21300000, guid: 4f4f1aa41489c0e49b2ea724cf771a2b, type: 3}
+  icon: {fileID: 21300000, guid: c82f273e502f1c746bd71682de12c876, type: 3}
   skillType: 3
+  description: "\uC804\uB7B5 \uD3ED\uACA9\uAE30\r\n\r\n\uC804\uC7A5\uC744 \uAC00\uB85C\uC9C0\uB974\uBA70
+    \uD3ED\uD0C4\uC744 \uD22C\uD558\uD574 \uB113\uC740 \uC9C0\uC5ED\uC744 \uD0C0\uACA9\uD55C\uB2E4."
   cooldown: 20
   castRange: 8
   minimumEnemyCount: 3
@@ -80,12 +82,16 @@ MonoBehaviour:
   stealthBomberShadowSize: 7
   stealthBomberShadowDarkness: 0.55
   attackHelicopterPrefab: {fileID: 0}
+  helicopterProjectileConfig: {fileID: 0}
   helicopterRocketPrefab: {fileID: 0}
   attackHelicopterDuration: 15
   attackHelicopterAttackInterval: 0.8
   attackHelicopterAttackRange: 7
   attackHelicopterMoveSpeed: 5
   attackHelicopterFollowOffset: 2.5
+  attackHelicopterMaxDistanceFromPlayer: 6
   helicopterOpeningRocketCount: 2
   helicopterRocketRadius: 2
   helicopterRocketSpeed: 16
+  helicopterRotorName: Propeller
+  helicopterRotorSpeed: 900

@@ -12,7 +12,7 @@ public class baseOutlineView : MonoBehaviour
         TraitPointFacility,
         Inventory,
         WeaponGacha,
-        BossDungeon
+        BossTracker
     }
     
     [Header("Facility")]
@@ -71,7 +71,7 @@ public class baseOutlineView : MonoBehaviour
             FacilityType.TraitPointFacility => 1,
             FacilityType.Inventory => 1,
             FacilityType.WeaponGacha => 1,
-            FacilityType.BossDungeon => baseCampManager?.CommandCenter?.Level ?? 1,
+            FacilityType.BossTracker => baseCampManager?.CommandCenter?.Level ?? 1,
             _ => 1
         };
     }
@@ -111,7 +111,7 @@ public class baseOutlineView : MonoBehaviour
                     baseCampManager.CoreCharger.OnUpgradeCompleted.AddListener(UpdateVisual);
                 }
                 break;
-            case FacilityType.BossDungeon:
+            case FacilityType.BossTracker:
                 if (baseCampManager?.CommandCenter != null)
                 {
                     baseCampManager.CommandCenter.OnLevelChanged.AddListener(HandleLevelChanged);

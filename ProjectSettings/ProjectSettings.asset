@@ -167,7 +167,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
-    Android: com.UnityTechnologies.com.unity.template.urpblank
+    Android: com.redbase.redbreacher
     Standalone: com.Unity-Technologies.com.unity.template.urp-blank
     iPhone: com.redbase.redbreacher
   buildNumber:
@@ -849,7 +849,7 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Android: DOTWEEN
+    Android: DOTWEEN;MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED
     EmbeddedLinux: DOTWEEN
     GameCoreScarlett: DOTWEEN
     GameCoreXboxOne: DOTWEEN
