@@ -1,16 +1,16 @@
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SkillHangerPanel : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [Header("Buttons")] 
+    [SerializeField] private Button[] skillButtons;
+    [SerializeField] private Button changeSkillButton;
+    
+    [Header("Skill Info SubPanel")]
+    [SerializeField] private TMP_Text skillNameText;
+    [SerializeField] private TMP_Text skillLevelText;
+    [SerializeField] private TMP_Text skillCooldownText;
+    [SerializeField] private TMP_Text skillDescriptionText;
 }
