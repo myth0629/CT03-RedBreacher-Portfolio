@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d181c03df4d514477af7af4667bb6e22, type: 3}
+  m_Name: TutorialConfig
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialConfig
+  bodyFont: {fileID: 11400000, guid: a5e325fc73a121645b8bb045804e62a4, type: 2}
+  overlayPrefab: {fileID: 4634822672165253103, guid: 7f288b02607aa48329b0d17e2740491f, type: 3}
+  steps:
+  - order: 1
+    id: open_player
+    bodyText: "\uAE30\uCCB4 \uD0ED\uC744 \uD130\uCE58\uD558\uC138\uC694."
+    highlightTargetName: Player_Btn
+    advanceType: 1
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 1
+    id: open_player
+    bodyText: "\uAE30\uCCB4 \uD0ED\uC744 \uD130\uCE58\uD558\uC138\uC694."
+    highlightTargetName: Player_Btn
+    advanceType: 1
+    eventType: 0
+    targetAmount: 0
+    targetId: 

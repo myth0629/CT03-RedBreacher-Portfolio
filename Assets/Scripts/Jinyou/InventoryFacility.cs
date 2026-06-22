@@ -1134,9 +1134,9 @@ public class InventoryFacility : MonoBehaviour
         }
 
         // 별도 SO 연결 전에도 드롭 테스트가 가능하도록 기본 3종을 런타임에 보강한다.
-        equipmentPartConfigs.Add(CreateRuntimeConfig("part_armor_default", "전술 장갑", EquipmentPartSlot.Armor, 0.05f, 0.1f, 0.2f));
-        equipmentPartConfigs.Add(CreateRuntimeConfig("part_engine_default", "고속 엔진", EquipmentPartSlot.Engine, 0.03f, 0.06f, 0.12f));
-        equipmentPartConfigs.Add(CreateRuntimeConfig("part_chip_default", "화력 칩", EquipmentPartSlot.Chip, 0.05f, 0.1f, 0.2f));
+        equipmentPartConfigs.Add(CreateRuntimeConfig("part_armor_default", "전술 장갑", EquipmentPartSlot.Armor, 0.05f, 0.1f, 0.2f, 0.3f));
+        equipmentPartConfigs.Add(CreateRuntimeConfig("part_engine_default", "고속 엔진", EquipmentPartSlot.Engine, 0.03f, 0.06f, 0.12f, 0.18f));
+        equipmentPartConfigs.Add(CreateRuntimeConfig("part_chip_default", "화력 칩", EquipmentPartSlot.Chip, 0.05f, 0.1f, 0.2f, 0.3f));
     }
 
     private void EnsureEquipmentPartsInitialized()
@@ -1157,10 +1157,11 @@ public class InventoryFacility : MonoBehaviour
         EquipmentPartSlot slot,
         float commonValue,
         float rareValue,
-        float epicValue)
+        float epicValue,
+        float legendaryValue)
     {
         EquipmentPartConfig config = ScriptableObject.CreateInstance<EquipmentPartConfig>();
-        config.ConfigureRuntimeDefaults(id, displayName, slot, commonValue, rareValue, epicValue);
+        config.ConfigureRuntimeDefaults(id, displayName, slot, commonValue, rareValue, epicValue, legendaryValue);
         return config;
     }
 

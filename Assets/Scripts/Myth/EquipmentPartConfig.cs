@@ -13,7 +13,8 @@ public enum EquipmentPartRarity
 {
     Common,
     Rare,
-    Epic
+    Epic,
+    Legendary
 }
 
 public enum EquipmentStatType
@@ -38,11 +39,13 @@ public class EquipmentPartConfig : ScriptableObject
     [SerializeField] private float commonMainValue = 0.05f;
     [SerializeField] private float rareMainValue = 0.1f;
     [SerializeField] private float epicMainValue = 0.2f;
+    [SerializeField] private float legendaryMainValue = 0.3f;
 
     [Header("Sale Price")]
     [SerializeField] private int commonSalePrice = 50;
     [SerializeField] private int rareSalePrice = 200;
     [SerializeField] private int epicSalePrice = 800;
+    [SerializeField] private int legendarySalePrice = 2400;
 
     public string Id => id;
     public string DisplayName => displayName;
@@ -52,9 +55,11 @@ public class EquipmentPartConfig : ScriptableObject
     public float CommonMainValue => commonMainValue;
     public float RareMainValue => rareMainValue;
     public float EpicMainValue => epicMainValue;
+    public float LegendaryMainValue => legendaryMainValue;
     public int CommonSalePrice => commonSalePrice;
     public int RareSalePrice => rareSalePrice;
     public int EpicSalePrice => epicSalePrice;
+    public int LegendarySalePrice => legendarySalePrice;
 
     public float GetMainValue(EquipmentPartRarity rarity)
     {
@@ -62,6 +67,7 @@ public class EquipmentPartConfig : ScriptableObject
         {
             EquipmentPartRarity.Rare => Mathf.Max(0f, rareMainValue),
             EquipmentPartRarity.Epic => Mathf.Max(0f, epicMainValue),
+            EquipmentPartRarity.Legendary => Mathf.Max(0f, legendaryMainValue),
             _ => Mathf.Max(0f, commonMainValue)
         };
     }
@@ -72,6 +78,7 @@ public class EquipmentPartConfig : ScriptableObject
         {
             EquipmentPartRarity.Rare => Mathf.Max(0, rareSalePrice),
             EquipmentPartRarity.Epic => Mathf.Max(0, epicSalePrice),
+            EquipmentPartRarity.Legendary => Mathf.Max(0, legendarySalePrice),
             _ => Mathf.Max(0, commonSalePrice)
         };
     }
@@ -92,7 +99,8 @@ public class EquipmentPartConfig : ScriptableObject
         EquipmentPartSlot configSlot,
         float commonValue,
         float rareValue,
-        float epicValue)
+        float epicValue,
+        float legendaryValue)
     {
         id = configId;
         displayName = configDisplayName;
@@ -100,9 +108,11 @@ public class EquipmentPartConfig : ScriptableObject
         commonMainValue = commonValue;
         rareMainValue = rareValue;
         epicMainValue = epicValue;
+        legendaryMainValue = legendaryValue;
         commonSalePrice = 50;
         rareSalePrice = 200;
         epicSalePrice = 800;
+        legendarySalePrice = 2400;
     }
 }
 
@@ -176,8 +186,14 @@ public static class EquipmentPartGenerator
             salePrice = config.GetSalePrice(rarity)
         };
 
-        // 희귀도에 따라 중복 없는 부옵을 확정해 저장한다.
-        int subStatCount = rarity == EquipmentPartRarity.Epic ? 2 : rarity == EquipmentPartRarity.Rare ? 1 : 0;
+        // 희귀도에 따라 중복 없는 부옵을 확정해 저장한다. 전설은 보스 처치 보상으로만 롤링된다.
+        int subStatCount = rarity switch
+        {
+            EquipmentPartRarity.Legendary => 3,
+            EquipmentPartRarity.Epic => 2,
+            EquipmentPartRarity.Rare => 1,
+            _ => 0
+        };
         List<EquipmentStatType> candidates = new List<EquipmentStatType>(SubStatTypes);
         for (int i = 0; i < subStatCount && candidates.Count > 0; i++)
         {
@@ -201,32 +217,50 @@ public static class EquipmentPartGenerator
     private const float RareChancePerLevel = 0.01f;  // 레벨당 +1%
     private const float MaxEpicChance = 0.25f;
     private const float MaxRareChance = 0.45f;
+    private const float BaseLegendaryBossChance = 0.01f;
+    private const float LegendaryBossChancePerLevel = 0.0015f; // 보스 처치 시 레벨당 +0.15%
+    private const float MaxLegendaryBossChance = 0.08f;
 
-    public static EquipmentPartRarity RollRarity(int level = 1)
+    public static EquipmentPartRarity RollRarity(int level = 1, bool allowLegendary = false)
     {
         int steps = Mathf.Max(0, level - 1);
         float epicChance = Mathf.Min(MaxEpicChance, BaseEpicChance + steps * EpicChancePerLevel);
         float rareChance = Mathf.Min(MaxRareChance, BaseRareChance + steps * RareChancePerLevel);
+        float legendaryChance = allowLegendary
+            ? Mathf.Min(MaxLegendaryBossChance, BaseLegendaryBossChance + steps * LegendaryBossChancePerLevel)
+            : 0f;
+
+        // 전설은 보스 보상 전용이며, 기존 고등급 총량이 과하게 튀지 않도록 영웅 확률 일부를 대체한다.
+        if (legendaryChance > 0f)
+        {
+            epicChance = Mathf.Max(0f, epicChance - legendaryChance);
+        }
 
         float roll = UnityEngine.Random.value;
-        if (roll < epicChance)
+        if (roll < legendaryChance)
+        {
+            return EquipmentPartRarity.Legendary;
+        }
+
+        if (roll < legendaryChance + epicChance)
         {
             return EquipmentPartRarity.Epic;
         }
 
-        return roll < epicChance + rareChance ? EquipmentPartRarity.Rare : EquipmentPartRarity.Common;
+        return roll < legendaryChance + epicChance + rareChance ? EquipmentPartRarity.Rare : EquipmentPartRarity.Common;
     }
 
     private static float RollSubStatValue(EquipmentStatType statType, EquipmentPartRarity rarity)
     {
+        bool legendary = rarity == EquipmentPartRarity.Legendary;
         bool epic = rarity == EquipmentPartRarity.Epic;
         return statType switch
         {
-            EquipmentStatType.AttackPercent => UnityEngine.Random.Range(epic ? 0.04f : 0.02f, epic ? 0.08f : 0.05f),
-            EquipmentStatType.HealthPercent => UnityEngine.Random.Range(epic ? 0.04f : 0.02f, epic ? 0.08f : 0.05f),
-            EquipmentStatType.AttackSpeedPercent => UnityEngine.Random.Range(epic ? 0.02f : 0.01f, epic ? 0.05f : 0.03f),
-            EquipmentStatType.CritChance => UnityEngine.Random.Range(epic ? 0.01f : 0.005f, epic ? 0.025f : 0.015f),
-            _ => UnityEngine.Random.Range(epic ? 0.05f : 0.03f, epic ? 0.1f : 0.06f)
+            EquipmentStatType.AttackPercent => UnityEngine.Random.Range(legendary ? 0.06f : epic ? 0.04f : 0.02f, legendary ? 0.12f : epic ? 0.08f : 0.05f),
+            EquipmentStatType.HealthPercent => UnityEngine.Random.Range(legendary ? 0.06f : epic ? 0.04f : 0.02f, legendary ? 0.12f : epic ? 0.08f : 0.05f),
+            EquipmentStatType.AttackSpeedPercent => UnityEngine.Random.Range(legendary ? 0.03f : epic ? 0.02f : 0.01f, legendary ? 0.07f : epic ? 0.05f : 0.03f),
+            EquipmentStatType.CritChance => UnityEngine.Random.Range(legendary ? 0.015f : epic ? 0.01f : 0.005f, legendary ? 0.035f : epic ? 0.025f : 0.015f),
+            _ => UnityEngine.Random.Range(legendary ? 0.08f : epic ? 0.05f : 0.03f, legendary ? 0.15f : epic ? 0.1f : 0.06f)
         };
     }
 }

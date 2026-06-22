@@ -49,6 +49,7 @@ public class PlayerEquipmentPartLoadout : MonoBehaviour
 
         SetEquippedId(part.slot, part.instanceId);
         SaveAndNotify();
+        TutorialManager.Report(TutorialEventType.PartEquipped);
         return true;
     }
 

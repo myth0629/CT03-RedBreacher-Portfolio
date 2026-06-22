@@ -13,7 +13,7 @@ public class PlayerController : MonoBehaviour
     private const string EquippedWeaponIdKey = "PlayerController.EquippedWeaponId";
     private const string EquippedSkillIdsKey = "PlayerController.EquippedSkillIds";
     private const string EquippedUnitIdKey = "PlayerController.EquippedUnitId";
-    private const int SkillSlotCount = 3;
+    private const int DefaultSkillSlotCount = 3;
 
     [System.Serializable]
     private class SkillLoadoutSaveData
@@ -171,6 +171,7 @@ public class PlayerController : MonoBehaviour
         ? unitConfig.RepositionCooldown
         : repositionCooldown;
     private ProjectileConfig ProjectileConfigValue => weaponConfig;
+    private int SkillSlotCount => Mathf.Max(DefaultSkillSlotCount, autoSkills?.Count ?? 0);
 
     private void Awake()
     {
@@ -322,12 +323,13 @@ public class PlayerController : MonoBehaviour
     public JinyouPlayerLoadoutSaveData CaptureLoadoutState()
     {
         EnsureSkillSlotCount();
+        int skillSlotCount = SkillSlotCount;
         JinyouPlayerLoadoutSaveData data = new JinyouPlayerLoadoutSaveData
         {
             unitId = unitConfig != null ? unitConfig.Id : string.Empty,
             weaponId = weaponConfig != null ? weaponConfig.Id : string.Empty
         };
-        for (int i = 0; i < SkillSlotCount; i++)
+        for (int i = 0; i < skillSlotCount; i++)
         {
             data.skillIds.Add(autoSkills[i] != null ? autoSkills[i].Id : string.Empty);
         }
@@ -356,15 +358,15 @@ public class PlayerController : MonoBehaviour
         }
 
         EnsureSkillSlotCount();
-        for (int i = 0; i < SkillSlotCount; i++)
+        int skillSlotCount = SkillSlotCount;
+        bool allowInspectorFallback = CountNonEmptySkills(autoSkills) > CountNonEmptySkillIds(data.skillIds);
+        for (int i = 0; i < skillSlotCount; i++)
         {
             string skillId = data.skillIds != null && i < data.skillIds.Count
                 ? data.skillIds[i]
                 : string.Empty;
-            PlayerSkillConfig skill = FindSkillById(skillId);
-            autoSkills[i] = skill != null && (inventory == null || inventory.ContainsSkill(skill))
-                ? skill
-                : null;
+            PlayerSkillConfig inspectorSkill = autoSkills[i];
+            autoSkills[i] = ResolveSavedSkillOrFallback(skillId, inspectorSkill, allowInspectorFallback);
         }
 
         autoSkillController?.Initialize(this, autoSkills);
@@ -447,13 +449,15 @@ public class PlayerController : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(skillJson))
         {
             SkillLoadoutSaveData saveData = JsonUtility.FromJson<SkillLoadoutSaveData>(skillJson);
-            for (int i = 0; i < SkillSlotCount; i++)
+            int skillSlotCount = SkillSlotCount;
+            bool allowInspectorFallback = CountNonEmptySkills(autoSkills) > CountNonEmptySkillIds(saveData?.skillIds);
+            for (int i = 0; i < skillSlotCount; i++)
             {
                 string skillId = saveData?.skillIds != null && i < saveData.skillIds.Count
                     ? saveData.skillIds[i]
                     : string.Empty;
-                PlayerSkillConfig savedSkill = FindSkillById(skillId);
-                autoSkills[i] = savedSkill != null && inventory.ContainsSkill(savedSkill) ? savedSkill : null;
+                PlayerSkillConfig inspectorSkill = autoSkills[i];
+                autoSkills[i] = ResolveSavedSkillOrFallback(skillId, inspectorSkill, allowInspectorFallback);
             }
         }
         else
@@ -467,14 +471,10 @@ public class PlayerController : MonoBehaviour
     private void EnsureSkillSlotCount()
     {
         autoSkills ??= new List<PlayerSkillConfig>();
-        while (autoSkills.Count < SkillSlotCount)
+        int skillSlotCount = SkillSlotCount;
+        while (autoSkills.Count < skillSlotCount)
         {
             autoSkills.Add(null);
-        }
-
-        if (autoSkills.Count > SkillSlotCount)
-        {
-            autoSkills.RemoveRange(SkillSlotCount, autoSkills.Count - SkillSlotCount);
         }
     }
 
@@ -482,7 +482,8 @@ public class PlayerController : MonoBehaviour
     {
         EnsureSkillSlotCount();
         SkillLoadoutSaveData saveData = new SkillLoadoutSaveData();
-        for (int i = 0; i < SkillSlotCount; i++)
+        int skillSlotCount = SkillSlotCount;
+        for (int i = 0; i < skillSlotCount; i++)
         {
             saveData.skillIds.Add(autoSkills[i] != null ? autoSkills[i].Id : string.Empty);
         }
@@ -494,6 +495,63 @@ public class PlayerController : MonoBehaviour
         }
 
         BaseCampManager.Instance?.RequestUnifiedSave();
+    }
+
+    private PlayerSkillConfig ResolveSavedSkillOrFallback(
+        string skillId,
+        PlayerSkillConfig inspectorSkill,
+        bool allowInspectorFallback)
+    {
+        PlayerSkillConfig savedSkill = FindSkillById(skillId);
+        if (savedSkill != null && (inventory == null || inventory.ContainsSkill(savedSkill)))
+        {
+            return savedSkill;
+        }
+
+        // 저장된 로드아웃보다 Inspector 기본 스킬이 많으면 새 테스트 스킬을 빈 슬롯에 유지한다.
+        return allowInspectorFallback
+            && inspectorSkill != null
+            && (inventory == null || inventory.ContainsSkill(inspectorSkill))
+                ? inspectorSkill
+                : null;
+    }
+
+    private static int CountNonEmptySkillIds(IReadOnlyList<string> skillIds)
+    {
+        if (skillIds == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 0; i < skillIds.Count; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(skillIds[i]))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static int CountNonEmptySkills(IReadOnlyList<PlayerSkillConfig> skills)
+    {
+        if (skills == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 0; i < skills.Count; i++)
+        {
+            if (skills[i] != null)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     private ProjectileConfig FindWeaponById(string configId)

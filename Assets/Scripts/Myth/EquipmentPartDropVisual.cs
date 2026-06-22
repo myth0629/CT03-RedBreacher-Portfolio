@@ -248,6 +248,7 @@ public class EquipmentPartDropVisual : MonoBehaviour
         {
             EquipmentPartRarity.Rare => new Color(0.35f, 0.8f, 1f, 1f),
             EquipmentPartRarity.Epic => new Color(1f, 0.45f, 0.9f, 1f),
+            EquipmentPartRarity.Legendary => new Color(1f, 0.72f, 0.18f, 1f),
             _ => Color.white
         };
     }

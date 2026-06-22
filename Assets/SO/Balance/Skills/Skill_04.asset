@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9948735bb66634f4aaa563da18aeac04, type: 3}
+  m_Name: Skill_04
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
+  id: 04
+  displayName: "\uC2A4\uD154\uC2A4 \uD3ED\uACA9\uAE30"
+  icon: {fileID: 21300000, guid: 4f4f1aa41489c0e49b2ea724cf771a2b, type: 3}
+  skillType: 3
+  cooldown: 20
+  castRange: 8
+  minimumEnemyCount: 3
+  attackPowerMultiplier: 3
+  flatDamage: 0
+  canCritical: 1
+  effectRadius: 2.5
+  maxTargets: 30
+  knockbackForce: 0
+  maxLevel: 10
+  damagePercentPerLevel: 0.1
+  cooldownReductionPercentPerLevel: 0.03
+  maxCooldownReductionPercent: 0.5
+  countIncreaseLevelInterval: 3
+  bombCountIncreasePerInterval: 0
+  turretCountIncreasePerInterval: 0
+  maxLevelDuplicateCoreCrystalReward: 1
+  impactDelay: 0.25
+  warningEffectPrefab: {fileID: 9179389450710726649, guid: 0309f63716c8a4a4e84bead042662d12, type: 3}
+  impactEffectPrefab: {fileID: 1221116321114522, guid: 13e7b1908d4d5094e9ba37c20eb5a0a0, type: 3}
+  effectCleanupDelay: 2
+  _airplanePrefab: {fileID: 0}
+  _airplaneSpeed: 15
+  _airplaneSpawnOffset: 15
+  _airplaneHeight: 6
+  _bombProjectilePrefab: {fileID: 0}
+  _bombEffectScale: 5
+  _bombCount: 1
+  _bombInterval: 0.15
+  _screenShakeDuration: 0.28
+  _screenShakeStrength: 0.8
+  _screenShakeFrequency: 1.8
+  turretPrefab: {fileID: 0}
+  turretProjectileConfig: {fileID: 0}
+  turretDuration: 8
+  turretAttackInterval: 0.8
+  turretAttackRange: 6
+  turretRotationSpeed: 360
+  turretPlacementDistance: 1.5
+  turretFirePointName: FirePoint
+  missileTurretPrefab: {fileID: 0}
+  missileProjectilePrefab: {fileID: 0}
+  missileTurretDuration: 8
+  missileTurretAttackInterval: 1.2
+  missileTurretAttackRange: 7
+  missileTurretRotationSpeed: 240
+  missileTurretPlacementDistance: 1.8
+  missileExplosionRadius: 2.2
+  missileProjectileSpeed: 12
+  missileTurretFirePointName: FirePoint
+  missileImpactEffectPrefab: {fileID: 0}
+  stealthBomberPrefab: {fileID: 214164098778057125, guid: 8fd535507b2293c479d0b5d315d95e60, type: 3}
+  stealthBomberSpeed: 18
+  stealthBomberTravelDistance: 18
+  stealthBomberHeight: 6
+  stealthBomberRows: 3
+  stealthBomberColumns: 3
+  stealthBomberSpacing: 2.5
+  stealthBomberBombInterval: 0.08
+  stealthBomberExplosionRadius: 2
+  stealthBomberShadowSprite: {fileID: 0}
+  stealthBomberShadowSize: 7
+  stealthBomberShadowDarkness: 0.55
+  attackHelicopterPrefab: {fileID: 0}
+  helicopterRocketPrefab: {fileID: 0}
+  attackHelicopterDuration: 15
+  attackHelicopterAttackInterval: 0.8
+  attackHelicopterAttackRange: 7
+  attackHelicopterMoveSpeed: 5
+  attackHelicopterFollowOffset: 2.5
+  helicopterOpeningRocketCount: 2
+  helicopterRocketRadius: 2
+  helicopterRocketSpeed: 16

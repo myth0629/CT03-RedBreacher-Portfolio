@@ -180,6 +180,35 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "turretRotationSpeed", row, "turretRotationSpeed");
             SetFloat(serializedObject, "turretPlacementDistance", row, "turretPlacementDistance");
             SetString(serializedObject, "turretFirePointName", Get(row, "turretFirePointName"));
+            SetObject(serializedObject, "missileTurretPrefab", GetAsset<GameObject>(row, "missileTurretPrefab"));
+            SetObject(serializedObject, "missileProjectilePrefab", GetAsset<GameObject>(row, "missileProjectilePrefab"));
+            SetFloat(serializedObject, "missileTurretDuration", row, "missileTurretDuration");
+            SetFloat(serializedObject, "missileTurretAttackInterval", row, "missileTurretAttackInterval");
+            SetFloat(serializedObject, "missileTurretAttackRange", row, "missileTurretAttackRange");
+            SetFloat(serializedObject, "missileTurretRotationSpeed", row, "missileTurretRotationSpeed");
+            SetFloat(serializedObject, "missileTurretPlacementDistance", row, "missileTurretPlacementDistance");
+            SetFloat(serializedObject, "missileExplosionRadius", row, "missileExplosionRadius");
+            SetFloat(serializedObject, "missileProjectileSpeed", row, "missileProjectileSpeed");
+            SetString(serializedObject, "missileTurretFirePointName", Get(row, "missileTurretFirePointName"));
+            SetObject(serializedObject, "stealthBomberPrefab", GetAsset<GameObject>(row, "stealthBomberPrefab"));
+            SetFloat(serializedObject, "stealthBomberSpeed", row, "stealthBomberSpeed");
+            SetFloat(serializedObject, "stealthBomberTravelDistance", row, "stealthBomberTravelDistance");
+            SetFloat(serializedObject, "stealthBomberHeight", row, "stealthBomberHeight");
+            SetInt(serializedObject, "stealthBomberRows", row, "stealthBomberRows");
+            SetInt(serializedObject, "stealthBomberColumns", row, "stealthBomberColumns");
+            SetFloat(serializedObject, "stealthBomberSpacing", row, "stealthBomberSpacing");
+            SetFloat(serializedObject, "stealthBomberBombInterval", row, "stealthBomberBombInterval");
+            SetFloat(serializedObject, "stealthBomberExplosionRadius", row, "stealthBomberExplosionRadius");
+            SetObject(serializedObject, "attackHelicopterPrefab", GetAsset<GameObject>(row, "attackHelicopterPrefab"));
+            SetObject(serializedObject, "helicopterRocketPrefab", GetAsset<GameObject>(row, "helicopterRocketPrefab"));
+            SetFloat(serializedObject, "attackHelicopterDuration", row, "attackHelicopterDuration");
+            SetFloat(serializedObject, "attackHelicopterAttackInterval", row, "attackHelicopterAttackInterval");
+            SetFloat(serializedObject, "attackHelicopterAttackRange", row, "attackHelicopterAttackRange");
+            SetFloat(serializedObject, "attackHelicopterMoveSpeed", row, "attackHelicopterMoveSpeed");
+            SetFloat(serializedObject, "attackHelicopterFollowOffset", row, "attackHelicopterFollowOffset");
+            SetInt(serializedObject, "helicopterOpeningRocketCount", row, "helicopterOpeningRocketCount");
+            SetFloat(serializedObject, "helicopterRocketRadius", row, "helicopterRocketRadius");
+            SetFloat(serializedObject, "helicopterRocketSpeed", row, "helicopterRocketSpeed");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
@@ -276,9 +305,11 @@ public static class BalanceCsvImporter
             SetFloat(serializedObject, "commonMainValue", row, "commonMainValue");
             SetFloat(serializedObject, "rareMainValue", row, "rareMainValue");
             SetFloat(serializedObject, "epicMainValue", row, "epicMainValue");
+            SetFloat(serializedObject, "legendaryMainValue", row, "legendaryMainValue");
             SetInt(serializedObject, "commonSalePrice", row, "commonSalePrice");
             SetInt(serializedObject, "rareSalePrice", row, "rareSalePrice");
             SetInt(serializedObject, "epicSalePrice", row, "epicSalePrice");
+            SetInt(serializedObject, "legendarySalePrice", row, "legendarySalePrice");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
@@ -395,7 +426,18 @@ public static class BalanceCsvImporter
             "bombProjectilePrefab", "bombEffectScale", "bombCount", "bombInterval",
             "screenShakeDuration", "screenShakeStrength", "screenShakeFrequency",
             "turretPrefab", "turretProjectileConfig", "turretDuration", "turretAttackInterval",
-            "turretAttackRange", "turretRotationSpeed", "turretPlacementDistance", "turretFirePointName"
+            "turretAttackRange", "turretRotationSpeed", "turretPlacementDistance", "turretFirePointName",
+            "missileTurretPrefab", "missileProjectilePrefab", "missileTurretDuration",
+            "missileTurretAttackInterval", "missileTurretAttackRange", "missileTurretRotationSpeed",
+            "missileTurretPlacementDistance", "missileExplosionRadius", "missileProjectileSpeed",
+            "missileTurretFirePointName",
+            "stealthBomberPrefab", "stealthBomberSpeed", "stealthBomberTravelDistance", "stealthBomberHeight",
+            "stealthBomberRows", "stealthBomberColumns", "stealthBomberSpacing",
+            "stealthBomberBombInterval", "stealthBomberExplosionRadius",
+            "attackHelicopterPrefab", "helicopterRocketPrefab", "attackHelicopterDuration",
+            "attackHelicopterAttackInterval", "attackHelicopterAttackRange", "attackHelicopterMoveSpeed",
+            "attackHelicopterFollowOffset", "helicopterOpeningRocketCount", "helicopterRocketRadius",
+            "helicopterRocketSpeed"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -446,7 +488,36 @@ public static class BalanceCsvImporter
                 FormatFloat(config.TurretAttackRange),
                 FormatFloat(config.TurretRotationSpeed),
                 FormatFloat(config.TurretPlacementDistance),
-                config.TurretFirePointName
+                config.TurretFirePointName,
+                GetAssetPath(config.MissileTurretPrefab),
+                GetAssetPath(config.MissileProjectilePrefab),
+                FormatFloat(config.MissileTurretDuration),
+                FormatFloat(config.MissileTurretAttackInterval),
+                FormatFloat(config.MissileTurretAttackRange),
+                FormatFloat(config.MissileTurretRotationSpeed),
+                FormatFloat(config.MissileTurretPlacementDistance),
+                FormatFloat(config.MissileExplosionRadius),
+                FormatFloat(config.MissileProjectileSpeed),
+                config.MissileTurretFirePointName,
+                GetAssetPath(config.StealthBomberPrefab),
+                FormatFloat(config.StealthBomberSpeed),
+                FormatFloat(config.StealthBomberTravelDistance),
+                FormatFloat(config.StealthBomberHeight),
+                config.StealthBomberRows.ToString(CultureInfo.InvariantCulture),
+                config.StealthBomberColumns.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.StealthBomberSpacing),
+                FormatFloat(config.StealthBomberBombInterval),
+                FormatFloat(config.StealthBomberExplosionRadius),
+                GetAssetPath(config.AttackHelicopterPrefab),
+                GetAssetPath(config.HelicopterRocketPrefab),
+                FormatFloat(config.AttackHelicopterDuration),
+                FormatFloat(config.AttackHelicopterAttackInterval),
+                FormatFloat(config.AttackHelicopterAttackRange),
+                FormatFloat(config.AttackHelicopterMoveSpeed),
+                FormatFloat(config.AttackHelicopterFollowOffset),
+                config.HelicopterOpeningRocketCount.ToString(CultureInfo.InvariantCulture),
+                FormatFloat(config.HelicopterRocketRadius),
+                FormatFloat(config.HelicopterRocketSpeed)
             });
         }
 
@@ -541,7 +612,7 @@ public static class BalanceCsvImporter
         string[] headers =
         {
             "id", "displayName", "icon", "slot", "commonMainValue", "rareMainValue", "epicMainValue",
-            "commonSalePrice", "rareSalePrice", "epicSalePrice"
+            "legendaryMainValue", "commonSalePrice", "rareSalePrice", "epicSalePrice", "legendarySalePrice"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -556,9 +627,11 @@ public static class BalanceCsvImporter
                 FormatFloat(config.CommonMainValue),
                 FormatFloat(config.RareMainValue),
                 FormatFloat(config.EpicMainValue),
+                FormatFloat(config.LegendaryMainValue),
                 config.CommonSalePrice.ToString(CultureInfo.InvariantCulture),
                 config.RareSalePrice.ToString(CultureInfo.InvariantCulture),
-                config.EpicSalePrice.ToString(CultureInfo.InvariantCulture)
+                config.EpicSalePrice.ToString(CultureInfo.InvariantCulture),
+                config.LegendarySalePrice.ToString(CultureInfo.InvariantCulture)
             });
         }
 

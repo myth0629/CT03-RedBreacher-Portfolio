@@ -111,6 +111,7 @@ public class PlayerProgression : MonoBehaviour
         experienceToNextLevel = Mathf.Max(1f, experienceToNextLevel * experienceGrowthRate);
         AchievementManager.ReportPlayerLevelReached(level);
         MainGuideMissionManager.ReportPlayerLevelReached(level);
+        TutorialManager.Report(TutorialEventType.PlayerLevelReached);
 
         Debug.Log($"플레이어 레벨업: Lv.{level}, 특성 포인트 {statPoints}");
     }

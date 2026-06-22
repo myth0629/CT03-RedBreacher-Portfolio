@@ -17,6 +17,7 @@ public class EquipmentPartsPanel : MonoBehaviour
     [SerializeField] private Color commonFrameColor = Color.white;
     [SerializeField] private Color rareFrameColor = new Color(0.25f, 0.55f, 1f, 1f);
     [SerializeField] private Color epicFrameColor = new Color(0.75f, 0.3f, 1f, 1f);
+    [SerializeField] private Color legendaryFrameColor = new Color(1f, 0.72f, 0.18f, 1f);
 
     [Header("Equipped Slots")]
     [SerializeField] private TMP_Text armorSlotText;
@@ -316,6 +317,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         {
             EquipmentPartRarity.Rare => rareFrameColor,
             EquipmentPartRarity.Epic => epicFrameColor,
+            EquipmentPartRarity.Legendary => legendaryFrameColor,
             _ => commonFrameColor
         };
     }
@@ -483,6 +485,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         {
             EquipmentPartRarity.Rare => "희귀",
             EquipmentPartRarity.Epic => "영웅",
+            EquipmentPartRarity.Legendary => "전설",
             _ => "일반"
         };
 
@@ -495,6 +498,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         {
             EquipmentPartRarity.Rare => "59CCFF",
             EquipmentPartRarity.Epic => "FF73E6",
+            EquipmentPartRarity.Legendary => "FFB82E",
             _ => "FFFFFF"
         };
     }

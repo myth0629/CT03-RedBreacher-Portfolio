@@ -106,18 +106,31 @@ public class PlayerAutoSkillController : MonoBehaviour
         bool castSucceeded = skill.SkillType switch
         {
             PlayerSkillType.AutoTurret => AutoTurretSkill.Spawn(player, skill, targetPosition),
+            PlayerSkillType.MissileTurret => MissileTurretSkill.Spawn(player, skill, targetPosition),
+            PlayerSkillType.StealthBomber => StealthBomberSkill.Cast(player, skill, targetPosition),
+            PlayerSkillType.AttackHelicopter => AttackHelicopterSkill.Spawn(player, skill, targetPosition),
             _ => BombardmentSkill.Cast(player, skill, targetPosition)
         };
 
         if (castSucceeded)
         {
             // 설치 터렛은 사라진 시점부터 재사용 쿨타임을 계산한다.
-            float cooldownStartDelay = skill.SkillType == PlayerSkillType.AutoTurret
-                ? skill.TurretDuration
-                : 0f;
+            float cooldownStartDelay = GetCooldownStartDelay(skill);
             nextCastTimes[skill] = Time.time + cooldownStartDelay + GetCooldown(skill);
             nextSearchTimes[skill] = 0f;
         }
+    }
+
+    private static float GetCooldownStartDelay(PlayerSkillConfig skill)
+    {
+        // 지속형 소환 스킬은 종료 시점부터 쿨타임을 시작해 중첩 소환을 막는다.
+        return skill.SkillType switch
+        {
+            PlayerSkillType.AutoTurret => skill.TurretDuration,
+            PlayerSkillType.MissileTurret => skill.MissileTurretDuration,
+            PlayerSkillType.AttackHelicopter => skill.AttackHelicopterDuration,
+            _ => 0f
+        };
     }
 
     private float GetCooldown(PlayerSkillConfig skill)

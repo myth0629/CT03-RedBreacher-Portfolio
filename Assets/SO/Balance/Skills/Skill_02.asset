@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9948735bb66634f4aaa563da18aeac04, type: 3}
-  m_Name: Skill02
+  m_Name: Skill_02
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
   id: 02
   displayName: "\uD3ED\uACA9"
-  icon: {fileID: 21300000, guid: d11fbba76bb96e24b9a115d6c071534f, type: 3}
+  icon: {fileID: 21300000, guid: d63abd99fc788744b88c4ef1b82e4b78, type: 3}
   skillType: 0
   cooldown: 15
   castRange: 8
@@ -45,9 +45,9 @@ MonoBehaviour:
   _bombEffectScale: 2
   _bombCount: 2
   _bombInterval: 0.15
-  _screenShakeDuration: 0.4
-  _screenShakeStrength: 1
-  _screenShakeFrequency: 2
+  _screenShakeDuration: 0.22
+  _screenShakeStrength: 0.4
+  _screenShakeFrequency: 1.5
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 0}
   turretDuration: 8
@@ -56,3 +56,32 @@ MonoBehaviour:
   turretRotationSpeed: 360
   turretPlacementDistance: 1.5
   turretFirePointName: FirePoint
+  missileTurretPrefab: {fileID: 0}
+  missileProjectilePrefab: {fileID: 0}
+  missileTurretDuration: 8
+  missileTurretAttackInterval: 1.2
+  missileTurretAttackRange: 7
+  missileTurretRotationSpeed: 240
+  missileTurretPlacementDistance: 1.8
+  missileExplosionRadius: 2.2
+  missileProjectileSpeed: 12
+  missileTurretFirePointName: FirePoint
+  stealthBomberPrefab: {fileID: 0}
+  stealthBomberSpeed: 24
+  stealthBomberTravelDistance: 18
+  stealthBomberHeight: 6
+  stealthBomberRows: 1
+  stealthBomberColumns: 3
+  stealthBomberSpacing: 2.2
+  stealthBomberBombInterval: 0.12
+  stealthBomberExplosionRadius: 2.5
+  attackHelicopterPrefab: {fileID: 0}
+  helicopterRocketPrefab: {fileID: 0}
+  attackHelicopterDuration: 15
+  attackHelicopterAttackInterval: 0.8
+  attackHelicopterAttackRange: 7
+  attackHelicopterMoveSpeed: 5
+  attackHelicopterFollowOffset: 2.5
+  helicopterOpeningRocketCount: 2
+  helicopterRocketRadius: 2
+  helicopterRocketSpeed: 16

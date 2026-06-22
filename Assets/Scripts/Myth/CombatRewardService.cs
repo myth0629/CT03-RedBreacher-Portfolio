@@ -18,9 +18,10 @@ public static class CombatRewardService
         // 일반 공격, 드론, 스킬 처치가 동일한 보상 경로를 사용한다.
         AchievementManager.ReportEnemyKilled();
         MainGuideMissionManager.ReportEnemyKilled();
+        TutorialManager.Report(TutorialEventType.EnemyKilled);
         player.Progression?.AddExperience(enemy.ExperienceReward);
         GrantCurrency(player, enemy);
-        TryGrantEquipmentPart(player, enemy);
+        TryGrantEquipmentPart(player, enemy, enemy is BossEnemyController);
     }
 
     private static void GrantCurrency(PlayerController player, EnemyController enemy)
@@ -45,7 +46,7 @@ public static class CombatRewardService
         wallet.Add(CurrencyType.CoreCrystals, enemy.CoreCrystalReward);
     }
 
-    private static void TryGrantEquipmentPart(PlayerController player, EnemyController enemy)
+    private static void TryGrantEquipmentPart(PlayerController player, EnemyController enemy, bool killedBoss)
     {
         InventoryFacility inventory = BaseCampManager.Instance != null
             ? BaseCampManager.Instance.Inventory
@@ -74,7 +75,7 @@ public static class CombatRewardService
         int dropLevel = player != null && player.Progression != null ? player.Progression.Level : 1;
         EquipmentPartInstance part = EquipmentPartGenerator.Create(
             config,
-            EquipmentPartGenerator.RollRarity(dropLevel),
+            EquipmentPartGenerator.RollRarity(dropLevel, killedBoss),
             dropLevel);
         PlayerEquipmentPartLoadout loadout = player != null
             ? player.EquipmentPartLoadout
@@ -115,6 +116,7 @@ public static class CombatRewardService
         {
             EquipmentPartRarity.Rare => "희귀",
             EquipmentPartRarity.Epic => "영웅",
+            EquipmentPartRarity.Legendary => "전설",
             _ => "일반"
         };
     }
