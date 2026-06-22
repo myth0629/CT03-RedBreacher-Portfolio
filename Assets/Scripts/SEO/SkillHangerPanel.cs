@@ -28,17 +28,20 @@ public class SkillHangerPanel : MonoBehaviour
     private PlayerSkillConfig[] slotSkills = Array.Empty<PlayerSkillConfig>();
     private UnityAction[] skillButtonActions = Array.Empty<UnityAction>();
     private PlayerSkillConfig selectedSkill;
+    private int selectedSkillSlotIndex = -1;
 
     private void OnEnable()
     {
         ResolveReferences();
         SubscribeInventory();
         SubscribeSkillButtons();
+        changeSkillButton?.onClick.AddListener(OpenSkillLoadoutSelectionPanel);
         RefreshSkillSlots();
     }
 
     private void OnDisable()
     {
+        changeSkillButton?.onClick.RemoveListener(OpenSkillLoadoutSelectionPanel);
         UnsubscribeSkillButtons();
         UnsubscribeInventory();
     }
@@ -65,6 +68,7 @@ public class SkillHangerPanel : MonoBehaviour
         if (selectedSkill != null && !IsVisibleSlotSkill(selectedSkill))
         {
             selectedSkill = null;
+            selectedSkillSlotIndex = -1;
         }
 
         RefreshSelectedSkillInfo();
@@ -78,6 +82,7 @@ public class SkillHangerPanel : MonoBehaviour
         }
 
         selectedSkill = slotSkills[slotIndex];
+        selectedSkillSlotIndex = selectedSkill != null ? slotIndex : -1;
         RefreshSelectedSkillInfo();
     }
 
@@ -85,6 +90,7 @@ public class SkillHangerPanel : MonoBehaviour
     {
         if (selectedSkill == null)
         {
+            SetButtonInteractable(changeSkillButton, false);
             SetSkillIcon(skillIconImage, null);
             SetText(skillNameText, "스킬이 선택되지 않음.");
             SetText(skillLevelText, "--");
@@ -94,11 +100,22 @@ public class SkillHangerPanel : MonoBehaviour
         }
 
         int level = GetSkillLevel(selectedSkill);
+        SetButtonInteractable(changeSkillButton, true);
         SetSkillIcon(skillIconImage, selectedSkill.Icon);
         SetText(skillNameText, selectedSkill.DisplayName);
         SetText(skillLevelText, $"Lv. {level}/{selectedSkill.MaxLevel}");
         SetText(skillCooldownText, $"{selectedSkill.GetCooldown(level):0.##}초");
         SetText(skillDescriptionText, selectedSkill.Description);
+    }
+
+    private void OpenSkillLoadoutSelectionPanel()
+    {
+        if (selectedSkill == null || selectedSkillSlotIndex < 0)
+        {
+            return;
+        }
+
+        skillLoadoutSelectionPanel?.Open(selectedSkillSlotIndex, RefreshSkillSlots);
     }
 
     private int GetSkillLevel(PlayerSkillConfig skill)
