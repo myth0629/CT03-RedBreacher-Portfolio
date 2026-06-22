@@ -168,7 +168,7 @@ public class BaseCampHud : MonoBehaviour
         SetUnlockStatusText(energyRefineryUnlockText, commandCenter, "energy_refinery");
         SetUnlockStatusText(assemblyFactoryUnlockText, commandCenter, "assembly_factory", assemblyFactoryUnlockPanel);
         SetUnlockStatusText(coreChargerUnlockText, commandCenter, "core_charger", coreChargerUnlockPanel);
-        SetUnlockStatusText(controlTowerUnlockText, commandCenter, "boss_dungeon");
+        SetUnlockStatusText(controlTowerUnlockText, commandCenter, "boss_tracker");
     }
 
     private void SetUnlockStatusText(
