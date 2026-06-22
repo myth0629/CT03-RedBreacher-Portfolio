@@ -87,7 +87,7 @@ GameObject:
   - component: {fileID: 2969920252492369612}
   - component: {fileID: 739734857032316256}
   - component: {fileID: 8571253794236393557}
-  - component: {fileID: 9170544345248244291}
+  - component: {fileID: -5163677942372953621}
   m_Layer: 5
   m_Name: SkillLoadoutOptionButton
   m_TagString: Untagged
@@ -199,7 +199,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &9170544345248244291
+--- !u!114 &-5163677942372953621
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -208,16 +208,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5215711745657652532}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16ecb0970cb6471f828097c31b37c18c, type: 3}
+  m_Script: {fileID: 11500000, guid: 1d44eecca931fd84a9fa7779d1c91e6e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerLoadoutOptionButton
-  button: {fileID: 8571253794236393557}
-  nameText: {fileID: 4557426776889340999}
-  weaponIcon: {fileID: 4613888536832966248}
-  droneIcon: {fileID: 0}
-  categoryText: {fileID: 0}
-  summaryText: {fileID: 0}
-  selectedMark: {fileID: 8945620010825750817}
+  m_EditorClassIdentifier: '::'
 --- !u!1 &6975532908230160692
 GameObject:
   m_ObjectHideFlags: 0
