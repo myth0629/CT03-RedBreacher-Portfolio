@@ -18,6 +18,7 @@ public static class CombatRewardService
         // 일반 공격, 드론, 스킬 처치가 동일한 보상 경로를 사용한다.
         AchievementManager.ReportEnemyKilled();
         MainGuideMissionManager.ReportEnemyKilled();
+        TutorialManager.Report(TutorialEventType.EnemyKilled);
         player.Progression?.AddExperience(enemy.ExperienceReward);
         GrantCurrency(player, enemy);
         TryGrantEquipmentPart(player, enemy, enemy is BossEnemyController);
