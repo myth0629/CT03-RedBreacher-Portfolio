@@ -290,12 +290,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         closeButton?.onClick.RemoveListener(Close);
     }
 
-    public void OpenWeapons()
+    public void OpenWeapons(Action onClosed = null)
     {
         ResolveSources();
         weaponSelectionCallback = null;
         droneSelectionCallback = null;
         skillSelectionCallback = null;
+        selectionClosedCallback = onClosed;
         currentMode = LoadoutMode.Weapon;
         selectedWeapon = player != null ? player.WeaponConfig : null;
         OpenPanel("무기 로드아웃");
@@ -303,12 +304,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         RefreshWeaponDetail(selectedWeapon);
     }
 
-    public void OpenDrones()
+    public void OpenDrones(Action onClosed = null)
     {
         ResolveSources();
         weaponSelectionCallback = null;
         droneSelectionCallback = null;
         skillSelectionCallback = null;
+        selectionClosedCallback = onClosed;
         currentMode = LoadoutMode.Drone;
         selectedDrone = droneController != null ? droneController.DroneConfig : null;
         OpenPanel("드론 로드아웃");
@@ -322,6 +324,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         weaponSelectionCallback = onSelected;
         droneSelectionCallback = null;
         skillSelectionCallback = null;
+        selectionClosedCallback = null;
         currentMode = LoadoutMode.Weapon;
         selectedWeapon = assemblyFactory != null ? assemblyFactory.SelectedWeaponConfig : null;
         OpenPanel("강화하고자 하는 무기를 선택하세요.");
@@ -335,6 +338,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         droneSelectionCallback = onSelected;
         weaponSelectionCallback = null;
         skillSelectionCallback = null;
+        selectionClosedCallback = null;
         currentMode = LoadoutMode.Drone;
         selectedDrone = assemblyFactory != null ? assemblyFactory.SelectedDroneConfig : null;
         OpenPanel("강화하고자 하는 드론을 선택하세요.");
