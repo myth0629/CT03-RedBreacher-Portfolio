@@ -23086,6 +23086,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ee6c5a9fbfaf54d36af61c2c6dfabb7c, type: 2}
   - {fileID: 11400000, guid: baf3bf57f208049c39b8a4f439238bdb, type: 2}
   equipButton: {fileID: 6190431088268413664}
+  closeButton: {fileID: 5500528654106941312}
   selectionRoot: {fileID: 4887737011173240076}
   titleText: {fileID: 8937768278798290423}
   contentRoot: {fileID: 5518460595236070918}
@@ -44780,6 +44781,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5985888954328565993, guid: bcdc7aface20c9d4db0a23f2e85c21c6, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5985888954328565993, guid: bcdc7aface20c9d4db0a23f2e85c21c6, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -44843,6 +44852,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -40
       objectReference: {fileID: 0}
+    - target: {fileID: 5354076903955967578, guid: 5075d43b969e67a488bcb52ae09de088, type: 3}
+      propertyPath: closeButton
+      value: 
+      objectReference: {fileID: 9153604883681167737}
     - target: {fileID: 5749423615515764840, guid: 5075d43b969e67a488bcb52ae09de088, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -44970,6 +44983,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3849366006306485909, guid: 5075d43b969e67a488bcb52ae09de088, type: 3}
   m_PrefabInstance: {fileID: 6401483352143099512}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &9153604883681167737 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2872874443918032641, guid: 5075d43b969e67a488bcb52ae09de088, type: 3}
+  m_PrefabInstance: {fileID: 6401483352143099512}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1001 &6738774631441900840
 PrefabInstance:
   m_ObjectHideFlags: 0

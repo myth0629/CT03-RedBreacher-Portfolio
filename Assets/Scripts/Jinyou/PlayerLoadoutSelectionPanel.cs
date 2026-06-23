@@ -278,11 +278,16 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private void OnEnable()
     {
         equipButton?.onClick.AddListener(ConfirmSelected);
+        closeButton?.onClick.AddListener(Close);
     }
 
     private void OnDisable()
     {
+        // NotifySelectionClosed: 첫 번째로 교체하기 버튼을 눌러 인벤토리에 진입하다가 다시 나올 때 기존 closeButton 복구가 누락되고,
+        // 이후 정상적으로 작동하는 "처음엔 안 열리고 두 번째 클릭에야 열리는" 문제를 해결하기 위해 호출.
+        NotifySelectionClosed();
         equipButton?.onClick.RemoveListener(ConfirmSelected);
+        closeButton?.onClick.RemoveListener(Close);
     }
 
     public void OpenWeapons()
