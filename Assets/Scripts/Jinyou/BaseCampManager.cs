@@ -7,6 +7,12 @@ using UnityEngine.UI;
 
 public class BaseCampManager : MonoBehaviour
 {
+    private const string CommandCenterFacilityId = "command_center";
+    private const string EnergyRefineryFacilityId = "energy_refinery";
+    private const string AssemblyFactoryFacilityId = "assembly_factory";
+    private const string CoreChargerFacilityId = "core_charger";
+    private const string SkillHangerFacilityId = "skill_hanger";
+
     public static BaseCampManager Instance { get; private set; }
 
     [Header("Facilities")]
@@ -38,6 +44,9 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private bool useUnifiedSave = true;
     [SerializeField] private bool autoSaveUnifiedState = true;
     [SerializeField] private string unifiedSaveKey = "Jinyou.SaveData";
+    [SerializeField] private string unifiedSaveFileName = "jinyou_save.json";
+    [SerializeField] private float autoSaveDelaySeconds = 0.75f;
+    [SerializeField] private float autoSaveMaxDelaySeconds = 5f;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugPanel;
@@ -54,7 +63,10 @@ public class BaseCampManager : MonoBehaviour
     private bool isRestoringUnifiedSave;
     private int loadedUnifiedSaveVersion;
     private bool confirmPlayerPrefsReset;
-    private bool skipNextBackupRotation;
+    private bool hasSuccessfulUnifiedSave;
+    private bool pendingUnifiedSave;
+    private float pendingUnifiedSaveAt;
+    private float pendingUnifiedSaveStartedAt;
     private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
     private GameObject closingFacilityPanel;
 
@@ -91,6 +103,7 @@ public class BaseCampManager : MonoBehaviour
     {
         ConnectFacilities();
         LoadUnifiedGame();
+        ReportCurrentFacilityLevelsToGuide();
         if (loadedUnifiedSaveVersion < 3)
         {
             ApplyEquippedLoadoutAtBoot();
@@ -116,6 +129,7 @@ public class BaseCampManager : MonoBehaviour
     private void Update()
     {
         TickInactiveFacilities(Time.deltaTime);
+        FlushPendingUnifiedSaveIfDue();
     }
 
     // 저장된 장착 무기/드론을 부팅 시 적용한다. 로드아웃 패널이 닫힌 팝업 안에 있어
@@ -134,12 +148,14 @@ public class BaseCampManager : MonoBehaviour
     {
         if (pauseStatus)
         {
+            FlushPendingUnifiedSave();
             SaveUnifiedGame();
         }
     }
 
     private void OnApplicationQuit()
     {
+        FlushPendingUnifiedSave();
         SaveUnifiedGame();
     }
 
@@ -153,6 +169,7 @@ public class BaseCampManager : MonoBehaviour
         }
 
         UnsubscribeUnifiedSaveEvents();
+        FlushPendingUnifiedSave();
 
         if (Instance == this)
         {
@@ -291,7 +308,7 @@ public class BaseCampManager : MonoBehaviour
         if (coreCharger.TryConvertCurrentUnit(Inventory, player, playerLevel))
         {
             DailyMissionManager.ReportUnitEnhanced();
-            MainGuideMissionManager.ReportUnitEnhanced();
+            MainGuideMissionManager.ReportUnitEnhanced(coreCharger.CompletedConversionCount);
             SaveUnifiedGameIfReady();
         }
     }
@@ -523,33 +540,51 @@ public class BaseCampManager : MonoBehaviour
     {
         if (!useUnifiedSave
             || isRestoringUnifiedSave
-            || string.IsNullOrWhiteSpace(unifiedSaveKey))
+            || string.IsNullOrWhiteSpace(unifiedSaveFileName))
         {
             return;
         }
 
         // 준비된 시설 상태를 하나의 JSON으로 저장해 시스템 간 시점을 맞춘다.
         JinyouSaveData data = CaptureUnifiedSaveData();
-        if (!skipNextBackupRotation && PlayerPrefs.HasKey(unifiedSaveKey))
+        if (!JinyouSaveValidator.Validate(data, out string validationError))
         {
-            string previousJson = PlayerPrefs.GetString(unifiedSaveKey, string.Empty);
-            if (!string.IsNullOrWhiteSpace(previousJson))
-            {
-                PlayerPrefs.SetString(UnifiedSaveBackupKey, previousJson);
-            }
+            Debug.LogWarning($"통합 저장 데이터 무결성 검사 실패: {validationError}", this);
+            return;
         }
 
-        skipNextBackupRotation = false;
-        PlayerPrefs.SetString(unifiedSaveKey, JsonUtility.ToJson(data));
-        PlayerPrefs.Save();
+        if (JinyouFileSaveStorage.TryWrite(unifiedSaveFileName, JsonUtility.ToJson(data), out string error))
+        {
+            hasSuccessfulUnifiedSave = true;
+            pendingUnifiedSave = false;
+            return;
+        }
+
+        Debug.LogWarning($"통합 저장 파일을 쓸 수 없습니다: {error}", this);
     }
 
     [ContextMenu("Load Unified Game")]
     public void LoadUnifiedGame()
     {
         if (!useUnifiedSave
-            || string.IsNullOrWhiteSpace(unifiedSaveKey)
-            || !PlayerPrefs.HasKey(unifiedSaveKey))
+            || string.IsNullOrWhiteSpace(unifiedSaveFileName))
+        {
+            return;
+        }
+
+        if (JinyouFileSaveStorage.TryRead(unifiedSaveFileName, false, out string fileJson, out _)
+            && TryRestoreUnifiedSaveJson(fileJson, "파일 저장", markAsFileSave: true))
+        {
+            return;
+        }
+
+        if (JinyouFileSaveStorage.TryRead(unifiedSaveFileName, true, out string backupFileJson, out _)
+            && TryRestoreUnifiedSaveJson(backupFileJson, "파일 백업", markAsFileSave: true))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(unifiedSaveKey) || !PlayerPrefs.HasKey(unifiedSaveKey))
         {
             return;
         }
@@ -562,9 +597,10 @@ public class BaseCampManager : MonoBehaviour
 
         try
         {
-            JinyouSaveData data = JsonUtility.FromJson<JinyouSaveData>(json);
-            loadedUnifiedSaveVersion = data != null ? data.version : 0;
-            RestoreUnifiedSaveData(data);
+            if (!TryRestoreUnifiedSaveJson(json, "레거시 PlayerPrefs 저장", markAsFileSave: false))
+            {
+                throw new ArgumentException("legacy save validation failed");
+            }
         }
         catch (ArgumentException exception)
         {
@@ -577,10 +613,10 @@ public class BaseCampManager : MonoBehaviour
 
             try
             {
-                JinyouSaveData backupData = JsonUtility.FromJson<JinyouSaveData>(backupJson);
-                loadedUnifiedSaveVersion = backupData != null ? backupData.version : 0;
-                RestoreUnifiedSaveData(backupData);
-                skipNextBackupRotation = true;
+                if (!TryRestoreUnifiedSaveJson(backupJson, "레거시 PlayerPrefs 백업", markAsFileSave: false))
+                {
+                    throw new ArgumentException("legacy backup validation failed");
+                }
                 Debug.LogWarning("통합 저장 데이터가 손상되어 백업 데이터로 복구했습니다.", this);
             }
             catch (ArgumentException backupException)
@@ -601,6 +637,23 @@ public class BaseCampManager : MonoBehaviour
         PlayerPrefs.DeleteKey(unifiedSaveKey);
         PlayerPrefs.DeleteKey(UnifiedSaveBackupKey);
         PlayerPrefs.Save();
+        JinyouFileSaveStorage.Delete(unifiedSaveFileName);
+        hasSuccessfulUnifiedSave = false;
+        pendingUnifiedSave = false;
+    }
+
+    private bool TryRestoreUnifiedSaveJson(string json, string sourceName, bool markAsFileSave)
+    {
+        if (!JinyouSaveValidator.TryDeserializeAndValidate(json, out JinyouSaveData data, out string error))
+        {
+            Debug.LogWarning($"{sourceName} 무결성 검사 실패: {error}", this);
+            return false;
+        }
+
+        loadedUnifiedSaveVersion = data.version;
+        RestoreUnifiedSaveData(data);
+        hasSuccessfulUnifiedSave |= markAsFileSave;
+        return true;
     }
 
     private void SetCredits(int value)
@@ -669,7 +722,6 @@ public class BaseCampManager : MonoBehaviour
         {
             CurrencyWallet.TrySpend(CurrencyType.Credits, upgradeCost);
             DailyMissionManager.ReportFacilityUpgraded();
-            MainGuideMissionManager.ReportFacilityUpgraded();
         }
     }
 
@@ -716,10 +768,48 @@ public class BaseCampManager : MonoBehaviour
         GUI.DragWindow();
     }
 
-    private void ResetLevelAndStageDebug()
+    /// <summary>
+    /// UI 버튼에서 연결해서 플레이어 레벨/스탯/스테이지 진행도만 초기화한다.
+    /// 전체 저장 삭제가 아니라 테스트용 진행도 초기화에 가깝다.
+    /// </summary>
+    public void ResetLevelAndStage()
     {
         ResetPlayerProgressionDebug();
         ResetStageProgressDebug();
+        SaveUnifiedGameIfReady();
+    }
+
+    /// <summary>
+    /// UI 버튼에서 연결해서 모든 저장 데이터를 삭제하고 현재 씬을 다시 로드한다.
+    /// 확인 팝업의 Yes 버튼에 이 메서드를 연결하는 것을 권장한다.
+    /// </summary>
+    public void ResetAllSaveAndReload()
+    {
+        unifiedSaveReady = false;
+        pendingUnifiedSave = false;
+        hasSuccessfulUnifiedSave = false;
+
+        if (!string.IsNullOrWhiteSpace(unifiedSaveKey))
+        {
+            PlayerPrefs.DeleteKey(unifiedSaveKey);
+            PlayerPrefs.DeleteKey(UnifiedSaveBackupKey);
+        }
+
+        if (!string.IsNullOrWhiteSpace(unifiedSaveFileName))
+        {
+            JinyouFileSaveStorage.Delete(unifiedSaveFileName);
+        }
+
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(activeScene.buildIndex);
+    }
+
+    private void ResetLevelAndStageDebug()
+    {
+        ResetLevelAndStage();
     }
 
     private void ResetPlayerProgressionDebug()
@@ -750,12 +840,7 @@ public class BaseCampManager : MonoBehaviour
     private void ResetAllPlayerPrefsDebug()
     {
         // 모든 저장 키를 제거한 뒤 씬을 다시 로드해 Inspector 초기값으로 테스트한다.
-        unifiedSaveReady = false;
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
-
-        Scene activeScene = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(activeScene.buildIndex);
+        ResetAllSaveAndReload();
     }
 
     private PlayerCurrencyWallet EnsureCurrencyWallet()
@@ -905,6 +990,14 @@ public class BaseCampManager : MonoBehaviour
         FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include)
             ?.SetStandaloneLoadoutSaveEnabled(false, false);
 
+        ResolvePlayerProgression()?.SetStandaloneSaveEnabled(false, false);
+        FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, false);
+        FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, false);
+        FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, false);
+
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.SetStandaloneSaveEnabled(false, false);
@@ -912,12 +1005,24 @@ public class BaseCampManager : MonoBehaviour
 
     public void RequestUnifiedSave()
     {
-        SaveUnifiedGameIfReady();
+        if (!autoSaveUnifiedState || !unifiedSaveReady || isRestoringUnifiedSave)
+        {
+            return;
+        }
+
+        float now = Time.unscaledTime;
+        if (!pendingUnifiedSave)
+        {
+            pendingUnifiedSaveStartedAt = now;
+        }
+
+        pendingUnifiedSave = true;
+        pendingUnifiedSaveAt = now + Mathf.Max(0f, autoSaveDelaySeconds);
     }
 
     private void ClearLegacyStandaloneData()
     {
-        if (!useUnifiedSave || !PlayerPrefs.HasKey(unifiedSaveKey))
+        if (!useUnifiedSave || !hasSuccessfulUnifiedSave)
         {
             return;
         }
@@ -937,6 +1042,14 @@ public class BaseCampManager : MonoBehaviour
         equipmentLoadout?.SetStandaloneSaveEnabled(false, true);
         FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include)
             ?.SetStandaloneLoadoutSaveEnabled(false, true);
+
+        ResolvePlayerProgression()?.SetStandaloneSaveEnabled(false, true);
+        FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, true);
+        FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, true);
+        FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, true);
 
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
@@ -969,6 +1082,13 @@ public class BaseCampManager : MonoBehaviour
         PlayerEquipmentPartLoadout equipmentLoadout =
             FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
         PlayerController player = FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
+        PlayerProgression progression = ResolvePlayerProgression();
+        PlayerStatAllocator statAllocator =
+            FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include);
+        EnemySpawnManager spawnManager =
+            FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include);
+        BossTracker bossTracker =
+            FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include);
         JinyouPlayerLoadoutSaveData playerLoadoutData = player != null
             ? player.CaptureLoadoutState()
             : playerLoadout != null
@@ -981,7 +1101,7 @@ public class BaseCampManager : MonoBehaviour
 
         return new JinyouSaveData
         {
-            version = 3,
+            version = JinyouSaveData.CurrentVersion,
             lastSavedUnixTime = GetCurrentUnixTime(),
             commanderLevel = CommanderLevel,
             mainBuildingLevel = commandCenter != null ? commandCenter.Level : 1,
@@ -1000,7 +1120,19 @@ public class BaseCampManager : MonoBehaviour
             playerLoadout = playerLoadoutData,
             equipmentLoadout = equipmentLoadout != null
                 ? equipmentLoadout.CaptureState()
-                : new JinyouEquipmentLoadoutSaveData()
+                : new JinyouEquipmentLoadoutSaveData(),
+            playerProgression = progression != null
+                ? progression.CaptureState()
+                : new JinyouPlayerProgressionSaveData { level = CommanderLevel },
+            playerStats = statAllocator != null
+                ? statAllocator.CaptureState()
+                : new JinyouPlayerStatSaveData(),
+            combatProgress = spawnManager != null
+                ? spawnManager.CaptureState()
+                : new JinyouCombatProgressSaveData(),
+            bossTracker = bossTracker != null
+                ? bossTracker.CaptureState()
+                : new JinyouBossTrackerSaveData()
         };
     }
 
@@ -1051,6 +1183,17 @@ public class BaseCampManager : MonoBehaviour
                 PlayerEquipmentPartLoadout equipmentLoadout =
                     FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
                 equipmentLoadout?.RestoreState(data.equipmentLoadout);
+            }
+
+            if (data.version >= 4)
+            {
+                ResolvePlayerProgression()?.RestoreState(data.playerProgression);
+                FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include)
+                    ?.RestoreState(data.playerStats);
+                FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include)
+                    ?.RestoreState(data.combatProgress);
+                FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include)
+                    ?.RestoreState(data.bossTracker);
             }
 
             ApplyOfflineRewards(data.lastSavedUnixTime);
@@ -1112,17 +1255,22 @@ public class BaseCampManager : MonoBehaviour
     {
         OnCommanderLevelChanged.AddListener(HandleUnifiedSaveEvent);
         commandCenter?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        commandCenter?.OnLevelChanged.AddListener(HandleCommandCenterLevelChanged);
         commandCenter?.OnBossTicketsChanged.AddListener(HandleUnifiedSaveEvent);
         creditRefinery?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        creditRefinery?.OnLevelChanged.AddListener(HandleEnergyRefineryLevelChanged);
         creditRefinery?.OnCreditsChanged.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnLevelChanged.AddListener(HandleAssemblyFactoryLevelChanged);
         assemblyFactory?.OnMenuSelected.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnMenuUnlocked.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnWeaponEnhanced.AddListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnDroneEnhanced.AddListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        coreCharger?.OnLevelChanged.AddListener(HandleCoreChargerLevelChanged);
         coreCharger?.OnUnitEnhanced.AddListener(HandleUnifiedSaveEvent);
         skillHanger?.OnLevelChanged.AddListener(HandleUnifiedSaveEvent);
+        skillHanger?.OnLevelChanged.AddListener(HandleSkillHangerLevelChanged);
         skillHanger?.OnUpgradeCompleted.AddListener(HandleUnifiedSaveEvent);
         Inventory?.OnInventoryChanged.AddListener(HandleUnifiedSaveEvent);
         PlayerEquipmentPartLoadout equipmentLoadout =
@@ -1132,6 +1280,33 @@ public class BaseCampManager : MonoBehaviour
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.OnAchievementsChanged.AddListener(HandleUnifiedSaveEvent);
         achievementManager?.OnAchievementCompleted.AddListener(HandleUnifiedSaveEvent);
+
+        PlayerProgression progression = ResolvePlayerProgression();
+        if (progression != null)
+        {
+            progression.Changed += HandleUnifiedSaveEvent;
+        }
+        PlayerStatAllocator statAllocator =
+            FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include);
+        if (statAllocator != null)
+        {
+            statAllocator.Changed += HandleUnifiedSaveEvent;
+        }
+
+        EnemySpawnManager spawnManager =
+            FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include);
+        if (spawnManager != null)
+        {
+            spawnManager.ProgressChanged += HandleUnifiedSaveEvent;
+        }
+
+        BossTracker bossTracker =
+            FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include);
+        if (bossTracker != null)
+        {
+            bossTracker.SelectionChanged += HandleUnifiedSaveEvent;
+            bossTracker.RecordsChanged += HandleUnifiedSaveEvent;
+        }
 
         DailyMissionManager resolvedDailyMissionManager = EnsureDailyMissionManager();
         resolvedDailyMissionManager.OnDailyMissionsChanged.AddListener(HandleUnifiedSaveEvent);
@@ -1148,17 +1323,22 @@ public class BaseCampManager : MonoBehaviour
     {
         OnCommanderLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
         commandCenter?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        commandCenter?.OnLevelChanged.RemoveListener(HandleCommandCenterLevelChanged);
         commandCenter?.OnBossTicketsChanged.RemoveListener(HandleUnifiedSaveEvent);
         creditRefinery?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        creditRefinery?.OnLevelChanged.RemoveListener(HandleEnergyRefineryLevelChanged);
         creditRefinery?.OnCreditsChanged.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        assemblyFactory?.OnLevelChanged.RemoveListener(HandleAssemblyFactoryLevelChanged);
         assemblyFactory?.OnMenuSelected.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnMenuUnlocked.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnWeaponEnhanced.RemoveListener(HandleUnifiedSaveEvent);
         assemblyFactory?.OnDroneEnhanced.RemoveListener(HandleUnifiedSaveEvent);
         coreCharger?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        coreCharger?.OnLevelChanged.RemoveListener(HandleCoreChargerLevelChanged);
         coreCharger?.OnUnitEnhanced.RemoveListener(HandleUnifiedSaveEvent);
         skillHanger?.OnLevelChanged.RemoveListener(HandleUnifiedSaveEvent);
+        skillHanger?.OnLevelChanged.RemoveListener(HandleSkillHangerLevelChanged);
         skillHanger?.OnUpgradeCompleted.RemoveListener(HandleUnifiedSaveEvent);
         Inventory?.OnInventoryChanged.RemoveListener(HandleUnifiedSaveEvent);
         PlayerEquipmentPartLoadout equipmentLoadout =
@@ -1168,6 +1348,34 @@ public class BaseCampManager : MonoBehaviour
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.OnAchievementsChanged.RemoveListener(HandleUnifiedSaveEvent);
         achievementManager?.OnAchievementCompleted.RemoveListener(HandleUnifiedSaveEvent);
+
+        PlayerProgression progression = ResolvePlayerProgression();
+        if (progression != null)
+        {
+            progression.Changed -= HandleUnifiedSaveEvent;
+        }
+
+        PlayerStatAllocator statAllocator =
+            FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include);
+        if (statAllocator != null)
+        {
+            statAllocator.Changed -= HandleUnifiedSaveEvent;
+        }
+
+        EnemySpawnManager spawnManager =
+            FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include);
+        if (spawnManager != null)
+        {
+            spawnManager.ProgressChanged -= HandleUnifiedSaveEvent;
+        }
+
+        BossTracker bossTracker =
+            FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include);
+        if (bossTracker != null)
+        {
+            bossTracker.SelectionChanged -= HandleUnifiedSaveEvent;
+            bossTracker.RecordsChanged -= HandleUnifiedSaveEvent;
+        }
 
         if (dailyMissionManager != null)
         {
@@ -1192,6 +1400,40 @@ public class BaseCampManager : MonoBehaviour
     private void HandleUnifiedSaveEvent(int value)
     {
         SaveUnifiedGameIfReady();
+    }
+
+    private void HandleCommandCenterLevelChanged(int level)
+    {
+        MainGuideMissionManager.ReportFacilityLevelReached(CommandCenterFacilityId, level);
+    }
+
+    private void HandleEnergyRefineryLevelChanged(int level)
+    {
+        MainGuideMissionManager.ReportFacilityLevelReached(EnergyRefineryFacilityId, level);
+    }
+
+    private void HandleAssemblyFactoryLevelChanged(int level)
+    {
+        MainGuideMissionManager.ReportFacilityLevelReached(AssemblyFactoryFacilityId, level);
+    }
+
+    private void HandleCoreChargerLevelChanged(int level)
+    {
+        MainGuideMissionManager.ReportFacilityLevelReached(CoreChargerFacilityId, level);
+    }
+
+    private void HandleSkillHangerLevelChanged(int level)
+    {
+        MainGuideMissionManager.ReportFacilityLevelReached(SkillHangerFacilityId, level);
+    }
+
+    private void ReportCurrentFacilityLevelsToGuide()
+    {
+        MainGuideMissionManager.ReportFacilityLevelReached(CommandCenterFacilityId, commandCenter != null ? commandCenter.Level : 0);
+        MainGuideMissionManager.ReportFacilityLevelReached(EnergyRefineryFacilityId, creditRefinery != null ? creditRefinery.Level : 0);
+        MainGuideMissionManager.ReportFacilityLevelReached(AssemblyFactoryFacilityId, assemblyFactory != null ? assemblyFactory.Level : 0);
+        MainGuideMissionManager.ReportFacilityLevelReached(CoreChargerFacilityId, coreCharger != null ? coreCharger.Level : 0);
+        MainGuideMissionManager.ReportFacilityLevelReached(SkillHangerFacilityId, SkillHanger != null ? SkillHanger.Level : 0);
     }
 
     private void HandleUnifiedSaveEvent(string value)
@@ -1233,8 +1475,36 @@ public class BaseCampManager : MonoBehaviour
     {
         if (autoSaveUnifiedState && unifiedSaveReady)
         {
-            SaveUnifiedGame();
+            RequestUnifiedSave();
         }
+    }
+
+    private void FlushPendingUnifiedSaveIfDue()
+    {
+        if (!pendingUnifiedSave)
+        {
+            return;
+        }
+
+        float now = Time.unscaledTime;
+        bool delayReached = now >= pendingUnifiedSaveAt;
+        bool maxDelayReached = autoSaveMaxDelaySeconds > 0f
+            && now - pendingUnifiedSaveStartedAt >= autoSaveMaxDelaySeconds;
+        if (delayReached || maxDelayReached)
+        {
+            FlushPendingUnifiedSave();
+        }
+    }
+
+    private void FlushPendingUnifiedSave()
+    {
+        if (!pendingUnifiedSave)
+        {
+            return;
+        }
+
+        pendingUnifiedSave = false;
+        SaveUnifiedGame();
     }
 
     private static long GetCurrentUnixTime()

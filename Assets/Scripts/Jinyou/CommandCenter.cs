@@ -196,6 +196,18 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         AddBossTicket();
     }
 
+    public void AddBossTickets(int amount)
+    {
+        int positiveAmount = Mathf.Max(0, amount);
+        if (positiveAmount == 0)
+        {
+            return;
+        }
+
+        bossTickets = Mathf.Max(0, bossTickets + positiveAmount);
+        OnBossTicketsChanged.Invoke(bossTickets);
+    }
+
     public int ProduceBossTicketsOffline(float elapsedSeconds)
     {
         if (!balanceReady || elapsedSeconds <= 0f || bossTickets >= bossTicketCapacity)
@@ -253,7 +265,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         EnsureBalanceInitialized();
         level = Mathf.Clamp(data.level, 1, maxLevel);
         ApplyLevelBalance();
-        bossTickets = Mathf.Clamp(data.bossTickets, 0, bossTicketCapacity);
+        bossTickets = Mathf.Max(0, data.bossTickets);
         bossTicketProductionSeconds = Mathf.Max(0f, data.bossTicketProductionSeconds);
         isUpgrading = data.isUpgrading;
         upgradeRemainingSeconds = Mathf.Max(0f, data.upgradeRemainingSeconds);
@@ -425,7 +437,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         }
 
         bossTicketCapacity = Mathf.Max(0, balance.ticketCapacity);
-        bossTickets = Mathf.Clamp(bossTickets, 0, bossTicketCapacity);
+        bossTickets = Mathf.Max(0, bossTickets);
     }
 
     private void OnValidate()
