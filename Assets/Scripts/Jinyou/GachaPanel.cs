@@ -47,6 +47,9 @@ public class GachaPanel : MonoBehaviour
     [Header("Result Panels")]
     [SerializeField] private GameObject _resultPanel;
 
+    [Header("Tween")]
+    [SerializeField] private GachaTweenTransition gachaTweenTransition;
+
     private readonly List<WeaponItemOdd> _weaponItemOdds = new List<WeaponItemOdd>();
     private readonly List<SkillItemOdd> _skillItemOdds = new List<SkillItemOdd>();
 
@@ -70,6 +73,7 @@ public class GachaPanel : MonoBehaviour
         weaponDrawMultiButton?.onClick.RemoveListener(DrawWeaponMulti);
         skillDrawOnceButton?.onClick.RemoveListener(DrawSkillOnce);
         skillDrawMultiButton?.onClick.RemoveListener(DrawSkillMulti);
+        gachaTweenTransition?.ResetAll();
     }
 
     private void Update()
@@ -110,12 +114,20 @@ public class GachaPanel : MonoBehaviour
         isDrawing = true;
         // 각 버튼이 자신의 뽑기 종류를 직접 지정해 탭 상태와 섞이지 않게 한다.
         selectedCategory = category;
+        CloseResultPanel();
         bool succeeded = weaponGacha.TryDraw(category, count);
         if (succeeded)
         {
             DailyMissionManager.ReportWeaponGachaDrawn(count);
             MainGuideMissionManager.ReportWeaponGachaDrawn(count);
-            ShowResults(weaponGacha.LastResults);
+            IReadOnlyList<GachaDrawResult> results = weaponGacha.LastResults;
+            PlayDrawTween(category, () =>
+            {
+                ShowResults(results);
+                isDrawing = false;
+                Refresh();
+            });
+            return;
         }
         else
         {
@@ -308,6 +320,8 @@ public class GachaPanel : MonoBehaviour
             _resultPanel.SetActive(true);
         }
 
+        gachaTweenTransition?.PlayResultPanel();
+
         int resultCount = Mathf.Min(10, results != null ? results.Count : 0);
         if (resultSlotRoot != null && resultSlotPrefab != null)
         {
@@ -456,12 +470,32 @@ public class GachaPanel : MonoBehaviour
         {
             _resultPanel.SetActive(false);
         }
+
+        gachaTweenTransition?.ResetAll();
     }
 
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
         weaponGacha ??= FindFirstObjectByType<WeaponGachaFacility>(FindObjectsInactive.Include);
+        gachaTweenTransition ??= GetComponentInChildren<GachaTweenTransition>(true);
+        gachaTweenTransition ??= FindFirstObjectByType<GachaTweenTransition>(FindObjectsInactive.Include);
+        if (gachaTweenTransition == null)
+        {
+            gachaTweenTransition = gameObject.AddComponent<GachaTweenTransition>();
+        }
+    }
+
+    private void PlayDrawTween(GachaCategory category, System.Action onComplete)
+    {
+        ResolveReferences();
+        if (gachaTweenTransition == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        gachaTweenTransition.PlayTitle(category, onComplete);
     }
 
     private static void SetButton(Button button, bool interactable)
