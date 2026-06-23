@@ -133,6 +133,7 @@ public class MainGuideMissionManager : MonoBehaviour
     public static void ReportDroneEnhanced(int amount = 1) => Instance?.AddProgress(GuideConditionType.EnhanceDrone, amount);
     public static void ReportBossTicketUsed(int amount = 1) => Instance?.AddProgress(GuideConditionType.UseBossTicket, amount);
     public static void ReportWeaponGachaDrawn(int amount = 1) => Instance?.AddProgress(GuideConditionType.DrawWeaponGacha, amount);
+    public static void ReportSkillGachaDrawn(int amount = 1) => Instance?.AddProgress(GuideConditionType.DrawSkillGacha, amount);
     public static void ReportOfflineRewardClaimed(int amount = 1) => Instance?.AddProgress(GuideConditionType.ClaimOfflineReward, amount);
     public static void ReportBossDefeated(int amount = 1) => Instance?.AddProgress(GuideConditionType.BossDefeat, amount);
 

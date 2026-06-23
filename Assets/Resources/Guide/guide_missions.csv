@@ -1,13 +1,13 @@
 ﻿order,id,conditionType,conditionTarget,title,description,targetAmount,rewardCurrency,rewardAmount
 1,kill_enemies_10_step1,EnemyKill,,첫 교전,적 10마리를 처치하라,10,Credits,300
 2,reach_level_3_step2,PlayerLevel,,지휘관 승급,지휘관 레벨 3에 도달하라,3,Credits,400
-3,collect_credits_1000_step3,CollectCredits,,보급 확보,정제소 크레딧 1000을 수급하라,1000,Credits,400
+3,collect_credits_500_step3,CollectCredits,,보급 확보,정제소 크레딧 500을 수급하라,500,Credits,400
 4,reach_command_center_level_2_step4,UpgradeFacility,command_center,기지 증축,지휘소 레벨 2에 도달하라,2,CoreCrystals,5
 5,enhance_weapon_1_step5,EnhanceWeapon,,화력 정비,무기를 1회 강화하라,1,Credits,500
 6,draw_weapon_1_step6,DrawWeaponGacha,,보급 요청,무기를 1회 소환하라,1,CoreCrystals,5
 7,reach_stage_1_step7,StageClear,,전선 돌파,스테이지 1에 도달하라,1,CoreCrystals,5
 8,use_boss_ticket_1_step8,UseBossTicket,,전술 돌입,보스 진입 티켓을 1회 사용하라,1,Credits,500
-9,defeat_boss_1_step9,BossDefeat,,첫 격퇴,보스를 1회 격퇴하라,1,CoreCrystals,10
+9,draw_skill_1_step9,DrawSkillGacha,,스킬 보급,스킬을 1회 소환하라,1,CoreCrystals,10
 10,reach_level_5_step10,PlayerLevel,,베테랑,지휘관 레벨 5에 도달하라,5,CoreCrystals,15
 11,collect_weapons_1_step11,WeaponCollect,,무장 확충,무기를 1종 확보하라,1,Credits,600
 12,collect_drones_1_step12,DroneCollect,,드론 전개,드론 1기 해금에 도달하라,1,CoreCrystals,10
@@ -21,11 +21,11 @@
 20,draw_weapon_1_step20,DrawWeaponGacha,,대규모 보급,무기를 1회 소환하라,1,CoreCrystals,20
 21,reach_level_7_step21,PlayerLevel,,정예 지휘관,지휘관 레벨 7에 도달하라,7,CoreCrystals,20
 22,collect_credits_1000_step22,CollectCredits,,전시 경제,정제소 크레딧 1000을 수급하라,1000,CoreCrystals,25
-23,defeat_boss_1_step23,BossDefeat,,보스 헌터,보스를 1회 격퇴하라,1,CoreCrystals,25
+23,draw_skill_1_step23,DrawSkillGacha,,전술 스킬 확보,스킬을 1회 소환하라,1,CoreCrystals,25
 24,enhance_weapon_5_step24,EnhanceWeapon,,무장 마스터,무기를 5회 강화하라,5,CoreCrystals,30
 25,reach_stage_3_step25,StageClear,,영토 장악,스테이지 3에 도달하라,3,CoreCrystals,35
 26,reach_level_9_step26,PlayerLevel,,전설의 지휘관,지휘관 레벨 9에 도달하라,9,CoreCrystals,50
-27,defeat_boss_1_step27,BossDefeat,,종결자,보스를 1회 격퇴하라,1,CoreCrystals,75
+27,draw_skill_1_step27,DrawSkillGacha,,스킬 보급 확대,스킬을 1회 소환하라,1,CoreCrystals,75
 28,kill_enemies_20_step28,EnemyKill,,섬멸 작전,적 20마리를 처치하라,20,Credits,1500
 29,enhance_drone_1_step29,EnhanceDrone,,드론 정밀 조율,드론을 1회 강화하라,1,CoreCrystals,20
 30,enhance_unit_1_step30,EnhanceUnit,,부대 전력 보강,유닛 강화 1단계에 도달하라,1,CoreCrystals,20
@@ -35,7 +35,7 @@
 34,collect_drones_2_step34,DroneCollect,,드론 해금 2,드론 2기 해금에 도달하라,2,CoreCrystals,25
 35,reach_stage_5_step35,StageClear,,전선 압박,스테이지 5에 도달하라,5,CoreCrystals,40
 36,reach_level_12_step36,PlayerLevel,,숙련 지휘관,지휘관 레벨 12에 도달하라,12,CoreCrystals,55
-37,collect_credits_2000_step37,CollectCredits,,전시 자금 운용,정제소 크레딧 2000을 수급하라,2000,CoreCrystals,40
+37,collect_credits_1500_step37,CollectCredits,,전시 자금 운용,정제소 크레딧 1500을 수급하라,1500,CoreCrystals,40
 38,use_boss_ticket_1_step38,UseBossTicket,,정예 추적,보스 진입 티켓을 1회 사용하라,1,Credits,2000
 39,defeat_boss_1_step39,BossDefeat,,거점 파괴자,보스를 1회 격퇴하라,1,CoreCrystals,80
 40,enhance_weapon_5_step40,EnhanceWeapon,,화력 지배,무기를 5회 강화하라,5,CoreCrystals,45
@@ -44,7 +44,7 @@
 43,enhance_unit_2_step43,EnhanceUnit,,정예 부대 육성,유닛 강화 2단계에 도달하라,2,CoreCrystals,45
 44,enhance_drone_1_step44,EnhanceDrone,,공중 지원 강화,드론을 1회 강화하라,1,CoreCrystals,45
 45,reach_stage_6_step45,StageClear,,진격 명령,스테이지 6에 도달하라,6,CoreCrystals,55
-46,draw_weapon_5_step46,DrawWeaponGacha,,전술 보급망,무기를 5회 소환하라,5,CoreCrystals,55
+46,draw_skill_5_step46,DrawSkillGacha,,스킬 보급 작전,스킬을 5회 소환하라,5,CoreCrystals,55
 47,reach_level_14_step47,PlayerLevel,,강습 지휘관,지휘관 레벨 14에 도달하라,14,CoreCrystals,65
 48,collect_credits_2000_step48,CollectCredits,,전비 축적,정제소 크레딧 2000을 수급하라,2000,CoreCrystals,60
 49,defeat_boss_1_step49,BossDefeat,,위협 제거,보스를 1회 격퇴하라,1,CoreCrystals,90
@@ -60,7 +60,7 @@
 59,enhance_unit_2_step59,EnhanceUnit,,부대 완성도 향상,유닛 강화 2단계에 도달하라,2,CoreCrystals,75
 60,enhance_drone_5_step60,EnhanceDrone,,드론 군집 운용,드론을 5회 강화하라,5,CoreCrystals,75
 61,draw_weapon_5_step61,DrawWeaponGacha,,집중 보급 작전,무기를 5회 소환하라,5,CoreCrystals,85
-62,collect_credits_3000_step62,CollectCredits,,군수 자금 확보,정제소 크레딧 3000을 수급하라,3000,CoreCrystals,85
+62,collect_credits_2500_step62,CollectCredits,,군수 자금 확보,정제소 크레딧 2500을 수급하라,2500,CoreCrystals,85
 63,kill_enemies_50_step63,EnemyKill,,압도적 화력,적 50마리를 처치하라,50,Credits,6500
 64,reach_stage_8_step64,StageClear,,전선 고착 돌파,스테이지 8에 도달하라,8,CoreCrystals,95
 65,reach_command_center_level_3_step65,UpgradeFacility,command_center,기지 완성도 향상,지휘소 레벨 3에 도달하라,3,CoreCrystals,95
@@ -72,7 +72,7 @@
 71,enhance_unit_2_step71,EnhanceUnit,,정예 군단 편성,유닛 강화 2단계에 도달하라,2,CoreCrystals,110
 72,enhance_drone_5_step72,EnhanceDrone,,무인 전력 완성,드론을 5회 강화하라,5,CoreCrystals,110
 73,use_boss_ticket_2_step73,UseBossTicket,,위험 구역 진입,보스 진입 티켓을 2회 사용하라,2,Credits,8000
-74,draw_weapon_5_step74,DrawWeaponGacha,,대형 보급 계약,무기를 5회 소환하라,5,CoreCrystals,120
+74,draw_skill_5_step74,DrawSkillGacha,,스킬 보급 작전,스킬을 5회 소환하라,5,CoreCrystals,120
 75,reach_stage_9_step75,StageClear,,영역 확장 작전,스테이지 9에 도달하라,9,CoreCrystals,125
 76,defeat_boss_2_step76,BossDefeat,,보스 사냥꾼,보스를 2회 격퇴하라,2,CoreCrystals,150
 77,collect_credits_3000_step77,CollectCredits,,전선 군수 작전,정제소 크레딧 3000을 수급하라,3000,CoreCrystals,125
@@ -88,7 +88,7 @@
 87,defeat_boss_2_step87,BossDefeat,,위협 종식,보스를 2회 격퇴하라,2,CoreCrystals,180
 88,draw_weapon_5_step88,DrawWeaponGacha,,최전선 보급,무기를 5회 소환하라,5,CoreCrystals,160
 89,use_boss_ticket_2_step89,UseBossTicket,,특수 작전 반복,보스 진입 티켓을 2회 사용하라,2,Credits,13000
-90,collect_credits_4000_step90,CollectCredits,,거대 군수 경제,정제소 크레딧 4000을 수급하라,4000,CoreCrystals,170
+90,collect_credits_3500_step90,CollectCredits,,거대 군수 경제,정제소 크레딧 3500을 수급하라,3500,CoreCrystals,170
 91,kill_enemies_70_step91,EnemyKill,,끝없는 공세,적 70마리를 처치하라,70,Credits,15000
 92,reach_assembly_factory_level_3_step92,UpgradeFacility,assembly_factory,완성형 기지,조립 공장 레벨 3에 도달하라,3,CoreCrystals,175
 93,reach_level_25_step93,PlayerLevel,,최고 사령관,지휘관 레벨 25에 도달하라,25,CoreCrystals,200
@@ -104,9 +104,9 @@
 103,reach_level_28_step103,PlayerLevel,,전술 참모장,지휘관 레벨 28에 도달하라,28,CoreCrystals,210
 104,enhance_weapon_10_step104,EnhanceWeapon,,화력망 재정비,무기를 10회 강화하라,10,CoreCrystals,230
 105,reach_stage_13_step105,StageClear,,전선 유지,스테이지 13에 도달하라,13,CoreCrystals,250
-106,collect_credits_5000_step106,CollectCredits,,보급선 안정화,정제소 크레딧 5000을 수급하라,5000,CoreCrystals,180
+106,collect_credits_4000_step106,CollectCredits,,보급선 안정화,정제소 크레딧 4000을 수급하라,4000,CoreCrystals,180
 107,defeat_boss_2_step107,BossDefeat,,강습 지휘,보스를 2회 격퇴하라,2,CoreCrystals,310
-108,draw_weapon_5_step108,DrawWeaponGacha,,무장 재보급,무기를 5회 소환하라,5,CoreCrystals,175
+108,draw_skill_5_step108,DrawSkillGacha,,스킬 보급 작전,스킬을 5회 소환하라,5,CoreCrystals,175
 109,enhance_unit_3_step109,EnhanceUnit,,부대 훈련 강화,유닛 강화 3단계에 도달하라,3,CoreCrystals,230
 110,enhance_drone_5_step110,EnhanceDrone,,드론 전술 갱신,드론을 5회 강화하라,5,CoreCrystals,230
 111,kill_enemies_90_step111,EnemyKill,,격전지 수복,적 90마리를 처치하라,90,Credits,17000
@@ -114,7 +114,7 @@
 113,collect_drones_7_step113,DroneCollect,,드론 해금 7,드론 7기 해금에 도달하라,7,CoreCrystals,150
 114,use_boss_ticket_2_step114,UseBossTicket,,작전권 투입,보스 진입 티켓을 2회 사용하라,2,Credits,14000
 115,reach_stage_14_step115,StageClear,,거점 전진,스테이지 14에 도달하라,14,CoreCrystals,260
-116,collect_credits_5000_step116,CollectCredits,,전선 재원 확보,정제소 크레딧 5000을 수급하라,5000,CoreCrystals,190
+116,collect_credits_4500_step116,CollectCredits,,전선 재원 확보,정제소 크레딧 4500을 수급하라,4500,CoreCrystals,190
 117,defeat_boss_2_step117,BossDefeat,,위험 개체 추적,보스를 2회 격퇴하라,2,CoreCrystals,320
 118,reach_skill_hanger_level_3_step118,UpgradeFacility,skill_hanger,방어 설비 강화,스킬 격납고 레벨 3에 도달하라,3,CoreCrystals,195
 119,enhance_weapon_10_step119,EnhanceWeapon,,주포 정비,무기를 10회 강화하라,10,CoreCrystals,240
@@ -124,7 +124,7 @@
 123,enhance_unit_4_step123,EnhanceUnit,,전투조 숙련,유닛 강화 4단계에 도달하라,4,CoreCrystals,240
 124,enhance_drone_5_step124,EnhanceDrone,,드론 운용 심화,드론을 5회 강화하라,5,CoreCrystals,240
 125,reach_stage_15_step125,StageClear,,전진 기지 확보,스테이지 15에 도달하라,15,CoreCrystals,270
-126,collect_credits_6000_step126,CollectCredits,,비축 자금 운용,정제소 크레딧 6000을 수급하라,6000,CoreCrystals,200
+126,collect_credits_5000_step126,CollectCredits,,비축 자금 운용,정제소 크레딧 5000을 수급하라,5000,CoreCrystals,200
 127,defeat_boss_2_step127,BossDefeat,,전장 제압,보스를 2회 격퇴하라,2,CoreCrystals,330
 128,collect_weapons_1_step128,WeaponCollect,,전투 장비 확충,무기를 1종 확보하라,1,Credits,19000
 129,collect_drones_8_step129,DroneCollect,,드론 해금 8,드론 8기 해금에 도달하라,8,CoreCrystals,160
@@ -134,9 +134,9 @@
 133,enhance_weapon_10_step133,EnhanceWeapon,,전선 화력 보정,무기를 10회 강화하라,10,CoreCrystals,250
 134,reach_stage_16_step134,StageClear,,전역 통제,스테이지 16에 도달하라,16,CoreCrystals,280
 135,reach_level_33_step135,PlayerLevel,,연합 지휘관,지휘관 레벨 33에 도달하라,33,CoreCrystals,230
-136,collect_credits_7000_step136,CollectCredits,,전시 예산 확대,정제소 크레딧 7000을 수급하라,7000,CoreCrystals,210
+136,collect_credits_5500_step136,CollectCredits,,전시 예산 확대,정제소 크레딧 5500을 수급하라,5500,CoreCrystals,210
 137,defeat_boss_3_step137,BossDefeat,,정예 보스 격파,보스를 3회 격퇴하라,3,CoreCrystals,340
-138,draw_weapon_10_step138,DrawWeaponGacha,,전술 장비 수급,무기를 10회 소환하라,10,CoreCrystals,195
+138,draw_skill_10_step138,DrawSkillGacha,,스킬 보급 작전,스킬을 10회 소환하라,10,CoreCrystals,195
 139,enhance_unit_4_step139,EnhanceUnit,,군단 훈련,유닛 강화 4단계에 도달하라,4,CoreCrystals,250
 140,enhance_drone_10_step140,EnhanceDrone,,드론 네트워크 강화,드론을 10회 강화하라,10,CoreCrystals,250
 141,kill_enemies_130_step141,EnemyKill,,점령지 정리,적 130마리를 처치하라,130,Credits,20000
@@ -144,7 +144,7 @@
 143,collect_drones_9_step143,DroneCollect,,드론 해금 9,드론 9기 해금에 도달하라,9,CoreCrystals,170
 144,use_boss_ticket_3_step144,UseBossTicket,,특수 진입 승인,보스 진입 티켓을 3회 사용하라,3,Credits,16000
 145,reach_stage_17_step145,StageClear,,장악 지역 확대,스테이지 17에 도달하라,17,CoreCrystals,290
-146,collect_credits_7000_step146,CollectCredits,,군수 흐름 강화,정제소 크레딧 7000을 수급하라,7000,CoreCrystals,220
+146,collect_credits_6000_step146,CollectCredits,,군수 흐름 강화,정제소 크레딧 6000을 수급하라,6000,CoreCrystals,220
 147,defeat_boss_3_step147,BossDefeat,,거대 위협 격퇴,보스를 3회 격퇴하라,3,CoreCrystals,350
 148,reach_energy_refinery_level_4_step148,UpgradeFacility,energy_refinery,통합 기지 운용,정제소 레벨 4에 도달하라,4,CoreCrystals,215
 149,enhance_weapon_15_step149,EnhanceWeapon,,화력선 안정화,무기를 15회 강화하라,15,CoreCrystals,260
@@ -154,7 +154,7 @@
 153,enhance_unit_4_step153,EnhanceUnit,,정예대 완성,유닛 강화 4단계에 도달하라,4,CoreCrystals,260
 154,enhance_drone_10_step154,EnhanceDrone,,드론 전장 적응,드론을 10회 강화하라,10,CoreCrystals,260
 155,reach_stage_19_step155,StageClear,,공세 유지,스테이지 19에 도달하라,19,CoreCrystals,300
-156,collect_credits_8000_step156,CollectCredits,,전투 자금 회수,정제소 크레딧 8000을 수급하라,8000,CoreCrystals,230
+156,collect_credits_6500_step156,CollectCredits,,전투 자금 회수,정제소 크레딧 6500을 수급하라,6500,CoreCrystals,230
 157,defeat_boss_3_step157,BossDefeat,,전술 섬멸자,보스를 3회 격퇴하라,3,CoreCrystals,360
 158,collect_weapons_2_step158,WeaponCollect,,무기 체계 완성,무기를 2종 확보하라,2,Credits,22000
 159,collect_drones_10_step159,DroneCollect,,드론 해금 10,드론 10기 해금에 도달하라,10,CoreCrystals,180
@@ -164,16 +164,16 @@
 163,enhance_weapon_15_step163,EnhanceWeapon,,주력 화기 개량,무기를 15회 강화하라,15,CoreCrystals,270
 164,reach_stage_20_step164,StageClear,,전역 진입,스테이지 20에 도달하라,20,CoreCrystals,310
 165,reach_level_39_step165,PlayerLevel,,전역 사령관,지휘관 레벨 39에 도달하라,39,CoreCrystals,250
-166,collect_credits_9000_step166,CollectCredits,,군수망 확대,정제소 크레딧 9000을 수급하라,9000,CoreCrystals,240
+166,collect_credits_7000_step166,CollectCredits,,군수망 확대,정제소 크레딧 7000을 수급하라,7000,CoreCrystals,240
 167,defeat_boss_3_step167,BossDefeat,,전장 심판자,보스를 3회 격퇴하라,3,CoreCrystals,370
-168,draw_weapon_10_step168,DrawWeaponGacha,,장기 보급 계약,무기를 10회 소환하라,10,CoreCrystals,215
+168,draw_skill_10_step168,DrawSkillGacha,,스킬 보급 작전,스킬을 10회 소환하라,10,CoreCrystals,215
 169,enhance_unit_5_step169,EnhanceUnit,,군단 전력 상승,유닛 강화 5단계에 도달하라,5,CoreCrystals,270
 170,enhance_drone_10_step170,EnhanceDrone,,드론 작전 고도화,드론을 10회 강화하라,10,CoreCrystals,270
 171,kill_enemies_160_step171,EnemyKill,,전선 소탕망,적 160마리를 처치하라,160,Credits,24500
 172,collect_weapons_2_step172,WeaponCollect,,특수 무장 확보,무기를 2종 확보하라,2,Credits,23500
 174,use_boss_ticket_3_step174,UseBossTicket,,연속 보스 작전,보스 진입 티켓을 3회 사용하라,3,Credits,18000
 175,reach_stage_21_step175,StageClear,,후반 전선 돌파,스테이지 21에 도달하라,21,CoreCrystals,320
-176,collect_credits_9000_step176,CollectCredits,,작전 자금 대형화,정제소 크레딧 9000을 수급하라,9000,CoreCrystals,255
+176,collect_credits_7500_step176,CollectCredits,,작전 자금 대형화,정제소 크레딧 7500을 수급하라,7500,CoreCrystals,255
 177,defeat_boss_3_step177,BossDefeat,,보스 전담 부대,보스를 3회 격퇴하라,3,CoreCrystals,380
 178,defeat_boss_3_step178,BossDefeat,,후반 보스 격퇴,보스를 3회 격퇴하라,3,CoreCrystals,235
 179,enhance_weapon_15_step179,EnhanceWeapon,,결전 장비 보정,무기를 15회 강화하라,15,CoreCrystals,280
@@ -183,7 +183,7 @@
 183,enhance_unit_5_step183,EnhanceUnit,,최정예 부대,유닛 강화 5단계에 도달하라,5,CoreCrystals,280
 184,enhance_drone_10_step184,EnhanceDrone,,무인 전력 절정,드론을 10회 강화하라,10,CoreCrystals,280
 185,reach_stage_22_step185,StageClear,,최후 전역 진군,스테이지 22에 도달하라,22,CoreCrystals,330
-186,collect_credits_10000_step186,CollectCredits,,전역 보급 완성,정제소 크레딧 10000을 수급하라,10000,CoreCrystals,270
+186,collect_credits_8000_step186,CollectCredits,,전역 보급 완성,정제소 크레딧 8000을 수급하라,8000,CoreCrystals,270
 187,defeat_boss_4_step187,BossDefeat,,위협 완전 차단,보스를 4회 격퇴하라,4,CoreCrystals,390
 188,collect_weapons_2_step188,WeaponCollect,,전설 장비 확충,무기를 2종 확보하라,2,Credits,25000
 190,use_boss_ticket_3_step190,UseBossTicket,,최종 작전 반복,보스 진입 티켓을 3회 사용하라,3,Credits,19000
@@ -192,26 +192,26 @@
 193,enhance_weapon_15_step193,EnhanceWeapon,,종결 장비 개량,무기를 15회 강화하라,15,CoreCrystals,300
 194,reach_stage_24_step194,StageClear,,천 번째 돌파,스테이지 24에 도달하라,24,CoreCrystals,350
 195,reach_level_45_step195,PlayerLevel,,전설 사령관,지휘관 레벨 45에 도달하라,45,CoreCrystals,280
-196,collect_credits_11000_step196,CollectCredits,,최종 군수 확보,정제소 크레딧 11000을 수급하라,11000,CoreCrystals,290
+196,collect_credits_8500_step196,CollectCredits,,최종 군수 확보,정제소 크레딧 8500을 수급하라,8500,CoreCrystals,290
 197,defeat_boss_4_step197,BossDefeat,,최종 위협 격퇴,보스를 4회 격퇴하라,4,CoreCrystals,420
 198,kill_enemies_200_step198,EnemyKill,,최종 소탕 작전,적 200마리를 처치하라,200,Credits,32000
-199,collect_credits_12000_step199,CollectCredits,,전역 경제 장악,정제소 크레딧 12000을 수급하라,12000,CoreCrystals,320
+199,collect_credits_9000_step199,CollectCredits,,전역 경제 장악,정제소 크레딧 9000을 수급하라,9000,CoreCrystals,320
 200,defeat_boss_4_step200,BossDefeat,,붉은 전장의 지배자,보스를 4회 격퇴하라,4,CoreCrystals,500
 201,kill_enemies_210_step201,EnemyKill,,잔당 소탕,적 210마리를 처치하라,210,Credits,33000
 202,reach_stage_26_step202,StageClear,,진군로 확보,스테이지 26에 도달하라,26,CoreCrystals,360
 203,reach_level_48_step203,PlayerLevel,,숙련 사령관,지휘관 레벨 48에 도달하라,48,CoreCrystals,285
 204,kill_enemies_220_step204,EnemyKill,,외곽 정리,적 220마리를 처치하라,220,Credits,250
 205,enhance_weapon_20_step205,EnhanceWeapon,,무장 출력 조정,무기를 20회 강화하라,20,CoreCrystals,305
-206,collect_credits_12000_step206,CollectCredits,,후방 재원 확보,정제소 크레딧 12000을 수급하라,12000,CoreCrystals,330
+206,collect_credits_9500_step206,CollectCredits,,후방 재원 확보,정제소 크레딧 9500을 수급하라,9500,CoreCrystals,330
 207,defeat_boss_4_step207,BossDefeat,,위협 재차단,보스를 4회 격퇴하라,4,CoreCrystals,510
-208,draw_weapon_15_step208,DrawWeaponGacha,,지속 보급 요청,무기를 15회 소환하라,15,CoreCrystals,230
+208,draw_skill_15_step208,DrawSkillGacha,,스킬 보급 작전,스킬을 15회 소환하라,15,CoreCrystals,230
 209,enhance_unit_6_step209,EnhanceUnit,,정예화 반복,유닛 강화 6단계에 도달하라,6,CoreCrystals,285
 210,enhance_drone_10_step210,EnhanceDrone,,드론 전력 유지,드론을 10회 강화하라,10,CoreCrystals,285
 211,kill_enemies_240_step211,EnemyKill,,전초지 압박,적 240마리를 처치하라,240,Credits,34000
 212,collect_weapons_2_step212,WeaponCollect,,무기 보관 확장,무기를 2종 확보하라,2,Credits,26000
 214,use_boss_ticket_4_step214,UseBossTicket,,심층 진입 작전,보스 진입 티켓을 4회 사용하라,4,Credits,19500
 215,reach_stage_27_step215,StageClear,,전선 재정비,스테이지 27에 도달하라,27,CoreCrystals,365
-216,collect_credits_13000_step216,CollectCredits,,작전 자금 보충,정제소 크레딧 13000을 수급하라,13000,CoreCrystals,340
+216,collect_credits_10000_step216,CollectCredits,,작전 자금 보충,정제소 크레딧 10000을 수급하라,10000,CoreCrystals,340
 217,defeat_boss_4_step217,BossDefeat,,강적 연속 격파,보스를 4회 격퇴하라,4,CoreCrystals,520
 218,defeat_boss_4_step218,BossDefeat,,요새 보스 격파,보스를 4회 격퇴하라,4,CoreCrystals,255
 219,enhance_weapon_20_step219,EnhanceWeapon,,화력 세부 조정,무기를 20회 강화하라,20,CoreCrystals,310
@@ -221,25 +221,25 @@
 223,enhance_unit_6_step223,EnhanceUnit,,전투조 재훈련,유닛 강화 6단계에 도달하라,6,CoreCrystals,290
 224,enhance_drone_10_step224,EnhanceDrone,,드론 정비 루틴,드론을 10회 강화하라,10,CoreCrystals,290
 225,reach_stage_28_step225,StageClear,,거점 연결,스테이지 28에 도달하라,28,CoreCrystals,370
-226,collect_credits_14000_step226,CollectCredits,,군수 자금 보강,정제소 크레딧 14000을 수급하라,14000,CoreCrystals,350
+226,collect_credits_10500_step226,CollectCredits,,군수 자금 보강,정제소 크레딧 10500을 수급하라,10500,CoreCrystals,350
 227,defeat_boss_5_step227,BossDefeat,,우두머리 추적,보스를 5회 격퇴하라,5,CoreCrystals,530
 228,collect_weapons_2_step228,WeaponCollect,,고급 무장 확보,무기를 2종 확보하라,2,Credits,27000
 230,use_boss_ticket_4_step230,UseBossTicket,,고난도 작전 진입,보스 진입 티켓을 4회 사용하라,4,Credits,20000
 231,kill_enemies_260_step231,EnemyKill,,교전 확대,적 260마리를 처치하라,260,Credits,36000
-232,collect_credits_15000_step232,CollectCredits,,전역 자금 운용,정제소 크레딧 15000을 수급하라,15000,CoreCrystals,260
+232,collect_credits_11000_step232,CollectCredits,,전역 자금 운용,정제소 크레딧 11000을 수급하라,11000,CoreCrystals,260
 233,enhance_weapon_20_step233,EnhanceWeapon,,전방 무장 보정,무기를 20회 강화하라,20,CoreCrystals,315
 234,reach_stage_29_step234,StageClear,,방어선 돌파,스테이지 29에 도달하라,29,CoreCrystals,375
 235,reach_level_54_step235,PlayerLevel,,작전 지휘관,지휘관 레벨 54에 도달하라,54,CoreCrystals,295
-236,collect_credits_16000_step236,CollectCredits,,보급 재원 확대,정제소 크레딧 16000을 수급하라,16000,CoreCrystals,360
+236,collect_credits_11500_step236,CollectCredits,,보급 재원 확대,정제소 크레딧 11500을 수급하라,11500,CoreCrystals,360
 237,defeat_boss_5_step237,BossDefeat,,특수 위협 제거,보스를 5회 격퇴하라,5,CoreCrystals,540
-238,draw_weapon_15_step238,DrawWeaponGacha,,전투 장비 조달,무기를 15회 소환하라,15,CoreCrystals,240
+238,draw_skill_15_step238,DrawSkillGacha,,스킬 보급 작전,스킬을 15회 소환하라,15,CoreCrystals,240
 239,enhance_unit_6_step239,EnhanceUnit,,유닛 작전 적응,유닛 강화 6단계에 도달하라,6,CoreCrystals,295
 240,enhance_drone_15_step240,EnhanceDrone,,드론 작전 적응,드론을 15회 강화하라,15,CoreCrystals,295
 241,kill_enemies_280_step241,EnemyKill,,중앙 소탕,적 280마리를 처치하라,280,Credits,37000
 242,collect_weapons_2_step242,WeaponCollect,,무장 목록 확장,무기를 2종 확보하라,2,Credits,28000
 244,use_boss_ticket_4_step244,UseBossTicket,,전장 심층 진입,보스 진입 티켓을 4회 사용하라,4,Credits,20500
 245,reach_stage_30_step245,StageClear,,작전 경계 확대,스테이지 30에 도달하라,30,CoreCrystals,380
-246,collect_credits_16000_step246,CollectCredits,,군수 예산 확장,정제소 크레딧 16000을 수급하라,16000,CoreCrystals,370
+246,collect_credits_12000_step246,CollectCredits,,군수 예산 확장,정제소 크레딧 12000을 수급하라,12000,CoreCrystals,370
 247,defeat_boss_5_step247,BossDefeat,,보스 저지선,보스를 5회 격퇴하라,5,CoreCrystals,550
 248,enhance_weapon_25_step248,EnhanceWeapon,,화기 운용 개선,무기를 25회 강화하라,25,CoreCrystals,265
 249,enhance_weapon_25_step249,EnhanceWeapon,,주력 무기 갱신,무기를 25회 강화하라,25,CoreCrystals,320
@@ -249,7 +249,7 @@
 253,enhance_unit_7_step253,EnhanceUnit,,전투 부대 갱신,유닛 강화 7단계에 도달하라,7,CoreCrystals,300
 254,enhance_drone_15_step254,EnhanceDrone,,무인 부대 갱신,드론을 15회 강화하라,15,CoreCrystals,300
 255,reach_stage_31_step255,StageClear,,전진로 압박,스테이지 31에 도달하라,31,CoreCrystals,385
-256,collect_credits_17000_step256,CollectCredits,,작전비 누적,정제소 크레딧 17000을 수급하라,17000,CoreCrystals,380
+256,collect_credits_12500_step256,CollectCredits,,작전비 누적,정제소 크레딧 12500을 수급하라,12500,CoreCrystals,380
 257,defeat_boss_5_step257,BossDefeat,,우세 확보,보스를 5회 격퇴하라,5,CoreCrystals,560
 258,collect_weapons_2_step258,WeaponCollect,,중장비 목록 확보,무기를 2종 확보하라,2,Credits,29000
 260,use_boss_ticket_5_step260,UseBossTicket,,위험 임무 반복,보스 진입 티켓을 5회 사용하라,5,Credits,21000
@@ -258,16 +258,16 @@
 263,enhance_weapon_25_step263,EnhanceWeapon,,화력 기준 상향,무기를 25회 강화하라,25,CoreCrystals,325
 264,reach_stage_33_step264,StageClear,,지역 통제,스테이지 33에 도달하라,33,CoreCrystals,390
 265,reach_level_61_step265,PlayerLevel,,상급 지휘관,지휘관 레벨 61에 도달하라,61,CoreCrystals,305
-266,collect_credits_18000_step266,CollectCredits,,자금 운용 안정화,정제소 크레딧 18000을 수급하라,18000,CoreCrystals,390
+266,collect_credits_13000_step266,CollectCredits,,자금 운용 안정화,정제소 크레딧 13000을 수급하라,13000,CoreCrystals,390
 267,defeat_boss_5_step267,BossDefeat,,결전 보스전,보스를 5회 격퇴하라,5,CoreCrystals,570
-268,draw_weapon_20_step268,DrawWeaponGacha,,무기 투입 순환,무기를 20회 소환하라,20,CoreCrystals,250
+268,draw_skill_20_step268,DrawSkillGacha,,스킬 보급 작전,스킬을 20회 소환하라,20,CoreCrystals,250
 269,enhance_unit_7_step269,EnhanceUnit,,부대 전투력 보정,유닛 강화 7단계에 도달하라,7,CoreCrystals,305
 270,enhance_drone_15_step270,EnhanceDrone,,드론 전투력 보정,드론을 15회 강화하라,15,CoreCrystals,305
 271,kill_enemies_320_step271,EnemyKill,,잔존 세력 제거,적 320마리를 처치하라,320,Credits,40000
 272,collect_weapons_2_step272,WeaponCollect,,희귀 무장 확보,무기를 2종 확보하라,2,Credits,30000
 274,use_boss_ticket_5_step274,UseBossTicket,,연속 진입 심화,보스 진입 티켓을 5회 사용하라,5,Credits,21500
 275,reach_stage_34_step275,StageClear,,공세선 유지,스테이지 34에 도달하라,34,CoreCrystals,395
-276,collect_credits_19000_step276,CollectCredits,,장기 군수 유지,정제소 크레딧 19000을 수급하라,19000,CoreCrystals,400
+276,collect_credits_13500_step276,CollectCredits,,장기 군수 유지,정제소 크레딧 13500을 수급하라,13500,CoreCrystals,400
 277,defeat_boss_5_step277,BossDefeat,,위협 지휘체 제거,보스를 5회 격퇴하라,5,CoreCrystals,580
 278,use_boss_ticket_5_step278,UseBossTicket,,위험 구역 반복,보스 진입 티켓을 5회 사용하라,5,Credits,275
 279,enhance_weapon_25_step279,EnhanceWeapon,,무장 개량 지속,무기를 25회 강화하라,25,CoreCrystals,330
@@ -277,7 +277,7 @@
 283,enhance_unit_7_step283,EnhanceUnit,,정예 부대 보정,유닛 강화 7단계에 도달하라,7,CoreCrystals,310
 284,enhance_drone_15_step284,EnhanceDrone,,정예 드론 보정,드론을 15회 강화하라,15,CoreCrystals,310
 285,reach_stage_35_step285,StageClear,,확장 경로 돌파,스테이지 35에 도달하라,35,CoreCrystals,400
-286,collect_credits_20000_step286,CollectCredits,,보급 자금 유지,정제소 크레딧 20000을 수급하라,20000,CoreCrystals,410
+286,collect_credits_14000_step286,CollectCredits,,보급 자금 유지,정제소 크레딧 14000을 수급하라,14000,CoreCrystals,410
 287,defeat_boss_6_step287,BossDefeat,,강적 소모전,보스를 6회 격퇴하라,6,CoreCrystals,590
 288,collect_weapons_2_step288,WeaponCollect,,장비 수집 진척,무기를 2종 확보하라,2,Credits,31000
 290,use_boss_ticket_6_step290,UseBossTicket,,보스 추적 지속,보스 진입 티켓을 6회 사용하라,6,Credits,22000
@@ -286,16 +286,16 @@
 293,enhance_weapon_30_step293,EnhanceWeapon,,무기 성능 상향,무기를 30회 강화하라,30,CoreCrystals,335
 294,reach_stage_36_step294,StageClear,,전선 전개,스테이지 36에 도달하라,36,CoreCrystals,405
 295,reach_level_67_step295,PlayerLevel,,사령 체계 강화,지휘관 레벨 67에 도달하라,67,CoreCrystals,315
-296,collect_credits_20000_step296,CollectCredits,,군수 순환 확대,정제소 크레딧 20000을 수급하라,20000,CoreCrystals,420
+296,collect_credits_14500_step296,CollectCredits,,군수 순환 확대,정제소 크레딧 14500을 수급하라,14500,CoreCrystals,420
 297,defeat_boss_6_step297,BossDefeat,,정예 보스전,보스를 6회 격퇴하라,6,CoreCrystals,600
-298,draw_weapon_20_step298,DrawWeaponGacha,,보급 체계 유지,무기를 20회 소환하라,20,CoreCrystals,260
+298,draw_skill_20_step298,DrawSkillGacha,,스킬 보급 작전,스킬을 20회 소환하라,20,CoreCrystals,260
 299,enhance_unit_8_step299,EnhanceUnit,,군단 전력 상승,유닛 강화 8단계에 도달하라,8,CoreCrystals,315
 300,enhance_drone_15_step300,EnhanceDrone,,드론 성능 개선,드론을 15회 강화하라,15,CoreCrystals,315
 301,kill_enemies_360_step301,EnemyKill,,위협 밀도 감소,적 360마리를 처치하라,360,Credits,43000
 302,collect_weapons_2_step302,WeaponCollect,,무기 운용 폭 확장,무기를 2종 확보하라,2,Credits,32000
 304,use_boss_ticket_6_step304,UseBossTicket,,위협 지역 재진입,보스 진입 티켓을 6회 사용하라,6,Credits,22500
 305,reach_stage_37_step305,StageClear,,최전선 유지,스테이지 37에 도달하라,37,CoreCrystals,410
-306,collect_credits_21000_step306,CollectCredits,,전역 자원 축적,정제소 크레딧 21000을 수급하라,21000,CoreCrystals,430
+306,collect_credits_15000_step306,CollectCredits,,전역 자원 축적,정제소 크레딧 15000을 수급하라,15000,CoreCrystals,430
 307,defeat_boss_6_step307,BossDefeat,,위협 지휘망 차단,보스를 6회 격퇴하라,6,CoreCrystals,610
 308,enhance_drone_20_step308,EnhanceDrone,,드론 운용 강화,드론을 20회 강화하라,20,CoreCrystals,285
 309,enhance_weapon_30_step309,EnhanceWeapon,,장기 화력 보정,무기를 30회 강화하라,30,CoreCrystals,340
@@ -305,7 +305,7 @@
 313,enhance_unit_8_step313,EnhanceUnit,,부대 운용 강화,유닛 강화 8단계에 도달하라,8,CoreCrystals,320
 314,enhance_drone_20_step314,EnhanceDrone,,드론 개량 지속,드론을 20회 강화하라,20,CoreCrystals,320
 315,reach_stage_38_step315,StageClear,,장기 전선 돌파,스테이지 38에 도달하라,38,CoreCrystals,415
-316,collect_credits_22000_step316,CollectCredits,,장기 작전 자금,정제소 크레딧 22000을 수급하라,22000,CoreCrystals,440
+316,collect_credits_15500_step316,CollectCredits,,장기 작전 자금,정제소 크레딧 15500을 수급하라,15500,CoreCrystals,440
 317,defeat_boss_6_step317,BossDefeat,,연속 강적 격퇴,보스를 6회 격퇴하라,6,CoreCrystals,620
 318,collect_weapons_3_step318,WeaponCollect,,무장 선택지 확대,무기를 3종 확보하라,3,Credits,33000
 320,use_boss_ticket_6_step320,UseBossTicket,,위험 대응 반복,보스 진입 티켓을 6회 사용하라,6,Credits,23000
@@ -314,16 +314,16 @@
 323,enhance_weapon_30_step323,EnhanceWeapon,,무장 완성도 향상,무기를 30회 강화하라,30,CoreCrystals,345
 324,reach_stage_41_step324,StageClear,,전선 재정비,스테이지 41에 도달하라,41,CoreCrystals,420
 325,reach_level_74_step325,PlayerLevel,,전역 통솔관,지휘관 레벨 74에 도달하라,74,CoreCrystals,325
-326,collect_credits_23000_step326,CollectCredits,,군수망 안정화,정제소 크레딧 23000을 수급하라,23000,CoreCrystals,450
+326,collect_credits_16000_step326,CollectCredits,,군수망 안정화,정제소 크레딧 16000을 수급하라,16000,CoreCrystals,450
 327,defeat_boss_6_step327,BossDefeat,,결전 위협 제거,보스를 6회 격퇴하라,6,CoreCrystals,630
-328,draw_weapon_25_step328,DrawWeaponGacha,,장기 무기 보급,무기를 25회 소환하라,25,CoreCrystals,270
+328,draw_skill_25_step328,DrawSkillGacha,,스킬 보급 작전,스킬을 25회 소환하라,25,CoreCrystals,270
 329,enhance_unit_9_step329,EnhanceUnit,,부대 개량 지속,유닛 강화 9단계에 도달하라,9,CoreCrystals,325
 330,enhance_drone_20_step330,EnhanceDrone,,드론 최종 조율,드론을 20회 강화하라,20,CoreCrystals,325
 331,kill_enemies_400_step331,EnemyKill,,잔당 소탕,적 400마리를 처치하라,400,Credits,46000
 332,collect_weapons_3_step332,WeaponCollect,,고성능 무장 확보,무기를 3종 확보하라,3,Credits,34000
 334,use_boss_ticket_7_step334,UseBossTicket,,심층 보스 작전,보스 진입 티켓을 7회 사용하라,7,Credits,23500
 335,reach_stage_42_step335,StageClear,,거점 연결,스테이지 42에 도달하라,42,CoreCrystals,425
-336,collect_credits_24000_step336,CollectCredits,,대형 작전비 확보,정제소 크레딧 24000을 수급하라,24000,CoreCrystals,460
+336,collect_credits_16500_step336,CollectCredits,,대형 작전비 확보,정제소 크레딧 16500을 수급하라,16500,CoreCrystals,460
 337,defeat_boss_7_step337,BossDefeat,,고난도 위협 격파,보스를 7회 격퇴하라,7,CoreCrystals,640
 338,kill_enemies_410_step338,EnemyKill,,외곽 정리,적 410마리를 처치하라,410,Credits,295
 339,enhance_weapon_35_step339,EnhanceWeapon,,천오백 무장 강화,무기를 35회 강화하라,35,CoreCrystals,350
@@ -333,7 +333,7 @@
 343,enhance_unit_9_step343,EnhanceUnit,,부대 최종 조율,유닛 강화 9단계에 도달하라,9,CoreCrystals,330
 344,enhance_drone_20_step344,EnhanceDrone,,드론 전력 유지,드론을 20회 강화하라,20,CoreCrystals,330
 345,reach_stage_43_step345,StageClear,,방어선 돌파,스테이지 43에 도달하라,43,CoreCrystals,430
-346,collect_credits_25000_step346,CollectCredits,,군수 비축 확대,정제소 크레딧 25000을 수급하라,25000,CoreCrystals,470
+346,collect_credits_17000_step346,CollectCredits,,군수 비축 확대,정제소 크레딧 17000을 수급하라,17000,CoreCrystals,470
 347,defeat_boss_7_step347,BossDefeat,,위협 종결 준비,보스를 7회 격퇴하라,7,CoreCrystals,650
 348,collect_weapons_3_step348,WeaponCollect,,특수 장비 확장,무기를 3종 확보하라,3,Credits,35000
 350,use_boss_ticket_7_step350,UseBossTicket,,전장 심층 반복,보스 진입 티켓을 7회 사용하라,7,Credits,24000
@@ -342,18 +342,18 @@
 353,enhance_weapon_35_step353,EnhanceWeapon,,화력망 안정화,무기를 35회 강화하라,35,CoreCrystals,355
 354,reach_stage_44_step354,StageClear,,작전 경계 확대,스테이지 44에 도달하라,44,CoreCrystals,435
 355,reach_level_80_step355,PlayerLevel,,숙련 사령관,지휘관 레벨 80에 도달하라,80,CoreCrystals,335
-356,collect_credits_26000_step356,CollectCredits,,최종 보급 기반,정제소 크레딧 26000을 수급하라,26000,CoreCrystals,480
+356,collect_credits_17500_step356,CollectCredits,,최종 보급 기반,정제소 크레딧 17500을 수급하라,17500,CoreCrystals,480
 357,defeat_boss_7_step357,BossDefeat,,강적 연속 격파,보스를 7회 격퇴하라,7,CoreCrystals,660
-358,draw_weapon_25_step358,DrawWeaponGacha,,지속 보급 요청,무기를 25회 소환하라,25,CoreCrystals,280
+358,draw_skill_25_step358,DrawSkillGacha,,스킬 보급 작전,스킬을 25회 소환하라,25,CoreCrystals,280
 359,enhance_unit_9_step359,EnhanceUnit,,정예화 반복,유닛 강화 9단계에 도달하라,9,CoreCrystals,335
 360,enhance_drone_25_step360,EnhanceDrone,,드론 정비 루틴,드론을 25회 강화하라,25,CoreCrystals,335
 361,kill_enemies_460_step361,EnemyKill,,교전 확대,적 460마리를 처치하라,460,Credits,49000
 362,collect_weapons_3_step362,WeaponCollect,,칠십 종 무장 확보,무기를 3종 확보하라,3,Credits,36000
 364,use_boss_ticket_7_step364,UseBossTicket,,보스 대응 강화,보스 진입 티켓을 7회 사용하라,7,Credits,24500
 365,reach_stage_45_step365,StageClear,,전진로 압박,스테이지 45에 도달하라,45,CoreCrystals,440
-366,collect_credits_26000_step366,CollectCredits,,후방 재원 확보,정제소 크레딧 26000을 수급하라,26000,CoreCrystals,490
+366,collect_credits_18000_step366,CollectCredits,,후방 재원 확보,정제소 크레딧 18000을 수급하라,18000,CoreCrystals,490
 367,defeat_boss_7_step367,BossDefeat,,요새 보스 격파,보스를 7회 격퇴하라,7,CoreCrystals,670
-368,collect_credits_27000_step368,CollectCredits,,작전 자금 보충,정제소 크레딧 27000을 수급하라,27000,CoreCrystals,305
+368,collect_credits_18500_step368,CollectCredits,,작전 자금 보충,정제소 크레딧 18500을 수급하라,18500,CoreCrystals,305
 369,enhance_weapon_35_step369,EnhanceWeapon,,무장 출력 조정,무기를 35회 강화하라,35,CoreCrystals,360
 370,reach_level_83_step370,PlayerLevel,,전술 통제관,지휘관 레벨 83에 도달하라,83,CoreCrystals,340
 371,kill_enemies_470_step371,EnemyKill,,중앙 소탕,적 470마리를 처치하라,470,Credits,50000
@@ -361,7 +361,7 @@
 373,enhance_unit_10_step373,EnhanceUnit,,전투조 재훈련,유닛 강화 10단계에 도달하라,10,CoreCrystals,340
 374,enhance_drone_25_step374,EnhanceDrone,,드론 작전 적응,드론을 25회 강화하라,25,CoreCrystals,340
 375,reach_stage_47_step375,StageClear,,지역 통제,스테이지 47에 도달하라,47,CoreCrystals,445
-376,collect_credits_28000_step376,CollectCredits,,군수 자금 보강,정제소 크레딧 28000을 수급하라,28000,CoreCrystals,500
+376,collect_credits_19000_step376,CollectCredits,,군수 자금 보강,정제소 크레딧 19000을 수급하라,19000,CoreCrystals,500
 377,defeat_boss_7_step377,BossDefeat,,우두머리 추적,보스를 7회 격퇴하라,7,CoreCrystals,680
 378,collect_weapons_3_step378,WeaponCollect,,무기 보관 확장,무기를 3종 확보하라,3,Credits,37000
 380,use_boss_ticket_8_step380,UseBossTicket,,심층 진입 작전,보스 진입 티켓을 8회 사용하라,8,Credits,25000
@@ -370,16 +370,16 @@
 383,enhance_weapon_40_step383,EnhanceWeapon,,전방 무장 보정,무기를 40회 강화하라,40,CoreCrystals,365
 384,reach_stage_48_step384,StageClear,,공세선 유지,스테이지 48에 도달하라,48,CoreCrystals,450
 385,reach_level_87_step385,PlayerLevel,,작전 지휘관,지휘관 레벨 87에 도달하라,87,CoreCrystals,345
-386,collect_credits_29000_step386,CollectCredits,,전역 자금 운용,정제소 크레딧 29000을 수급하라,29000,CoreCrystals,510
+386,collect_credits_19500_step386,CollectCredits,,전역 자금 운용,정제소 크레딧 19500을 수급하라,19500,CoreCrystals,510
 387,defeat_boss_8_step387,BossDefeat,,특수 위협 제거,보스를 8회 격퇴하라,8,CoreCrystals,690
-388,draw_weapon_30_step388,DrawWeaponGacha,,전투 장비 조달,무기를 30회 소환하라,30,CoreCrystals,290
+388,draw_skill_30_step388,DrawSkillGacha,,스킬 보급 작전,스킬을 30회 소환하라,30,CoreCrystals,290
 389,enhance_unit_10_step389,EnhanceUnit,,유닛 작전 적응,유닛 강화 10단계에 도달하라,10,CoreCrystals,345
 390,enhance_drone_25_step390,EnhanceDrone,,무인 부대 갱신,드론을 25회 강화하라,25,CoreCrystals,345
 391,kill_enemies_500_step391,EnemyKill,,공세 차단,적 500마리를 처치하라,500,Credits,52000
 392,collect_weapons_3_step392,WeaponCollect,,고급 무장 확보,무기를 3종 확보하라,3,Credits,38000
 394,use_boss_ticket_8_step394,UseBossTicket,,고난도 작전 진입,보스 진입 티켓을 8회 사용하라,8,Credits,25500
 395,reach_stage_49_step395,StageClear,,확장 경로 돌파,스테이지 49에 도달하라,49,CoreCrystals,455
-396,collect_credits_30000_step396,CollectCredits,,보급 재원 확대,정제소 크레딧 30000을 수급하라,30000,CoreCrystals,520
+396,collect_credits_20000_step396,CollectCredits,,보급 재원 확대,정제소 크레딧 20000을 수급하라,20000,CoreCrystals,520
 397,defeat_boss_8_step397,BossDefeat,,보스 저지선,보스를 8회 격퇴하라,8,CoreCrystals,700
 398,reach_stage_50_step398,StageClear,,전선 전개,스테이지 50에 도달하라,50,CoreCrystals,315
 399,reach_level_90_step399,PlayerLevel,,전장 조율관,지휘관 레벨 90에 도달하라,90,CoreCrystals,350

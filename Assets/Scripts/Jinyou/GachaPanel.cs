@@ -113,8 +113,16 @@ public class GachaPanel : MonoBehaviour
         bool succeeded = weaponGacha.TryDraw(category, count);
         if (succeeded)
         {
-            DailyMissionManager.ReportWeaponGachaDrawn(count);
-            MainGuideMissionManager.ReportWeaponGachaDrawn(count);
+            if (category == GachaCategory.Weapon)
+            {
+                DailyMissionManager.ReportWeaponGachaDrawn(count);
+                MainGuideMissionManager.ReportWeaponGachaDrawn(count);
+            }
+            else if (category == GachaCategory.Skill)
+            {
+                MainGuideMissionManager.ReportSkillGachaDrawn(count);
+            }
+
             ShowResults(weaponGacha.LastResults);
         }
         else

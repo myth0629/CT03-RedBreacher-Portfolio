@@ -18,6 +18,7 @@ public enum GuideConditionType
     EnhanceDrone,
     UseBossTicket,
     DrawWeaponGacha,
+    DrawSkillGacha,
     ClaimOfflineReward,
     BossDefeat
 }
