@@ -1,12 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
+
+public readonly struct CombatDamageEvent
+{
+    public CombatDamageEvent(
+        CombatHealth target,
+        float requestedDamage,
+        float appliedDamage,
+        float previousHealth,
+        float currentHealth,
+        bool isCritical,
+        bool isFatal,
+        Vector3 hitPosition)
+    {
+        Target = target;
+        RequestedDamage = requestedDamage;
+        AppliedDamage = appliedDamage;
+        PreviousHealth = previousHealth;
+        CurrentHealth = currentHealth;
+        IsCritical = isCritical;
+        IsFatal = isFatal;
+        HitPosition = hitPosition;
+    }
+
+    public CombatHealth Target { get; }
+    public float RequestedDamage { get; }
+    public float AppliedDamage { get; }
+    public float PreviousHealth { get; }
+    public float CurrentHealth { get; }
+    public bool IsCritical { get; }
+    public bool IsFatal { get; }
+    public Vector3 HitPosition { get; }
+}
 
 public class CombatHealth : MonoBehaviour
 {
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private bool destroyOnDeath = true;
+    [SerializeField] private bool autoAddDamageFeedback = true;
 
     [Header("Auto Regen")]
     [SerializeField] private bool enableAutoRegen = true;
@@ -42,10 +76,14 @@ public class CombatHealth : MonoBehaviour
     public bool IsInvulnerable => debugInvulnerable || Time.time < invulnerableUntil;
     public bool IsDebugInvulnerable => debugInvulnerable;
     public event System.Action<float> OnDamageBlockedByInvulnerability;
+    public event System.Action<CombatDamageEvent> OnDamaged;
+    public event System.Action<CombatDamageEvent> OnCriticalDamaged;
+    public event System.Action<CombatDamageEvent> OnDied;
 
     private void Awake()
     {
         currentHealth = maxHealth;
+        EnsureDamageFeedback();
     }
 
     private void Update()
@@ -95,7 +133,24 @@ public class CombatHealth : MonoBehaviour
 
         // 체력 감소 후 사망 여부를 즉시 판정한다.
         lastDamageTime = Time.time;
+        float previousHealth = currentHealth;
         currentHealth = Mathf.Max(0f, currentHealth - damage);
+        CombatDamageEvent damageEvent = new CombatDamageEvent(
+            this,
+            damage,
+            previousHealth - currentHealth,
+            previousHealth,
+            currentHealth,
+            isCritical,
+            currentHealth <= 0f,
+            transform.position);
+
+        // 타격감 전용 연출은 이 이벤트를 구독해서 데미지 계산/사망 판정과 분리한다.
+        OnDamaged?.Invoke(damageEvent);
+        if (isCritical)
+        {
+            OnCriticalDamaged?.Invoke(damageEvent);
+        }
 
         // 데미지 숫자는 부수 연출이므로, 표시 실패가 데미지/사망 처리나 공격자 로직을 깨지 않게 격리한다.
         // 막타도 남은 체력이 아닌 공격이 계산한 원래 피해량을 표시한다.
@@ -110,7 +165,7 @@ public class CombatHealth : MonoBehaviour
 
         if (currentHealth <= 0f)
         {
-            Die();
+            Die(damageEvent);
         }
     }
 
@@ -190,9 +245,10 @@ public class CombatHealth : MonoBehaviour
         currentHealth = Mathf.Min(maxHealth, currentHealth + regenPerSecond * Time.deltaTime);
     }
 
-    private void Die()
+    private void Die(CombatDamageEvent damageEvent)
     {
         isDead = true;
+        OnDied?.Invoke(damageEvent);
 
         if (GetComponent<PlayerController>() != null)
         {
@@ -208,6 +264,413 @@ public class CombatHealth : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+    private void EnsureDamageFeedback()
+    {
+        if (!autoAddDamageFeedback || GetComponent<CombatDamageFeedback>() != null)
+        {
+            return;
+        }
+
+        // 프리팹 수정 없이 CombatHealth가 있는 대상에 피격 연출 컴포넌트를 자동 부착한다.
+        gameObject.AddComponent<CombatDamageFeedback>();
+    }
+}
+
+[DisallowMultipleComponent]
+public class CombatDamageFeedback : MonoBehaviour
+{
+    private const string FlashOverlayName = "__DamageFlashOverlay";
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+    private static Material flashOverlayMaterial;
+    private static bool flashOverlayMaterialSearched;
+
+    [Header("Hit Flash")]
+    [SerializeField] private bool enableHitFlash = true;
+    [SerializeField] private Color hitFlashColor = Color.white;
+    [SerializeField] private Color criticalFlashColor = new Color(1f, 0.85f, 0.1f);
+    [SerializeField] private float flashDuration = 0.08f;
+
+    [Header("Hit Squash")]
+    [SerializeField] private bool enableHitSquash = true;
+    [SerializeField] private float squashPunch = 0.06f;
+    [SerializeField] private float criticalSquashPunch = 0.13f;
+    [SerializeField] private float squashDuration = 0.14f;
+
+    [Header("Camera Shake")]
+    [SerializeField] private bool enableCameraShake = true;
+    [SerializeField] private bool shakeOnlyOnCriticalOrFatal = true;
+    [SerializeField] private float normalShakeDuration = 0.06f;
+    [SerializeField] private float normalShakeStrength = 0.18f;
+    [SerializeField] private float normalShakeFrequency = 18f;
+    [SerializeField] private float criticalShakeDuration = 0.1f;
+    [SerializeField] private float criticalShakeStrength = 0.42f;
+    [SerializeField] private float criticalShakeFrequency = 24f;
+    [SerializeField] private float shakeInterval = 0.05f;
+
+    [Header("Hit Stop")]
+    [SerializeField] private bool enableCriticalHitStop = true;
+    [SerializeField] private float criticalHitStopDuration = 0.035f;
+    [SerializeField] private float fatalHitStopDuration = 0.055f;
+
+    private CombatHealth health;
+    private readonly List<SpriteRenderer> spriteRenderers = new List<SpriteRenderer>();
+    private readonly List<Color> spriteBaseColors = new List<Color>();
+    private readonly List<SpriteRenderer> spriteFlashOverlays = new List<SpriteRenderer>();
+    private readonly List<Renderer> renderers = new List<Renderer>();
+    private readonly List<Color> rendererBaseColors = new List<Color>();
+    private MaterialPropertyBlock propertyBlock;
+    private Tween flashTween;
+    private Tween squashTween;
+    private Vector3 baseScale = Vector3.one;
+    private bool baseScaleCaptured;
+    private float nextShakeTime;
+    private bool allowsImpactFeedback;
+    private bool isBoss;
+    private bool flashTargetsReady;
+    private static bool hitStopActive;
+    private static float previousTimeScale = 1f;
+
+    private void Awake()
+    {
+        // MaterialPropertyBlock은 생성자/필드 초기화에서 만들 수 없어 Awake에서 생성한다.
+        propertyBlock = new MaterialPropertyBlock();
+
+        // 일반 적 다수가 동시에 피격될 때 연출이 과해지지 않도록 보스/플레이어만 강한 피격 연출을 허용한다.
+        isBoss = GetComponent<BossEnemyController>() != null;
+        allowsImpactFeedback = GetComponent<PlayerController>() != null || isBoss;
+    }
+
+    private void OnEnable()
+    {
+        health = GetComponent<CombatHealth>();
+        if (health == null)
+        {
+            return;
+        }
+
+        health.OnDamaged += HandleDamaged;
+        health.OnCriticalDamaged += HandleCriticalDamaged;
+    }
+
+    private void OnDisable()
+    {
+        if (health != null)
+        {
+            health.OnDamaged -= HandleDamaged;
+            health.OnCriticalDamaged -= HandleCriticalDamaged;
+        }
+
+        StopFlash();
+        StopSquash();
+    }
+
+    private void HandleDamaged(CombatDamageEvent damageEvent)
+    {
+        PlayFlash(damageEvent.IsCritical ? criticalFlashColor : hitFlashColor);
+
+        // 보스는 펀치 대신 피격마다 스크린 셰이크로 묵직함을 준다.
+        if (!isBoss)
+        {
+            PlaySquash(damageEvent.IsCritical);
+        }
+
+        PlayShake(damageEvent.IsCritical || damageEvent.IsFatal, force: isBoss);
+    }
+
+    private void HandleCriticalDamaged(CombatDamageEvent damageEvent)
+    {
+        // 히트스탑은 보스전에서만 작동시킨다. (일반 웨이브에서는 화면 정지가 과하게 느껴짐)
+        if (!enableCriticalHitStop || !allowsImpactFeedback || !BossEnemyController.IsBossBattleActive)
+        {
+            return;
+        }
+
+        float duration = damageEvent.IsFatal ? fatalHitStopDuration : criticalHitStopDuration;
+        PlayHitStop(duration);
+    }
+
+    private void PlayFlash(Color color)
+    {
+        if (!enableHitFlash)
+        {
+            return;
+        }
+
+        EnsureFlashTargets();
+        StopFlash();
+        float strength = 1f;
+        flashTween = DOVirtual.Float(1f, 0f, Mathf.Max(0.01f, flashDuration), value =>
+            {
+                strength = value;
+                ApplyFlash(color, strength);
+            })
+            .SetEase(Ease.OutQuad)
+            .SetUpdate(true)
+            .OnComplete(ClearFlash);
+    }
+
+    private void PlaySquash(bool critical)
+    {
+        if (!enableHitSquash)
+        {
+            return;
+        }
+
+        // 첫 피격 시점에 원래 스케일을 확정한다. (스폰 직후 스케일 보정이 끝난 뒤)
+        if (!baseScaleCaptured)
+        {
+            baseScale = transform.localScale;
+            baseScaleCaptured = true;
+        }
+
+        // 연속 피격으로 스케일이 누적되지 않도록 원래 크기로 되돌린 뒤 다시 펀치한다.
+        squashTween?.Kill(false);
+        transform.localScale = baseScale;
+
+        float punch = critical ? criticalSquashPunch : squashPunch;
+        squashTween = transform.DOPunchScale(baseScale * punch, Mathf.Max(0.01f, squashDuration), 8, 0.8f)
+            .SetUpdate(true)
+            .OnComplete(() => transform.localScale = baseScale);
+    }
+
+    private void StopSquash()
+    {
+        squashTween?.Kill(false);
+        squashTween = null;
+        if (baseScaleCaptured)
+        {
+            transform.localScale = baseScale;
+        }
+    }
+
+    private void PlayShake(bool critical, bool force = false)
+    {
+        if (!enableCameraShake || !allowsImpactFeedback || (shakeOnlyOnCriticalOrFatal && !critical && !force) || Time.unscaledTime < nextShakeTime)
+        {
+            return;
+        }
+
+        nextShakeTime = Time.unscaledTime + Mathf.Max(0f, shakeInterval);
+        CombatCameraShake.Play(
+            critical ? criticalShakeDuration : normalShakeDuration,
+            critical ? criticalShakeStrength : normalShakeStrength,
+            critical ? criticalShakeFrequency : normalShakeFrequency);
+    }
+
+    private static void PlayHitStop(float duration)
+    {
+        if (duration <= 0f || hitStopActive)
+        {
+            return;
+        }
+
+        hitStopActive = true;
+        previousTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+        DOVirtual.DelayedCall(duration, () =>
+            {
+                Time.timeScale = previousTimeScale;
+                hitStopActive = false;
+            })
+            .SetUpdate(true);
+    }
+
+    private void CacheRenderers()
+    {
+        spriteRenderers.Clear();
+        spriteBaseColors.Clear();
+        List<SpriteRenderer> foundSpriteRenderers = new List<SpriteRenderer>();
+        GetComponentsInChildren(true, foundSpriteRenderers);
+        for (int i = 0; i < foundSpriteRenderers.Count; i++)
+        {
+            SpriteRenderer spriteRenderer = foundSpriteRenderers[i];
+            if (spriteRenderer == null || spriteRenderer.gameObject.name == FlashOverlayName)
+            {
+                continue;
+            }
+
+            spriteRenderers.Add(spriteRenderer);
+            spriteBaseColors.Add(spriteRenderer.color);
+        }
+
+        renderers.Clear();
+        rendererBaseColors.Clear();
+        GetComponentsInChildren(true, renderers);
+        for (int i = renderers.Count - 1; i >= 0; i--)
+        {
+            Renderer targetRenderer = renderers[i];
+            if (targetRenderer == null || targetRenderer is SpriteRenderer)
+            {
+                renderers.RemoveAt(i);
+                continue;
+            }
+
+            rendererBaseColors.Insert(0, ResolveRendererColor(targetRenderer));
+        }
+    }
+
+    private void EnsureFlashTargets()
+    {
+        if (flashTargetsReady)
+        {
+            return;
+        }
+
+        // SpriteShapeShadow가 Awake 이후 머티리얼을 바꾸므로, 첫 피격 시점에 렌더러를 확정한다.
+        CacheRenderers();
+        CreateSpriteFlashOverlays();
+        flashTargetsReady = true;
+    }
+
+    private void CreateSpriteFlashOverlays()
+    {
+        spriteFlashOverlays.Clear();
+        Material overlayMaterial = GetFlashOverlayMaterial();
+        for (int i = 0; i < spriteRenderers.Count; i++)
+        {
+            SpriteRenderer source = spriteRenderers[i];
+            if (source == null)
+            {
+                spriteFlashOverlays.Add(null);
+                continue;
+            }
+
+            GameObject overlayObject = new GameObject(FlashOverlayName);
+            overlayObject.transform.SetParent(source.transform, false);
+            SpriteRenderer overlay = overlayObject.AddComponent<SpriteRenderer>();
+            overlay.sprite = source.sprite;
+            overlay.flipX = source.flipX;
+            overlay.flipY = source.flipY;
+            overlay.sortingLayerID = source.sortingLayerID;
+            overlay.sortingOrder = source.sortingOrder + 1;
+            overlay.color = new Color(1f, 1f, 1f, 0f);
+            overlay.enabled = false;
+            if (overlayMaterial != null)
+            {
+                overlay.sharedMaterial = overlayMaterial;
+            }
+
+            spriteFlashOverlays.Add(overlay);
+        }
+    }
+
+    private void ApplyFlash(Color flashColor, float strength)
+    {
+        for (int i = 0; i < spriteRenderers.Count; i++)
+        {
+            SpriteRenderer spriteRenderer = spriteRenderers[i];
+            if (spriteRenderer == null)
+            {
+                continue;
+            }
+
+            spriteRenderer.color = Color.Lerp(spriteBaseColors[i], flashColor, strength);
+            ApplySpriteFlashOverlay(i, spriteRenderer, flashColor, strength);
+        }
+
+        for (int i = 0; i < renderers.Count; i++)
+        {
+            Renderer targetRenderer = renderers[i];
+            if (targetRenderer == null)
+            {
+                continue;
+            }
+
+            Color color = Color.Lerp(rendererBaseColors[i], flashColor, strength);
+            targetRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor(BaseColorId, color);
+            propertyBlock.SetColor(ColorId, color);
+            targetRenderer.SetPropertyBlock(propertyBlock);
+        }
+    }
+
+    private void StopFlash()
+    {
+        flashTween?.Kill(false);
+        flashTween = null;
+        ClearFlash();
+    }
+
+    private void ClearFlash()
+    {
+        for (int i = 0; i < spriteRenderers.Count; i++)
+        {
+            if (spriteRenderers[i] != null)
+            {
+                spriteRenderers[i].color = spriteBaseColors[i];
+            }
+
+            if (i < spriteFlashOverlays.Count && spriteFlashOverlays[i] != null)
+            {
+                spriteFlashOverlays[i].enabled = false;
+                spriteFlashOverlays[i].color = new Color(1f, 1f, 1f, 0f);
+            }
+        }
+
+        for (int i = 0; i < renderers.Count; i++)
+        {
+            Renderer targetRenderer = renderers[i];
+            if (targetRenderer == null)
+            {
+                continue;
+            }
+
+            targetRenderer.SetPropertyBlock(null);
+        }
+    }
+
+    private static Color ResolveRendererColor(Renderer targetRenderer)
+    {
+        Material material = targetRenderer.sharedMaterial;
+        if (material == null)
+        {
+            return Color.white;
+        }
+
+        if (material.HasProperty(BaseColorId))
+        {
+            return material.GetColor(BaseColorId);
+        }
+
+        return material.HasProperty(ColorId) ? material.GetColor(ColorId) : Color.white;
+    }
+
+    private static Material GetFlashOverlayMaterial()
+    {
+        if (!flashOverlayMaterialSearched)
+        {
+            flashOverlayMaterialSearched = true;
+            Shader shader = Shader.Find("GUI/Text Shader");
+            if (shader != null)
+            {
+                flashOverlayMaterial = new Material(shader)
+                {
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+        }
+
+        return flashOverlayMaterial;
+    }
+
+    private void ApplySpriteFlashOverlay(int index, SpriteRenderer source, Color flashColor, float strength)
+    {
+        if (index >= spriteFlashOverlays.Count || spriteFlashOverlays[index] == null)
+        {
+            return;
+        }
+
+        SpriteRenderer overlay = spriteFlashOverlays[index];
+        overlay.sprite = source.sprite;
+        overlay.flipX = source.flipX;
+        overlay.flipY = source.flipY;
+        overlay.sortingLayerID = source.sortingLayerID;
+        overlay.sortingOrder = source.sortingOrder + 1;
+        overlay.color = new Color(flashColor.r, flashColor.g, flashColor.b, Mathf.Clamp01(strength));
+        overlay.enabled = source.enabled && source.sprite != null && strength > 0.01f;
+    }
 }
 
 public class DamageNumberVisual : MonoBehaviour
@@ -217,6 +680,7 @@ public class DamageNumberVisual : MonoBehaviour
 
     private TextMeshPro text;
     private Coroutine animationRoutine;
+    private Tween animationTween;
 
     public static void Play(
         float damage,
@@ -330,29 +794,29 @@ public class DamageNumberVisual : MonoBehaviour
         transform.position = position + new Vector3(spread.x, 0f, spread.y);
         FaceCamera();
         transform.localScale = Vector3.one;
-        animationRoutine = StartCoroutine(Animate(
+        Animate(
             Mathf.Max(0.05f, duration),
-            Mathf.Max(0f, riseDistance)));
+            Mathf.Max(0f, riseDistance),
+            isCritical);
     }
 
-    private IEnumerator Animate(float duration, float riseDistance)
+    private void Animate(float duration, float riseDistance, bool isCritical)
     {
         Vector3 startPosition = transform.position;
         Vector3 endPosition = startPosition + Vector3.up * riseDistance;
         Color startColor = text.color;
-        float elapsed = 0f;
+        Vector3 punchScale = Vector3.one * (isCritical ? 0.35f : 0.14f);
 
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float progress = Mathf.Clamp01(elapsed / duration);
-            transform.position = Vector3.Lerp(startPosition, endPosition, progress);
-            FaceCamera();
-            text.color = new Color(startColor.r, startColor.g, startColor.b, 1f - progress);
-            yield return null;
-        }
-
-        Release();
+        animationTween = DOTween.Sequence()
+            .SetTarget(this)
+            .Join(transform.DOMove(endPosition, duration).SetEase(Ease.OutQuad))
+            .Join(DOVirtual.Float(1f, 0f, duration, alpha =>
+            {
+                FaceCamera();
+                text.color = new Color(startColor.r, startColor.g, startColor.b, alpha);
+            }))
+            .Join(transform.DOPunchScale(punchScale, Mathf.Min(0.22f, duration), 8, 0.75f))
+            .OnComplete(Release);
     }
 
     private void FaceCamera()
@@ -371,6 +835,9 @@ public class DamageNumberVisual : MonoBehaviour
             StopCoroutine(animationRoutine);
             animationRoutine = null;
         }
+
+        animationTween?.Kill(false);
+        animationTween = null;
     }
 
     private void Release()

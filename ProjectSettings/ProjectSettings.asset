@@ -8,7 +8,7 @@ PlayerSettings:
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
   AndroidEnableSustainedPerformanceMode: 0
-  defaultScreenOrientation: 4
+  defaultScreenOrientation: 0
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
@@ -255,7 +255,7 @@ PlayerSettings:
   appleEnableAutomaticSigning: 1
   iOSRequireARKit: 0
   iOSAutomaticallyDetectAndAddCapabilities: 1
-  appleEnableProMotion: 0
+  appleEnableProMotion: 1
   shaderPrecisionModel: 0
   clonedFromGUID: 3c72c65a16f0acb438eed22b8b16c24a
   templatePackageId: com.unity.template.urp-blank@17.0.14
@@ -865,7 +865,7 @@ PlayerSettings:
     WebGL: DOTWEEN
     Windows Store Apps: DOTWEEN
     XboxOne: DOTWEEN
-    iPhone: DOTWEEN
+    iPhone: DOTWEEN;MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED
     tvOS: DOTWEEN
   additionalCompilerArguments: {}
   platformArchitecture: {}

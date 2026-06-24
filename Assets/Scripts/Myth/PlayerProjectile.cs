@@ -295,13 +295,36 @@ public class PlayerProjectile : MonoBehaviour
 
     private void SpawnHitEffect()
     {
+        // 대상이 없는 경우(벽 충돌 등)는 투사체 위치에 생성한다.
+        SpawnHitEffect(transform.position, transform.rotation);
+    }
+
+    private void SpawnHitEffect(CombatHealth target)
+    {
+        if (target == null)
+        {
+            SpawnHitEffect();
+            return;
+        }
+
+        // 투사체 중심이 아니라 적과의 접촉 지점에 이펙트를 띄워 타격 위치를 정확히 보여준다.
+        Vector3 contact = CombatPlane.WithFixedY(
+            Vector3.MoveTowards(transform.position, target.transform.position, collisionRadius));
+        Quaternion rotation = direction.sqrMagnitude > 0.0001f
+            ? Quaternion.LookRotation(direction)
+            : transform.rotation;
+        SpawnHitEffect(contact, rotation);
+    }
+
+    private void SpawnHitEffect(Vector3 position, Quaternion rotation)
+    {
         if (hitEffectPrefab == null)
         {
             return;
         }
 
         // 충돌 위치에 히트 이펙트를 분리 생성해 투사체가 사라져도 재생되게 한다.
-        GameObject hit = CombatObjectPool.GetEffect(hitEffectPrefab, transform.position, transform.rotation);
+        GameObject hit = CombatObjectPool.GetEffect(hitEffectPrefab, position, rotation);
         CombatObjectPool.ReleaseEffect(hit, effectCleanupDelay);
     }
 
@@ -399,7 +422,7 @@ public class PlayerProjectile : MonoBehaviour
             // 같은 적은 한 번만 타격하고 설정한 관통 수까지 투사체를 유지한다.
             piercedTargets.Add(target);
             ApplyDamageToTarget(target, damage);
-            SpawnHitEffect();
+            SpawnHitEffect(target);
             if (piercedTargets.Count >= Mathf.Max(1, maxPierceTargets))
             {
                 hasHit = true;
@@ -413,7 +436,7 @@ public class PlayerProjectile : MonoBehaviour
             ApplyDamageToTarget(target, damage);
         }
 
-        SpawnHitEffect();
+        SpawnHitEffect(target);
         ReturnToPool();
     }
 
@@ -496,6 +519,17 @@ public class CombatObjectPool : MonoBehaviour
     private Transform projectileRoot;
     private Transform effectRoot;
 
+    // 도메인 리로드 비활성(Enter Play Mode Options) 환경에서 이전 세션의 파괴된 객체 참조가
+    // 정적 큐/인스턴스에 남아 터지는 것을 막는다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetPool()
+    {
+        instance = null;
+        projectiles.Clear();
+        bossProjectiles.Clear();
+        effects.Clear();
+    }
+
     private static CombatObjectPool Instance
     {
         get
@@ -528,7 +562,23 @@ public class CombatObjectPool : MonoBehaviour
 
     public static PlayerProjectile GetProjectile()
     {
-        PlayerProjectile projectile = projectiles.Count > 0 ? projectiles.Dequeue() : CreateProjectile();
+        // 큐에 남은 항목이 외부에서 파괴됐을 수 있으므로 살아있는 인스턴스를 만날 때까지 건너뛴다.
+        PlayerProjectile projectile = null;
+        while (projectiles.Count > 0)
+        {
+            PlayerProjectile candidate = projectiles.Dequeue();
+            if (candidate != null)
+            {
+                projectile = candidate;
+                break;
+            }
+        }
+
+        if (projectile == null)
+        {
+            projectile = CreateProjectile();
+        }
+
         projectile.gameObject.SetActive(true);
         projectile.PrepareForReuse();
         return projectile;
@@ -550,9 +600,23 @@ public class CombatObjectPool : MonoBehaviour
 
     public static BossProjectile GetBossProjectile()
     {
-        BossProjectile projectile = bossProjectiles.Count > 0
-            ? bossProjectiles.Dequeue()
-            : CreateBossProjectile();
+        // 큐에 남은 항목이 외부에서 파괴됐을 수 있으므로 살아있는 인스턴스를 만날 때까지 건너뛴다.
+        BossProjectile projectile = null;
+        while (bossProjectiles.Count > 0)
+        {
+            BossProjectile candidate = bossProjectiles.Dequeue();
+            if (candidate != null)
+            {
+                projectile = candidate;
+                break;
+            }
+        }
+
+        if (projectile == null)
+        {
+            projectile = CreateBossProjectile();
+        }
+
         projectile.gameObject.SetActive(true);
         projectile.PrepareForReuse();
         return projectile;

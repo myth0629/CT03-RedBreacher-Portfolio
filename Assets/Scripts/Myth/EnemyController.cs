@@ -236,7 +236,14 @@ public class EnemyController : MonoBehaviour
 
         // 넉백 중에는 추적 이동을 잠시 멈추고 뒤로 밀린다.
         transform.position = CombatPlane.WithFixedY(transform.position + knockbackVelocity * Time.fixedDeltaTime);
-        knockbackVelocity = Vector3.MoveTowards(knockbackVelocity, Vector3.zero, knockbackDamping * Time.fixedDeltaTime);
+
+        // 선형 감속 대신 지수 감쇠로 초반엔 확 튕기고 빠르게 멎는 "팝 후 정착" 손맛을 준다.
+        knockbackVelocity *= Mathf.Exp(-knockbackDamping * Time.fixedDeltaTime);
+        if (knockbackVelocity.sqrMagnitude <= 0.0001f)
+        {
+            knockbackVelocity = Vector3.zero;
+        }
+
         StopBody();
         return true;
     }

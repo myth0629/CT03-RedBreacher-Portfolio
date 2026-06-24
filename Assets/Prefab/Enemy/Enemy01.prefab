@@ -48,6 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatHealth
   maxHealth: 100
   destroyOnDeath: 1
+  autoAddDamageFeedback: 1
   enableAutoRegen: 1
   playerOnlyRegen: 1
   regenDelayAfterHit: 3

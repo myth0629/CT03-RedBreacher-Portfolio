@@ -5,6 +5,14 @@ using UnityEngine;
 [RequireComponent(typeof(CombatHealth))]
 public class BossEnemyController : EnemyController
 {
+    // 활성 보스 수. 0보다 크면 보스전으로 간주한다. (히트스탑 등 보스전 전용 연출 판정용)
+    public static int ActiveBossCount { get; private set; }
+    public static bool IsBossBattleActive => ActiveBossCount > 0;
+
+    // 도메인 리로드 비활성 환경에서도 이전 세션 잔여 카운트를 초기화한다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetBossRegistry() => ActiveBossCount = 0;
+
     [SerializeField] private BossEnemyConfig bossConfig;
     [SerializeField] private Transform firePoint;
 
@@ -26,6 +34,12 @@ public class BossEnemyController : EnemyController
         base.Awake();
         ResolveFirePoints();
         EnsureLaserLine();
+    }
+
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        ActiveBossCount++;
     }
 
     protected override void Start()
@@ -637,6 +651,7 @@ public class BossEnemyController : EnemyController
     protected override void OnDisable()
     {
         base.OnDisable();
+        ActiveBossCount = Mathf.Max(0, ActiveBossCount - 1);
         isDodging = false;
         if (laserRoutine != null)
         {
