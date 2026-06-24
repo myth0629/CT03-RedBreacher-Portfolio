@@ -58,8 +58,12 @@ public class FirebaseAuthManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // ▼ 교체 지점: 네이티브(B). 웹(C)로 되돌리려면 new WebGoogleSignIn()으로만 바꾸면 됨.
+        // 로그인 공급자 선택: Android = Play Games, iOS/에디터 = 네이티브 구글 로그인.
+#if UNITY_ANDROID && !UNITY_EDITOR
+        googleSignIn = new PlayGamesSignIn();
+#else
         googleSignIn = new NativeGoogleSignIn();
+#endif
     }
 
     private async void Start()
@@ -74,8 +78,38 @@ public class FirebaseAuthManager : MonoBehaviour
 
         auth = FirebaseAuth.DefaultInstance;
         IsReady = true;
-        // 자동 로그인(이전 세션 CurrentUser)도 여기서 반영됨.
-        SetState(IsSignedIn ? ConnectionState.SignedIn : ConnectionState.Ready);
+
+        // 1) 이전 Firebase 세션이 남아 있으면 그대로 자동 로그인.
+        if (IsSignedIn)
+        {
+            SetState(ConnectionState.SignedIn);
+            return;
+        }
+
+        // 2) 무음 자동 연결 시도(Android Play Games). 성공하면 버튼 없이 로그인, 실패하면 버튼 노출.
+        await TrySilentSignIn();
+    }
+
+    private async Task TrySilentSignIn()
+    {
+        string token = await googleSignIn.TrySilentSignInAsync();
+        if (string.IsNullOrEmpty(token))
+        {
+            SetState(ConnectionState.Ready); // 무음 불가 → 수동 로그인 버튼 노출
+            return;
+        }
+
+        try
+        {
+            Credential credential = googleSignIn.CreateCredential(token);
+            await auth.SignInWithCredentialAsync(credential);
+            SetState(ConnectionState.SignedIn);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[Auth] 무음 자동 로그인 실패: {e.Message}");
+            SetState(ConnectionState.Ready);
+        }
     }
 
     /// <summary>구글 로그인 → Firebase 자격증명 교환. 성공 시 true.</summary>
@@ -89,8 +123,8 @@ public class FirebaseAuthManager : MonoBehaviour
 
         SetState(ConnectionState.SigningIn);
 
-        string idToken = await googleSignIn.SignInAsync();
-        if (string.IsNullOrEmpty(idToken))
+        string token = await googleSignIn.SignInAsync();
+        if (string.IsNullOrEmpty(token))
         {
             SetState(ConnectionState.Ready); // 사용자 취소 → 다시 대기 상태로
             return false;
@@ -98,7 +132,8 @@ public class FirebaseAuthManager : MonoBehaviour
 
         try
         {
-            Credential credential = GoogleAuthProvider.GetCredential(idToken, null);
+            // 공급자별 자격증명 생성(구글=GoogleAuthProvider, Play Games=PlayGamesAuthProvider).
+            Credential credential = googleSignIn.CreateCredential(token);
             await auth.SignInWithCredentialAsync(credential);
             SetState(ConnectionState.SignedIn);
             return true;

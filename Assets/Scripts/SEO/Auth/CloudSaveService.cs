@@ -16,8 +16,8 @@ using UnityEngine;
 public class CloudSaveService : MonoBehaviour
 {
     private const string UsersCollection = "users";
-    private const string SaveField = "jinyouSave";
-    private const string TimestampField = "jinyouLastSaved";
+    private const string SaveField = "save";
+    private const string TimestampField = "lastSaved";
     private const string VersionField = "version";
     private const string UpdatedAtField = "updatedAt";
     private const float PushDebounceSeconds = 3f;

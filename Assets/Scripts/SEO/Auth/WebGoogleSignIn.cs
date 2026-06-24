@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Firebase.Auth;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -68,6 +69,17 @@ public class WebGoogleSignIn : IGoogleSignIn
         Application.deepLinkActivated += OnDeepLink;
         Application.OpenURL(url);
         return pending.Task;
+    }
+
+    public Credential CreateCredential(string idToken)
+    {
+        return GoogleAuthProvider.GetCredential(idToken, null);
+    }
+
+    public Task<string> TrySilentSignInAsync()
+    {
+        // 웹 OAuth 플로우는 무음 로그인을 지원하지 않는다(브라우저 리다이렉트 필요).
+        return Task.FromResult<string>(null);
     }
 
     private void OnDeepLink(string link)

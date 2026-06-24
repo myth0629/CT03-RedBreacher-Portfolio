@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Firebase.Auth;
 using UnityEngine;
 
 /// <summary>
@@ -87,6 +88,18 @@ public class NativeGoogleSignIn : IGoogleSignIn
         Complete(null);
 #endif
         return signInTask;
+    }
+
+    public Credential CreateCredential(string idToken)
+    {
+        return GoogleAuthProvider.GetCredential(idToken, null);
+    }
+
+    public Task<string> TrySilentSignInAsync()
+    {
+        // 네이티브 구글 브리지는 무음 로그인을 지원하지 않는다(첫 로그인은 버튼).
+        // 재실행 시 자동 로그인은 Firebase 세션 복원으로 처리된다.
+        return Task.FromResult<string>(null);
     }
 
     public void SignOut()
