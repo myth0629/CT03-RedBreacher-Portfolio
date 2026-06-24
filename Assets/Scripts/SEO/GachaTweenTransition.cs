@@ -29,6 +29,10 @@ public class GachaTweenTransition : MonoBehaviour
     [Header("GachaResult Target")] 
     [SerializeField] private RectTransform gachaPanelTransform;
     [SerializeField] private Button gachaResultCloseButton;
+
+    [Header(("GachaOddPanels Target"))] 
+    [SerializeField] private RectTransform weaponGachaOddPanel;
+    [SerializeField] private RectTransform skillGachaOddPanel;
     
     [Header("Move")]
     [SerializeField] private Vector2 titleTargetPosition = new Vector2(0f, 240f);
@@ -51,6 +55,12 @@ public class GachaTweenTransition : MonoBehaviour
     [SerializeField] private float resultPanelScaleDelay = 0.3f;
     [SerializeField] private Ease resultPanelScaleEase = Ease.Linear;
 
+    [Header("Odd Panel Open")]
+    [SerializeField] private Vector3 oddPanelFromLocalPosition = new Vector3(0f, 1700f, 0f);
+    [SerializeField] private float oddPanelMoveDuration = 0.5f;
+    [SerializeField] private float oddPanelMoveDelay;
+    [SerializeField] private Ease oddPanelMoveEase = Ease.OutExpo;
+
     private RectTransform weaponTitleRect;
     private RectTransform skillTitleRect;
     private Vector2 weaponTitleStartPosition;
@@ -66,6 +76,8 @@ public class GachaTweenTransition : MonoBehaviour
     private Sprite weaponInitialBoxSprite;
     private Sprite skillInitialBoxSprite;
     private Vector3 gachaPanelStartScale;
+    private Vector3 weaponGachaOddPanelStartLocalPosition;
+    private Vector3 skillGachaOddPanelStartLocalPosition;
     private bool hasWeaponStartPosition;
     private bool hasSkillStartPosition;
     private bool hasWeaponButtonsGroupStartPosition;
@@ -75,8 +87,14 @@ public class GachaTweenTransition : MonoBehaviour
     private bool hasWeaponGachaBoxStartScale;
     private bool hasSkillGachaBoxStartScale;
     private bool hasGachaPanelStartScale;
+    private bool hasWeaponGachaOddPanelStartLocalPosition;
+    private bool hasSkillGachaOddPanelStartLocalPosition;
+    private bool wasWeaponGachaOddPanelActive;
+    private bool wasSkillGachaOddPanelActive;
     private Tween activeTween;
     private Tween resultPanelTween;
+    private Tween weaponGachaOddPanelTween;
+    private Tween skillGachaOddPanelTween;
 
     private void Awake()
     {
@@ -86,7 +104,13 @@ public class GachaTweenTransition : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
+        CacheOddPanelActiveStates();
         gachaResultCloseButton?.onClick.AddListener(ResetAll);
+    }
+
+    private void Update()
+    {
+        PlayOddPanelTweensOnOpen();
     }
 
     private void OnDisable()
@@ -159,6 +183,8 @@ public class GachaTweenTransition : MonoBehaviour
         activeTween?.Kill(false);
         activeTween = null;
         ResetResultPanel();
+        ResetOddPanel(GachaCategory.Weapon);
+        ResetOddPanel(GachaCategory.Skill);
         ResetTitle(GachaCategory.Weapon);
         ResetTitle(GachaCategory.Skill);
         ResetButtonsGroup(GachaCategory.Weapon);
@@ -281,6 +307,58 @@ public class GachaTweenTransition : MonoBehaviour
         }
     }
 
+    public void PlayOddPanel(GachaCategory category)
+    {
+        ResolveReferences();
+        RectTransform target = category == GachaCategory.Skill ? skillGachaOddPanel : weaponGachaOddPanel;
+        if (target == null)
+        {
+            return;
+        }
+
+        Vector3 targetLocalPosition = GetOddPanelTargetLocalPosition(category, target);
+        Tween tween = category == GachaCategory.Skill ? skillGachaOddPanelTween : weaponGachaOddPanelTween;
+        tween?.Kill(false);
+        target.localPosition = oddPanelFromLocalPosition;
+        tween = target
+            .DOLocalMove(targetLocalPosition, Mathf.Max(0.01f, oddPanelMoveDuration))
+            .SetDelay(Mathf.Max(0f, oddPanelMoveDelay))
+            .SetEase(oddPanelMoveEase)
+            .OnComplete(() => ClearOddPanelTween(category));
+
+        if (category == GachaCategory.Skill)
+        {
+            skillGachaOddPanelTween = tween;
+            return;
+        }
+
+        weaponGachaOddPanelTween = tween;
+    }
+
+    public void ResetOddPanel(GachaCategory category)
+    {
+        ResolveReferences();
+        RectTransform target = category == GachaCategory.Skill ? skillGachaOddPanel : weaponGachaOddPanel;
+        if (category == GachaCategory.Skill)
+        {
+            skillGachaOddPanelTween?.Kill(false);
+            skillGachaOddPanelTween = null;
+            if (target != null && hasSkillGachaOddPanelStartLocalPosition)
+            {
+                target.localPosition = skillGachaOddPanelStartLocalPosition;
+            }
+
+            return;
+        }
+
+        weaponGachaOddPanelTween?.Kill(false);
+        weaponGachaOddPanelTween = null;
+        if (target != null && hasWeaponGachaOddPanelStartLocalPosition)
+        {
+            target.localPosition = weaponGachaOddPanelStartLocalPosition;
+        }
+    }
+
     private void ResolveReferences()
     {
         weaponTitleText ??= FindTitleText("WeaponGacha_Panel");
@@ -296,6 +374,8 @@ public class GachaTweenTransition : MonoBehaviour
         gachaPanelTransform ??= FindRectTransformByName("GachaResult");
         gachaPanelTransform ??= FindRectTransformByName("GachaResult Panel");
         gachaResultCloseButton ??= FindChildComponent<Button>("GachaResult Panel", "Close Button");
+        weaponGachaOddPanel ??= FindRectTransformByName("WeaponGachaOddDetailPanel");
+        skillGachaOddPanel ??= FindRectTransformByName("SkillGachaOddDetailPanel");
         weaponGachaBoxImage ??= weaponGachaBox != null ? weaponGachaBox.GetComponent<Image>() : null;
         skillGachaBoxImage ??= skillGachaBox != null ? skillGachaBox.GetComponent<Image>() : null;
 
@@ -329,6 +409,14 @@ public class GachaTweenTransition : MonoBehaviour
             gachaPanelTransform,
             ref gachaPanelStartScale,
             ref hasGachaPanelStartScale);
+        ResolveLocalPosition(
+            weaponGachaOddPanel,
+            ref weaponGachaOddPanelStartLocalPosition,
+            ref hasWeaponGachaOddPanelStartLocalPosition);
+        ResolveLocalPosition(
+            skillGachaOddPanel,
+            ref skillGachaOddPanelStartLocalPosition,
+            ref hasSkillGachaOddPanelStartLocalPosition);
         weaponInitialBoxSprite ??= weaponGachaBoxImage != null ? weaponGachaBoxImage.sprite : null;
         skillInitialBoxSprite ??= skillGachaBoxImage != null ? skillGachaBoxImage.sprite : null;
     }
@@ -374,6 +462,69 @@ public class GachaTweenTransition : MonoBehaviour
             startScale = target.localScale;
             hasStartScale = true;
         }
+    }
+
+    private static void ResolveLocalPosition(
+        RectTransform target,
+        ref Vector3 startLocalPosition,
+        ref bool hasStartLocalPosition)
+    {
+        if (target != null && !hasStartLocalPosition)
+        {
+            startLocalPosition = target.localPosition;
+            hasStartLocalPosition = true;
+        }
+    }
+
+    private void PlayOddPanelTweensOnOpen()
+    {
+        ResolveReferences();
+        bool isWeaponOddPanelActive = weaponGachaOddPanel != null && weaponGachaOddPanel.gameObject.activeInHierarchy;
+        bool isSkillOddPanelActive = skillGachaOddPanel != null && skillGachaOddPanel.gameObject.activeInHierarchy;
+
+        if (isWeaponOddPanelActive && !wasWeaponGachaOddPanelActive)
+        {
+            PlayOddPanel(GachaCategory.Weapon);
+        }
+
+        if (isSkillOddPanelActive && !wasSkillGachaOddPanelActive)
+        {
+            PlayOddPanel(GachaCategory.Skill);
+        }
+
+        wasWeaponGachaOddPanelActive = isWeaponOddPanelActive;
+        wasSkillGachaOddPanelActive = isSkillOddPanelActive;
+    }
+
+    private void CacheOddPanelActiveStates()
+    {
+        wasWeaponGachaOddPanelActive = weaponGachaOddPanel != null && weaponGachaOddPanel.gameObject.activeInHierarchy;
+        wasSkillGachaOddPanelActive = skillGachaOddPanel != null && skillGachaOddPanel.gameObject.activeInHierarchy;
+    }
+
+    private Vector3 GetOddPanelTargetLocalPosition(GachaCategory category, RectTransform fallbackTarget)
+    {
+        if (category == GachaCategory.Skill)
+        {
+            return hasSkillGachaOddPanelStartLocalPosition
+                ? skillGachaOddPanelStartLocalPosition
+                : fallbackTarget.localPosition;
+        }
+
+        return hasWeaponGachaOddPanelStartLocalPosition
+            ? weaponGachaOddPanelStartLocalPosition
+            : fallbackTarget.localPosition;
+    }
+
+    private void ClearOddPanelTween(GachaCategory category)
+    {
+        if (category == GachaCategory.Skill)
+        {
+            skillGachaOddPanelTween = null;
+            return;
+        }
+
+        weaponGachaOddPanelTween = null;
     }
 
     private void SetBoxOpened(GachaCategory category, bool opened)
