@@ -82,9 +82,16 @@ public class BaseCampManager : MonoBehaviour
         EnsureMainGuideMissionManager();
     }
 
-    private void Start()
+    private async void Start()
     {
         ConnectFacilities();
+        // 로컬 로드 전에 클라우드와 동기화(로그인 상태에서만). 비로그인/오프라인이면 즉시 통과.
+        await SyncFromCloudBeforeLoad();
+        if (this == null)
+        {
+            return; // 동기화 대기 중 씬/오브젝트가 파괴되었으면 중단.
+        }
+
         LoadUnifiedGame();
         if (loadedUnifiedSaveVersion < 3)
         {
@@ -128,12 +135,32 @@ public class BaseCampManager : MonoBehaviour
         if (pauseStatus)
         {
             SaveUnifiedGame();
+            CloudSaveService.Instance.FlushNow(); // 일시정지 중엔 Update가 멈추므로 즉시 업로드.
         }
     }
 
     private void OnApplicationQuit()
     {
         SaveUnifiedGame();
+        CloudSaveService.Instance.FlushNow();
+    }
+
+    // 로그인 상태면 클라우드 세이브를 내려받아 로컬과 최신본을 맞춘다. 실패해도 로컬로 계속 진행.
+    private async System.Threading.Tasks.Task SyncFromCloudBeforeLoad()
+    {
+        if (!useUnifiedSave || string.IsNullOrWhiteSpace(unifiedSaveKey))
+        {
+            return;
+        }
+
+        try
+        {
+            await CloudSaveService.Instance.EnsureSyncedAsync(unifiedSaveKey);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"[Cloud] 동기화 실패(로컬로 진행): {exception.Message}", this);
+        }
     }
 
     private void OnDestroy()
@@ -396,6 +423,7 @@ public class BaseCampManager : MonoBehaviour
         skipNextBackupRotation = false;
         PlayerPrefs.SetString(unifiedSaveKey, JsonUtility.ToJson(data));
         PlayerPrefs.Save();
+        CloudSaveService.Instance.RequestPush(unifiedSaveKey); // 디바운스 후 클라우드 업로드(비로그인 시 no-op).
     }
 
     [ContextMenu("Load Unified Game")]
@@ -835,7 +863,7 @@ public class BaseCampManager : MonoBehaviour
 
         return new JinyouSaveData
         {
-            version = 3,
+            version = 4,
             lastSavedUnixTime = GetCurrentUnixTime(),
             commanderLevel = CommanderLevel,
             mainBuildingLevel = commandCenter != null ? commandCenter.Level : 1,
@@ -854,8 +882,40 @@ public class BaseCampManager : MonoBehaviour
             playerLoadout = playerLoadoutData,
             equipmentLoadout = equipmentLoadout != null
                 ? equipmentLoadout.CaptureState()
-                : new JinyouEquipmentLoadoutSaveData()
+                : new JinyouEquipmentLoadoutSaveData(),
+            myth = CaptureMythSaveData()
         };
+    }
+
+    // Myth 전투 진행도(레벨/스탯/라운드)를 통합 세이브에 모은다. 컴포넌트가 없으면 captured=false로 남아 복원 시 건너뛴다.
+    private JinyouMythSaveData CaptureMythSaveData()
+    {
+        JinyouMythSaveData myth = new JinyouMythSaveData();
+
+        PlayerProgression progression =
+            FindFirstObjectByType<PlayerProgression>(FindObjectsInactive.Include);
+        if (progression != null)
+        {
+            myth.progression = progression.CaptureSaveData();
+        }
+
+        PlayerStatAllocator statAllocator =
+            FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include);
+        if (statAllocator != null)
+        {
+            myth.statAllocator = statAllocator.CaptureSaveData();
+        }
+
+        EnemySpawnManager enemySpawn =
+            FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include);
+        if (enemySpawn != null)
+        {
+            myth.enemySpawn = enemySpawn.CaptureSaveData();
+        }
+
+        myth.tutorial = TutorialManager.CaptureSaveData(); // 인스턴스 없어도 PlayerPrefs에서 직접 캡처.
+
+        return myth;
     }
 
     private void RestoreUnifiedSaveData(JinyouSaveData data)
@@ -905,6 +965,18 @@ public class BaseCampManager : MonoBehaviour
                 PlayerEquipmentPartLoadout equipmentLoadout =
                     FindFirstObjectByType<PlayerEquipmentPartLoadout>(FindObjectsInactive.Include);
                 equipmentLoadout?.RestoreState(data.equipmentLoadout);
+            }
+
+            // Myth 전투 진행도는 version 4부터. 구버전 세이브는 건너뛰어 기존 로컬 진행도를 보존한다.
+            if (data.version >= 4 && data.myth != null)
+            {
+                FindFirstObjectByType<PlayerProgression>(FindObjectsInactive.Include)
+                    ?.RestoreSaveData(data.myth.progression);
+                FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include)
+                    ?.RestoreSaveData(data.myth.statAllocator);
+                FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include)
+                    ?.RestoreSaveData(data.myth.enemySpawn);
+                TutorialManager.RestoreSaveData(data.myth.tutorial);
             }
 
             ApplyOfflineRewards(data.lastSavedUnixTime);

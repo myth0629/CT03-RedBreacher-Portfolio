@@ -623,4 +623,26 @@ public class EnemySpawnManager : MonoBehaviour
         PlayerPrefs.SetInt(CurrentRoundKey, Mathf.Max(1, currentRound));
         PlayerPrefs.Save();
     }
+
+    /// <summary>클라우드 동기화용 스테이지 진행(라운드) 스냅샷(통합 세이브에 편입).</summary>
+    public JinyouEnemySpawnSaveData CaptureSaveData()
+    {
+        return new JinyouEnemySpawnSaveData
+        {
+            captured = true,
+            currentRound = Mathf.Max(1, currentRound),
+        };
+    }
+
+    /// <summary>통합 세이브에서 라운드 진행을 복원한다(클라우드 풀 이후 재적용).</summary>
+    public void RestoreSaveData(JinyouEnemySpawnSaveData data)
+    {
+        if (data == null || !data.captured)
+        {
+            return;
+        }
+
+        currentRound = Mathf.Max(1, data.currentRound);
+        SaveProgress();
+    }
 }
