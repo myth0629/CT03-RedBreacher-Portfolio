@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -55,7 +54,6 @@ public class SkillLoadoutPanel : MonoBehaviour
     [SerializeField] private Vector2 invalidSlotShakeStrength = new Vector2(12f, 0f);
 
     private readonly List<PlayerLoadoutOptionButton> spawnedButtons = new List<PlayerLoadoutOptionButton>();
-    private readonly Dictionary<Transform, Vector3> tweenBaseScales = new Dictionary<Transform, Vector3>();
     private UnityAction[] slotSelectActions = new UnityAction[4];
     private readonly UnityAction[] equipActions = new UnityAction[3];
     private readonly UnityAction[] unequipActions = new UnityAction[3];
@@ -491,22 +489,13 @@ public class SkillLoadoutPanel : MonoBehaviour
 
     private void PlaySlotSelectedFeedback(int slotIndex)
     {
-        PlayPunchScale(GetSlotRect(slotIndex), slotSelectPunchScale, slotSelectTweenDuration);
+        GetSlotRect(slotIndex).Punch(slotSelectPunchScale, slotSelectTweenDuration);
     }
 
     private void PlayInvalidSlotFeedback(int slotIndex)
     {
-        RectTransform slotRect = GetSlotRect(slotIndex);
-        if (slotRect == null)
-        {
-            return;
-        }
-
         // 잠긴 슬롯은 위치 흔들림으로 클릭 불가 상태를 짧게 알려준다.
-        slotRect.DOComplete();
-        slotRect.DOPunchAnchorPos(invalidSlotShakeStrength, invalidSlotShakeDuration, 10, 0.6f)
-            .SetUpdate(true)
-            .SetTarget(slotRect);
+        GetSlotRect(slotIndex).ShakeX(invalidSlotShakeStrength, invalidSlotShakeDuration);
     }
 
     private void PlayEquipChangedFeedback(int slotIndex)
@@ -514,56 +503,20 @@ public class SkillLoadoutPanel : MonoBehaviour
         Transform iconTransform = GetSlotIconTransform(slotIndex);
         if (iconTransform != null && iconTransform.gameObject.activeInHierarchy)
         {
-            PlayPunchScale(iconTransform, equipChangedPunchScale, equipChangedTweenDuration);
+            iconTransform.Punch(equipChangedPunchScale, equipChangedTweenDuration);
             return;
         }
 
-        PlayPunchScale(GetSlotRect(slotIndex), equipChangedPunchScale, equipChangedTweenDuration);
-    }
-
-    private void PlayPunchScale(Transform target, float scale, float duration)
-    {
-        if (target == null)
-        {
-            return;
-        }
-
-        if (!tweenBaseScales.ContainsKey(target))
-        {
-            tweenBaseScales[target] = target.localScale;
-        }
-
-        target.DOKill(false);
-        target.localScale = tweenBaseScales[target];
-        target.DOPunchScale(Vector3.one * Mathf.Max(0f, scale), Mathf.Max(0.01f, duration), 8, 0.75f)
-            .SetUpdate(true)
-            .SetTarget(target);
+        GetSlotRect(slotIndex).Punch(equipChangedPunchScale, equipChangedTweenDuration);
     }
 
     private void KillFeedbackTweens()
     {
         for (int i = 0; i < slotButtons.Length; i++)
         {
-            RectTransform slotRect = GetSlotRect(i);
-            if (slotRect != null)
-            {
-                slotRect.DOComplete();
-                slotRect.DOKill(false);
-            }
+            GetSlotRect(i).Stop();
+            GetSlotIconTransform(i).Stop();
         }
-
-        foreach (KeyValuePair<Transform, Vector3> item in tweenBaseScales)
-        {
-            if (item.Key == null)
-            {
-                continue;
-            }
-
-            item.Key.DOKill(false);
-            item.Key.localScale = item.Value;
-        }
-
-        tweenBaseScales.Clear();
     }
 
     private RectTransform GetSlotRect(int slotIndex)

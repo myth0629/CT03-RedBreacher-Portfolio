@@ -1,6 +1,9 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 /// <summary>
 /// 타이틀 화면에서 화면 아무 곳이나 탭/클릭하면 게임 씬을 로드한다.
@@ -34,6 +37,12 @@ public class TapToStartGame : MonoBehaviour
 
         if (WasTapped())
         {
+            // 버튼(로그아웃 등) 위 탭만 게임 시작에서 제외한다(배경 이미지 등은 무시).
+            if (IsPointerOverButton())
+            {
+                return;
+            }
+
             // 로그인 전이면 탭 무시(그룹이 활성 상태여도 게임으로 안 넘어감).
             if (requireSignIn && !(FirebaseAuthManager.Instance != null && FirebaseAuthManager.Instance.IsSignedIn))
             {
@@ -81,5 +90,42 @@ public class TapToStartGame : MonoBehaviour
         // Pointer.current는 마우스/터치/펜을 모두 포괄한다(가장 최근 사용 포인터).
         Pointer pointer = Pointer.current;
         return pointer != null && pointer.press.wasPressedThisFrame;
+    }
+
+    private static readonly List<RaycastResult> raycastResults = new List<RaycastResult>();
+
+    private static bool IsPointerOverButton()
+    {
+        // 배경/그라데이션 같은 장식 이미지도 raycast 타겟이라 IsPointerOverGameObject()는 화면 전체를 'UI 위'로 본다.
+        // 따라서 직접 raycast해서 '실제로 누를 수 있는 Selectable(버튼 등)' 위인지로 판정한다.
+        EventSystem eventSystem = EventSystem.current;
+        Pointer pointer = Pointer.current;
+        if (eventSystem == null || pointer == null)
+        {
+            return false;
+        }
+
+        PointerEventData data = new PointerEventData(eventSystem)
+        {
+            position = pointer.position.ReadValue(),
+        };
+
+        raycastResults.Clear();
+        eventSystem.RaycastAll(data, raycastResults);
+        foreach (RaycastResult result in raycastResults)
+        {
+            if (result.gameObject == null)
+            {
+                continue;
+            }
+
+            Selectable selectable = result.gameObject.GetComponentInParent<Selectable>();
+            if (selectable != null && selectable.IsInteractable())
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
