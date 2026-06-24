@@ -183,12 +183,12 @@ MonoBehaviour:
   tapHint: {fileID: 2275269908556247925}
   bubbleWidthNormalized: 0.84
   bubbleMarginXNormalized: 0.08
-  bubbleBottomYNormalized: 0.3
-  bubbleTopYNormalized: 0.9
-  usePreferredBubbleHeight: 0
-  fixedBubbleHeight: 250
-  minBubbleHeight: 250
-  maxBubbleHeight: 300
+  bubbleBottomYNormalized: 0.2
+  bubbleTopYNormalized: 0.7
+  usePreferredBubbleHeight: 1
+  fixedBubbleHeight: 400
+  minBubbleHeight: 400
+  maxBubbleHeight: 600
   bubbleVerticalPadding: 68
 --- !u!1 &2275269908556247925
 GameObject:

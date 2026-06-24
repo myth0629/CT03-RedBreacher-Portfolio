@@ -26,6 +26,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     [Header("Buttons")]
     [SerializeField] private Button equipButton;
+    [SerializeField] private Button closeButton;
 
     [Header("Panel")]
     [SerializeField] private GameObject selectionRoot;
@@ -51,6 +52,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private Action<ProjectileConfig> weaponSelectionCallback;
     private Action<DroneConfig> droneSelectionCallback;
     private Action<PlayerSkillConfig> skillSelectionCallback;
+    private Action selectionClosedCallback;
     private PanelTweenTransition panelTransition;
 
 
@@ -276,19 +278,25 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private void OnEnable()
     {
         equipButton?.onClick.AddListener(ConfirmSelected);
+        closeButton?.onClick.AddListener(Close);
     }
 
     private void OnDisable()
     {
+        // NotifySelectionClosed: 첫 번째로 교체하기 버튼을 눌러 인벤토리에 진입하다가 다시 나올 때 기존 closeButton 복구가 누락되고,
+        // 이후 정상적으로 작동하는 "처음엔 안 열리고 두 번째 클릭에야 열리는" 문제를 해결하기 위해 호출.
+        NotifySelectionClosed();
         equipButton?.onClick.RemoveListener(ConfirmSelected);
+        closeButton?.onClick.RemoveListener(Close);
     }
 
-    public void OpenWeapons()
+    public void OpenWeapons(Action onClosed = null)
     {
         ResolveSources();
         weaponSelectionCallback = null;
         droneSelectionCallback = null;
         skillSelectionCallback = null;
+        selectionClosedCallback = onClosed;
         currentMode = LoadoutMode.Weapon;
         selectedWeapon = player != null ? player.WeaponConfig : null;
         OpenPanel("무기 로드아웃");
@@ -296,12 +304,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         RefreshWeaponDetail(selectedWeapon);
     }
 
-    public void OpenDrones()
+    public void OpenDrones(Action onClosed = null)
     {
         ResolveSources();
         weaponSelectionCallback = null;
         droneSelectionCallback = null;
         skillSelectionCallback = null;
+        selectionClosedCallback = onClosed;
         currentMode = LoadoutMode.Drone;
         selectedDrone = droneController != null ? droneController.DroneConfig : null;
         OpenPanel("드론 로드아웃");
@@ -315,6 +324,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         weaponSelectionCallback = onSelected;
         droneSelectionCallback = null;
         skillSelectionCallback = null;
+        selectionClosedCallback = null;
         currentMode = LoadoutMode.Weapon;
         selectedWeapon = assemblyFactory != null ? assemblyFactory.SelectedWeaponConfig : null;
         OpenPanel("강화하고자 하는 무기를 선택하세요.");
@@ -328,6 +338,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         droneSelectionCallback = onSelected;
         weaponSelectionCallback = null;
         skillSelectionCallback = null;
+        selectionClosedCallback = null;
         currentMode = LoadoutMode.Drone;
         selectedDrone = assemblyFactory != null ? assemblyFactory.SelectedDroneConfig : null;
         OpenPanel("강화하고자 하는 드론을 선택하세요.");
@@ -335,12 +346,16 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         RefreshDroneDetail(selectedDrone);
     }
 
-    public void OpenSkillsForSelection(Action<PlayerSkillConfig> onSelected, PlayerSkillConfig currentSkill = null)
+    public void OpenSkillsForSelection(
+        Action<PlayerSkillConfig> onSelected,
+        PlayerSkillConfig currentSkill = null,
+        Action onClosed = null)
     {
         ResolveSources();
         skillSelectionCallback = onSelected;
         weaponSelectionCallback = null;
         droneSelectionCallback = null;
+        selectionClosedCallback = onClosed;
         currentMode = LoadoutMode.Skill;
         selectedSkill = currentSkill;
         OpenPanel("교체할 스킬을 선택하세요.");
@@ -350,6 +365,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     public void Close()
     {
+        NotifySelectionClosed();
+
         GameObject root = ResolveSelectionRoot();
         if (root != null)
         {
@@ -362,6 +379,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
             root.SetActive(false);
         }
+    }
+
+    private void NotifySelectionClosed()
+    {
+        Action callback = selectionClosedCallback;
+        selectionClosedCallback = null;
+        callback?.Invoke();
     }
 
     private void OpenPanel(string title)

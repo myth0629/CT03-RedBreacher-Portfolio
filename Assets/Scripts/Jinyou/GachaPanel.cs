@@ -34,18 +34,15 @@ public class GachaPanel : MonoBehaviour
     [FormerlySerializedAs("skillOddPrefab")]
     [SerializeField] private SkillItemOdd skillItemOddSlot;
 
-    [Header("Labels")]
-    [SerializeField] private TMP_Text currencyText;
-    [SerializeField] private TMP_Text costText;
-    [SerializeField] private TMP_Text resultText;
-    [SerializeField] private TMP_Text tableText;
-
     [Header("Result Slots")]
     [SerializeField] private Transform resultSlotRoot;
     [SerializeField] private GachaResultSlot resultSlotPrefab;
 
     [Header("Result Panels")]
     [SerializeField] private GameObject _resultPanel;
+
+    [Header("Tween")]
+    [SerializeField] private GachaTweenTransition gachaTweenTransition;
 
     private readonly List<WeaponItemOdd> _weaponItemOdds = new List<WeaponItemOdd>();
     private readonly List<SkillItemOdd> _skillItemOdds = new List<SkillItemOdd>();
@@ -70,6 +67,7 @@ public class GachaPanel : MonoBehaviour
         weaponDrawMultiButton?.onClick.RemoveListener(DrawWeaponMulti);
         skillDrawOnceButton?.onClick.RemoveListener(DrawSkillOnce);
         skillDrawMultiButton?.onClick.RemoveListener(DrawSkillMulti);
+        gachaTweenTransition?.ResetAll();
     }
 
     private void Update()
@@ -110,17 +108,20 @@ public class GachaPanel : MonoBehaviour
         isDrawing = true;
         // 각 버튼이 자신의 뽑기 종류를 직접 지정해 탭 상태와 섞이지 않게 한다.
         selectedCategory = category;
+        CloseResultPanel();
         bool succeeded = weaponGacha.TryDraw(category, count);
         if (succeeded)
         {
             DailyMissionManager.ReportWeaponGachaDrawn(count);
             MainGuideMissionManager.ReportWeaponGachaDrawn(count);
-            ShowResults(weaponGacha.LastResults);
-        }
-        else
-        {
-            ClearResultSlots();
-            SetText(resultText, "코어 크리스탈이 부족하거나 확률표가 비어 있습니다.");
+            IReadOnlyList<GachaDrawResult> results = weaponGacha.LastResults;
+            PlayDrawTween(category, () =>
+            {
+                ShowResults(results);
+                isDrawing = false;
+                Refresh();
+            });
+            return;
         }
 
         isDrawing = false;
@@ -133,30 +134,24 @@ public class GachaPanel : MonoBehaviour
         bool connected = weaponGacha != null;
         int crystals = baseCampManager != null ? baseCampManager.CoreCrystals : 0;
         int multiCount = connected ? weaponGacha.MultiDrawCount : 10;
-
-        SetText(currencyText, crystals.ToString());
-        SetText(
-            costText,
-            connected
-                ? $"1회 {weaponGacha.GetDrawCost(selectedCategory, 1)} / {multiCount}회 {weaponGacha.GetDrawCost(selectedCategory, multiCount)}"
-                : "뽑기 시설이 연결되지 않았습니다.");
+        
         RefreshDrawCostTexts(connected, multiCount);
-        SetText(tableText, BuildTableText());
         RefreshWeaponOddList();
         RefreshSkillOddList();
 
-        SetButton(
-            weaponDrawOnceButton,
-            connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Weapon, 1));
-        SetButton(
-            weaponDrawMultiButton,
-            connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Weapon, multiCount));
-        SetButton(
-            skillDrawOnceButton,
-            connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Skill, 1));
-        SetButton(
-            skillDrawMultiButton,
-            connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Skill, multiCount));
+        bool canDrawWeaponOnce = connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Weapon, 1);
+        bool canDrawWeaponMulti = connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Weapon, multiCount);
+        bool canDrawSkillOnce = connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Skill, 1);
+        bool canDrawSkillMulti = connected && !isDrawing && weaponGacha.CanDraw(GachaCategory.Skill, multiCount);
+
+        SetButton(weaponDrawOnceButton, canDrawWeaponOnce);
+        SetButton(weaponDrawMultiButton, canDrawWeaponMulti);
+        SetButton(skillDrawOnceButton, canDrawSkillOnce);
+        SetButton(skillDrawMultiButton, canDrawSkillMulti);
+        SetCostTextColor(weaponDrawOnceCostText, canDrawWeaponOnce);
+        SetCostTextColor(weaponDrawMultiCostText, canDrawWeaponMulti);
+        SetCostTextColor(skillDrawOnceCostText, canDrawSkillOnce);
+        SetCostTextColor(skillDrawMultiCostText, canDrawSkillMulti);
     }
 
     private void RefreshWeaponOddList()
@@ -308,6 +303,8 @@ public class GachaPanel : MonoBehaviour
             _resultPanel.SetActive(true);
         }
 
+        gachaTweenTransition?.PlayResultPanel();
+
         int resultCount = Mathf.Min(10, results != null ? results.Count : 0);
         if (resultSlotRoot != null && resultSlotPrefab != null)
         {
@@ -321,21 +318,7 @@ public class GachaPanel : MonoBehaviour
                     resultSlots[i].Setup(results[i]);
                 }
             }
-
-            SetText(resultText, string.Empty);
-            return;
         }
-
-        SetText(resultText, BuildResultText(results));
-    }
-
-    private void SelectCategory(GachaCategory category)
-    {
-        selectedCategory = category;
-        ClearResultSlots();
-        SetText(resultText, string.Empty);
-        CloseResultPanel();
-        Refresh();
     }
 
     private void EnsureResultSlotCount(int count)
@@ -347,121 +330,38 @@ public class GachaPanel : MonoBehaviour
         }
     }
 
-    private void ClearResultSlots()
-    {
-        for (int i = 0; i < resultSlots.Count; i++)
-        {
-            if (resultSlots[i] != null)
-            {
-                resultSlots[i].gameObject.SetActive(false);
-            }
-        }
-    }
-
-    private string BuildResultText(IReadOnlyList<GachaDrawResult> results)
-    {
-        if (results == null || results.Count == 0)
-        {
-            return "결과 없음";
-        }
-
-        string text = string.Empty;
-        for (int i = 0; i < results.Count; i++)
-        {
-            GachaDrawResult result = results[i];
-            if (result?.grantResult == null)
-            {
-                continue;
-            }
-
-            string state = result.grantResult.isNew ? "NEW" : "중복";
-            string progress = result.grantResult.requiredDuplicates > 0
-                ? $"{result.grantResult.duplicateProgress}/{result.grantResult.requiredDuplicates}"
-                : "MAX";
-            text += $"{result.DisplayName} [{state}] Lv.{result.grantResult.currentLevel} {progress}\n";
-        }
-
-        return text.TrimEnd();
-    }
-
-    private string BuildTableText()
-    {
-        if (weaponGacha == null)
-        {
-            return string.Empty;
-        }
-
-        return selectedCategory == GachaCategory.Weapon
-            ? BuildWeaponTableText(weaponGacha.GetWeaponEntries())
-            : BuildSkillTableText(weaponGacha.GetSkillEntries());
-    }
-
-    private static string BuildWeaponTableText(IReadOnlyList<WeaponGachaFacility.WeaponGachaEntry> entries)
-    {
-        float totalWeight = 0f;
-        for (int i = 0; i < entries.Count; i++)
-        {
-            WeaponGachaFacility.WeaponGachaEntry entry = entries[i];
-            if (entry != null && entry.enabled && entry.weaponConfig != null && entry.weight > 0f)
-            {
-                totalWeight += entry.weight;
-            }
-        }
-
-        string text = string.Empty;
-        for (int i = 0; i < entries.Count; i++)
-        {
-            WeaponGachaFacility.WeaponGachaEntry entry = entries[i];
-            if (entry == null || !entry.enabled || entry.weaponConfig == null || entry.weight <= 0f)
-            {
-                continue;
-            }
-
-            text += $"{entry.weaponConfig.DisplayName}: {entry.weight / totalWeight * 100f:0.##}%\n";
-        }
-
-        return string.IsNullOrWhiteSpace(text) ? "확률표가 비어 있습니다." : text.TrimEnd();
-    }
-
-    private static string BuildSkillTableText(IReadOnlyList<WeaponGachaFacility.SkillGachaEntry> entries)
-    {
-        float totalWeight = 0f;
-        for (int i = 0; i < entries.Count; i++)
-        {
-            WeaponGachaFacility.SkillGachaEntry entry = entries[i];
-            if (entry != null && entry.enabled && entry.skillConfig != null && entry.weight > 0f)
-            {
-                totalWeight += entry.weight;
-            }
-        }
-
-        string text = string.Empty;
-        for (int i = 0; i < entries.Count; i++)
-        {
-            WeaponGachaFacility.SkillGachaEntry entry = entries[i];
-            if (entry == null || !entry.enabled || entry.skillConfig == null || entry.weight <= 0f)
-            {
-                continue;
-            }
-
-            text += $"{entry.skillConfig.DisplayName}: {entry.weight / totalWeight * 100f:0.##}%\n";
-        }
-
-        return string.IsNullOrWhiteSpace(text) ? "확률표가 비어 있습니다." : text.TrimEnd();
-    }
-
     public void CloseResultPanel()
     {
         if (_resultPanel != null)
         {
             _resultPanel.SetActive(false);
         }
+
+        gachaTweenTransition?.ResetAll();
     }
 
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
         weaponGacha ??= FindFirstObjectByType<WeaponGachaFacility>(FindObjectsInactive.Include);
+        gachaTweenTransition ??= GetComponentInChildren<GachaTweenTransition>(true);
+        gachaTweenTransition ??= FindFirstObjectByType<GachaTweenTransition>(FindObjectsInactive.Include);
+        if (gachaTweenTransition == null)
+        {
+            gachaTweenTransition = gameObject.AddComponent<GachaTweenTransition>();
+        }
+    }
+
+    private void PlayDrawTween(GachaCategory category, System.Action onComplete)
+    {
+        ResolveReferences();
+        if (gachaTweenTransition == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        gachaTweenTransition.PlayTitle(category, onComplete);
     }
 
     private static void SetButton(Button button, bool interactable)
@@ -477,6 +377,14 @@ public class GachaPanel : MonoBehaviour
         if (target != null)
         {
             target.text = value;
+        }
+    }
+
+    private static void SetCostTextColor(TMP_Text target, bool canDraw)
+    {
+        if (target != null)
+        {
+            target.color = canDraw ? Color.white : Color.red;
         }
     }
 }

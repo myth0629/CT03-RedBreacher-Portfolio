@@ -7,6 +7,7 @@ public class PlayerLoadoutPopupButtonBinder : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button weaponButton;
     [SerializeField] private Button droneButton;
+    [SerializeField] private Button closeButton;
 
     [Header("Target")]
     [SerializeField] private PlayerLoadoutSelectionPanel selectionPanel;
@@ -16,24 +17,38 @@ public class PlayerLoadoutPopupButtonBinder : MonoBehaviour
     private void OnEnable()
     {
         EnsurePanelTransition();
+        SetCloseButtonVisible(true);
         weaponButton?.onClick.AddListener(OpenWeapons);
         droneButton?.onClick.AddListener(OpenDrones);
     }
 
     private void OnDisable()
     {
+        SetCloseButtonVisible(true);
         weaponButton?.onClick.RemoveListener(OpenWeapons);
         droneButton?.onClick.RemoveListener(OpenDrones);
     }
 
     private void OpenWeapons()
     {
-        selectionPanel?.OpenWeapons();
+        if (selectionPanel == null)
+        {
+            return;
+        }
+
+        SetCloseButtonVisible(false);
+        selectionPanel.OpenWeapons(() => SetCloseButtonVisible(true));
     }
 
     private void OpenDrones()
     {
-        selectionPanel?.OpenDrones();
+        if (selectionPanel == null)
+        {
+            return;
+        }
+
+        SetCloseButtonVisible(false);
+        selectionPanel.OpenDrones(() => SetCloseButtonVisible(true));
     }
 
     private void EnsurePanelTransition()
@@ -43,6 +58,14 @@ public class PlayerLoadoutPopupButtonBinder : MonoBehaviour
         if (panelTransition == null)
         {
             panelTransition = gameObject.AddComponent<PanelTweenTransition>();
+        }
+    }
+
+    private void SetCloseButtonVisible(bool visible)
+    {
+        if (closeButton != null && closeButton.gameObject.activeSelf != visible)
+        {
+            closeButton.gameObject.SetActive(visible);
         }
     }
 }

@@ -38,7 +38,7 @@ public class GachaResultSlot : MonoBehaviour
         }
 
         SetText(_nameText, result.DisplayName);
-        SetText(_stateText, result.grantResult.isNew ? "NEW" : "중복");
+        SetText(_stateText, result.grantResult.isNew ? "신규!" : "<color=#ffffff>중복</color>");
         SetText(_levelText, $"Lv.{result.grantResult.currentLevel}");
         SetText(
             _progressText,
