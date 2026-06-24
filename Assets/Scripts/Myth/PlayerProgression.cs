@@ -106,6 +106,36 @@ public class PlayerProgression : MonoBehaviour
         Save();
     }
 
+    /// <summary>클라우드 동기화용 진행도 스냅샷(통합 세이브에 편입).</summary>
+    public JinyouPlayerProgressionSaveData CaptureSaveData()
+    {
+        return new JinyouPlayerProgressionSaveData
+        {
+            captured = true,
+            level = level,
+            currentExperience = currentExperience,
+            experienceToNextLevel = experienceToNextLevel,
+            statPoints = statPoints,
+        };
+    }
+
+    /// <summary>통합 세이브에서 진행도를 복원한다(클라우드 풀 이후 재적용).</summary>
+    public void RestoreSaveData(JinyouPlayerProgressionSaveData data)
+    {
+        if (data == null || !data.captured)
+        {
+            return;
+        }
+
+        level = Mathf.Max(1, data.level);
+        currentExperience = Mathf.Max(0f, data.currentExperience);
+        experienceToNextLevel = Mathf.Max(1f, data.experienceToNextLevel);
+        statPoints = Mathf.Max(0, data.statPoints);
+        Save();
+        AchievementManager.ReportPlayerLevelReached(level);
+        MainGuideMissionManager.ReportPlayerLevelReached(level);
+    }
+
     private void LevelUp()
     {
         level++;

@@ -158,6 +158,34 @@ public class PlayerStatAllocator : MonoBehaviour
         progression?.AddStatPoints(refundPoints);
     }
 
+    /// <summary>클라우드 동기화용 스탯 강화 레벨 스냅샷(통합 세이브에 편입).</summary>
+    public JinyouPlayerStatAllocatorSaveData CaptureSaveData()
+    {
+        return new JinyouPlayerStatAllocatorSaveData
+        {
+            captured = true,
+            attackLevel = attackLevel,
+            healthLevel = healthLevel,
+            critChanceLevel = critChanceLevel,
+            critMultiplierLevel = critMultiplierLevel,
+        };
+    }
+
+    /// <summary>통합 세이브에서 스탯 강화 레벨을 복원한다(클라우드 풀 이후 재적용).</summary>
+    public void RestoreSaveData(JinyouPlayerStatAllocatorSaveData data)
+    {
+        if (data == null || !data.captured)
+        {
+            return;
+        }
+
+        attackLevel = Mathf.Clamp(data.attackLevel, 0, Mathf.Max(0, maxAttackLevel));
+        healthLevel = Mathf.Clamp(data.healthLevel, 0, Mathf.Max(0, maxHealthLevel));
+        critChanceLevel = Mathf.Clamp(data.critChanceLevel, 0, GetCritChanceMaxLevel());
+        critMultiplierLevel = Mathf.Clamp(data.critMultiplierLevel, 0, GetCritMultiplierMaxLevel());
+        Save();
+    }
+
     private bool TryUpgrade(ref int currentLevel, int maxLevel)
     {
         if (progression == null)

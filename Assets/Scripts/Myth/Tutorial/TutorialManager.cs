@@ -187,6 +187,52 @@ public class TutorialManager : MonoBehaviour
         UnsubscribeEvents();
     }
 
+    // ── 클라우드 동기화(통합 세이브 편입) ──────────────────────────────────────
+    // 인스턴스가 없어도 동작하도록 PlayerPrefs를 직접 읽고/쓴다(부트스트랩이 인스턴스 생성을 결정하므로).
+
+    /// <summary>현재 튜토리얼 진행 상태 스냅샷.</summary>
+    public static JinyouTutorialSaveData CaptureSaveData()
+    {
+        return new JinyouTutorialSaveData
+        {
+            captured = true,
+            completed = PlayerPrefs.GetInt(CompletedKey, 0) == 1,
+            stepIndex = Mathf.Max(0, PlayerPrefs.GetInt(StepIndexKey, 0)),
+        };
+    }
+
+    /// <summary>통합 세이브에서 튜토리얼 상태를 복원한다. 클라우드가 '완료'면 진행 중이던 튜토리얼도 즉시 종료한다.</summary>
+    public static void RestoreSaveData(JinyouTutorialSaveData data)
+    {
+        if (data == null || !data.captured)
+        {
+            return;
+        }
+
+        PlayerPrefs.SetInt(CompletedKey, data.completed ? 1 : 0);
+        PlayerPrefs.SetInt(StepIndexKey, Mathf.Max(0, data.stepIndex));
+        PlayerPrefs.Save();
+
+        TutorialManager live = Instance;
+        if (live == null)
+        {
+            return;
+        }
+
+        if (data.completed)
+        {
+            live.Complete(); // 이번 실행에 떠 있던 튜토리얼을 즉시 종료/숨김.
+        }
+        else
+        {
+            live.completed = false;
+            if (!live.running)
+            {
+                live.stepIndex = Mathf.Max(0, data.stepIndex);
+            }
+        }
+    }
+
     // 강조 타깃을 이름으로 계속 탐색해 늦게 활성화되는 패널 내부 요소도 따라간다.
     private void ResolveActiveTarget()
     {
