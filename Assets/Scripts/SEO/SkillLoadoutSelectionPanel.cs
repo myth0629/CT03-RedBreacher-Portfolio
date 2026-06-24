@@ -53,6 +53,8 @@ public class SkillLoadoutSelectionPanel : MonoBehaviour
         onEquipped = equippedCallback;
         selectedSkill = null;
         GameObject target = selectionRoot != null ? selectionRoot : gameObject;
+        // 비활성 상태에서 트랜지션을 보장해두면 SetActive 시 열기 연출이 재생된다.
+        PanelTweenTransition.EnsureOn(target);
         target.SetActive(true);
         RebuildSkillList();
         RefreshSkillDetail(selectedSkill);
@@ -150,7 +152,14 @@ public class SkillLoadoutSelectionPanel : MonoBehaviour
     public void Close()
     {
         GameObject target = selectionRoot != null ? selectionRoot : gameObject;
-        target.SetActive(false);
+        if (!target.activeInHierarchy)
+        {
+            target.SetActive(false);
+            return;
+        }
+
+        // 닫기 연출 후 비활성화까지 PanelTweenTransition이 담당한다.
+        PanelTweenTransition.EnsureOn(target).Close();
     }
 
     private int GetSkillLevel(PlayerSkillConfig skill)

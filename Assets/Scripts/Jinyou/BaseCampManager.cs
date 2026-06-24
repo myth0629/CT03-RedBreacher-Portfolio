@@ -1,5 +1,4 @@
 using System;
-using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -24,9 +23,6 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private GameObject[] facilityPanels;
     [SerializeField] private bool closePanelsOnStart = true;
     [SerializeField] private bool animateFacilityPanels = true;
-    [SerializeField] private float facilityPanelOpenDuration = 0.16f;
-    [SerializeField] private float facilityPanelCloseDuration = 0.12f;
-    [SerializeField] private float facilityPanelOpenStartScale = 0.92f;
 
     [Header("Player State")]
     [SerializeField] private int commanderLevel = 1;
@@ -56,7 +52,6 @@ public class BaseCampManager : MonoBehaviour
     private bool confirmPlayerPrefsReset;
     private bool skipNextBackupRotation;
     private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
-    private GameObject closingFacilityPanel;
 
     public CommandCenter CommandCenter => commandCenter;
     public CreditRefinery CreditRefinery => creditRefinery;
@@ -109,8 +104,6 @@ public class BaseCampManager : MonoBehaviour
         {
             CloseAllPanels();
         }
-
-        BindFacilityPanelCloseButtons();
     }
 
     private void Update()
@@ -317,7 +310,8 @@ public class BaseCampManager : MonoBehaviour
         {
             if (panel != null)
             {
-                CloseFacilityPanelImmediate(panel);
+                // 다른 패널은 즉시 닫는다. 트윈 정리/상태 복원은 PanelTweenTransition.OnDisable이 처리한다.
+                panel.SetActive(false);
             }
         }
     }
@@ -331,164 +325,24 @@ public class BaseCampManager : MonoBehaviour
 
         if (!animateFacilityPanels || !panel.activeInHierarchy)
         {
-            CloseFacilityPanelImmediate(panel);
+            panel.SetActive(false);
             return;
         }
 
-        PlayFacilityPanelClose(panel);
+        // 닫기 연출 후 비활성화까지 PanelTweenTransition이 담당한다.
+        PanelTweenTransition.EnsureOn(panel).Close();
     }
 
     private void OpenFacilityPanel(GameObject panel)
     {
-        if (!animateFacilityPanels)
+        if (animateFacilityPanels)
         {
-            panel.SetActive(true);
-            return;
+            // 비활성 상태에서 컴포넌트를 붙여두면 SetActive 시 OnEnable이 열기 연출을 재생한다.
+            // 패널 트랜지션·ExitButton 바인딩의 단일 출처는 PanelTweenTransition이다.
+            PanelTweenTransition.EnsureOn(panel);
         }
 
-        CanvasGroup canvasGroup = EnsureCanvasGroup(panel);
-        panel.transform.DOKill(false);
-        canvasGroup?.DOKill(false);
-
-        if (canvasGroup != null)
-        {
-            canvasGroup.alpha = 0f;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-        }
-
-        panel.transform.localScale = Vector3.one * Mathf.Clamp(facilityPanelOpenStartScale, 0.01f, 1f);
         panel.SetActive(true);
-
-        // 시설 팝업은 시간 정지 상태에서도 UI 피드백이 보이도록 unscaled time을 사용한다.
-        panel.transform.DOScale(Vector3.one, Mathf.Max(0.01f, facilityPanelOpenDuration))
-            .SetEase(Ease.OutBack)
-            .SetUpdate(true)
-            .SetTarget(panel.transform);
-        canvasGroup?.DOFade(1f, Mathf.Max(0.01f, facilityPanelOpenDuration))
-            .SetEase(Ease.OutQuad)
-            .SetUpdate(true)
-            .SetTarget(canvasGroup);
-    }
-
-    private void PlayFacilityPanelClose(GameObject panel)
-    {
-        if (closingFacilityPanel == panel)
-        {
-            return;
-        }
-
-        closingFacilityPanel = panel;
-        CanvasGroup canvasGroup = EnsureCanvasGroup(panel);
-        panel.transform.DOKill(false);
-        canvasGroup?.DOKill(false);
-
-        if (canvasGroup != null)
-        {
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-        }
-
-        float duration = Mathf.Max(0.01f, facilityPanelCloseDuration);
-        Sequence sequence = DOTween.Sequence()
-            .SetUpdate(true)
-            .SetTarget(panel);
-        sequence.Join(panel.transform.DOScale(Vector3.one * 0.96f, duration).SetEase(Ease.InQuad));
-        if (canvasGroup != null)
-        {
-            sequence.Join(canvasGroup.DOFade(0f, duration).SetEase(Ease.InQuad));
-        }
-
-        sequence.OnComplete(() =>
-        {
-            CloseFacilityPanelImmediate(panel);
-            if (closingFacilityPanel == panel)
-            {
-                closingFacilityPanel = null;
-            }
-        });
-    }
-
-    private void CloseFacilityPanelImmediate(GameObject panel)
-    {
-        if (panel == null)
-        {
-            return;
-        }
-
-        CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
-        panel.transform.DOKill(false);
-        canvasGroup?.DOKill(false);
-        panel.transform.localScale = Vector3.one;
-        if (canvasGroup != null)
-        {
-            canvasGroup.alpha = 1f;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-        }
-
-        panel.SetActive(false);
-        if (closingFacilityPanel == panel)
-        {
-            closingFacilityPanel = null;
-        }
-    }
-
-    private void BindFacilityPanelCloseButtons()
-    {
-        if (facilityPanels == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < facilityPanels.Length; i++)
-        {
-            GameObject panel = facilityPanels[i];
-            if (panel == null)
-            {
-                continue;
-            }
-
-            Button[] buttons = panel.GetComponentsInChildren<Button>(true);
-            for (int buttonIndex = 0; buttonIndex < buttons.Length; buttonIndex++)
-            {
-                Button button = buttons[buttonIndex];
-                if (button == null || button.name != "ExitButton" || !HasPersistentSetActiveTarget(button, panel))
-                {
-                    continue;
-                }
-
-                GameObject capturedPanel = panel;
-                button.onClick = new Button.ButtonClickedEvent();
-                button.onClick.AddListener(() => ClosePanel(capturedPanel));
-            }
-        }
-    }
-
-    private static bool HasPersistentSetActiveTarget(Button button, GameObject targetPanel)
-    {
-        int count = button.onClick.GetPersistentEventCount();
-        for (int i = 0; i < count; i++)
-        {
-            if (button.onClick.GetPersistentTarget(i) == targetPanel
-                && button.onClick.GetPersistentMethodName(i) == "SetActive")
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static CanvasGroup EnsureCanvasGroup(GameObject panel)
-    {
-        CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
-        {
-            canvasGroup = panel.AddComponent<CanvasGroup>();
-        }
-
-        return canvasGroup;
     }
 
     public void AddCredits(int amount)

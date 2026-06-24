@@ -50,6 +50,23 @@ public class PanelTweenTransition : MonoBehaviour
         closing = false;
     }
 
+    /// <summary>패널에 PanelTweenTransition을 보장(없으면 부착)한다. 트랜지션 부착 패턴의 단일 출처.</summary>
+    public static PanelTweenTransition EnsureOn(GameObject panel)
+    {
+        if (panel == null)
+        {
+            return null;
+        }
+
+        PanelTweenTransition transition = panel.GetComponent<PanelTweenTransition>();
+        if (transition == null)
+        {
+            transition = panel.AddComponent<PanelTweenTransition>();
+        }
+
+        return transition;
+    }
+
     public void Close()
     {
         PlayClose(() => gameObject.SetActive(false));
