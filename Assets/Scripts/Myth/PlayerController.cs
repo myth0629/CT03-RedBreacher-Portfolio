@@ -453,6 +453,12 @@ public class PlayerController : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    public void RefreshProgressionStats()
+    {
+        ApplyHealthStats();
+        RefreshUnitReferences();
+    }
+
     private void EnsureAutoSkillController()
     {
         autoSkillController = GetComponent<PlayerAutoSkillController>();

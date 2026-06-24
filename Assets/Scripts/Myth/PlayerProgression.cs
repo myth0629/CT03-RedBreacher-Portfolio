@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerProgression : MonoBehaviour
@@ -23,6 +24,7 @@ public class PlayerProgression : MonoBehaviour
     public float ExperienceToNextLevel => experienceToNextLevel;
     public float ExperienceProgress01 => experienceToNextLevel > 0f ? Mathf.Clamp01(currentExperience / experienceToNextLevel) : 0f;
     public int StatPoints => statPoints;
+    public event Action Changed;
 
     private void Awake()
     {
@@ -131,15 +133,58 @@ public class PlayerProgression : MonoBehaviour
 
     private void Save()
     {
-        if (!saveToPlayerPrefs)
+        if (saveToPlayerPrefs)
+        {
+            PlayerPrefs.SetInt(LevelKey, level);
+            PlayerPrefs.SetFloat(CurrentExperienceKey, currentExperience);
+            PlayerPrefs.SetFloat(ExperienceToNextLevelKey, experienceToNextLevel);
+            PlayerPrefs.SetInt(StatPointsKey, statPoints);
+            PlayerPrefs.Save();
+        }
+
+        Changed?.Invoke();
+        BaseCampManager.Instance?.RequestUnifiedSave();
+    }
+
+    public JinyouPlayerProgressionSaveData CaptureState()
+    {
+        return new JinyouPlayerProgressionSaveData
+        {
+            level = level,
+            currentExperience = currentExperience,
+            experienceToNextLevel = experienceToNextLevel,
+            statPoints = statPoints
+        };
+    }
+
+    public void RestoreState(JinyouPlayerProgressionSaveData data)
+    {
+        if (data == null)
         {
             return;
         }
 
-        PlayerPrefs.SetInt(LevelKey, level);
-        PlayerPrefs.SetFloat(CurrentExperienceKey, currentExperience);
-        PlayerPrefs.SetFloat(ExperienceToNextLevelKey, experienceToNextLevel);
-        PlayerPrefs.SetInt(StatPointsKey, statPoints);
+        level = Mathf.Max(1, data.level);
+        currentExperience = Mathf.Max(0f, data.currentExperience);
+        experienceToNextLevel = Mathf.Max(1f, data.experienceToNextLevel);
+        statPoints = Mathf.Max(0, data.statPoints);
+        AchievementManager.ReportPlayerLevelReached(level);
+        MainGuideMissionManager.ReportPlayerLevelReached(level);
+        Changed?.Invoke();
+    }
+
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveToPlayerPrefs = enabled;
+        if (!clearStoredData)
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(LevelKey);
+        PlayerPrefs.DeleteKey(CurrentExperienceKey);
+        PlayerPrefs.DeleteKey(ExperienceToNextLevelKey);
+        PlayerPrefs.DeleteKey(StatPointsKey);
         PlayerPrefs.Save();
     }
 }

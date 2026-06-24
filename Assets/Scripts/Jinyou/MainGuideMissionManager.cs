@@ -28,6 +28,7 @@ public class MainGuideMissionManager : MonoBehaviour
 
     private int currentIndex;
     private int currentAmount;
+    private int bossTicketGrantedStepIndex = -1;
 
     public IReadOnlyList<GuideMissionConfig.GuideStepData> Steps => steps;
     public int CurrentIndex => currentIndex;
@@ -38,13 +39,33 @@ public class MainGuideMissionManager : MonoBehaviour
         AllCompleted ? null : steps[currentIndex];
 
     public int CurrentTargetAmount =>
-        CurrentStep != null ? Mathf.Max(1, CurrentStep.targetAmount) : 0;
+        GetEffectiveTargetAmount(CurrentStep);
 
     public bool IsCurrentCompleted =>
         CurrentStep != null && CurrentAmount >= CurrentTargetAmount;
 
     public float CurrentProgress01 =>
         CurrentStep != null ? Mathf.Clamp01((float)CurrentAmount / CurrentTargetAmount) : 1f;
+
+    private int GetEffectiveTargetAmount(GuideMissionConfig.GuideStepData step)
+    {
+        if (step == null)
+        {
+            return 0;
+        }
+
+        int targetAmount = Mathf.Max(1, step.targetAmount);
+        if (step.conditionType == GuideConditionType.UpgradeFacility)
+        {
+            int maxLevel = ResolveFacilityMaxLevel(step.conditionTarget);
+            if (maxLevel > 0)
+            {
+                targetAmount = Mathf.Min(targetAmount, maxLevel);
+            }
+        }
+
+        return targetAmount;
+    }
 
     private void Awake()
     {
@@ -101,16 +122,18 @@ public class MainGuideMissionManager : MonoBehaviour
     // ── 정적 보고 훅(기존 Report 발생 지점에서 함께 호출한다) ────────────────
     public static void ReportEnemyKilled(int amount = 1) => Instance?.AddProgress(GuideConditionType.EnemyKill, amount);
     public static void ReportPlayerLevelReached(int level) => Instance?.SetAbsoluteProgress(GuideConditionType.PlayerLevel, level);
-    public static void ReportStageCleared(int amount = 1) => Instance?.AddProgress(GuideConditionType.StageClear, amount);
+    public static void ReportStageCleared(int stage) => Instance?.SetAbsoluteProgress(GuideConditionType.StageClear, stage);
     public static void ReportWeaponCollected(int amount = 1) => Instance?.AddProgress(GuideConditionType.WeaponCollect, amount);
-    public static void ReportDroneCollected(int amount = 1) => Instance?.AddProgress(GuideConditionType.DroneCollect, amount);
+    public static void ReportDroneCollected(int amount = 1) => Instance?.ReportDroneCollectionProgress();
     public static void ReportCreditsCollected(int amount) => Instance?.AddProgress(GuideConditionType.CollectCredits, amount);
-    public static void ReportFacilityUpgraded(int amount = 1) => Instance?.AddProgress(GuideConditionType.UpgradeFacility, amount);
+    public static void ReportFacilityUpgraded(int amount = 1) => Instance?.PrimeCurrentStep();
+    public static void ReportFacilityLevelReached(string facilityId, int level) => Instance?.SetFacilityLevelProgress(facilityId, level);
     public static void ReportWeaponEnhanced(int amount = 1) => Instance?.AddProgress(GuideConditionType.EnhanceWeapon, amount);
-    public static void ReportUnitEnhanced(int amount = 1) => Instance?.AddProgress(GuideConditionType.EnhanceUnit, amount);
+    public static void ReportUnitEnhanced(int amount = 1) => Instance?.SetAbsoluteProgress(GuideConditionType.EnhanceUnit, amount);
     public static void ReportDroneEnhanced(int amount = 1) => Instance?.AddProgress(GuideConditionType.EnhanceDrone, amount);
     public static void ReportBossTicketUsed(int amount = 1) => Instance?.AddProgress(GuideConditionType.UseBossTicket, amount);
     public static void ReportWeaponGachaDrawn(int amount = 1) => Instance?.AddProgress(GuideConditionType.DrawWeaponGacha, amount);
+    public static void ReportSkillGachaDrawn(int amount = 1) => Instance?.AddProgress(GuideConditionType.DrawSkillGacha, amount);
     public static void ReportOfflineRewardClaimed(int amount = 1) => Instance?.AddProgress(GuideConditionType.ClaimOfflineReward, amount);
     public static void ReportBossDefeated(int amount = 1) => Instance?.AddProgress(GuideConditionType.BossDefeat, amount);
 
@@ -220,15 +243,154 @@ public class MainGuideMissionManager : MonoBehaviour
             return;
         }
 
+        GrantBossTicketsForCurrentStepIfNeeded(step);
+
         if (GuideMissionConfig.IsAbsoluteCondition(step.conditionType))
         {
+            if (step.conditionType == GuideConditionType.StageClear)
+            {
+                latestAbsoluteValues[GuideConditionType.StageClear] = Mathf.Max(
+                    GetAbsolute(GuideConditionType.StageClear),
+                    ResolveCurrentStage());
+            }
+            else if (step.conditionType == GuideConditionType.UpgradeFacility)
+            {
+                SetFacilityLevelProgress(step.conditionTarget, ResolveFacilityLevel(step.conditionTarget));
+                return;
+            }
+            else if (step.conditionType == GuideConditionType.EnhanceUnit)
+            {
+                latestAbsoluteValues[GuideConditionType.EnhanceUnit] = Mathf.Max(
+                    GetAbsolute(GuideConditionType.EnhanceUnit),
+                    ResolveUnitEnhancementCount());
+            }
+
             currentAmount = Mathf.Min(Mathf.Max(1, step.targetAmount), GetAbsolute(step.conditionType));
         }
     }
 
+    private void SetFacilityLevelProgress(string facilityId, int level)
+    {
+        GuideMissionConfig.GuideStepData step = CurrentStep;
+        if (step == null || step.conditionType != GuideConditionType.UpgradeFacility)
+        {
+            return;
+        }
+
+        if (!IsMatchingFacilityTarget(step.conditionTarget, facilityId))
+        {
+            return;
+        }
+
+        ApplyProgress(Mathf.Min(CurrentTargetAmount, Mathf.Max(0, level)));
+    }
+
     private int GetAbsolute(GuideConditionType conditionType)
     {
-        return latestAbsoluteValues.TryGetValue(conditionType, out int value) ? value : 0;
+        int value = latestAbsoluteValues.TryGetValue(conditionType, out int storedValue)
+            ? storedValue
+            : 0;
+        if (conditionType == GuideConditionType.StageClear)
+        {
+            value = Mathf.Max(value, ResolveCurrentStage());
+        }
+        else if (conditionType == GuideConditionType.UpgradeFacility)
+        {
+            value = Mathf.Max(value, ResolveFacilityLevel(CurrentStep?.conditionTarget));
+        }
+        else if (conditionType == GuideConditionType.EnhanceUnit)
+        {
+            value = Mathf.Max(value, ResolveUnitEnhancementCount());
+        }
+        else if (conditionType == GuideConditionType.DroneCollect)
+        {
+            value = Mathf.Max(value, ResolveDroneCollectionCount());
+        }
+
+        return value;
+    }
+
+    private void ReportDroneCollectionProgress()
+    {
+        SetAbsoluteProgress(GuideConditionType.DroneCollect, ResolveDroneCollectionCount());
+    }
+
+    private int ResolveCurrentStage()
+    {
+        EnemySpawnManager spawnManager = FindFirstObjectByType<EnemySpawnManager>();
+        return spawnManager != null ? Mathf.Max(1, spawnManager.CurrentStage) : 0;
+    }
+
+    private int ResolveUnitEnhancementCount()
+    {
+        BaseCampManager baseCamp = BaseCampManager.Instance;
+        if (baseCamp == null)
+        {
+            baseCamp = FindFirstObjectByType<BaseCampManager>(FindObjectsInactive.Include);
+        }
+
+        return baseCamp != null && baseCamp.CoreCharger != null
+            ? Mathf.Max(0, baseCamp.CoreCharger.CompletedConversionCount)
+            : 0;
+    }
+
+    private int ResolveDroneCollectionCount()
+    {
+        InventoryFacility inventory = FindFirstObjectByType<InventoryFacility>(FindObjectsInactive.Include);
+        return inventory != null && inventory.OwnedDroneIds != null
+            ? Mathf.Max(0, inventory.OwnedDroneIds.Count)
+            : 0;
+    }
+
+    private int ResolveFacilityLevel(string facilityId)
+    {
+        BaseCampManager baseCamp = BaseCampManager.Instance;
+        if (baseCamp == null)
+        {
+            baseCamp = FindFirstObjectByType<BaseCampManager>(FindObjectsInactive.Include);
+        }
+
+        if (baseCamp == null)
+        {
+            return 0;
+        }
+
+        string normalizedId = NormalizeFacilityId(facilityId);
+        return normalizedId switch
+        {
+            "command_center" => baseCamp.CommandCenter != null ? baseCamp.CommandCenter.Level : 0,
+            "energy_refinery" => baseCamp.CreditRefinery != null ? baseCamp.CreditRefinery.Level : 0,
+            "assembly_factory" => baseCamp.AssemblyFactory != null ? baseCamp.AssemblyFactory.Level : 0,
+            "core_charger" => baseCamp.CoreCharger != null ? baseCamp.CoreCharger.Level : 0,
+            "skill_hanger" => baseCamp.SkillHanger != null ? baseCamp.SkillHanger.Level : 0,
+            _ => 0
+        };
+    }
+
+    private int ResolveFacilityMaxLevel(string facilityId)
+    {
+        string normalizedId = NormalizeFacilityId(facilityId);
+        if (string.IsNullOrWhiteSpace(normalizedId))
+        {
+            return 0;
+        }
+
+        BaseCampBalanceConfig config = BaseCampBalanceConfig.Current;
+        return config != null ? Mathf.Max(1, config.GetMaxLevel(normalizedId)) : 0;
+    }
+
+    private static bool IsMatchingFacilityTarget(string stepTarget, string reportedTarget)
+    {
+        string normalizedStepTarget = NormalizeFacilityId(stepTarget);
+        return !string.IsNullOrWhiteSpace(normalizedStepTarget)
+            && normalizedStepTarget == NormalizeFacilityId(reportedTarget);
+    }
+
+    private static string NormalizeFacilityId(string facilityId)
+    {
+        return string.IsNullOrWhiteSpace(facilityId)
+            ? string.Empty
+            : facilityId.Trim().ToLowerInvariant();
     }
 
     public JinyouGuideMissionSaveData CaptureState()
@@ -236,7 +398,8 @@ public class MainGuideMissionManager : MonoBehaviour
         return new JinyouGuideMissionSaveData
         {
             currentIndex = currentIndex,
-            currentAmount = CurrentAmount
+            currentAmount = CurrentAmount,
+            bossTicketGrantedStepIndex = bossTicketGrantedStepIndex
         };
     }
 
@@ -251,6 +414,7 @@ public class MainGuideMissionManager : MonoBehaviour
         currentAmount = AllCompleted
             ? 0
             : Mathf.Clamp(data.currentAmount, 0, CurrentTargetAmount);
+        bossTicketGrantedStepIndex = data.bossTicketGrantedStepIndex;
         PrimeCurrentStep();
         Save();
         OnGuideMissionsChanged.Invoke();
@@ -261,6 +425,7 @@ public class MainGuideMissionManager : MonoBehaviour
     {
         currentIndex = 0;
         currentAmount = 0;
+        bossTicketGrantedStepIndex = -1;
         latestAbsoluteValues.Clear();
         Save();
         OnGuideMissionsChanged.Invoke();
@@ -284,6 +449,30 @@ public class MainGuideMissionManager : MonoBehaviour
         }
 
         return FindFirstObjectByType<PlayerCurrencyWallet>();
+    }
+
+    private void GrantBossTicketsForCurrentStepIfNeeded(GuideMissionConfig.GuideStepData step)
+    {
+        if (step == null
+            || bossTicketGrantedStepIndex == currentIndex
+            || (step.conditionType != GuideConditionType.UseBossTicket
+                && step.conditionType != GuideConditionType.BossDefeat))
+        {
+            return;
+        }
+
+        CommandCenter commandCenter = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.CommandCenter
+            : FindFirstObjectByType<CommandCenter>();
+        if (commandCenter == null)
+        {
+            return;
+        }
+
+        int neededTickets = Mathf.Max(1, Mathf.Max(1, step.targetAmount) - CurrentAmount);
+        commandCenter.AddBossTickets(neededTickets);
+        bossTicketGrantedStepIndex = currentIndex;
+        Save();
     }
 
     private void Load()

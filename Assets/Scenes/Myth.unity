@@ -1360,6 +1360,14 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 3007835671500335653}
+    - target: {fileID: 1798013084591374551, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1798013084591374551, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1841762282487784376, guid: 345f49ab4b61b4f4c810c3f084b1c094, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -1802,6 +1810,9 @@ MonoBehaviour:
   useUnifiedSave: 1
   autoSaveUnifiedState: 1
   unifiedSaveKey: Jinyou.SaveData
+  unifiedSaveFileName: jinyou_save.json
+  autoSaveDelaySeconds: 0.75
+  autoSaveMaxDelaySeconds: 5
   showDebugPanel: 0
   debugPanelRect:
     serializedVersion: 2
