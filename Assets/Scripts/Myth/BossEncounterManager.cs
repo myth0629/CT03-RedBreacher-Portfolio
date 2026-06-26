@@ -15,6 +15,15 @@ public class BossEncounterManager : MonoBehaviour
     private bool encounterActive;
 
     public bool IsEncounterActive => encounterActive;
+    public bool IsBossHudVisible
+    {
+        get
+        {
+            ResolveReferences();
+            return bossEncounterHud != null && bossEncounterHud.IsBossHudVisible;
+        }
+    }
+
     public event Action EncounterStarted;
     public event Action<bool> EncounterEnded;
 

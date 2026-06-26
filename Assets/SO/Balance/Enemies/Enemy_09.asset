@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Enemy_09
   m_EditorClassIdentifier: Assembly-CSharp::EnemyConfig
   id: 09
-  displayName: "\uC80109"
-  enemyPrefab: {fileID: 0}
+  displayName: "\uBD88\uB3C4\uC800 APC"
+  enemyPrefab: {fileID: 6804874563998169931, guid: 91cbc892ceea54f8a87096fb902c13d8, type: 3}
   maxHealth: 540
   moveSpeed: 0.6
   stopDistance: 1.1
@@ -24,7 +24,7 @@ MonoBehaviour:
   creditReward: 150
   coreCrystalReward: 2
   partDropChance: 0.09
-  deathExplosionEffectPrefab: {fileID: 1433295770268946, guid: 9f0ee939215f6df4babea8e4758a7079, type: 3}
+  deathExplosionEffectPrefab: {fileID: 1755199646753852, guid: a7e139447bd9ebd49b379aa5c661f201, type: 3}
   deathExplosionCleanupDelay: 0.6
   deathExplosionOffset: {x: 0, y: 0, z: 0}
   deathExplosionScale: 1

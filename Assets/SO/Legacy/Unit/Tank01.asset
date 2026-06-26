@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tank01
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUnitConfig
   id: unit_1
-  displayName: "\uD0F1\uD06C\uC774\uB984"
+  displayName: "\uACBD\uC804\uCC28"
   unitPrefab: {fileID: 6483762977116725696, guid: d5358ed55036949d79e06706787124be, type: 3}
   maxHealth: 100
   critChance: 0.1
@@ -24,4 +24,5 @@ MonoBehaviour:
   moveSpeed: 2
   rotationSpeed: 120
   fireAngleTolerance: 3
-  projectileConfig: {fileID: 11400000, guid: f6a04bdbcdcdd4a868549b706fa13040, type: 2}
+  repositionDistance: 1.8
+  repositionCooldown: 5

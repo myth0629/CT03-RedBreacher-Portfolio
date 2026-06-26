@@ -18,6 +18,8 @@ public class BossEncounterHud : MonoBehaviour
     private CombatHealth bossHealth;
     private float resultHideTime;
 
+    public bool IsBossHudVisible => bossHudPanel != null && bossHudPanel.activeInHierarchy;
+
     private void Awake()
     {
         Hide();
@@ -41,6 +43,10 @@ public class BossEncounterHud : MonoBehaviour
         if (bossHudPanel != null)
         {
             bossHudPanel.SetActive(true);
+        }
+
+        if (guidMissionPanel != null)
+        {
             guidMissionPanel.SetActive(false);
         }
 
@@ -55,6 +61,10 @@ public class BossEncounterHud : MonoBehaviour
         if (bossHudPanel != null)
         {
             bossHudPanel.SetActive(false);
+        }
+
+        if (guidMissionPanel != null)
+        {
             guidMissionPanel.SetActive(true);
         }
     }
@@ -70,6 +80,11 @@ public class BossEncounterHud : MonoBehaviour
         }
 
         // 별도 결과 프리팹 없이 기존 보스 HUD를 결과 표시에도 사용한다.
+        if (guidMissionPanel != null)
+        {
+            guidMissionPanel.SetActive(false);
+        }
+
         if (bossNameText != null)
         {
             bossNameText.text = title;

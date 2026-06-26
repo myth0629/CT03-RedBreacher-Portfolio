@@ -146,6 +146,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatHealth
   maxHealth: 100
   destroyOnDeath: 1
+  autoAddDamageFeedback: 1
   enableAutoRegen: 1
   playerOnlyRegen: 1
   regenDelayAfterHit: 3
@@ -175,7 +176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 476576e4865e143768d3a9fd83b9de3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  unitConfig: {fileID: 11400000, guid: 8a3270d70f9b8495d9fcff64b4b83ab1, type: 2}
+  unitConfig: {fileID: 11400000, guid: a3b7befadd4964e5b9ee9048889e72fb, type: 2}
   weaponConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
   unitRoot: {fileID: 1065801000117078494}
   displayName: Player
@@ -214,8 +215,13 @@ MonoBehaviour:
   projectileEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   autoSkills:
-  - {fileID: 11400000, guid: ade7c23ee0ef94de58b64675613a20d6, type: 2}
-  - {fileID: 11400000, guid: f37875bbd6023431e90ef1a693f06d5b, type: 2}
+  - {fileID: 11400000, guid: 73defaf86166b48fcbe8f5a77de1db3a, type: 2}
+  - {fileID: 11400000, guid: 517fc1aefca3743219be5549e67a0486, type: 2}
+  - {fileID: 11400000, guid: d270cf4ae8f6d4d3985dd40c3803af2d, type: 2}
+  - {fileID: 11400000, guid: ee6c5a9fbfaf54d36af61c2c6dfabb7c, type: 2}
+  - {fileID: 11400000, guid: baf3bf57f208049c39b8a4f439238bdb, type: 2}
+  skillSlotRequiredSkillHangerLevels: 00000000020000000300000004000000
+  saveLoadoutToPlayerPrefs: 1
 --- !u!114 &1908932380892413804
 MonoBehaviour:
   m_ObjectHideFlags: 0
