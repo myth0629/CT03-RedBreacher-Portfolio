@@ -35,6 +35,9 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private bool autoSaveUnifiedState = true;
     [SerializeField] private string unifiedSaveKey = "Jinyou.SaveData";
 
+    // 구키→계정키 이관을 기기당 최초 1회만 수행하기 위한 가드 키.
+    private const string LegacyMigrationFlagKey = "Jinyou.SaveData.LegacyMigrated";
+
     [Header("Debug")]
     [SerializeField] private bool showDebugPanel;
     [SerializeField] private Rect debugPanelRect = new Rect(16f, 16f, 280f, 220f);
@@ -65,7 +68,18 @@ public class BaseCampManager : MonoBehaviour
     public PlayerCurrencyWallet CurrencyWallet => EnsureCurrencyWallet();
     public PlayerProgression PlayerProgression => ResolvePlayerProgression();
     public JinyouOfflineRewardSaveData LastOfflineReward => lastOfflineReward;
-    private string UnifiedSaveBackupKey => $"{unifiedSaveKey}.Backup";
+    // 로그인 시 계정(UID)별 키로 분리한다(baseKey_UID). 비로그인/Auth 미준비 시 기본 키 그대로.
+    // 이렇게 해야 한 기기에서 여러 계정이 같은 로컬 세이브를 공유하지 않는다.
+    private string ResolvedSaveKey
+    {
+        get
+        {
+            FirebaseAuthManager auth = FirebaseAuthManager.Instance;
+            return auth != null ? auth.ScopedSaveKey(unifiedSaveKey) : unifiedSaveKey;
+        }
+    }
+
+    private string UnifiedSaveBackupKey => $"{ResolvedSaveKey}.Backup";
 
     private void Awake()
     {
@@ -153,14 +167,52 @@ public class BaseCampManager : MonoBehaviour
             return;
         }
 
+        MigrateLegacySaveKeyIfNeeded();
+
         try
         {
-            await CloudSaveService.Instance.EnsureSyncedAsync(unifiedSaveKey);
+            await CloudSaveService.Instance.EnsureSyncedAsync(ResolvedSaveKey);
         }
         catch (Exception exception)
         {
             Debug.LogWarning($"[Cloud] 동기화 실패(로컬로 진행): {exception.Message}", this);
         }
+    }
+
+    // 구버전(스코프 없는 단일 키)에서 계정별 키로 1회만 이관한다.
+    // 업데이트 전 단일 사용자 기기의 로컬 진행도가 첫 로그인 시 유실되지 않게 한다.
+    // 최초 로그인 부팅에서 한 번 실행한 뒤 플래그로 잠가, 이후 게스트/타계정 데이터가 다시 섞이지 않게 한다.
+    private void MigrateLegacySaveKeyIfNeeded()
+    {
+        if (PlayerPrefs.HasKey(LegacyMigrationFlagKey))
+        {
+            return; // 이미 1회 이관 완료.
+        }
+
+        string scopedKey = ResolvedSaveKey;
+        if (scopedKey == unifiedSaveKey)
+        {
+            return; // 비로그인 상태: 스코프 키 == 기본 키. 로그인 후 다시 시도(플래그 미설정).
+        }
+
+        // 계정 데이터가 아직 없고, 옮길 구 데이터가 있을 때만 복사한다.
+        if (!PlayerPrefs.HasKey(scopedKey) && PlayerPrefs.HasKey(unifiedSaveKey))
+        {
+            PlayerPrefs.SetString(scopedKey, PlayerPrefs.GetString(unifiedSaveKey, string.Empty));
+
+            string legacyBackupKey = $"{unifiedSaveKey}.Backup";
+            if (PlayerPrefs.HasKey(legacyBackupKey))
+            {
+                PlayerPrefs.SetString($"{scopedKey}.Backup", PlayerPrefs.GetString(legacyBackupKey, string.Empty));
+            }
+
+            PlayerPrefs.DeleteKey(unifiedSaveKey);
+            PlayerPrefs.DeleteKey(legacyBackupKey);
+            Debug.Log($"[Cloud] 구 세이브 키를 계정 키로 이관: {unifiedSaveKey} → {scopedKey}");
+        }
+
+        PlayerPrefs.SetString(LegacyMigrationFlagKey, "1");
+        PlayerPrefs.Save();
     }
 
     private void OnDestroy()
@@ -410,10 +462,11 @@ public class BaseCampManager : MonoBehaviour
         }
 
         // 준비된 시설 상태를 하나의 JSON으로 저장해 시스템 간 시점을 맞춘다.
+        string key = ResolvedSaveKey;
         JinyouSaveData data = CaptureUnifiedSaveData();
-        if (!skipNextBackupRotation && PlayerPrefs.HasKey(unifiedSaveKey))
+        if (!skipNextBackupRotation && PlayerPrefs.HasKey(key))
         {
-            string previousJson = PlayerPrefs.GetString(unifiedSaveKey, string.Empty);
+            string previousJson = PlayerPrefs.GetString(key, string.Empty);
             if (!string.IsNullOrWhiteSpace(previousJson))
             {
                 PlayerPrefs.SetString(UnifiedSaveBackupKey, previousJson);
@@ -421,22 +474,23 @@ public class BaseCampManager : MonoBehaviour
         }
 
         skipNextBackupRotation = false;
-        PlayerPrefs.SetString(unifiedSaveKey, JsonUtility.ToJson(data));
+        PlayerPrefs.SetString(key, JsonUtility.ToJson(data));
         PlayerPrefs.Save();
-        CloudSaveService.Instance.RequestPush(unifiedSaveKey); // 디바운스 후 클라우드 업로드(비로그인 시 no-op).
+        CloudSaveService.Instance.RequestPush(key); // 디바운스 후 클라우드 업로드(비로그인 시 no-op).
     }
 
     [ContextMenu("Load Unified Game")]
     public void LoadUnifiedGame()
     {
+        string key = ResolvedSaveKey;
         if (!useUnifiedSave
             || string.IsNullOrWhiteSpace(unifiedSaveKey)
-            || !PlayerPrefs.HasKey(unifiedSaveKey))
+            || !PlayerPrefs.HasKey(key))
         {
             return;
         }
 
-        string json = PlayerPrefs.GetString(unifiedSaveKey, string.Empty);
+        string json = PlayerPrefs.GetString(key, string.Empty);
         if (string.IsNullOrWhiteSpace(json))
         {
             return;
@@ -480,7 +534,7 @@ public class BaseCampManager : MonoBehaviour
             return;
         }
 
-        PlayerPrefs.DeleteKey(unifiedSaveKey);
+        PlayerPrefs.DeleteKey(ResolvedSaveKey);
         PlayerPrefs.DeleteKey(UnifiedSaveBackupKey);
         PlayerPrefs.Save();
     }
@@ -799,7 +853,7 @@ public class BaseCampManager : MonoBehaviour
 
     private void ClearLegacyStandaloneData()
     {
-        if (!useUnifiedSave || !PlayerPrefs.HasKey(unifiedSaveKey))
+        if (!useUnifiedSave || !PlayerPrefs.HasKey(ResolvedSaveKey))
         {
             return;
         }

@@ -29,6 +29,7 @@ public class MapBackgroundManager : MonoBehaviour
     [SerializeField] private float fadeHoldSeconds = 0f;
 
     private int appliedIndex = -1;
+    private bool initialized;
 
     private void Awake()
     {
@@ -66,11 +67,15 @@ public class MapBackgroundManager : MonoBehaviour
         {
             ApplyForStage(spawnManager.CurrentStage, false);
         }
+
+        // 초기화가 끝난 뒤의 스테이지 변경부터 페이드 연출을 적용한다.
+        initialized = true;
     }
 
     private void HandleStageChanged(int stage)
     {
-        ApplyForStage(stage, true);
+        // 초기화 전(세이브 로드 중)에 들어온 변경은 페이드 없이 즉시 반영해 시작 시 깜빡임을 막는다.
+        ApplyForStage(stage, initialized);
     }
 
     private void ApplyForStage(int stage, bool animate)
