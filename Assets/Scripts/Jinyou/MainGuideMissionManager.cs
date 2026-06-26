@@ -129,7 +129,7 @@ public class MainGuideMissionManager : MonoBehaviour
     public static void ReportFacilityUpgraded(int amount = 1) => Instance?.PrimeCurrentStep();
     public static void ReportFacilityLevelReached(string facilityId, int level) => Instance?.SetFacilityLevelProgress(facilityId, level);
     public static void ReportWeaponEnhanced(int amount = 1) => Instance?.AddProgress(GuideConditionType.EnhanceWeapon, amount);
-    public static void ReportUnitEnhanced(int amount = 1) => Instance?.SetAbsoluteProgress(GuideConditionType.EnhanceUnit, amount);
+    public static void ReportUnitEnhanced(int amount = 1) => Instance?.ReportUnitEnhancementProgress();
     public static void ReportDroneEnhanced(int amount = 1) => Instance?.AddProgress(GuideConditionType.EnhanceDrone, amount);
     public static void ReportBossTicketUsed(int amount = 1) => Instance?.AddProgress(GuideConditionType.UseBossTicket, amount);
     public static void ReportWeaponGachaDrawn(int amount = 1) => Instance?.AddProgress(GuideConditionType.DrawWeaponGacha, amount);
@@ -313,6 +313,11 @@ public class MainGuideMissionManager : MonoBehaviour
     private void ReportDroneCollectionProgress()
     {
         SetAbsoluteProgress(GuideConditionType.DroneCollect, ResolveDroneCollectionCount());
+    }
+
+    private void ReportUnitEnhancementProgress()
+    {
+        SetAbsoluteProgress(GuideConditionType.EnhanceUnit, ResolveUnitEnhancementCount());
     }
 
     private int ResolveCurrentStage()

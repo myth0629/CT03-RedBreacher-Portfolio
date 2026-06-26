@@ -121,49 +121,50 @@ public static class JinyouSaveValidator
     private static bool ValidateV4(JinyouSaveData data, out string error)
     {
         error = string.Empty;
-        if (data.playerProgression == null
-            || data.playerStats == null
-            || data.combatProgress == null
-            || data.bossTracker == null)
+        if (data.myth == null
+            || data.myth.progression == null
+            || data.myth.statAllocator == null
+            || data.myth.enemySpawn == null
+            || data.myth.bossTracker == null)
         {
             error = "v4 save is missing runtime progression data";
             return false;
         }
 
-        if (data.playerProgression.level < 1
-            || data.playerProgression.currentExperience < 0f
-            || data.playerProgression.experienceToNextLevel <= 0f
-            || data.playerProgression.statPoints < 0
-            || !IsFinite(data.playerProgression.currentExperience)
-            || !IsFinite(data.playerProgression.experienceToNextLevel))
+        if (data.myth.progression.level < 1
+            || data.myth.progression.currentExperience < 0f
+            || data.myth.progression.experienceToNextLevel <= 0f
+            || data.myth.progression.statPoints < 0
+            || !IsFinite(data.myth.progression.currentExperience)
+            || !IsFinite(data.myth.progression.experienceToNextLevel))
         {
             error = "player progression is invalid";
             return false;
         }
 
-        if (data.playerStats.attackLevel < 0
-            || data.playerStats.healthLevel < 0
-            || data.playerStats.critChanceLevel < 0
-            || data.playerStats.critMultiplierLevel < 0)
+        if (data.myth.statAllocator.attackLevel < 0
+            || data.myth.statAllocator.healthLevel < 0
+            || data.myth.statAllocator.critChanceLevel < 0
+            || data.myth.statAllocator.critMultiplierLevel < 0)
         {
             error = "player stat allocation is invalid";
             return false;
         }
 
-        if (data.combatProgress.currentRound < 1)
+        if (data.myth.enemySpawn.currentRound < 1)
         {
             error = "combat round is invalid";
             return false;
         }
 
-        if (data.bossTracker.records == null)
+        if (data.myth.bossTracker.records == null)
         {
             error = "boss records are missing";
             return false;
         }
 
         HashSet<string> seen = new HashSet<string>();
-        foreach (JinyouBossRecordSaveData record in data.bossTracker.records)
+        foreach (JinyouBossRecordSaveData record in data.myth.bossTracker.records)
         {
             if (record == null
                 || string.IsNullOrWhiteSpace(record.bossId)

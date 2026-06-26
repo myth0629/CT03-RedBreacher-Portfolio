@@ -112,8 +112,7 @@ public class GachaPanel : MonoBehaviour
         bool succeeded = weaponGacha.TryDraw(category, count);
         if (succeeded)
         {
-            DailyMissionManager.ReportWeaponGachaDrawn(count);
-            MainGuideMissionManager.ReportWeaponGachaDrawn(count);
+            ReportDrawMissions(category, count);
             IReadOnlyList<GachaDrawResult> results = weaponGacha.LastResults;
             PlayDrawTween(category, () =>
             {
@@ -126,6 +125,18 @@ public class GachaPanel : MonoBehaviour
 
         isDrawing = false;
         Refresh();
+    }
+
+    private static void ReportDrawMissions(GachaCategory category, int count)
+    {
+        if (category == GachaCategory.Skill)
+        {
+            MainGuideMissionManager.ReportSkillGachaDrawn(count);
+            return;
+        }
+
+        DailyMissionManager.ReportWeaponGachaDrawn(count);
+        MainGuideMissionManager.ReportWeaponGachaDrawn(count);
     }
 
     private void Refresh()
