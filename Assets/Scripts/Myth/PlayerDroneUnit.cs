@@ -10,6 +10,7 @@ public class PlayerDroneUnit : MonoBehaviour
     private int slotIndex;
     private int slotCount;
     private float nextAttackTime;
+    private Vector3 followVelocity;
 
     public void Initialize(PlayerController owner, DroneConfig droneConfig, int index, int count)
     {
@@ -41,25 +42,41 @@ public class PlayerDroneUnit : MonoBehaviour
             currentTarget = FindClosestTarget();
         }
 
-        if (currentTarget == null || !IsTargetInRange(currentTarget))
+        Vector3 targetDirection = currentTarget != null && IsTargetInRange(currentTarget)
+            ? CombatPlane.Direction(transform.position, currentTarget.transform.position)
+            : Vector3.zero;
+
+        if (targetDirection.sqrMagnitude > 0f)
+        {
+            // 사거리 안에 적이 있으면 적을 조준하고 사격한다.
+            CombatPlane.RotateZOnlyToward(transform, targetDirection, config.RotationSpeed * Time.deltaTime);
+            if (IsFacing(targetDirection) && Time.time >= nextAttackTime)
+            {
+                Fire(targetDirection);
+                nextAttackTime = Time.time + GetAttackInterval();
+            }
+            return;
+        }
+
+        // 적이 없으면 플레이어처럼 자신이 이동하는 방향을 바라본다.
+        FaceMovementDirection();
+    }
+
+    private void FaceMovementDirection()
+    {
+        // SmoothDamp가 산출한 추적 속도를 이동 방향으로 사용한다. 거의 멈춰 있으면 현재 방향을 유지한다.
+        if (followVelocity.sqrMagnitude < 0.01f)
         {
             return;
         }
 
-        Vector3 direction = CombatPlane.Direction(transform.position, currentTarget.transform.position);
-        if (direction.sqrMagnitude <= 0f)
+        Vector3 moveDirection = CombatPlane.ProjectDirection(followVelocity);
+        if (moveDirection.sqrMagnitude <= 0f)
         {
             return;
         }
 
-        CombatPlane.RotateZOnlyToward(transform, direction, config.RotationSpeed * Time.deltaTime);
-        if (!IsFacing(direction) || Time.time < nextAttackTime)
-        {
-            return;
-        }
-
-        Fire(direction);
-        nextAttackTime = Time.time + GetAttackInterval();
+        CombatPlane.RotateZOnlyToward(transform, moveDirection, config.RotationSpeed * Time.deltaTime);
     }
 
     private void FollowPlayerSlot()
@@ -67,8 +84,13 @@ public class PlayerDroneUnit : MonoBehaviour
         Vector3 targetPosition = GetSlotPosition();
         CoreCharger coreCharger = GetCoreCharger();
         float followSpeedBonus = coreCharger != null ? coreCharger.DroneFollowSpeedBonus : 0f;
-        float followRate = Mathf.Max(0f, config.FollowSpeed + followSpeedBonus) * Time.deltaTime;
-        transform.position = CombatPlane.WithFixedY(Vector3.Lerp(transform.position, targetPosition, followRate));
+
+        // SmoothDamp로 관성 있는 추적을 만들어 별개 유닛처럼 트레일링하게 한다.
+        // FollowSpeed 보너스가 높을수록 지연 시간을 줄여 더 빠르게 따라온다.
+        float responsiveness = Mathf.Max(0.01f, config.FollowSpeed + followSpeedBonus);
+        float smoothTime = config.FollowSmoothTime * (config.FollowSpeed / responsiveness);
+        Vector3 smoothed = Vector3.SmoothDamp(transform.position, targetPosition, ref followVelocity, smoothTime);
+        transform.position = CombatPlane.WithFixedY(smoothed);
     }
 
     private Vector3 GetSlotPosition()
@@ -86,9 +108,8 @@ public class PlayerDroneUnit : MonoBehaviour
             angleDegrees = Mathf.Lerp(90f, 270f, progress);
         }
 
-        // 플레이어의 몸체 회전 각도(Y Rotation)를 반영하여 플레이어 기준의 로컬 방향으로 회전시킴
-        float playerYAngle = player.transform.eulerAngles.y;
-        float finalAngle = (playerYAngle + angleDegrees) * Mathf.Deg2Rad;
+        // 플레이어 회전과 무관하게 월드 기준 고정 방향으로 배치하여 별개의 유닛처럼 움직이게 한다.
+        float finalAngle = angleDegrees * Mathf.Deg2Rad;
 
         // X/Z 평면 기준 오프셋 계산 (Z는 정면, X는 오른쪽)
         Vector3 offset = new Vector3(Mathf.Sin(finalAngle), 0f, Mathf.Cos(finalAngle)) * config.FollowRadius;

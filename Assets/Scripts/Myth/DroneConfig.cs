@@ -25,6 +25,8 @@ public class DroneConfig : ScriptableObject
     [SerializeField] private int droneCount = 1;
     [SerializeField] private float followRadius = 1.2f;
     [SerializeField] private float followSpeed = 8f;
+    [Tooltip("드론이 슬롯 위치로 따라오는 지연(관성) 시간. 값이 클수록 느릿하게 트레일링하며 별개 유닛처럼 보인다.")]
+    [SerializeField] private float followSmoothTime = 0.35f;
     [SerializeField] private float startAngle = 180f;
     [SerializeField] private float angleStep = 45f;
     [SerializeField] private string muzzleNamePrefix = "FireMuzzle";
@@ -44,6 +46,7 @@ public class DroneConfig : ScriptableObject
     public int DroneCount => Mathf.Max(1, droneCount);
     public float FollowRadius => followRadius;
     public float FollowSpeed => followSpeed;
+    public float FollowSmoothTime => Mathf.Max(0f, followSmoothTime);
     public float StartAngle => startAngle;
     public float AngleStep => angleStep;
     public string MuzzleNamePrefix => muzzleNamePrefix;

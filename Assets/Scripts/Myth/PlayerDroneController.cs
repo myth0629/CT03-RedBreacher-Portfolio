@@ -101,8 +101,8 @@ public class PlayerDroneController : MonoBehaviour
 
     private Transform GetDroneParent()
     {
-        // 별도 슬롯 루트가 있으면 그 아래에 생성하고, 없으면 플레이어 하위에 둔다.
-        return droneSpawnParent != null ? droneSpawnParent : transform;
+        // 별도 슬롯 루트가 지정되면 그 아래에 두고, 없으면 플레이어 회전을 상속하지 않도록 씬 루트(독립)에 둔다.
+        return droneSpawnParent;
     }
 
     private void ClearDrones()
