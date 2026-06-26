@@ -33,6 +33,7 @@ public class BaseCampFacilityView : MonoBehaviour, IPointerClickHandler
 
     public string FacilityId => GetFacilityId();
     public Sprite FacilitySprite => facilityImage != null ? facilityImage.sprite : null;
+    public int CurrentLevel => GetCurrentLevel();
 
     private void Awake()
     {

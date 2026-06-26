@@ -115,12 +115,7 @@ public class BossSummonButton : MonoBehaviour
 
     private static string GetBossName(BossTracker.BossDefinition boss)
     {
-        if (!string.IsNullOrWhiteSpace(boss.displayName))
-        {
-            return boss.displayName;
-        }
-
-        return boss.bossConfig != null ? boss.bossConfig.DisplayName : "보스";
+        return boss != null ? boss.DisplayName : "보스";
     }
 
     private void ResolveReferences()
