@@ -263,19 +263,19 @@ public class AchievementManager : MonoBehaviour
         Instance?.AddProgress(AchievementProgressType.EnemyKill, amount);
     }
 
-    public static void ReportStageCleared(int stage)
+    public static void ReportStageCleared(int amount = 1)
     {
-        Instance?.SetProgress(AchievementProgressType.StageClear, stage);
+        Instance?.AddProgress(AchievementProgressType.StageClear, amount);
     }
 
     public static void ReportWeaponCollected(int amount = 1)
     {
-        Instance?.ReportWeaponCollectionProgress();
+        Instance?.AddProgress(AchievementProgressType.WeaponCollect, amount);
     }
 
     public static void ReportDroneCollected(int amount = 1)
     {
-        Instance?.ReportDroneCollectionProgress();
+        Instance?.AddProgress(AchievementProgressType.DroneCollect, amount);
     }
 
     [ContextMenu("Reset Achievement Progress")]
@@ -391,67 +391,9 @@ public class AchievementManager : MonoBehaviour
             wallet.Add(achievement.RewardCurrency, achievement.RewardAmount);
         }
 
-        PrimeAbsoluteProgress(achievement);
         Save();
         OnAchievementsChanged.Invoke();
         return true;
-    }
-
-    private void PrimeAbsoluteProgress(AchievementEntry achievement)
-    {
-        if (achievement == null)
-        {
-            return;
-        }
-
-        bool wasCompleted = achievement.Completed;
-        switch (achievement.ProgressType)
-        {
-            case AchievementProgressType.StageClear:
-                achievement.SetProgress(ResolveCurrentStage());
-                break;
-            case AchievementProgressType.WeaponCollect:
-                achievement.SetProgress(ResolveWeaponCollectionCount());
-                break;
-            case AchievementProgressType.DroneCollect:
-                achievement.SetProgress(ResolveDroneCollectionCount());
-                break;
-            default:
-                return;
-        }
-
-        if (!wasCompleted && achievement.Completed)
-        {
-            OnAchievementCompleted.Invoke(achievement);
-        }
-    }
-
-    private void ReportWeaponCollectionProgress()
-    {
-        SetProgress(AchievementProgressType.WeaponCollect, ResolveWeaponCollectionCount());
-    }
-
-    private void ReportDroneCollectionProgress()
-    {
-        SetProgress(AchievementProgressType.DroneCollect, ResolveDroneCollectionCount());
-    }
-
-    private int ResolveCurrentStage()
-    {
-        EnemySpawnManager spawnManager = FindFirstObjectByType<EnemySpawnManager>();
-        return spawnManager != null ? Mathf.Max(1, spawnManager.CurrentStage) : 0;
-    }
-
-    private int ResolveWeaponCollectionCount()
-    {
-        InventoryFacility inventory = InventoryFacility.FindAny();
-        return inventory != null ? Mathf.Max(0, inventory.WeaponConfigs.Count) : 0;
-    }
-
-    private int ResolveDroneCollectionCount()
-    {
-        InventoryFacility inventory = InventoryFacility.FindAny();
-        return inventory != null ? Mathf.Max(0, inventory.OwnedDroneIds.Count) : 0;
     }
 
     private PlayerCurrencyWallet ResolveCurrencyWallet()

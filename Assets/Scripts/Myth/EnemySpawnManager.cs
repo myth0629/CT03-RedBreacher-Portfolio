@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Action = System.Action;
 using TMPro;
 using UnityEngine;
 
@@ -76,7 +75,6 @@ public class EnemySpawnManager : MonoBehaviour
     public bool CanStartBossEncounter => !bossEncounterActive
         && playerDeathRestartRoutine == null
         && (player == null || player.Health == null || !player.Health.IsDead);
-    public event Action ProgressChanged;
 
     private void Awake()
     {
@@ -99,14 +97,8 @@ public class EnemySpawnManager : MonoBehaviour
     {
         if (startOnAwake)
         {
-            StartCoroutine(StartRoundsAfterInitialization());
+            StartRounds();
         }
-    }
-
-    private IEnumerator StartRoundsAfterInitialization()
-    {
-        yield return null;
-        StartRounds();
     }
 
     private void Update()
@@ -265,8 +257,6 @@ public class EnemySpawnManager : MonoBehaviour
     {
         currentStage = GetStageForRound(currentRound);
         currentRoundInStage = GetRoundInStage(currentRound);
-        AchievementManager.ReportStageCleared(currentStage);
-        MainGuideMissionManager.ReportStageCleared(currentStage);
     }
 
     private void ReportStageClearIfNeeded()
@@ -283,7 +273,8 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         lastReportedStageClearRound = clearedRound;
-        MainGuideMissionManager.ReportStageCleared(GetStageForRound(clearedRound));
+        AchievementManager.ReportStageCleared();
+        MainGuideMissionManager.ReportStageCleared();
     }
 
     private void SpawnEnemy(int index)
@@ -624,45 +615,12 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void SaveProgress()
     {
-        if (saveToPlayerPrefs)
-        {
-            PlayerPrefs.SetInt(CurrentRoundKey, Mathf.Max(1, currentRound));
-            PlayerPrefs.Save();
-        }
-
-        ProgressChanged?.Invoke();
-        BaseCampManager.Instance?.RequestUnifiedSave();
-    }
-
-    public JinyouCombatProgressSaveData CaptureState()
-    {
-        return new JinyouCombatProgressSaveData
-        {
-            currentRound = Mathf.Max(1, currentRound)
-        };
-    }
-
-    public void RestoreState(JinyouCombatProgressSaveData data)
-    {
-        if (data == null)
+        if (!saveToPlayerPrefs)
         {
             return;
         }
 
-        currentRound = Mathf.Max(Mathf.Max(1, startRound), data.currentRound);
-        RefreshStageRoundState();
-        ProgressChanged?.Invoke();
-    }
-
-    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
-    {
-        saveToPlayerPrefs = enabled;
-        if (!clearStoredData)
-        {
-            return;
-        }
-
-        PlayerPrefs.DeleteKey(CurrentRoundKey);
+        PlayerPrefs.SetInt(CurrentRoundKey, Mathf.Max(1, currentRound));
         PlayerPrefs.Save();
     }
 

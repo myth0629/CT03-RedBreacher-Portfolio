@@ -51,7 +51,7 @@ public class BossTracker : MonoBehaviour
             displayName = "어려움",
             requiredResearchLabLevel = 3,
             recommendedPower = 3000,
-            rewardSummary = "고급 부품",
+            rewardSummary = "희귀 부품",
             healthMultiplier = 1.75f,
             moveSpeedMultiplier = 1.1f,
             damageMultiplier = 1.5f,
@@ -73,9 +73,7 @@ public class BossTracker : MonoBehaviour
 
     [SerializeField] private int selectedBossIndex;
     [SerializeField] private int selectedDifficultyIndex;
-    [SerializeField] private bool saveRecordsToPlayerPrefs = true;
 
-    private readonly List<JinyouBossRecordSaveData> records = new List<JinyouBossRecordSaveData>();
     private BossDefinition activeBoss;
     private BossDifficulty activeDifficulty;
     private float encounterStartTime;
@@ -86,13 +84,11 @@ public class BossTracker : MonoBehaviour
     public BossDefinition SelectedBoss => GetBoss(selectedBossIndex);
     public BossDifficulty SelectedDifficulty => GetDifficulty(selectedDifficultyIndex);
     public event Action SelectionChanged;
-    public event Action RecordsChanged;
 
     private void Awake()
     {
         ResolveReferences();
         EnsureValidSelection();
-        LoadLegacyRecords();
         SubscribeEncounter();
     }
 
@@ -163,9 +159,7 @@ public class BossTracker : MonoBehaviour
         activeBoss = boss;
         activeDifficulty = difficulty;
         encounterStartTime = Time.unscaledTime;
-        JinyouBossRecordSaveData record = GetOrCreateRecord(boss, difficulty);
-        record.attempts++;
-        SaveRecord(record);
+        IncrementRecord(boss, difficulty, "Attempts");
         return true;
     }
 
@@ -226,83 +220,12 @@ public class BossTracker : MonoBehaviour
             return string.Empty;
         }
 
-        JinyouBossRecordSaveData record = GetOrCreateRecord(boss, difficulty);
-        return record.bestTime > 0f
-            ? $"클리어 {record.clears} / 실패 {record.failures} / 최고 {record.bestTime:0.0}초"
-            : $"클리어 {record.clears} / 실패 {record.failures}";
-    }
-
-    public JinyouBossTrackerSaveData CaptureState()
-    {
-        BossDefinition boss = SelectedBoss;
-        BossDifficulty difficulty = SelectedDifficulty;
-        return new JinyouBossTrackerSaveData
-        {
-            selectedBossId = GetBossId(boss),
-            selectedDifficultyId = GetDifficultyId(difficulty),
-            records = new List<JinyouBossRecordSaveData>(records)
-        };
-    }
-
-    public void RestoreState(JinyouBossTrackerSaveData data)
-    {
-        if (data == null)
-        {
-            return;
-        }
-
-        EnsureBossFallback();
-        selectedBossIndex = FindBossIndex(data.selectedBossId, selectedBossIndex);
-        selectedDifficultyIndex = FindDifficultyIndex(data.selectedDifficultyId, selectedDifficultyIndex);
-        records.Clear();
-        if (data.records != null)
-        {
-            foreach (JinyouBossRecordSaveData record in data.records)
-            {
-                if (record == null
-                    || string.IsNullOrWhiteSpace(record.bossId)
-                    || string.IsNullOrWhiteSpace(record.difficultyId))
-                {
-                    continue;
-                }
-
-                records.Add(new JinyouBossRecordSaveData
-                {
-                    bossId = record.bossId,
-                    difficultyId = record.difficultyId,
-                    attempts = Mathf.Max(0, record.attempts),
-                    clears = Mathf.Max(0, record.clears),
-                    failures = Mathf.Max(0, record.failures),
-                    bestTime = Mathf.Max(0f, record.bestTime)
-                });
-            }
-        }
-
-        EnsureValidSelection();
-        SelectionChanged?.Invoke();
-        RecordsChanged?.Invoke();
-    }
-
-    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
-    {
-        saveRecordsToPlayerPrefs = enabled;
-        if (!clearStoredData)
-        {
-            return;
-        }
-
-        foreach (BossDefinition boss in bosses)
-        {
-            foreach (BossDifficulty difficulty in difficulties)
-            {
-                PlayerPrefs.DeleteKey(GetRecordKey(boss, difficulty, "Attempts"));
-                PlayerPrefs.DeleteKey(GetRecordKey(boss, difficulty, "Clears"));
-                PlayerPrefs.DeleteKey(GetRecordKey(boss, difficulty, "Failures"));
-                PlayerPrefs.DeleteKey(GetRecordKey(boss, difficulty, "BestTime"));
-            }
-        }
-
-        PlayerPrefs.Save();
+        int clears = PlayerPrefs.GetInt(GetRecordKey(boss, difficulty, "Clears"), 0);
+        int failures = PlayerPrefs.GetInt(GetRecordKey(boss, difficulty, "Failures"), 0);
+        float bestTime = PlayerPrefs.GetFloat(GetRecordKey(boss, difficulty, "BestTime"), 0f);
+        return bestTime > 0f
+            ? $"클리어 {clears} / 실패 {failures} / 최고 {bestTime:0.0}초"
+            : $"클리어 {clears} / 실패 {failures}";
     }
 
     private void HandleEncounterEnded(bool cleared)
@@ -317,14 +240,12 @@ public class BossTracker : MonoBehaviour
         activeBoss = null;
         activeDifficulty = null;
         float clearTime = Mathf.Max(0f, Time.unscaledTime - encounterStartTime);
-        JinyouBossRecordSaveData record = GetOrCreateRecord(completedBoss, completedDifficulty);
-
         if (!cleared)
         {
+            // 방치형: 패배는 "더 강해져"라는 정상 신호 → 시간제 자원인 티켓을 돌려준다.
             ResolveReferences();
             cmdCenter?.RefundBossTicket();
-            record.failures++;
-            SaveRecord(record);
+            IncrementRecord(completedBoss, completedDifficulty, "Failures");
             bossEncounterManager.ShowResult(
                 "보스전 실패 (티켓 반환)",
                 $"{completedDifficulty.displayName}\n{GetRecordSummary(completedBoss, completedDifficulty)}",
@@ -332,16 +253,21 @@ public class BossTracker : MonoBehaviour
             return;
         }
 
-        bool firstClear = record.clears == 0;
-        record.clears++;
-        if (record.bestTime <= 0f || clearTime < record.bestTime)
+        string clearKey = GetRecordKey(completedBoss, completedDifficulty, "Clears");
+        int previousClears = PlayerPrefs.GetInt(clearKey, 0);
+        bool firstClear = previousClears == 0;
+        PlayerPrefs.SetInt(clearKey, previousClears + 1);
+
+        string bestTimeKey = GetRecordKey(completedBoss, completedDifficulty, "BestTime");
+        float bestTime = PlayerPrefs.GetFloat(bestTimeKey, 0f);
+        if (bestTime <= 0f || clearTime < bestTime)
         {
-            record.bestTime = clearTime;
+            PlayerPrefs.SetFloat(bestTimeKey, clearTime);
         }
 
-        SaveRecord(record);
         if (firstClear)
         {
+            // 기본 보상은 전투 보상 서비스가 지급하므로 최초 클리어 보너스만 추가한다.
             PlayerCurrencyWallet wallet = BaseCampManager.Instance != null
                 ? BaseCampManager.Instance.CurrencyWallet
                 : FindFirstObjectByType<PlayerCurrencyWallet>();
@@ -349,6 +275,7 @@ public class BossTracker : MonoBehaviour
             wallet?.AddCoreCrystals(completedDifficulty.firstClearCoreCrystalBonus);
         }
 
+        PlayerPrefs.Save();
         string firstClearText = firstClear
             ? $"\n최초 클리어 보너스: 크레딧 +{completedDifficulty.firstClearCreditBonus}"
                 + $" / 코어 +{completedDifficulty.firstClearCoreCrystalBonus}"
@@ -359,71 +286,14 @@ public class BossTracker : MonoBehaviour
             true);
     }
 
-    private JinyouBossRecordSaveData GetOrCreateRecord(BossDefinition boss, BossDifficulty difficulty)
+    private void IncrementRecord(
+        BossDefinition boss,
+        BossDifficulty difficulty,
+        string recordName)
     {
-        string bossId = GetBossId(boss);
-        string difficultyId = GetDifficultyId(difficulty);
-        foreach (JinyouBossRecordSaveData record in records)
-        {
-            if (record.bossId == bossId && record.difficultyId == difficultyId)
-            {
-                return record;
-            }
-        }
-
-        JinyouBossRecordSaveData created = new JinyouBossRecordSaveData
-        {
-            bossId = bossId,
-            difficultyId = difficultyId
-        };
-        records.Add(created);
-        return created;
-    }
-
-    private void SaveRecord(JinyouBossRecordSaveData record)
-    {
-        if (record == null)
-        {
-            return;
-        }
-
-        if (saveRecordsToPlayerPrefs)
-        {
-            BossDefinition boss = FindBoss(record.bossId);
-            BossDifficulty difficulty = FindDifficulty(record.difficultyId);
-            PlayerPrefs.SetInt(GetRecordKey(boss, difficulty, "Attempts"), Mathf.Max(0, record.attempts));
-            PlayerPrefs.SetInt(GetRecordKey(boss, difficulty, "Clears"), Mathf.Max(0, record.clears));
-            PlayerPrefs.SetInt(GetRecordKey(boss, difficulty, "Failures"), Mathf.Max(0, record.failures));
-            PlayerPrefs.SetFloat(GetRecordKey(boss, difficulty, "BestTime"), Mathf.Max(0f, record.bestTime));
-            PlayerPrefs.Save();
-        }
-
-        RecordsChanged?.Invoke();
-        BaseCampManager.Instance?.RequestUnifiedSave();
-    }
-
-    private void LoadLegacyRecords()
-    {
-        foreach (BossDefinition boss in bosses)
-        {
-            foreach (BossDifficulty difficulty in difficulties)
-            {
-                int attempts = PlayerPrefs.GetInt(GetRecordKey(boss, difficulty, "Attempts"), 0);
-                int clears = PlayerPrefs.GetInt(GetRecordKey(boss, difficulty, "Clears"), 0);
-                int failures = PlayerPrefs.GetInt(GetRecordKey(boss, difficulty, "Failures"), 0);
-                float bestTime = PlayerPrefs.GetFloat(GetRecordKey(boss, difficulty, "BestTime"), 0f);
-                if (attempts <= 0 && clears <= 0 && failures <= 0 && bestTime <= 0f)
-                {
-                    continue;
-                }
-
-                JinyouBossRecordSaveData record = GetOrCreateRecord(boss, difficulty);
-                record.attempts = Mathf.Max(0, attempts);
-                record.clears = Mathf.Max(0, clears);
-                record.failures = Mathf.Max(0, failures);
-                record.bestTime = Mathf.Max(0f, bestTime);
-            }
-        }
+        string key = GetRecordKey(boss, difficulty, recordName);
+        PlayerPrefs.SetInt(key, PlayerPrefs.GetInt(key, 0) + 1);
+        PlayerPrefs.Save();
     }
 
     private static string GetRecordKey(
@@ -431,7 +301,13 @@ public class BossTracker : MonoBehaviour
         BossDifficulty difficulty,
         string recordName)
     {
-        return $"BossDungeon.{GetBossId(boss)}.{GetDifficultyId(difficulty)}.{recordName}";
+        string bossId = !string.IsNullOrWhiteSpace(boss?.bossId)
+            ? boss.bossId
+            : boss?.displayName;
+        string difficultyId = !string.IsNullOrWhiteSpace(difficulty?.difficultyId)
+            ? difficulty.difficultyId
+            : difficulty?.displayName;
+        return $"BossDungeon.{bossId}.{difficultyId}.{recordName}";
     }
 
     private void CycleBoss(int direction)
@@ -443,7 +319,6 @@ public class BossTracker : MonoBehaviour
 
         selectedBossIndex = WrapIndex(selectedBossIndex + direction, bosses.Count);
         SelectionChanged?.Invoke();
-        BaseCampManager.Instance?.RequestUnifiedSave();
     }
 
     private void CycleDifficulty(int direction)
@@ -455,7 +330,6 @@ public class BossTracker : MonoBehaviour
 
         selectedDifficultyIndex = WrapIndex(selectedDifficultyIndex + direction, difficulties.Count);
         SelectionChanged?.Invoke();
-        BaseCampManager.Instance?.RequestUnifiedSave();
     }
 
     private BossDefinition GetBoss(int index)
@@ -467,54 +341,6 @@ public class BossTracker : MonoBehaviour
     private BossDifficulty GetDifficulty(int index)
     {
         return difficulties.Count > 0 ? difficulties[WrapIndex(index, difficulties.Count)] : null;
-    }
-
-    private BossDefinition FindBoss(string bossId)
-    {
-        int index = FindBossIndex(bossId, -1);
-        return index >= 0 ? bosses[index] : null;
-    }
-
-    private BossDifficulty FindDifficulty(string difficultyId)
-    {
-        int index = FindDifficultyIndex(difficultyId, -1);
-        return index >= 0 ? difficulties[index] : null;
-    }
-
-    private int FindBossIndex(string bossId, int fallback)
-    {
-        if (string.IsNullOrWhiteSpace(bossId))
-        {
-            return fallback;
-        }
-
-        for (int i = 0; i < bosses.Count; i++)
-        {
-            if (GetBossId(bosses[i]) == bossId)
-            {
-                return i;
-            }
-        }
-
-        return fallback;
-    }
-
-    private int FindDifficultyIndex(string difficultyId, int fallback)
-    {
-        if (string.IsNullOrWhiteSpace(difficultyId))
-        {
-            return fallback;
-        }
-
-        for (int i = 0; i < difficulties.Count; i++)
-        {
-            if (GetDifficultyId(difficulties[i]) == difficultyId)
-            {
-                return i;
-            }
-        }
-
-        return fallback;
     }
 
     private static BossEnemyConfig GetBossConfig(BossDefinition boss, BossDifficulty difficulty)
@@ -582,24 +408,6 @@ public class BossTracker : MonoBehaviour
 
         bossEncounterManager.EncounterEnded -= HandleEncounterEnded;
         bossEncounterManager.EncounterEnded += HandleEncounterEnded;
-    }
-
-    private static string GetBossId(BossDefinition boss)
-    {
-        return !string.IsNullOrWhiteSpace(boss?.bossId)
-            ? boss.bossId
-            : !string.IsNullOrWhiteSpace(boss?.displayName)
-                ? boss.displayName
-                : "default_boss";
-    }
-
-    private static string GetDifficultyId(BossDifficulty difficulty)
-    {
-        return !string.IsNullOrWhiteSpace(difficulty?.difficultyId)
-            ? difficulty.difficultyId
-            : !string.IsNullOrWhiteSpace(difficulty?.displayName)
-                ? difficulty.displayName
-                : "normal";
     }
 
     private static int WrapIndex(int index, int count)

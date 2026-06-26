@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -64,7 +63,6 @@ public class PlayerStatAllocator : MonoBehaviour
     public bool CanUpgradeHealth => healthLevel < Mathf.Max(0, maxHealthLevel);
     public bool CanUpgradeCritChance => playerController == null || playerController.CritChance < MaxCritChance;
     public bool CanUpgradeCritMultiplier => playerController == null || playerController.CritMultiplier < MaxCritMultiplier;
-    public event Action Changed;
 
     private void Awake()
     {
@@ -230,59 +228,15 @@ public class PlayerStatAllocator : MonoBehaviour
 
     private void Save()
     {
-        if (saveToPlayerPrefs)
-        {
-            PlayerPrefs.SetInt(AttackLevelKey, attackLevel);
-            PlayerPrefs.SetInt(HealthLevelKey, healthLevel);
-            PlayerPrefs.SetInt(CritChanceLevelKey, critChanceLevel);
-            PlayerPrefs.SetInt(CritMultiplierLevelKey, critMultiplierLevel);
-            PlayerPrefs.Save();
-        }
-
-        playerController?.RefreshProgressionStats();
-        Changed?.Invoke();
-        BaseCampManager.Instance?.RequestUnifiedSave();
-    }
-
-    public JinyouPlayerStatSaveData CaptureState()
-    {
-        return new JinyouPlayerStatSaveData
-        {
-            attackLevel = attackLevel,
-            healthLevel = healthLevel,
-            critChanceLevel = critChanceLevel,
-            critMultiplierLevel = critMultiplierLevel
-        };
-    }
-
-    public void RestoreState(JinyouPlayerStatSaveData data)
-    {
-        if (data == null)
+        if (!saveToPlayerPrefs)
         {
             return;
         }
 
-        attackLevel = Mathf.Clamp(data.attackLevel, 0, Mathf.Max(0, maxAttackLevel));
-        healthLevel = Mathf.Clamp(data.healthLevel, 0, Mathf.Max(0, maxHealthLevel));
-        critChanceLevel = Mathf.Clamp(data.critChanceLevel, 0, GetCritChanceMaxLevel());
-        critMultiplierLevel = Mathf.Clamp(data.critMultiplierLevel, 0, GetCritMultiplierMaxLevel());
-        playerController ??= GetComponent<PlayerController>();
-        playerController?.RefreshProgressionStats();
-        Changed?.Invoke();
-    }
-
-    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
-    {
-        saveToPlayerPrefs = enabled;
-        if (!clearStoredData)
-        {
-            return;
-        }
-
-        PlayerPrefs.DeleteKey(AttackLevelKey);
-        PlayerPrefs.DeleteKey(HealthLevelKey);
-        PlayerPrefs.DeleteKey(CritChanceLevelKey);
-        PlayerPrefs.DeleteKey(CritMultiplierLevelKey);
+        PlayerPrefs.SetInt(AttackLevelKey, attackLevel);
+        PlayerPrefs.SetInt(HealthLevelKey, healthLevel);
+        PlayerPrefs.SetInt(CritChanceLevelKey, critChanceLevel);
+        PlayerPrefs.SetInt(CritMultiplierLevelKey, critMultiplierLevel);
         PlayerPrefs.Save();
     }
 
