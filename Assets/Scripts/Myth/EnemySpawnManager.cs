@@ -65,6 +65,9 @@ public class EnemySpawnManager : MonoBehaviour
     private bool spawningRound;
     private bool bossEncounterActive;
 
+    /// <summary>스테이지 번호가 바뀔 때 새 스테이지 값과 함께 발화한다. (배경 교체 등 연출 훅)</summary>
+    public event System.Action<int> StageChanged;
+
     public int CurrentStage => currentStage;
     public int CurrentRound => currentRound;
     public int CurrentRoundInStage => currentRoundInStage;
@@ -255,8 +258,14 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void RefreshStageRoundState()
     {
+        int previousStage = currentStage;
         currentStage = GetStageForRound(currentRound);
         currentRoundInStage = GetRoundInStage(currentRound);
+
+        if (currentStage != previousStage)
+        {
+            StageChanged?.Invoke(currentStage);
+        }
     }
 
     private void ReportStageClearIfNeeded()

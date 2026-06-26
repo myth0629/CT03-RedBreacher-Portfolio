@@ -73,6 +73,39 @@ public class ScreenFader : MonoBehaviour
         StartCoroutine(Transition(sceneName, Mathf.Max(0.01f, fadeDuration)));
     }
 
+    /// <summary>씬 로드 없이 페이드 아웃 → (검은 화면에서) 액션 실행 → 페이드 인. 배경 교체 등 연출에 사용.</summary>
+    public void FadeTransition(System.Action onBlackout, float fadeDuration = 0.4f, float holdSeconds = 0f)
+    {
+        if (transitioning)
+        {
+            // 이미 전환 중이면 변경이 누락되지 않도록 액션만 즉시 실행한다.
+            onBlackout?.Invoke();
+            return;
+        }
+
+        StartCoroutine(FadeTransitionRoutine(onBlackout, Mathf.Max(0.01f, fadeDuration), Mathf.Max(0f, holdSeconds)));
+    }
+
+    private IEnumerator FadeTransitionRoutine(System.Action onBlackout, float fadeDuration, float holdSeconds)
+    {
+        transitioning = true;
+        group.blocksRaycasts = true;
+
+        yield return Fade(0f, 1f, fadeDuration);
+
+        onBlackout?.Invoke();
+
+        if (holdSeconds > 0f)
+        {
+            yield return new WaitForSecondsRealtime(holdSeconds);
+        }
+
+        yield return Fade(1f, 0f, fadeDuration);
+
+        group.blocksRaycasts = false;
+        transitioning = false;
+    }
+
     private IEnumerator Transition(string sceneName, float fadeDuration)
     {
         transitioning = true;
