@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -82,11 +83,18 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private Image experienceFillImage;
     [SerializeField] private Image roundProgressFillImage;
 
-    // 재화 표시값(애니메이션용). 보상 흡수 연출이 도착하면 카운트업되도록 hold 시점을 둔다.
-    private long shownCredits = -1;
-    private long shownCoreCrystals = -1;
+    // 재화 표시 애니메이터(DOTween 카운트업). 보상 흡수 연출 도착(hold) 이후에 숫자가 올라간다.
+    private readonly CurrencyDisplay creditsDisplay = new CurrencyDisplay();
+    private readonly CurrencyDisplay coreCrystalsDisplay = new CurrencyDisplay();
     private float creditHoldUntil;
     private float coreCrystalHoldUntil;
+
+    // 바(체력/경험치/라운드) 채움을 DOTween으로 부드럽게 보간하는 애니메이터.
+    private readonly BarAnimator healthSliderAnim = new BarAnimator();
+    private readonly BarAnimator experienceSliderAnim = new BarAnimator();
+    private readonly BarAnimator healthFillAnim = new BarAnimator();
+    private readonly BarAnimator experienceFillAnim = new BarAnimator();
+    private readonly BarAnimator roundProgressAnim = new BarAnimator();
 
     /// <summary>지정 재화의 표시 숫자 갱신을 잠시 멈춘다(보상 비행 동안 숫자 고정 → 도착 시 카운트업).</summary>
     public void HoldCurrencyDisplay(CurrencyType currency, float seconds)
@@ -102,21 +110,93 @@ public class PlayerStatusHud : MonoBehaviour
         }
     }
 
-    // 표시값을 실제값으로 부드럽게 이동시킨다. 소비(감소)는 즉시, 획득(증가)은 hold 이후 카운트업.
-    private static string DisplayCurrency(ref long shown, long real, float holdUntil)
+    // 재화 표시값을 DOTween으로 카운트업한다. 소비(감소)는 즉시, 획득(증가)은 hold 이후 트윈.
+    private class CurrencyDisplay
     {
-        if (shown < 0 || real < shown)
+        private const float CountUpDuration = 0.4f;
+
+        private long shown = -1;
+        private long animatingTo;
+        private Tween tween;
+
+        public void Apply(TMP_Text text, long real, float holdUntil)
         {
-            shown = real;
-        }
-        else if (shown < real && Time.unscaledTime >= holdUntil)
-        {
-            long diff = real - shown;
-            long step = (long)Mathf.Max(1f, Mathf.Ceil(diff * 0.18f));
-            shown = System.Math.Min(real, shown + step);
+            if (shown < 0 || real < shown)
+            {
+                // 최초 표시 또는 소비(감소)는 즉시 반영한다.
+                tween?.Kill();
+                tween = null;
+                shown = real;
+                animatingTo = real;
+            }
+            else if (real > shown && real != animatingTo && Time.unscaledTime >= holdUntil)
+            {
+                // 획득(증가)은 hold가 끝난 뒤 현재값에서 실제값까지 카운트업한다.
+                animatingTo = real;
+                tween?.Kill();
+                tween = DOTween.To(() => shown, value => shown = value, real, CountUpDuration)
+                    .SetEase(Ease.OutCubic)
+                    .SetUpdate(true);
+            }
+
+            if (text != null)
+            {
+                text.text = shown.ToString();
+            }
         }
 
-        return shown.ToString();
+        public void Kill()
+        {
+            tween?.Kill();
+            tween = null;
+        }
+    }
+
+    // 채움 게이지를 목표값이 바뀔 때만 DOTween으로 보간한다(매 프레임 트윈 생성 방지).
+    private class BarAnimator
+    {
+        private const float FillDuration = 0.25f;
+
+        private float target = float.NaN;
+        private Tween tween;
+
+        public void ApplyFill(Image image, float value)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            if (!Mathf.Approximately(target, value))
+            {
+                target = value;
+                tween?.Kill();
+                tween = image.DOFillAmount(value, FillDuration).SetEase(Ease.OutCubic).SetUpdate(true);
+            }
+        }
+
+        public void ApplySlider(Slider slider, float value)
+        {
+            if (slider == null)
+            {
+                return;
+            }
+
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            if (!Mathf.Approximately(target, value))
+            {
+                target = value;
+                tween?.Kill();
+                tween = slider.DOValue(value, FillDuration).SetEase(Ease.OutCubic).SetUpdate(true);
+            }
+        }
+
+        public void Kill()
+        {
+            tween?.Kill();
+            tween = null;
+        }
     }
 
     private void Awake()
@@ -156,6 +236,18 @@ public class PlayerStatusHud : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        // 파괴된 UI를 대상으로 트윈이 남지 않도록 모두 정리한다.
+        creditsDisplay.Kill();
+        coreCrystalsDisplay.Kill();
+        healthSliderAnim.Kill();
+        experienceSliderAnim.Kill();
+        healthFillAnim.Kill();
+        experienceFillAnim.Kill();
+        roundProgressAnim.Kill();
+    }
+
     private void Update()
     {
         Refresh();
@@ -181,7 +273,7 @@ public class PlayerStatusHud : MonoBehaviour
             SetText(stageText, stageValue);
             SetText(roundText, roundValue);
             SetText(tankPopupStageText, stageValue);
-            SetFill(roundProgressFillImage, roundProgress);
+            roundProgressAnim.ApplyFill(roundProgressFillImage, roundProgress);
         }
 
         if (currencyWallet == null)
@@ -191,8 +283,8 @@ public class PlayerStatusHud : MonoBehaviour
 
         if (currencyWallet != null)
         {
-            SetText(creditsText, DisplayCurrency(ref shownCredits, currencyWallet.Credits, creditHoldUntil));
-            SetText(coreCrystalsText, DisplayCurrency(ref shownCoreCrystals, currencyWallet.CoreCrystals, coreCrystalHoldUntil));
+            creditsDisplay.Apply(creditsText, currencyWallet.Credits, creditHoldUntil);
+            coreCrystalsDisplay.Apply(coreCrystalsText, currencyWallet.CoreCrystals, coreCrystalHoldUntil);
         }
 
         if (player == null)
@@ -211,8 +303,8 @@ public class PlayerStatusHud : MonoBehaviour
             SetText(levelText, $"LV. {progression.Level}");
             SetText(experienceText, $"{progression.CurrentExperience:0} / {progression.ExperienceToNextLevel:0}");
             SetText(statPointText, $"{progression.StatPoints}");
-            SetSlider(experienceSlider, progression.ExperienceProgress01);
-            SetFill(experienceFillImage, progression.ExperienceProgress01);
+            experienceSliderAnim.ApplySlider(experienceSlider, progression.ExperienceProgress01);
+            experienceFillAnim.ApplyFill(experienceFillImage, progression.ExperienceProgress01);
         }
 
         if (health != null)
@@ -220,8 +312,8 @@ public class PlayerStatusHud : MonoBehaviour
             float maxHealth = Mathf.Max(1f, health.MaxHealth);
             float healthRate = Mathf.Clamp01(health.CurrentHealth / maxHealth);
             SetText(healthText, $"{health.CurrentHealth:0} / {maxHealth:0}");
-            SetSlider(healthSlider, healthRate);
-            SetFill(healthFillImage, healthRate);
+            healthSliderAnim.ApplySlider(healthSlider, healthRate);
+            healthFillAnim.ApplyFill(healthFillImage, healthRate);
         }
 
         RefreshTankPopup(health, progression);
@@ -321,24 +413,6 @@ public class PlayerStatusHud : MonoBehaviour
         if (target != null)
         {
             target.text = value;
-        }
-    }
-
-    private static void SetSlider(Slider target, float value)
-    {
-        if (target != null)
-        {
-            target.minValue = 0f;
-            target.maxValue = 1f;
-            target.value = value;
-        }
-    }
-
-    private static void SetFill(Image target, float value)
-    {
-        if (target != null)
-        {
-            target.fillAmount = value;
         }
     }
 

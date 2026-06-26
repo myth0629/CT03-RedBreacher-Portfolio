@@ -1,11 +1,11 @@
-using System.Collections;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
 /// 보상 클레임 시 클릭 위치에서 상단 재화 아이콘으로 여러 개의 아이콘이 분출했다가
 /// 포물선을 그리며 빨려들어가는 연출을 재생한다. 아이콘이 도착하는 시점에 재화 숫자가
-/// 카운트업되도록 <see cref="PlayerStatusHud"/>에 hold를 건다. 코루틴 기반(외부 트윈 불필요).
+/// 카운트업되도록 <see cref="PlayerStatusHud"/>에 hold를 건다. DOTween 기반.
 /// </summary>
 public class RewardFlyAnimator : MonoBehaviour
 {
@@ -65,26 +65,28 @@ public class RewardFlyAnimator : MonoBehaviour
             hud.HoldCurrencyDisplay(currency, TravelDuration);
         }
 
-        StartCoroutine(SpawnBurst(sprite, sourceWorldPosition, target, Mathf.Max(32f, iconSize)));
+        PlayBurst(sprite, sourceWorldPosition, target, Mathf.Max(32f, iconSize));
     }
 
-    private IEnumerator SpawnBurst(Sprite sprite, Vector3 startWorld, RectTransform target, float iconSize)
+    private void PlayBurst(Sprite sprite, Vector3 startWorld, RectTransform target, float iconSize)
     {
+        // pivot이 (0,0.5) 등 중앙이 아니어도 아이콘의 '시각적 중심'으로 빨려들어가도록 rect 중심을 쓴다.
+        Vector3 endWorld = target != null ? GetRectWorldCenter(target) : startWorld;
+
         for (int i = 0; i < IconCount; i++)
         {
-            Vector3 endWorld = target != null ? target.position : startWorld;
-            StartCoroutine(FlyOne(sprite, startWorld, endWorld, iconSize, i));
-            yield return new WaitForSecondsRealtime(StaggerPerIcon);
+            FlyOne(sprite, startWorld, endWorld, iconSize, i);
         }
 
-        yield return new WaitForSecondsRealtime(TravelDuration);
         if (target != null)
         {
-            StartCoroutine(Pulse(target));
+            // 마지막 아이콘이 도착하는 시점에 타깃 아이콘을 펄스시킨다.
+            float pulseDelay = (IconCount - 1) * StaggerPerIcon + TravelDuration;
+            DOVirtual.DelayedCall(pulseDelay, () => Pulse(target), false).SetUpdate(true);
         }
     }
 
-    private IEnumerator FlyOne(Sprite sprite, Vector3 startWorld, Vector3 endWorld, float iconSize, int index)
+    private void FlyOne(Sprite sprite, Vector3 startWorld, Vector3 endWorld, float iconSize, int index)
     {
         GameObject go = new GameObject("FlyIcon", typeof(RectTransform));
         RectTransform rect = (RectTransform)go.transform;
@@ -108,34 +110,40 @@ public class RewardFlyAnimator : MonoBehaviour
         rect.localPosition = start;
         rect.localScale = Vector3.one * 1.3f;
 
-        float t = 0f;
-        while (t < 1f)
-        {
-            t += Time.unscaledDeltaTime / TravelDuration;
-            float e = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
-            rect.localPosition = Quadratic(start, control, end, e);
-            float s = Mathf.Lerp(1.3f, 0.65f, e);
-            rect.localScale = new Vector3(s, s, 1f);
-            img.color = new Color(1f, 1f, 1f, Mathf.Lerp(1f, 0.8f, e));
-            yield return null;
-        }
-
-        Destroy(go);
+        // 0→1 진행값을 DOTween으로 구동하고, 위치/스케일/알파를 포물선(SmoothStep)으로 평가한다.
+        float driver = 0f;
+        DOTween.To(() => driver, value =>
+            {
+                driver = value;
+                float e = Mathf.SmoothStep(0f, 1f, value);
+                rect.localPosition = Quadratic(start, control, end, e);
+                float s = Mathf.Lerp(1.3f, 0.65f, e);
+                rect.localScale = new Vector3(s, s, 1f);
+                img.color = new Color(1f, 1f, 1f, Mathf.Lerp(1f, 0.8f, e));
+            }, 1f, TravelDuration)
+            .SetEase(Ease.Linear)
+            .SetDelay(index * StaggerPerIcon)
+            .SetUpdate(true)
+            .OnComplete(() => Destroy(go));
     }
 
-    private IEnumerator Pulse(RectTransform target)
+    private static void Pulse(RectTransform target)
     {
-        float duration = 0.18f;
-        float t = 0f;
-        while (t < 1f)
+        if (target == null)
         {
-            t += Time.unscaledDeltaTime / duration;
-            float s = 1f + 0.25f * Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI);
-            target.localScale = new Vector3(s, s, 1f);
-            yield return null;
+            return;
         }
 
+        // 도착 강조: 살짝 부풀었다가 원래 스케일로 복귀하는 펀치 연출.
+        target.DOKill();
         target.localScale = Vector3.one;
+        target.DOPunchScale(new Vector3(0.25f, 0.25f, 0f), 0.18f, 1, 0.5f).SetUpdate(true);
+    }
+
+    private static Vector3 GetRectWorldCenter(RectTransform rect)
+    {
+        // pivot/anchor와 무관하게 사각형의 중심을 월드 좌표로 반환한다.
+        return rect.TransformPoint(rect.rect.center);
     }
 
     private bool EnsureReferences()
