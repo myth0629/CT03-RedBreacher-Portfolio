@@ -9,20 +9,24 @@ public class AchievementPopup : MonoBehaviour
     [SerializeField] private AchievementManager achievementManager;
     [SerializeField] private Transform contentRoot;
     [SerializeField] private GameObject achievementItemTemplate;
+    [SerializeField] private AudioClip btnAudio;
 
     private readonly List<GameObject> spawnedItems = new List<GameObject>();
     private PanelTweenTransition panelTransition;
+    private AudioSource audioSource;
 
     private void Awake()
     {
         ResolveReferences();
         EnsurePanelTransition();
+        EnsureAudioSource();
     }
 
     private void OnEnable()
     {
         ResolveReferences();
         EnsurePanelTransition();
+        EnsureAudioSource();
         if (achievementManager != null)
         {
             achievementManager.OnAchievementsChanged.AddListener(Rebuild);
@@ -110,6 +114,7 @@ public class AchievementPopup : MonoBehaviour
             int rewardAmount = achievement.RewardAmount;
             claimButton.onClick.AddListener(() =>
             {
+                PlayButtonAudio();
                 // 클레임 성공 시 Rebuild로 이 아이템이 파괴되므로 위치를 먼저 캡처한다.
                 Vector3 sourcePosition = claimRect != null ? claimRect.position : Vector3.zero;
                 float iconSize = claimRect != null ? claimRect.rect.width : 56f;
@@ -156,6 +161,27 @@ public class AchievementPopup : MonoBehaviour
         {
             panelTransition = gameObject.AddComponent<PanelTweenTransition>();
         }
+    }
+
+    private void EnsureAudioSource()
+    {
+        audioSource ??= GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+        }
+    }
+
+    private void PlayButtonAudio()
+    {
+        if (btnAudio == null)
+        {
+            return;
+        }
+
+        EnsureAudioSource();
+        audioSource.PlayOneShot(btnAudio);
     }
 
     private static void SetText(GameObject root, string childName, string value)

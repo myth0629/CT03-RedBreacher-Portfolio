@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Boss01
   m_EditorClassIdentifier: Assembly-CSharp::BossEnemyConfig
   id: 01
-  displayName: "\uBA54\uCE74"
+  displayName: "\uBA54\uCE74 \uBCF4\uD589\uBCD1\uAE30"
   enemyPrefab: {fileID: 5508998916971657268, guid: 99d761f792bed40e6a109c516339568f, type: 3}
   maxHealth: 10000
   moveSpeed: 1.2
@@ -24,6 +24,10 @@ MonoBehaviour:
   creditReward: 10
   coreCrystalReward: 10
   partDropChance: 0.05
+  deathExplosionEffectPrefab: {fileID: 0}
+  deathExplosionCleanupDelay: 0.6
+  deathExplosionOffset: {x: 0, y: 0, z: 0}
+  deathExplosionScale: 1
   portrait: {fileID: 21300000, guid: 6a13a1a776fc75744b18f46a3b7d8a6c, type: 3}
   rangedAttackRange: 6
   rangedAttackDamage: 200
@@ -52,6 +56,10 @@ MonoBehaviour:
   laserLineMaterial: {fileID: -876546973899608171, guid: f090c02c15e42bf41ba8388b37b3c21e, type: 3}
   laserWarningColor: {r: 1, g: 0.2, b: 0.1, a: 0.55}
   laserActiveColor: {r: 1, g: 0, b: 0, a: 1}
+  enrageStartSeconds: 0
+  enrageRampPerSecond: 0.04
+  enrageMaxMultiplier: 3
+  enableProjectileDodge: 0
   dodgeDetectionRadius: 4
   dodgeDistance: 2
   dodgeCooldown: 2.5
