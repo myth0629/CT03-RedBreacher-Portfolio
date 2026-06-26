@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyConfig
   id: 05
   displayName: "\uC80105"
-  enemyPrefab: {fileID: 0}
+  enemyPrefab: {fileID: 6804874563998169931, guid: 1ebe43cc97ada42c3a959d08fc408d8b, type: 3}
   maxHealth: 140
   moveSpeed: 0.6
   stopDistance: 1.1
@@ -24,7 +24,7 @@ MonoBehaviour:
   creditReward: 40
   coreCrystalReward: 0
   partDropChance: 0.07
-  deathExplosionEffectPrefab: {fileID: 1433295770268946, guid: 9f0ee939215f6df4babea8e4758a7079, type: 3}
+  deathExplosionEffectPrefab: {fileID: 1312591640859010, guid: ba7ba54e0ea76594c8748942d4d05b1f, type: 3}
   deathExplosionCleanupDelay: 0.6
   deathExplosionOffset: {x: 0, y: 0, z: 0}
   deathExplosionScale: 1
