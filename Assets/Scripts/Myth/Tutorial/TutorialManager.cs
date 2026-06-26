@@ -63,6 +63,11 @@ public class TutorialManager : MonoBehaviour
         }
 
         Instance = this;
+
+        // Bootstrap은 최초 씬(타이틀) 로드 직후 1회만 실행되므로, 씬 전환에도 파괴되지 않게 유지한다.
+        // 그러지 않으면 타이틀에서 생성된 매니저가 게임(기지) 씬 로드 시 사라져 튜토리얼이 영영 뜨지 않는다.
+        DontDestroyOnLoad(gameObject);
+
         config = TutorialConfig.Current;
         completed = PlayerPrefs.GetInt(CompletedKey, 0) == 1;
         stepIndex = Mathf.Max(0, PlayerPrefs.GetInt(StepIndexKey, 0));
