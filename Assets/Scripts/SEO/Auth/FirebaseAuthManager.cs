@@ -58,12 +58,8 @@ public class FirebaseAuthManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // 로그인 공급자 선택: Android = Play Games, iOS/에디터 = 네이티브 구글 로그인.
-#if UNITY_ANDROID && !UNITY_EDITOR
-        googleSignIn = new PlayGamesSignIn();
-#else
+        // 로그인 공급자: Android/iOS/에디터 모두 네이티브 구글 로그인으로 통일.
         googleSignIn = new NativeGoogleSignIn();
-#endif
     }
 
     private async void Start()
@@ -86,7 +82,7 @@ public class FirebaseAuthManager : MonoBehaviour
             return;
         }
 
-        // 2) 무음 자동 연결 시도(Android Play Games). 성공하면 버튼 없이 로그인, 실패하면 버튼 노출.
+        // 2) 무음 자동 연결 시도. 네이티브 구글은 무음 미지원이라 버튼을 노출하고, 재방문자는 위의 Firebase 세션 복원으로 자동 로그인된다.
         await TrySilentSignIn();
     }
 
