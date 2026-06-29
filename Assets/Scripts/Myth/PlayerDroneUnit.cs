@@ -7,15 +7,17 @@ public class PlayerDroneUnit : MonoBehaviour
     private Transform muzzle;
     private CombatHealth currentTarget;
     private AssemblyFactory assemblyFactory;
+    private AudioSource fireSource;
     private int slotIndex;
     private int slotCount;
     private float nextAttackTime;
     private Vector3 followVelocity;
 
-    public void Initialize(PlayerController owner, DroneConfig droneConfig, int index, int count)
+    public void Initialize(PlayerController owner, DroneConfig droneConfig, int index, int count, AudioSource droneFireSource)
     {
         player = owner;
         config = droneConfig;
+        fireSource = droneFireSource;
         slotIndex = index;
         slotCount = Mathf.Max(1, count);
         muzzle = FindMuzzle(transform);
@@ -185,6 +187,19 @@ public class PlayerDroneUnit : MonoBehaviour
         projectile.transform.position = GetFirePosition(direction);
         projectile.Configure(projectileConfig);
         projectile.Launch(direction, GetDamage(projectileConfig), config.ProjectileSpeed, config.ProjectileLifetime, player.Health);
+        PlayFireSfx(projectileConfig);
+    }
+
+    // 무기 SO에 있는 sfxFire를 연결해서 오디오 소스를(droneFireSource) 연결해 출력한다.
+    private void PlayFireSfx(ProjectileConfig projectileConfig)
+    {
+        AudioClip clip = projectileConfig != null ? projectileConfig.SfxFire : null;
+        if (fireSource == null || clip == null)
+        {
+            return;
+        }
+
+        fireSource.PlayOneShot(clip);
     }
 
     private float GetDamage(ProjectileConfig projectileConfig)
