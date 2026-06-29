@@ -51,8 +51,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float repositionDistance = 1.8f;
     [SerializeField] private float repositionCooldown = 5f;
     [SerializeField] private float repositionCheckInterval = 0.5f;
-    [SerializeField] private float repositionSpeedMultiplier = 1.35f;
-    [SerializeField] private float repositionStopDistance = 0.05f;
+    [Tooltip("거리 벌리기(회피 기동) 한 번에 걸리는 시간(초). 짧을수록 빠른 대시, 너무 짧으면 순간이동처럼 보임.")]
+    [SerializeField] private float repositionDashDuration = 0.22f;
+    [Tooltip("값이 클수록 초반에 더 몰아서 가속. 너무 크면 순간이동 느낌이 나므로 2~3 권장.")]
+    [SerializeField, Range(1f, 6f)] private float repositionEaseExponent = 2.5f;
     [SerializeField] private LayerMask repositionObstacleMask;
     [SerializeField] private float repositionCollisionRadius = 0.45f;
     [SerializeField] private bool clampRepositionToBounds = true;
@@ -80,6 +82,7 @@ public class PlayerController : MonoBehaviour
     private PlayerAutoSkillController autoSkillController;
     private PlayerBossDodgeController bossDodgeController;
     private PlayerDebugModeController debugModeController;
+    private AfterimageEmitter afterimageEmitter;
     private InventoryFacility inventory;
     private AssemblyFactory assemblyFactory;
     private SkillHangerFacility skillHanger;
@@ -95,6 +98,8 @@ public class PlayerController : MonoBehaviour
     private float nextRepositionTime;
     private float nextRepositionCheckTime;
     private Vector3 repositionDestination;
+    private Vector3 repositionStartPosition;
+    private float repositionElapsed;
     private Vector3 fallbackRepositionBoundsCenter;
     private bool hasAppliedHealthStats;
     private bool isRepositioning;
@@ -235,6 +240,11 @@ public class PlayerController : MonoBehaviour
         RefreshUnitReferences();
         bossDodgeController = PlayerBossDodgeController.Ensure(this);
         debugModeController = PlayerDebugModeController.Ensure(this);
+        afterimageEmitter = GetComponent<AfterimageEmitter>();
+        if (afterimageEmitter == null)
+        {
+            afterimageEmitter = gameObject.AddComponent<AfterimageEmitter>();
+        }
 
         // 장착된 기체의 전체 스프라이트에 바닥 그림자를 적용한다.
         SpriteShapeShadow.Ensure(gameObject);
@@ -841,26 +851,30 @@ public class PlayerController : MonoBehaviour
             return false;
         }
 
-        Vector3 moveDirection = CombatPlane.Direction(transform.position, repositionDestination);
-        float remainingDistance = Mathf.Sqrt(CombatPlane.DistanceSqr(transform.position, repositionDestination));
-        if (remainingDistance <= Mathf.Max(0.01f, repositionStopDistance) || moveDirection.sqrMagnitude <= 0f)
+        Vector3 moveDirection = CombatPlane.ProjectDirection(repositionDestination - repositionStartPosition);
+        if (moveDirection.sqrMagnitude <= 0f)
         {
             FinishAutoReposition();
             return false;
         }
+
+        // 등속 이동 대신 짧은 시간 동안 초반에 확 튀어나가는 대시로 빠른 회피 기동 느낌을 준다.
+        repositionElapsed += Time.deltaTime;
+        float duration = Mathf.Max(0.01f, repositionDashDuration);
+        float progress = Mathf.Clamp01(repositionElapsed / duration);
+        float easedProgress = 1f - Mathf.Pow(1f - progress, Mathf.Max(1f, repositionEaseExponent));
 
         RotateToward(moveDirection);
-        float moveDistance = Mathf.Min(
-            MoveSpeedValue * Mathf.Max(0.1f, repositionSpeedMultiplier) * Time.deltaTime,
-            remainingDistance);
-        Vector3 nextPosition = CombatPlane.WithFixedY(transform.position + moveDirection * moveDistance);
-        if (IsRepositionPathBlocked(transform.position, nextPosition))
+        transform.position = ClampRepositionPosition(
+            CombatPlane.WithFixedY(Vector3.Lerp(repositionStartPosition, repositionDestination, easedProgress)));
+        afterimageEmitter?.Emit();
+
+        if (progress >= 1f)
         {
             FinishAutoReposition();
             return false;
         }
 
-        transform.position = ClampRepositionPosition(nextPosition);
         SetVehicleMoveInput(1f, 0f);
 
         // 자동 재배치 중에도 본체와 별개로 터렛은 기존 타겟을 계속 조준하고 공격한다.
@@ -913,6 +927,9 @@ public class PlayerController : MonoBehaviour
         }
 
         isRepositioning = true;
+        repositionStartPosition = CombatPlane.WithFixedY(transform.position);
+        repositionElapsed = 0f;
+        afterimageEmitter?.Emit(true);
         nextRepositionTime = Time.time + Mathf.Max(0.1f, RepositionCooldownValue);
     }
 
