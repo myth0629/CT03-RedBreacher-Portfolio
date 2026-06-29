@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -36,6 +36,9 @@ public class EnemySpawnManager : MonoBehaviour
     [Header("Spawn")]
     [SerializeField] private EnemyConfig enemyConfig;
     [SerializeField] private List<EnemyConfig> enemyConfigs = new List<EnemyConfig>();
+    [SerializeField] private List<EnemyConfig> enemyConfigStage2 = new List<EnemyConfig>();
+    [SerializeField] private List<EnemyConfig> enemyConfigStage3 = new List<EnemyConfig>();
+    [SerializeField] private List<EnemyConfig> enemyConfigFinalStage = new List<EnemyConfig>();
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private Transform enemySpawnParent;
     [SerializeField] private Transform spawnCenter;
@@ -321,21 +324,74 @@ public class EnemySpawnManager : MonoBehaviour
 
     private EnemyConfig GetEnemyConfig()
     {
-        if (enemyConfigs != null && enemyConfigs.Count > 0)
+        int validConfigCount = CountValidEnemyConfigs(enemyConfigs)
+            + (currentStage >= 10 ? CountValidEnemyConfigs(enemyConfigStage2) : 0)
+            + (currentStage >= 20 ? CountValidEnemyConfigs(enemyConfigStage3) : 0)
+            + (currentStage >= 30 ? CountValidEnemyConfigs(enemyConfigFinalStage) : 0);
+
+        if (validConfigCount > 0)
         {
             // 등록된 적 SO 중 유효한 항목 하나를 스폰마다 무작위로 선택한다.
-            int startIndex = Random.Range(0, enemyConfigs.Count);
-            for (int i = 0; i < enemyConfigs.Count; i++)
+            // 스테이지 10 이상 넘어갈 때 마다 새로운 적 SO를 추가해 스폰에 포함시킨다.
+            int targetIndex = Random.Range(0, validConfigCount);
+            if (TryGetEnemyConfigAt(enemyConfigs, ref targetIndex, out EnemyConfig selectedConfig)
+                || currentStage >= 10 && TryGetEnemyConfigAt(enemyConfigStage2, ref targetIndex, out selectedConfig)
+                || currentStage >= 20 && TryGetEnemyConfigAt(enemyConfigStage3, ref targetIndex, out selectedConfig)
+                || currentStage >= 30 && TryGetEnemyConfigAt(enemyConfigFinalStage, ref targetIndex, out selectedConfig))
             {
-                EnemyConfig config = enemyConfigs[(startIndex + i) % enemyConfigs.Count];
-                if (config != null)
-                {
-                    return config;
-                }
+                return selectedConfig;
             }
         }
 
         return enemyConfig;
+    }
+
+    private static int CountValidEnemyConfigs(List<EnemyConfig> configs)
+    {
+        if (configs == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 0; i < configs.Count; i++)
+        {
+            if (configs[i] != null)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    // 각 스테이지 별 적 SO 갯수만큼 스폰에 적용
+    private static bool TryGetEnemyConfigAt(List<EnemyConfig> configs, ref int targetIndex, out EnemyConfig selectedConfig)
+    {
+        selectedConfig = null;
+        if (configs == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < configs.Count; i++)
+        {
+            EnemyConfig config = configs[i];
+            if (config == null)
+            {
+                continue;
+            }
+
+            if (targetIndex == 0)
+            {
+                selectedConfig = config;
+                return true;
+            }
+
+            targetIndex--;
+        }
+
+        return false;
     }
 
     private GameObject GetEnemyPrefab(EnemyConfig selectedConfig)
