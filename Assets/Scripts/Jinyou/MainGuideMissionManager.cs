@@ -122,7 +122,7 @@ public class MainGuideMissionManager : MonoBehaviour
     // ── 정적 보고 훅(기존 Report 발생 지점에서 함께 호출한다) ────────────────
     public static void ReportEnemyKilled(int amount = 1) => Instance?.AddProgress(GuideConditionType.EnemyKill, amount);
     public static void ReportPlayerLevelReached(int level) => Instance?.SetAbsoluteProgress(GuideConditionType.PlayerLevel, level);
-    public static void ReportStageCleared(int stage) => Instance?.SetAbsoluteProgress(GuideConditionType.StageClear, stage);
+    public static void ReportStageCleared(int amount = 1) => Instance?.AddProgress(GuideConditionType.StageClear, amount);
     public static void ReportWeaponCollected(int amount = 1) => Instance?.AddProgress(GuideConditionType.WeaponCollect, amount);
     public static void ReportDroneCollected(int amount = 1) => Instance?.ReportDroneCollectionProgress();
     public static void ReportCreditsCollected(int amount) => Instance?.AddProgress(GuideConditionType.CollectCredits, amount);
