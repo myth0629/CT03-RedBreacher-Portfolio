@@ -48,6 +48,11 @@ public class BaseCampManager : MonoBehaviour
     public UnityEvent<int> OnCommanderLevelChanged = new UnityEvent<int>();
     public UnityEvent<JinyouOfflineRewardSaveData> OnOfflineRewardsClaimed = new UnityEvent<JinyouOfflineRewardSaveData>();
 
+    // 통합 세이브(클라우드 동기화 포함) 로드가 끝난 시점을 알린다.
+    // 알림 배지 기준선처럼 "복원 완료 후" 잡아야 하는 초기화에 사용한다.
+    public event System.Action UnifiedSaveLoaded;
+    public bool IsUnifiedSaveLoaded { get; private set; }
+
     private PlayerCurrencyWallet registeredCurrencyWallet;
     private bool unifiedSaveReady;
     private bool isRestoringUnifiedSave;
@@ -120,6 +125,10 @@ public class BaseCampManager : MonoBehaviour
         {
             ApplyEquippedLoadoutAtBoot();
         }
+
+        // 클라우드 동기화 + 로컬 복원이 모두 끝난 시점. 이후 구독자들이 안전하게 초기 상태를 잡는다.
+        IsUnifiedSaveLoaded = true;
+        UnifiedSaveLoaded?.Invoke();
 
         if (closePanelsOnStart)
         {

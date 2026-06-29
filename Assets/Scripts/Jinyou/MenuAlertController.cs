@@ -63,7 +63,8 @@ public class MenuAlertController : MonoBehaviour
     private void Start()
     {
         ResolveReferences();
-        InitializeSeenSignatures();
+        // 알림 기준선은 통합 세이브(클라우드 동기화 포함) 복원이 끝난 뒤 잡는다.
+        // Start 시점엔 아직 복원 전이라 여기서 잡으면 실기기에서 알림이 영구히 켜진다.
         RefreshBindings();
         RefreshAlerts();
     }
@@ -141,13 +142,28 @@ public class MenuAlertController : MonoBehaviour
             if (subscribedBaseCampManager != null)
             {
                 subscribedBaseCampManager.OnCoreCrystalsChanged.RemoveListener(HandleCurrencyChanged);
+                subscribedBaseCampManager.UnifiedSaveLoaded -= HandleUnifiedSaveLoaded;
                 UnsubscribeFacilityEvents(subscribedBaseCampManager);
             }
 
             baseCampManager.OnCoreCrystalsChanged.AddListener(HandleCurrencyChanged);
+            baseCampManager.UnifiedSaveLoaded += HandleUnifiedSaveLoaded;
             SubscribeFacilityEvents(baseCampManager);
             subscribedBaseCampManager = baseCampManager;
+
+            // 구독 전에 이미 로드가 끝난 경우(이벤트를 놓친 경우)를 대비해 즉시 기준선을 잡는다.
+            if (baseCampManager.IsUnifiedSaveLoaded)
+            {
+                HandleUnifiedSaveLoaded();
+            }
         }
+    }
+
+    private void HandleUnifiedSaveLoaded()
+    {
+        ResolveReferences();
+        InitializeSeenSignatures();
+        RefreshAlerts();
     }
 
     private void UnsubscribeEvents()
@@ -170,6 +186,7 @@ public class MenuAlertController : MonoBehaviour
         if (subscribedBaseCampManager != null)
         {
             subscribedBaseCampManager.OnCoreCrystalsChanged.RemoveListener(HandleCurrencyChanged);
+            subscribedBaseCampManager.UnifiedSaveLoaded -= HandleUnifiedSaveLoaded;
             UnsubscribeFacilityEvents(subscribedBaseCampManager);
             subscribedBaseCampManager = null;
         }
