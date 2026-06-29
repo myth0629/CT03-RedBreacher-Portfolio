@@ -1339,6 +1339,8 @@ public class PlayerController : MonoBehaviour
             FireProjectileFrom(GetFireMuzzle(i), direction, damage, activeProjectileConfig, isCritical);
         }
 
+        // muzzleCount의 영향으로 발사음이 겹치지 않게 FireForward()의 루프 밖으로 이동
+        PlayFireSfx(activeProjectileConfig);
         return GetAttackIntervalMultiplier(activeProjectileConfig);
     }
 
@@ -1363,7 +1365,6 @@ public class PlayerController : MonoBehaviour
             GetProjectileLifetime(activeProjectileConfig),
             health,
             isCritical);
-        PlayFireSfx(activeProjectileConfig);
     }
 
     private void PlayFireSfx(ProjectileConfig activeProjectileConfig)
