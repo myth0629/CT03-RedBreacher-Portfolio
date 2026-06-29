@@ -71,6 +71,9 @@ public class PlayerController : MonoBehaviour
     private List<int> skillSlotRequiredSkillHangerLevels = new List<int> { 0, 2, 3, 4 };
     [SerializeField] private bool saveLoadoutToPlayerPrefs = true;
 
+    [Header("Audio Source")] 
+    [SerializeField] private AudioSource sfxFireSource;
+    
     private readonly List<Transform> fireMuzzles = new List<Transform>();
     private CombatHealth health;
     private PlayerProgression progression;
@@ -1360,6 +1363,18 @@ public class PlayerController : MonoBehaviour
             GetProjectileLifetime(activeProjectileConfig),
             health,
             isCritical);
+        PlayFireSfx(activeProjectileConfig);
+    }
+
+    private void PlayFireSfx(ProjectileConfig activeProjectileConfig)
+    {
+        AudioClip clip = activeProjectileConfig != null ? activeProjectileConfig.SfxFire : null;
+        if (sfxFireSource == null || clip == null)
+        {
+            return;
+        }
+
+        sfxFireSource.PlayOneShot(clip);
     }
 
     private float CalculateAttackDamage(ProjectileConfig activeProjectileConfig, out bool isCritical)

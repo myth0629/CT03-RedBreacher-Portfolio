@@ -140,4 +140,5 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     public GameObject ProjectileEffectPrefab => projectileEffectPrefab;
     public GameObject HitEffectPrefab => hitEffectPrefab;
     public float EffectCleanupDelay => effectCleanupDelay;
+    public AudioClip SfxFire => sfxFire;
 }
