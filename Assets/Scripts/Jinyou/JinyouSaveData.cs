@@ -4,7 +4,9 @@ using System.Collections.Generic;
 [Serializable]
 public class JinyouSaveData
 {
-    public int version = 4;
+    public const int CurrentVersion = 4;
+
+    public int version = CurrentVersion;
     public long lastSavedUnixTime;
     public int commanderLevel = 1;
     public int mainBuildingLevel = 1;
@@ -32,6 +34,7 @@ public class JinyouMythSaveData
     public JinyouPlayerProgressionSaveData progression = new JinyouPlayerProgressionSaveData();
     public JinyouPlayerStatAllocatorSaveData statAllocator = new JinyouPlayerStatAllocatorSaveData();
     public JinyouEnemySpawnSaveData enemySpawn = new JinyouEnemySpawnSaveData();
+    public JinyouBossTrackerSaveData bossTracker = new JinyouBossTrackerSaveData();
     public JinyouTutorialSaveData tutorial = new JinyouTutorialSaveData();
 }
 
@@ -64,10 +67,39 @@ public class JinyouPlayerStatAllocatorSaveData
 }
 
 [Serializable]
+public class JinyouPlayerStatSaveData : JinyouPlayerStatAllocatorSaveData
+{
+}
+
+[Serializable]
 public class JinyouEnemySpawnSaveData
 {
     public bool captured;
     public int currentRound = 1;
+}
+
+[Serializable]
+public class JinyouCombatProgressSaveData : JinyouEnemySpawnSaveData
+{
+}
+
+[Serializable]
+public class JinyouBossTrackerSaveData
+{
+    public string selectedBossId;
+    public string selectedDifficultyId;
+    public List<JinyouBossRecordSaveData> records = new List<JinyouBossRecordSaveData>();
+}
+
+[Serializable]
+public class JinyouBossRecordSaveData
+{
+    public string bossId;
+    public string difficultyId;
+    public int attempts;
+    public int clears;
+    public int failures;
+    public float bestTime;
 }
 
 [Serializable]
@@ -213,4 +245,5 @@ public class JinyouGuideMissionSaveData
     // 순차형 가이드 미션은 활성 단계 인덱스와 해당 단계 진행도만 저장한다.
     public int currentIndex;
     public int currentAmount;
+    public int bossTicketGrantedStepIndex = -1;
 }

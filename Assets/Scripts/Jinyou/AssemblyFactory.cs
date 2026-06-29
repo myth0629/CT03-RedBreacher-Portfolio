@@ -840,12 +840,17 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             enhancementLevels = new List<WeaponEnhancementLevel>()
         };
 
-        EnsureWeaponEnhancementLevels(enhancement, GetWeaponEnhanceLevelCap());
-
         weaponEnhancements.Add(enhancement);
         if (savedWeaponLevels.TryGetValue(weaponConfig.Id, out int savedLevel))
         {
+            enhancement.maxEnhanceLevel = Mathf.Max(GetWeaponEnhanceLevelCap(), savedLevel);
+            EnsureWeaponEnhancementLevels(enhancement, enhancement.maxEnhanceLevel);
             enhancement.enhanceLevel = Mathf.Clamp(savedLevel, 0, enhancement.MaxEnhanceLevel);
+        }
+        else
+        {
+            enhancement.maxEnhanceLevel = GetWeaponEnhanceLevelCap();
+            EnsureWeaponEnhancementLevels(enhancement, enhancement.maxEnhanceLevel);
         }
         return enhancement;
     }
@@ -875,6 +880,8 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             if (enhancement?.weaponConfig != null
                 && savedWeaponLevels.TryGetValue(enhancement.weaponConfig.Id, out int savedLevel))
             {
+                enhancement.maxEnhanceLevel = Mathf.Max(enhancement.maxEnhanceLevel, savedLevel);
+                EnsureWeaponEnhancementLevels(enhancement, enhancement.maxEnhanceLevel);
                 enhancement.enhanceLevel = Mathf.Clamp(savedLevel, 0, enhancement.MaxEnhanceLevel);
             }
         }
@@ -942,7 +949,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         weaponEnhancements ??= new List<WeaponEnhancement>();
         droneEnhancements ??= new List<DroneEnhancement>();
 
-        int weaponCap = GetWeaponEnhanceLevelCap();
+        int weaponCap = Mathf.Max(GetWeaponEnhanceLevelCap(), GetRequiredSavedWeaponEnhanceLevelCap());
         foreach (WeaponEnhancement enhancement in weaponEnhancements)
         {
             if (enhancement == null)
@@ -990,6 +997,25 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         }
 
         ApplyDefaultWeaponEnhanceCosts(enhancement);
+    }
+
+    private int GetRequiredSavedWeaponEnhanceLevelCap()
+    {
+        int requiredCap = 0;
+        foreach (WeaponEnhancement enhancement in weaponEnhancements)
+        {
+            if (enhancement != null)
+            {
+                requiredCap = Mathf.Max(requiredCap, enhancement.enhanceLevel);
+            }
+        }
+
+        foreach (int savedLevel in savedWeaponLevels.Values)
+        {
+            requiredCap = Mathf.Max(requiredCap, savedLevel);
+        }
+
+        return requiredCap;
     }
 
     private void ApplyDefaultWeaponEnhanceCosts(WeaponEnhancement enhancement)
@@ -1071,6 +1097,8 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
                     continue;
                 }
 
+                enhancement.maxEnhanceLevel = Mathf.Max(enhancement.maxEnhanceLevel, saved.level);
+                EnsureWeaponEnhancementLevels(enhancement, enhancement.maxEnhanceLevel);
                 enhancement.enhanceLevel = Mathf.Clamp(saved.level, 0, enhancement.MaxEnhanceLevel);
             }
         }

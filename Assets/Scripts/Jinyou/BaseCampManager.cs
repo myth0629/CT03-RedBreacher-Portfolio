@@ -326,6 +326,7 @@ public class BaseCampManager : MonoBehaviour
             SetCreditsForFacility(availableCredits);
             DailyMissionManager.ReportWeaponEnhanced();
             MainGuideMissionManager.ReportWeaponEnhanced();
+            SaveUnifiedGameIfReady();
         }
     }
 
@@ -363,7 +364,7 @@ public class BaseCampManager : MonoBehaviour
         if (coreCharger.TryConvertCurrentUnit(Inventory, player, playerLevel))
         {
             DailyMissionManager.ReportUnitEnhanced();
-            MainGuideMissionManager.ReportUnitEnhanced();
+            MainGuideMissionManager.ReportUnitEnhanced(coreCharger.CompletedConversionCount);
             SaveUnifiedGameIfReady();
         }
     }
@@ -967,6 +968,13 @@ public class BaseCampManager : MonoBehaviour
             myth.enemySpawn = enemySpawn.CaptureSaveData();
         }
 
+        BossTracker bossTracker =
+            FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include);
+        if (bossTracker != null)
+        {
+            myth.bossTracker = bossTracker.CaptureState();
+        }
+
         myth.tutorial = TutorialManager.CaptureSaveData(); // 인스턴스 없어도 PlayerPrefs에서 직접 캡처.
 
         return myth;
@@ -1030,6 +1038,8 @@ public class BaseCampManager : MonoBehaviour
                     ?.RestoreSaveData(data.myth.statAllocator);
                 FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include)
                     ?.RestoreSaveData(data.myth.enemySpawn);
+                FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include)
+                    ?.RestoreState(data.myth.bossTracker);
                 TutorialManager.RestoreSaveData(data.myth.tutorial);
             }
 
