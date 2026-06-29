@@ -9,6 +9,7 @@ public class PlayerDroneController : MonoBehaviour
     [SerializeField] private DroneConfig droneConfig;
     [SerializeField] private Transform droneSpawnParent;
     [SerializeField] private bool spawnOnStart = true;
+    [SerializeField] private AudioSource droneFireSource;
 
     private readonly List<PlayerDroneUnit> drones = new List<PlayerDroneUnit>();
     private DroneConfig appliedConfig;
@@ -82,7 +83,7 @@ public class PlayerDroneController : MonoBehaviour
             drone = droneObject.AddComponent<PlayerDroneUnit>();
         }
 
-        drone.Initialize(player, droneConfig, index, count);
+        drone.Initialize(player, droneConfig, index, count, droneFireSource);
         return drone;
     }
 
