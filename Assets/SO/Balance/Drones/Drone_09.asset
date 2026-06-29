@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Drone_09
   m_EditorClassIdentifier: Assembly-CSharp::DroneConfig
   id: 09
-  displayName: "\uB4DC\uB86009"
+  displayName: "\uC911\uD615\uB4DC\uB860-EX"
   dronePrefab: {fileID: 214164098778057125, guid: 1e1f80bec305add41ab5746601b177e7, type: 3}
   projectileConfig: {fileID: 11400000, guid: 16f8aefde54f04e4d8162af0984e3a00, type: 2}
   attackDamage: 18
@@ -29,6 +29,7 @@ MonoBehaviour:
   droneCount: 3
   followRadius: 1.4
   followSpeed: 9.6
+  followSmoothTime: 0.35
   startAngle: 180
   angleStep: 45
   muzzleNamePrefix: FireMuzzle
