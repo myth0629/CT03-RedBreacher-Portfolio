@@ -28,7 +28,7 @@ public class GachaTweenTransition : MonoBehaviour
 
     [Header("GachaResult Target")] 
     [SerializeField] private RectTransform gachaPanelTransform;
-    [SerializeField] private Button gachaResultCloseButton;
+    [SerializeField] private Button gachaResultConfirmButton;
 
     [Header(("GachaOddPanels Target"))] 
     [SerializeField] private RectTransform weaponGachaOddPanel;
@@ -105,7 +105,7 @@ public class GachaTweenTransition : MonoBehaviour
     {
         ResolveReferences();
         CacheOddPanelActiveStates();
-        gachaResultCloseButton?.onClick.AddListener(ResetAll);
+        gachaResultConfirmButton?.onClick.AddListener(ResetAll);
     }
 
     private void Update()
@@ -115,7 +115,7 @@ public class GachaTweenTransition : MonoBehaviour
 
     private void OnDisable()
     {
-        gachaResultCloseButton?.onClick.RemoveListener(ResetAll);
+        gachaResultConfirmButton?.onClick.RemoveListener(ResetAll);
         ResetAll();
     }
 
@@ -373,7 +373,7 @@ public class GachaTweenTransition : MonoBehaviour
         skillGachaBoxOpenGlow ??= FindChildGameObject("SkillGacha_Panel", "skillGachaBoxOpenGlow");
         gachaPanelTransform ??= FindRectTransformByName("GachaResult");
         gachaPanelTransform ??= FindRectTransformByName("GachaResult Panel");
-        gachaResultCloseButton ??= FindChildComponent<Button>("GachaResult Panel", "Close Button");
+        gachaResultConfirmButton ??= FindChildComponent<Button>("GachaResult Panel", "Close Button");
         weaponGachaOddPanel ??= FindRectTransformByName("WeaponGachaOddDetailPanel");
         skillGachaOddPanel ??= FindRectTransformByName("SkillGachaOddDetailPanel");
         weaponGachaBoxImage ??= weaponGachaBox != null ? weaponGachaBox.GetComponent<Image>() : null;

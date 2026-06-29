@@ -124,7 +124,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7416176820142541194}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
+        m_MethodName: Play
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &4256132195752717908
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,12 +194,12 @@ GameObject:
   - component: {fileID: 6226333421120596021}
   - component: {fileID: 285463883274771483}
   m_Layer: 5
-  m_Name: locked
+  m_Name: locked_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2062546700744833234
 RectTransform:
   m_ObjectHideFlags: 0

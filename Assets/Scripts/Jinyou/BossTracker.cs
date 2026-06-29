@@ -4,13 +4,31 @@ using UnityEngine;
 
 public class BossTracker : MonoBehaviour
 {
+    // 보스 SO 데이터수정 구조를 따로 수정하기 않고 직관적으로 반영하기 위해 [HideInInspector]를 추가하고
+    // 그 아래의 public 함수로 데이터를 동기화
     [Serializable]
     public class BossDefinition
     {
         public string bossId;
+        [HideInInspector]
         public string displayName;
+        [HideInInspector]
         public Sprite portrait;
         public BossEnemyConfig bossConfig;
+
+        public string Id => !string.IsNullOrWhiteSpace(bossId)
+            ? bossId
+            : bossConfig != null ? bossConfig.Id : string.Empty;
+
+        public string DisplayName => bossConfig != null && !string.IsNullOrWhiteSpace(bossConfig.DisplayName)
+            ? bossConfig.DisplayName
+            : !string.IsNullOrWhiteSpace(displayName)
+                ? displayName
+                : "보스";
+
+        public Sprite Portrait => bossConfig != null && bossConfig.Portrait != null
+            ? bossConfig.Portrait
+            : portrait;
     }
 
     [Serializable]
@@ -303,7 +321,7 @@ public class BossTracker : MonoBehaviour
     {
         string bossId = !string.IsNullOrWhiteSpace(boss?.bossId)
             ? boss.bossId
-            : boss?.displayName;
+            : boss?.Id;
         string difficultyId = !string.IsNullOrWhiteSpace(difficulty?.difficultyId)
             ? difficulty.difficultyId
             : difficulty?.displayName;
@@ -383,7 +401,6 @@ public class BossTracker : MonoBehaviour
             bosses.Add(new BossDefinition
             {
                 bossId = difficulty.bossConfig.Id,
-                displayName = difficulty.bossConfig.DisplayName,
                 portrait = difficulty.bossConfig.Portrait,
                 bossConfig = difficulty.bossConfig
             });

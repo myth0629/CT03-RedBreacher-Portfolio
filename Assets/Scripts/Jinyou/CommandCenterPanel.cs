@@ -139,17 +139,24 @@ public class CommandCenterPanel : MonoBehaviour
             RebuildBaseUnlockStatuses();
         }
 
-        foreach (CommandCenter.FacilityUnlock unlock in cmdCenter.FacilityUnlocks)
+        BaseCampFacilityView[] facilityViews = FindObjectsByType<BaseCampFacilityView>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < cmdCenter.FacilityUnlocks.Count && i < _baseUnlockStatusList.Count; i++)
         {
+            CommandCenter.FacilityUnlock unlock = cmdCenter.FacilityUnlocks[i];
             if (unlock != null)
             {
                 cmdCenter.IsFacilityUnlocked(unlock.facilityId);
             }
-        }
 
-        foreach (baseUnlockStatus status in _baseUnlockStatusList)
-        {
-            status?.Refresh();
+            baseUnlockStatus status = _baseUnlockStatusList[i];
+            if (status != null)
+            {
+                BaseCampFacilityView facilityView = FindFacilityView(facilityViews, unlock?.facilityId);
+                status.Configure(facilityView, unlock);
+            }
         }
     }
 

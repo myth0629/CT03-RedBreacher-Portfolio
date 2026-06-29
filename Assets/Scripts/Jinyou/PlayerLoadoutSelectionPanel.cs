@@ -33,6 +33,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private Transform contentRoot;
     [SerializeField] private PlayerLoadoutOptionButton optionButtonPrefab;
+    [SerializeField] private AudioClip optionButtonAudioClip;
 
     [Header("Detail")] 
     [SerializeField] private Image detailIconWeapon;
@@ -54,6 +55,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private Action<PlayerSkillConfig> skillSelectionCallback;
     private Action selectionClosedCallback;
     private PanelTweenTransition panelTransition;
+    private AudioSource audioSource;
 
 
     private static void SetIcon(Image target, Sprite sprite)
@@ -119,11 +121,13 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         // 패널은 씬/프리팹에서 비활성으로 시작하므로 여기서 따로 끌 필요가 없다.
         ResolveSources();
         ResolveDetailIconReferences();
+        EnsureAudioSource();
     }
 
     private void Start()
     {
         ResolveSources();
+        EnsureAudioSource();
         ApplySavedLoadout();
     }
 
@@ -277,6 +281,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void OnEnable()
     {
+        EnsureAudioSource();
         equipButton?.onClick.AddListener(ConfirmSelected);
         closeButton?.onClick.AddListener(Close);
     }
@@ -426,7 +431,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                 weapon.WeaponCategory,
                 $"Lv.{GetFactoryWeaponLevel(weapon)} / 피해량 {GetEnhancedWeaponDamage(weapon):0.##}",
                 weapon == selectedWeapon,
-                () => SelectWeapon(weapon),
+                () =>
+                {
+                    PlayOptionButtonAudio();
+                    SelectWeapon(weapon);
+                },
                 weapon.Icon);
         }
     }
@@ -457,7 +466,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                 $"갯수 {drone.DroneCount}",
                 $"Lv.{GetFactoryDroneLevel(drone)} / 피해량 {GetEnhancedDroneDamage(drone):0.##}",
                 drone == selectedDrone,
-                () => SelectDrone(drone),
+                () =>
+                {
+                    PlayOptionButtonAudio();
+                    SelectDrone(drone);
+                },
                 null,
                 drone);
         }
@@ -492,7 +505,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                 "스킬",
                 BuildSkillSummary(skill),
                 skill == selectedSkill,
-                () => SelectSkill(skill),
+                () =>
+                {
+                    PlayOptionButtonAudio();
+                    SelectSkill(skill);
+                },
                 skill.Icon);
         }
     }
@@ -828,6 +845,27 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         {
             target.text = value;
         }
+    }
+
+    private void EnsureAudioSource()
+    {
+        audioSource ??= GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+        }
+    }
+
+    private void PlayOptionButtonAudio()
+    {
+        if (optionButtonAudioClip == null)
+        {
+            return;
+        }
+
+        EnsureAudioSource();
+        audioSource.PlayOneShot(optionButtonAudioClip);
     }
 
 #if UNITY_EDITOR

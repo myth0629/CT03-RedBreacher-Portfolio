@@ -18,6 +18,7 @@ public enum GuideConditionType
     EnhanceDrone,
     UseBossTicket,
     DrawWeaponGacha,
+    DrawSkillGacha,
     ClaimOfflineReward,
     BossDefeat
 }
@@ -34,6 +35,7 @@ public class GuideMissionConfig : ScriptableObject
         public int order = 1;
         public string id;
         public GuideConditionType conditionType = GuideConditionType.EnemyKill;
+        public string conditionTarget;
         public string title;
         [TextArea]
         public string description;
@@ -64,7 +66,11 @@ public class GuideMissionConfig : ScriptableObject
     // 절대값(레벨 도달 등) 조건은 누적이 아니라 현재값으로 평가한다.
     public static bool IsAbsoluteCondition(GuideConditionType conditionType)
     {
-        return conditionType == GuideConditionType.PlayerLevel;
+        return conditionType == GuideConditionType.PlayerLevel
+            || conditionType == GuideConditionType.StageClear
+            || conditionType == GuideConditionType.DroneCollect
+            || conditionType == GuideConditionType.UpgradeFacility
+            || conditionType == GuideConditionType.EnhanceUnit;
     }
 
     public void ReplaceSteps(List<GuideStepData> importedSteps)
@@ -81,6 +87,12 @@ public class GuideMissionConfig : ScriptableObject
 
     private static GuideMissionConfig LoadFromResources()
     {
+        TextAsset preferredCsv = Resources.Load<TextAsset>(CsvResourcePath);
+        if (preferredCsv != null)
+        {
+            return CreateFromCsv(preferredCsv.text);
+        }
+
         GuideMissionConfig asset = Resources.Load<GuideMissionConfig>(AssetResourcePath);
         if (asset != null)
         {
@@ -119,6 +131,7 @@ public class GuideMissionConfig : ScriptableObject
                 order = GetInt(row, "order", result.Count + 1),
                 id = Get(row, "id"),
                 conditionType = GetEnum(row, "conditionType", GuideConditionType.EnemyKill),
+                conditionTarget = Get(row, "conditionTarget"),
                 title = Get(row, "title"),
                 description = Get(row, "description"),
                 targetAmount = Mathf.Max(1, GetInt(row, "targetAmount", 1)),

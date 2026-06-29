@@ -624,17 +624,19 @@ public class PlayerStatusHud : MonoBehaviour
     private void RefreshStagePanelVisibility()
     {
         ResolveBossEncounterManager();
-        SetActive(stagePanel, bossEncounterManager == null || !bossEncounterManager.IsEncounterActive);
+        bool shouldHideForBossHud = bossEncounterManager != null
+            && (bossEncounterManager.IsEncounterActive || bossEncounterManager.IsBossHudVisible);
+        SetActive(stagePanel, !shouldHideForBossHud);
     }
 
     private void HandleBossEncounterEnded(bool cleared)
     {
-        SetActive(stagePanel, true);
+        RefreshStagePanelVisibility();
     }
 
     private void HandleBossEncounterStarted()
     {
-        SetActive(stagePanel, false);
+        RefreshStagePanelVisibility();
     }
 
     private static void SetActive(GameObject target, bool active)

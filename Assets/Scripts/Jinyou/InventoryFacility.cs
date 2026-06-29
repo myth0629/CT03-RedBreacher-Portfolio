@@ -295,8 +295,9 @@ public class InventoryFacility : MonoBehaviour
         {
             // 중복 무기가 아닌 최초 획득만 수집 업적에 반영한다.
             AchievementManager.ReportWeaponCollected();
-            MainGuideMissionManager.ReportWeaponCollected();
         }
+
+        MainGuideMissionManager.ReportWeaponCollected(quantity);
 
         return BuildGrantResult(
             weaponConfig,
@@ -838,12 +839,22 @@ public class InventoryFacility : MonoBehaviour
     private bool RegisterDrone(DroneConfig droneConfig, bool reportCollection)
     {
         EnsureCollectionProgressInitialized();
-        if (droneConfig == null || ownedDroneIds.Contains(droneConfig.Id))
+        if (droneConfig == null)
         {
             return false;
         }
 
         // 드론 ID를 기준으로 최초 해금만 저장하고 수집 업적에 반영한다.
+        if (ownedDroneIds.Contains(droneConfig.Id))
+        {
+            if (reportCollection)
+            {
+                MainGuideMissionManager.ReportDroneCollected();
+            }
+
+            return false;
+        }
+
         ownedDroneIds.Add(droneConfig.Id);
         SaveCollectionProgress();
         NotifyCollectionChanged();
@@ -1088,6 +1099,8 @@ public class InventoryFacility : MonoBehaviour
 
     private void NotifyCollectionChanged()
     {
+        AchievementManager.ReportWeaponCollected();
+        AchievementManager.ReportDroneCollected();
         OnCollectionProgressChanged.Invoke();
         OnInventoryChanged.Invoke();
     }

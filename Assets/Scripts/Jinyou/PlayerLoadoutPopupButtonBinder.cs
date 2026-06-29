@@ -8,7 +8,7 @@ public class PlayerLoadoutPopupButtonBinder : MonoBehaviour
     [SerializeField] private Button weaponButton;
     [SerializeField] private Button droneButton;
     [SerializeField] private Button closeButton;
-
+    
     [Header("Target")]
     [SerializeField] private PlayerLoadoutSelectionPanel selectionPanel;
 

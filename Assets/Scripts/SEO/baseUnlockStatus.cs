@@ -12,6 +12,8 @@ public class baseUnlockStatus : MonoBehaviour
     private BaseCampFacilityView facilityView;
     private CommandCenter.FacilityUnlock facilityUnlock;
 
+    public string FacilityId => facilityUnlock != null ? facilityUnlock.facilityId : string.Empty;
+
     public void Configure(
         BaseCampFacilityView view,
         CommandCenter.FacilityUnlock unlock)
@@ -24,6 +26,8 @@ public class baseUnlockStatus : MonoBehaviour
 
     public void Refresh()
     {
+        facilityView?.SyncView();
+
         Sprite facilitySprite = facilityView != null ? facilityView.FacilitySprite : null;
         if (baseIcon != null)
         {
@@ -41,8 +45,15 @@ public class baseUnlockStatus : MonoBehaviour
             ? facilityUnlock.displayName
             : string.Empty);
         SetText(baseLevelText, facilityUnlock != null && facilityUnlock.unlocked
-            ? $"Lv. {facilityUnlock.requiredLabLevel}"
+            ? $"Lv. {GetCurrentFacilityLevel()}"
             : string.Empty);
+    }
+
+    private int GetCurrentFacilityLevel()
+    {
+        return facilityView != null
+            ? facilityView.CurrentLevel
+            : facilityUnlock != null ? facilityUnlock.requiredLabLevel : 1;
     }
 
     private static void SetText(TMP_Text target, string value)

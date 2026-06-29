@@ -125,8 +125,8 @@ public class BossTrackerPanel : MonoBehaviour
         BossTracker.BossDifficulty difficulty)
     {
         BossEnemyConfig config = boss != null ? boss.bossConfig : null;
-        string displayName = boss != null && !string.IsNullOrWhiteSpace(boss.displayName)
-            ? boss.displayName
+        string displayName = boss != null
+            ? boss.DisplayName
             : config != null ? config.DisplayName : "선택된 보스 없음";
 
         float healthMultiplier = difficulty != null ? difficulty.healthMultiplier : 1f;
@@ -152,9 +152,9 @@ public class BossTrackerPanel : MonoBehaviour
 
         if (bossIcon != null)
         {
-            Sprite portrait = config != null && config.Portrait != null
-                ? config.Portrait
-                : boss != null ? boss.portrait : null;
+            Sprite portrait = boss != null
+                ? boss.Portrait
+                : config != null ? config.Portrait : null;
             bossIcon.sprite = portrait;
             bossIcon.enabled = portrait != null;
             bossIcon.preserveAspect = true;
