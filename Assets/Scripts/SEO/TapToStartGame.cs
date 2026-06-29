@@ -23,6 +23,9 @@ public class TapToStartGame : MonoBehaviour
     [Header("Optional - 'Tap to Start' 깜빡임")]
     [SerializeField] private TMP_Text tapText;
     [SerializeField] private float blinkSpeed = 2f;
+    
+    [Header("GameQuit Popup(안드로이드 한정)")]
+    [SerializeField] private GameObject gameQuitPopup;
 
     private bool starting;
 
@@ -57,6 +60,14 @@ public class TapToStartGame : MonoBehaviour
             else
             {
                 LoadGameScene();
+            }
+        }
+        
+        if (gameQuitPopup != null)
+        {
+            if (WasGameQuitPopupRequested() && !gameQuitPopup.activeSelf)
+            {
+                gameQuitPopup.SetActive(true);
             }
         }
     }
@@ -127,5 +138,20 @@ public class TapToStartGame : MonoBehaviour
         }
 
         return false;
+    }
+    
+    // PC버전(에디터)의 ESC키나 안드로이드 버전의 백버튼을 누르면 게임종료 팝업창을 활성화
+    private bool WasGameQuitPopupRequested()
+    {
+        return Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+    }
+
+    public void GameQuit()
+    {
+        Application.Quit();
+        
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
     }
 }

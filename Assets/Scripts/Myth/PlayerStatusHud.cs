@@ -328,7 +328,7 @@ public class PlayerStatusHud : MonoBehaviour
         }
     }
 
-    // PC버전의 ESC키나 스마트폰 버전의 백버튼을 누르면 게임종료 팝업창을 활성화
+    // PC버전(에디터)의 ESC키나 안드로이드 버전의 백버튼을 누르면 게임종료 팝업창을 활성화
     private bool WasGameQuitPopupRequested()
     {
         return Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
