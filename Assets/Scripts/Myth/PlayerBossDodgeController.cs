@@ -19,6 +19,10 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     [SerializeField] private float wallClearance = 0.05f;
     [SerializeField] private LayerMask obstacleMask;
 
+    [Header("회피 속도감 연출")]
+    [Tooltip("값이 클수록 회피 초반이 더 폭발적으로 가속됩니다. (이전 기본값 3)")]
+    [SerializeField, Range(1f, 6f)] private float dodgeEaseExponent = 4.5f;
+
     [Header("퍼펙트 회피 보상")]
     [SerializeField, Range(0f, 2f)] private float perfectDodgeAttackBonus = 0.2f;
     [SerializeField] private float perfectDodgeBuffDuration = 3f;
@@ -55,6 +59,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     private GameObject activeFeedbackText;
     private SpriteRenderer[] flashingRenderers;
     private Color[] originalRendererColors;
+    private AfterimageEmitter afterimageEmitter;
 
     public bool IsDodging { get; private set; }
     public float CooldownRemaining => Mathf.Max(0f, nextDodgeTime - Time.time);
@@ -80,6 +85,12 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     {
         player = GetComponent<PlayerController>();
         health = GetComponent<CombatHealth>();
+        afterimageEmitter = GetComponent<AfterimageEmitter>();
+        if (afterimageEmitter == null)
+        {
+            afterimageEmitter = gameObject.AddComponent<AfterimageEmitter>();
+        }
+
         int wallLayer = LayerMask.NameToLayer("Wall");
         if (obstacleMask.value == 0 && wallLayer >= 0)
         {
@@ -256,6 +267,8 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         perfectDodgeWindowUntil = Time.time + invulnerability;
         perfectDodgeTriggered = false;
         health?.SetTemporaryInvulnerability(invulnerability);
+
+        afterimageEmitter?.Emit(true);
     }
 
     private void UpdateDodge()
@@ -263,14 +276,32 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         float duration = Mathf.Max(0.01f, dodgeDuration);
         dodgeElapsed += Time.deltaTime;
         float progress = Mathf.Clamp01(dodgeElapsed / duration);
-        float easedProgress = 1f - Mathf.Pow(1f - progress, 3f);
+        // 지수가 클수록 초반에 거리를 더 많이 당겨와 폭발적인 가속감을 준다.
+        float easedProgress = 1f - Mathf.Pow(1f - progress, Mathf.Max(1f, dodgeEaseExponent));
         transform.position = CombatPlane.WithFixedY(
             Vector3.Lerp(dodgeStartPosition, dodgeDestination, easedProgress));
+
+        afterimageEmitter?.Emit();
 
         if (progress >= 1f)
         {
             IsDodging = false;
         }
+    }
+
+    private SpriteRenderer[] GatherBodyRenderers()
+    {
+        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        List<SpriteRenderer> valid = new List<SpriteRenderer>(renderers.Length);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null && renderers[i].gameObject.name != "__SpriteShapeShadow")
+            {
+                valid.Add(renderers[i]);
+            }
+        }
+
+        return valid.ToArray();
     }
 
     private Vector3 GetWorldDirection(Vector2 screenDirection)
@@ -380,17 +411,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
 
     private void CacheFlashRenderers()
     {
-        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
-        List<SpriteRenderer> validRenderers = new List<SpriteRenderer>();
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            if (renderers[i] != null && renderers[i].gameObject.name != "__SpriteShapeShadow")
-            {
-                validRenderers.Add(renderers[i]);
-            }
-        }
-
-        flashingRenderers = validRenderers.ToArray();
+        flashingRenderers = GatherBodyRenderers();
         originalRendererColors = new Color[flashingRenderers.Length];
         for (int i = 0; i < flashingRenderers.Length; i++)
         {
