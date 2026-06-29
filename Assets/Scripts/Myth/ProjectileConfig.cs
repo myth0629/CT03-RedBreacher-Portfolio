@@ -107,6 +107,9 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private GameObject projectileEffectPrefab;
     [SerializeField] private GameObject hitEffectPrefab;
     [SerializeField] private float effectCleanupDelay = 2f;
+    
+    [Header("SFX")]
+    [SerializeField] private AudioClip sfxFire;
 
     public string Id => id;
     public string DisplayName => displayName;
