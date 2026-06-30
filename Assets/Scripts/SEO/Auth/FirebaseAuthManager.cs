@@ -21,8 +21,31 @@ public class FirebaseAuthManager : MonoBehaviour
     public bool IsSignedIn => auth != null && auth.CurrentUser != null;
     public string Uid => auth != null && auth.CurrentUser != null ? auth.CurrentUser.UserId : null;
 
-    /// <summary>구글 프로필 표시 이름(없으면 null). 환영 문구 등에 사용.</summary>
-    public string DisplayName => auth != null && auth.CurrentUser != null ? auth.CurrentUser.DisplayName : null;
+    /// <summary>현재 사용자가 익명(게스트) 계정인지. 게스트 표시/계정 연동 안내 등에 사용.</summary>
+    public bool IsAnonymous => auth != null && auth.CurrentUser != null && auth.CurrentUser.IsAnonymous;
+
+    /// <summary>표시 이름. 구글은 프로필 이름, 익명(게스트)은 "게스트-XXXX"(UID 끝 4자리). 환영 문구/플레이어 이름 등에 사용.</summary>
+    public string DisplayName
+    {
+        get
+        {
+            if (auth == null || auth.CurrentUser == null)
+            {
+                return null;
+            }
+
+            if (auth.CurrentUser.IsAnonymous)
+            {
+                string uid = auth.CurrentUser.UserId;
+                string suffix = !string.IsNullOrEmpty(uid) && uid.Length >= 4
+                    ? uid.Substring(uid.Length - 4)
+                    : uid;
+                return $"게스트-{suffix}";
+            }
+
+            return auth.CurrentUser.DisplayName;
+        }
+    }
 
     /// <summary>준비 완료/로그인 상태 변화 시 호출.</summary>
     public event Action OnAuthStateChanged;
@@ -137,6 +160,37 @@ public class FirebaseAuthManager : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogError($"[Auth] Firebase 로그인 실패: {e.Message}");
+            SetState(ConnectionState.SignInFailed);
+            return false;
+        }
+    }
+
+    /// <summary>익명(게스트) 로그인. 진짜 UID를 받아 Firestore/클라우드 세이브가 동작한다. 성공 시 true.</summary>
+    public async Task<bool> SignInAnonymouslyAsync()
+    {
+        if (!IsReady)
+        {
+            Debug.LogWarning("[Auth] 아직 Firebase 준비 전입니다.");
+            return false;
+        }
+
+        // 이미 로그인(자동 로그인/익명 포함)되어 있으면 그대로 사용한다.
+        if (IsSignedIn)
+        {
+            SetState(ConnectionState.SignedIn);
+            return true;
+        }
+
+        SetState(ConnectionState.SigningIn);
+        try
+        {
+            await auth.SignInAnonymouslyAsync();
+            SetState(ConnectionState.SignedIn);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[Auth] 익명 로그인 실패: {e.Message}");
             SetState(ConnectionState.SignInFailed);
             return false;
         }

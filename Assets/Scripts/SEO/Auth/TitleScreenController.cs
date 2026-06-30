@@ -22,6 +22,11 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] private Button signOutButton;         // 로그인 상태에서만 보이는 로그아웃 버튼
     [SerializeField] private GameObject signOutGroup;      // 숨길 로그아웃 묶음(미지정 시 버튼 오브젝트 사용)
 
+    [Header("Guest")]
+    [Tooltip("게스트(익명) 로그인 버튼. 구글 로그인과 동일하게 로그인 후 이름 표시 + Tap to Start 노출. (Button OnClick에 EnterAsGuest를 직접 연결해도 됨)")]
+    [SerializeField] private Button guestLoginButton;
+    [SerializeField] private GameObject guestGroup;       // 숨길 게스트 묶음(미지정 시 버튼 오브젝트 사용)
+
     [Header("Welcome Toast")]
     [Tooltip("토스트용 한글 폰트. 기본 TMP 폰트엔 한글 폴백이 없으므로 지정 권장.")]
     [SerializeField] private TMP_FontAsset toastFont;
@@ -49,10 +54,11 @@ public class TitleScreenController : MonoBehaviour
 
     private void Awake()
     {
-        // 초기: 로그인만 보이고 Tap to Start/로그아웃은 숨김.
+        // 초기: 로그인/게스트만 보이고 Tap to Start/로그아웃은 숨김.
         SetActiveSafe(tapToStartGroup, false);
         SetActiveSafe(SignOutVisual(), false);
         SetActiveSafe(LoginVisual(), true);
+        SetActiveSafe(GuestVisual(), true);
 
         // 첫 프레임부터 '접속 중...'이 보이도록 초기화.
         if (stateText != null)
@@ -72,6 +78,13 @@ public class TitleScreenController : MonoBehaviour
         if (signOutButton != null)
         {
             signOutButton.onClick.AddListener(OnSignOutClicked);
+        }
+
+        if (guestLoginButton != null)
+        {
+            // 익명 로그인도 Firebase 준비가 필요하므로 준비 전엔 비활성(HandleAuthState에서 활성화).
+            guestLoginButton.onClick.AddListener(EnterAsGuest);
+            guestLoginButton.interactable = false;
         }
 
         // FirebaseAuthManager.Awake는 이 시점 이전에 실행됨(같은 씬). 준비/상태 변화를 구독.
@@ -97,6 +110,11 @@ public class TitleScreenController : MonoBehaviour
         if (signOutButton != null)
         {
             signOutButton.onClick.RemoveListener(OnSignOutClicked);
+        }
+
+        if (guestLoginButton != null)
+        {
+            guestLoginButton.onClick.RemoveListener(EnterAsGuest);
         }
 
         if (FirebaseAuthManager.Instance != null)
@@ -128,10 +146,19 @@ public class TitleScreenController : MonoBehaviour
         // 비로그인: 로그인 버튼이 보이는 초기 상태로 복귀.
         welcomeShown = false; // 다음 로그인 때 다시 환영하도록 리셋.
         ShowSignedOut();
-        if (!busy && googleLoginButton != null)
+        if (!busy)
         {
             // Firebase 준비 전 터치는 무반응처럼 보이므로, 준비된 뒤에만 버튼을 활성화한다.
-            googleLoginButton.interactable = manager != null && manager.IsReady;
+            bool ready = manager != null && manager.IsReady;
+            if (googleLoginButton != null)
+            {
+                googleLoginButton.interactable = ready;
+            }
+
+            if (guestLoginButton != null)
+            {
+                guestLoginButton.interactable = ready;
+            }
         }
     }
 
@@ -168,6 +195,52 @@ public class TitleScreenController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Firebase 익명(게스트) 로그인. 구글 로그인과 동일하게 성공 시 이름 표시 + Tap to Start를 노출한다(바로 진입하지 않음).
+    /// 익명도 진짜 UID라 Firestore/클라우드 세이브가 동작하고, IsSignedIn=true가 되어 TapToStartGame 게이트도 통과한다.
+    /// Button OnClick에 직접 연결하거나 guestLoginButton에 할당하면 된다.
+    /// </summary>
+    public async void EnterAsGuest()
+    {
+        if (busy)
+        {
+            return;
+        }
+
+        FirebaseAuthManager manager = FirebaseAuthManager.Instance;
+        if (manager == null || !manager.IsReady)
+        {
+            Debug.LogWarning("[Title] 인증이 아직 준비되지 않았습니다.");
+            HandleAuthState();
+            return;
+        }
+
+        Debug.Log("[Title] 게스트(익명) 로그인 시도");
+        busy = true;
+        if (guestLoginButton != null)
+        {
+            guestLoginButton.interactable = false;
+        }
+
+        if (googleLoginButton != null)
+        {
+            googleLoginButton.interactable = false;
+        }
+
+        bool success = await manager.SignInAnonymouslyAsync();
+        busy = false;
+
+        if (success)
+        {
+            // 구글 로그인과 동일: 이름 표시(환영 토스트) + Tap to Start 노출. 환영 토스트는 HandleAuthState에서 1회 처리.
+            ShowSignedIn();
+        }
+        else
+        {
+            HandleAuthState();
+        }
+    }
+
     private void OnSignOutClicked()
     {
         if (busy)
@@ -182,6 +255,7 @@ public class TitleScreenController : MonoBehaviour
     private void ShowSignedIn()
     {
         SetActiveSafe(LoginVisual(), false);
+        SetActiveSafe(GuestVisual(), false);
         SetActiveSafe(tapToStartGroup, true);
         SetActiveSafe(SignOutVisual(), true);
     }
@@ -191,6 +265,7 @@ public class TitleScreenController : MonoBehaviour
         SetActiveSafe(tapToStartGroup, false);
         SetActiveSafe(SignOutVisual(), false);
         SetActiveSafe(LoginVisual(), true);
+        SetActiveSafe(GuestVisual(), true);
     }
 
     private void UpdateStateText()
@@ -246,6 +321,16 @@ public class TitleScreenController : MonoBehaviour
         }
 
         return googleLoginButton != null ? googleLoginButton.gameObject : null;
+    }
+
+    private GameObject GuestVisual()
+    {
+        if (guestGroup != null)
+        {
+            return guestGroup;
+        }
+
+        return guestLoginButton != null ? guestLoginButton.gameObject : null;
     }
 
     private GameObject SignOutVisual()

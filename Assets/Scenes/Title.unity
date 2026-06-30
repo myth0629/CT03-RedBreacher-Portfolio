@@ -507,6 +507,7 @@ MonoBehaviour:
   tapToStartGroup: {fileID: 1296024106}
   signOutButton: {fileID: 2120414397}
   signOutGroup: {fileID: 2120414395}
+  guestLoginButton: {fileID: 1249179076}
   toastFont: {fileID: 11400000, guid: a5e325fc73a121645b8bb045804e62a4, type: 2}
   welcomeFormat: "{0}\uB2D8, \uD658\uC601\uD569\uB2C8\uB2E4!"
   welcomeFallback: "\uD658\uC601\uD569\uB2C8\uB2E4!"
@@ -545,34 +546,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 838151362680778155, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
-      value: 
-      objectReference: {fileID: 1113625907}
-    - target: {fileID: 838151362680778155, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
-      value: Play
-      objectReference: {fileID: 0}
-    - target: {fileID: 1982781153321643721, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 1222963958}
-    - target: {fileID: 1982781153321643721, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
-      value: 
-      objectReference: {fileID: 1113625907}
-    - target: {fileID: 1982781153321643721, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: GameQuit
-      objectReference: {fileID: 0}
-    - target: {fileID: 1982781153321643721, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
-      value: PlayOneShot
-      objectReference: {fileID: 0}
-    - target: {fileID: 1982781153321643721, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: TapToStartGame, Assembly-CSharp
-      objectReference: {fileID: 0}
     - target: {fileID: 2185690315232929083, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
       propertyPath: m_fontMaterial
       value: 
@@ -673,36 +646,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5893569941398567561, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-      propertyPath: gameQuitPopup
-      value: 
-      objectReference: {fileID: 1113625906}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
---- !u!1 &1113625906 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6019088867069708802, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-  m_PrefabInstance: {fileID: 1113625905}
-  m_PrefabAsset: {fileID: 0}
---- !u!82 &1113625907 stripped
-AudioSource:
-  m_CorrespondingSourceObject: {fileID: 6311110274768842316, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
-  m_PrefabInstance: {fileID: 1113625905}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1222963958 stripped
+--- !u!114 &1249179076 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5893569941398567561, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
+  m_CorrespondingSourceObject: {fileID: 5284209534662242299, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
   m_PrefabInstance: {fileID: 1113625905}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3120823d3ee3146d1b6f88eb4d36fd60, type: 3}
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TapToStartGame
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &1296024106 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6488415193012926775, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
