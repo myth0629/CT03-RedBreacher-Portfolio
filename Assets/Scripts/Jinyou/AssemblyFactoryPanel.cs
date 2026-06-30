@@ -283,17 +283,17 @@ public class AssemblyFactoryPanel : MonoBehaviour
         float nextIncrease = GetNextWeaponAttackIncrease(enhancement);
         float nextAttack = currentAttack + nextIncrease;
 
-        SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0.##}</color>");
+        SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0}</color>");
 
         if (enhancement.IsMaxLevel)
         {
-            SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0.##}</color>");
+            SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0}</color>");
             SetText(weaponAttackLevelText, "<color=#4AD787>최대치</color>");
             SetText(weaponEnhanceCostText, "None");
             return string.Empty;
         }
 
-        SetText(weaponAttackLevelText, $"{currentAttack:0.##}  ->  <color=#4AD787>{nextAttack:0.##}</color>");
+        SetText(weaponAttackLevelText, $"{currentAttack:0}  ->  <color=#4AD787>{nextAttack:0}</color>");
         SetText(weaponEnhanceCostText, $"{enhancement.NextEnhanceCost}");
         return string.Empty;
     }
@@ -361,7 +361,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         }
 
         float increase = GetNextWeaponAttackIncrease(enhancement);
-        return $"강화하기 {enhancement.weaponConfig.DisplayName} +{increase:0.##}";
+        return $"강화하기 {enhancement.weaponConfig.DisplayName} +{increase:0}";
     }
 
     private string BuildDroneEnhanceButtonText()

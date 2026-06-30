@@ -42,8 +42,16 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupWeaponRangeText;
     [SerializeField] private TMP_Text tankPopupWeaponFireIntervalText;
     [SerializeField] private TMP_Text tankPopupWeaponSpeedText;
-    [SerializeField] private TMP_Text tankPopupWeaponLifetimeText;
+    [SerializeField] private TMP_Text tankPopupWeaponRadiusText;
     [SerializeField] private TMP_Text tankPopupWeaponKnockbackText;
+    [SerializeField] private TMP_Text tankPopupDroneNameText;
+    [SerializeField] private TMP_Text tankPopupDroneCountText;
+    [SerializeField] private TMP_Text tankPopupDroneDamageText;
+    [SerializeField] private TMP_Text tankPopupDroneWeaponText;
+    [SerializeField] private TMP_Text tankPopupDroneIntervalText;
+    [SerializeField] private TMP_Text tankPopupDroneRangeText;
+    [SerializeField] private TMP_Text tankPopupDroneWeaponSpeedText;
+    [SerializeField] private TMP_Text tankPopupDroneFollowSpeedText;
     [SerializeField] private Image tankPopupEquipWeaponIcon;
     [SerializeField] private RawImage tankPopupEquipDroneIcon;
     private Image tankPopupEquipDronePlaceholderImage;
@@ -368,17 +376,26 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupWeaponCategoryText, weapon != null ? weapon.WeaponCategory : "무기 카테고리");
         SetIcon(tankPopupEquipWeaponIcon, weapon != null ? weapon.Icon : null);
         SetDronePreview(tankPopupEquipDroneIcon, drone);
-        SetText(tankPopupWeaponDamageText, $"{player.WeaponAttackDamage:0.##}");
+        SetText(tankPopupWeaponDamageText, $"{weapon.AttackDamage:0.##}");
         SetText(tankPopupWeaponRangeText, $"{player.AttackRange:0.##}");
         SetText(tankPopupWeaponFireIntervalText, $"{player.AttackInterval:0.##}");
-        SetText(tankPopupWeaponSpeedText, $"{player.ProjectileSpeed:0.##}");
-        SetText(tankPopupWeaponLifetimeText, $"{player.ProjectileLifetime:0.##}");
+        SetText(tankPopupWeaponSpeedText, $"{weapon.Speed * weapon.Lifetime:0.##}");
+        SetText(tankPopupWeaponRadiusText, weapon != null ? $"{weapon.AreaRadius:0.##}" : "0");
         SetText(tankPopupWeaponKnockbackText, $"{player.KnockbackForce:0.##}");
         SetText(stattankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
         SetText(stattankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
         SetText(stattankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
         SetText(stattankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
         SetText(stattankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
+        
+        SetText(tankPopupDroneNameText, drone.DisplayName);
+        SetText(tankPopupDroneCountText, $" {drone.DroneCount}마리");
+        SetText(tankPopupDroneDamageText, $"{drone.AttackDamage:0.##}");
+        SetText(tankPopupDroneWeaponText, drone.ProjectileConfig.DisplayName);
+        SetText(tankPopupDroneIntervalText, $"{drone.AttackInterval:0.##}");
+        SetText(tankPopupDroneRangeText, $"{drone.AttackRange * drone.ProjectileLifetime:0.##}");
+        SetText(tankPopupDroneWeaponSpeedText, $"{drone.ProjectileSpeed:0.##}");
+        SetText(tankPopupDroneFollowSpeedText, $"{drone.FollowSpeed:0.##}");
     }
 
     private void RefreshStatUpgradePopup(PlayerProgression progression)

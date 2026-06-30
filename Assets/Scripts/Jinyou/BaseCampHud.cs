@@ -18,6 +18,9 @@ public class BaseCampHud : MonoBehaviour
     [SerializeField] private Image refineryStorageFill;
     [SerializeField] private Button collectButton;
 
+    [Header("Controls")]
+    [SerializeField] private Button exitButton;
+
     [Header("BaseUnlockStatus")]
     [SerializeField] private TMP_Text energyRefineryUnlockText;
     [SerializeField] private TMP_Text assemblyFactoryUnlockText;
@@ -30,6 +33,7 @@ public class BaseCampHud : MonoBehaviour
     {
         ResolveReferences();
         collectButton?.onClick.AddListener(CollectCredits);
+        EnsureExitButtonVisible();
         Refresh();
     }
 
@@ -61,6 +65,7 @@ public class BaseCampHud : MonoBehaviour
     private void Refresh()
     {
         ResolveReferences();
+        EnsureExitButtonVisible();
 
         if (baseCampManager == null)
         {
@@ -117,6 +122,14 @@ public class BaseCampHud : MonoBehaviour
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
+    }
+
+    private void EnsureExitButtonVisible()
+    {
+        if (exitButton != null && !exitButton.gameObject.activeSelf)
+        {
+            exitButton.gameObject.SetActive(true);
+        }
     }
 
 

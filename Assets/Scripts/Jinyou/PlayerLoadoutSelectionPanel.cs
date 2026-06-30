@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -463,7 +463,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
             option.Bind(
                 $"{drone.DisplayName} Lv.{GetFactoryDroneLevel(drone)}",
-                $"갯수 {drone.DroneCount}",
+                $"{drone.DroneCount}마리",
                 $"Lv.{GetFactoryDroneLevel(drone)} / 피해량 {GetEnhancedDroneDamage(drone):0.##}",
                 drone == selectedDrone,
                 () =>
@@ -619,16 +619,19 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         ResolveDetailIconReferences();
 
         int weaponEnhanceLevel = weapon != null ? GetFactoryWeaponLevel(weapon) : 0;
-        float weaponEnhancedDamage = weaponEnhanceLevel > 0 ? GetEnhancedWeaponDamage(weapon) : 0f;
+        float weaponBonusDamage = weapon != null ? GetWeaponBonusDamage(weapon) : 0f;
         SetIcon(detailIconWeapon, weapon != null ? weapon.Icon : null);
         SetDroneIcon(detailIconDrone, null);
         SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하세요.");
-        SetText(detailCategoryText, weapon != null ? $"Type: {weapon.WeaponCategory}" : string.Empty);
+        SetText(detailCategoryText, weapon != null ? $"{weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
-            ? $"공장강화 Lv. {weaponEnhanceLevel}\n"
-                + $"수집강화 Lv. {GetCollectionWeaponLevel(weapon)}\n"
-                + $"피해량: {weapon.AttackDamage:0.##} (+ {weaponEnhancedDamage:0.##})\n"
-                + $"발사간격: {weapon.Speed:0.##}"
+            ? $"공장강화 Lv. <color=#4AD787>{weaponEnhanceLevel}</color>\n"
+                + $"수집강화 Lv. <color=#4AD787>{GetCollectionWeaponLevel(weapon)}</color>\n"
+                + "\n"
+                + $"피해량: <color=#EC9A0E>{weapon.AttackDamage:0.##}</color> (+ <color=#4AD787>{weaponBonusDamage:0.##}</color>)\n"
+                + $"범위피해: <color=#EC9A0E>{weapon.AreaRadius:0.##}</color>\n"
+                + $"탄속: <color=#EC9A0E>{weapon.Speed * weapon.Lifetime:0.##}</color>\n"
+                + $"저지력: <color=#EC9A0E>{weapon.KnockbackForce:0.##}</color>\n"
             : string.Empty);
     }
 
@@ -641,9 +644,10 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetIcon(detailIconWeapon, null);
         SetDroneIcon(detailIconDrone, drone);
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
-        SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount}" : string.Empty);
+        SetText(detailCategoryText, drone != null ? $"{drone.DroneCount}마리" : string.Empty);
         SetText(detailStatsText, drone != null
             ? $"공장강화 Lv. {droneEnhanceLevel}\n"
+                + "\n"
                 + $"피해량: {drone.AttackDamage:0.##} (+ {droneEnhancedDamage:0.##})\n"
                 + $"사거리: {drone.AttackRange:0.##}\n"
                 + $"발사간격: {drone.AttackInterval:0.##}"
@@ -657,9 +661,10 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetIcon(detailIconWeapon, skill != null ? skill.Icon : null);
         SetDroneIcon(detailIconDrone, null);
         SetText(detailNameText, skill != null ? skill.DisplayName : "스킬을 선택하세요.");
-        SetText(detailCategoryText, skill != null ? "Type: 스킬" : string.Empty);
+        SetText(detailCategoryText, skill != null ? "스킬" : string.Empty);
         SetText(detailStatsText, skill != null
             ? $"수집강화 Lv. {GetCollectionSkillLevel(skill)}\n"
+                + "\n"
                 + $"쿨타임: {skill.GetCooldown(GetCollectionSkillLevel(skill)):0.##}\n"
                 + $"범위: {skill.EffectRadius:0.##}\n"
                 + BuildSkillSummary(skill)
@@ -821,12 +826,40 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private float GetEnhancedWeaponDamage(ProjectileConfig weapon)
     {
+        if (weapon == null)
+        {
+            return 0f;
+        }
+
+        return weapon.AttackDamage * GetCollectionWeaponDamageMultiplier(weapon)
+            + GetFactoryWeaponDamageBonus(weapon);
+    }
+
+    private float GetWeaponBonusDamage(ProjectileConfig weapon)
+    {
         return weapon != null
-            ? weapon.AttackDamage + (assemblyFactory != null
-                ? assemblyFactory.GetWeaponStatBonus(
-                    weapon,
-                    AssemblyFactory.WeaponEnhancementStat.AttackDamage)
-                : 0f)
+            ? Mathf.Max(0f, GetEnhancedWeaponDamage(weapon) - weapon.AttackDamage)
+            : 0f;
+    }
+
+    private float GetCollectionWeaponDamageMultiplier(ProjectileConfig weapon)
+    {
+        if (weapon == null)
+        {
+            return 1f;
+        }
+
+        return DuplicateLevelProgression.GetLevelMultiplier(
+            GetCollectionWeaponLevel(weapon),
+            weapon.DamagePercentPerLevel);
+    }
+
+    private float GetFactoryWeaponDamageBonus(ProjectileConfig weapon)
+    {
+        return weapon != null && assemblyFactory != null
+            ? assemblyFactory.GetWeaponStatBonus(
+                weapon,
+                AssemblyFactory.WeaponEnhancementStat.AttackDamage)
             : 0f;
     }
 

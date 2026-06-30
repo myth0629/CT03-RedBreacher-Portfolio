@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,10 +10,20 @@ public class PlayerLoadoutPopupButtonBinder : MonoBehaviour
     [SerializeField] private Button droneButton;
     [SerializeField] private Button closeButton;
     
+    [Header("Panels")]
+    [SerializeField] private GameObject droneInfoPanel;
+    [SerializeField] private GameObject weaponInfoPanel;
+    
     [Header("Target")]
     [SerializeField] private PlayerLoadoutSelectionPanel selectionPanel;
 
     private PanelTweenTransition panelTransition;
+
+    private void Start()
+    {
+        droneInfoPanel.SetActive(false);
+        weaponInfoPanel.SetActive(true);
+    }
 
     private void OnEnable()
     {
