@@ -210,6 +210,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     [SerializeField, Min(0)] private int defaultWeaponEnhanceCost = 100;
     [SerializeField, Min(0)] private int defaultWeaponEnhanceCostIncreasePerLevel = 50;
     [SerializeField, Min(0f)] private float defaultWeaponAttackIncrease = 1f;
+    [SerializeField, Min(0f)] private float defaultWeaponAttackIncreasePerLevel = 0.25f;
 
     [Header("Drone Enhancement")]
     [SerializeField] private List<DroneEnhancement> droneEnhancements = new List<DroneEnhancement>();
@@ -990,13 +991,14 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
                     new WeaponStatIncrease
                     {
                         stat = WeaponEnhancementStat.AttackDamage,
-                        amount = defaultWeaponAttackIncrease
+                        amount = GetDefaultWeaponAttackIncrease(levelIndex)
                     }
                 }
             });
         }
 
         ApplyDefaultWeaponEnhanceCosts(enhancement);
+        ApplyDefaultWeaponAttackIncreases(enhancement);
     }
 
     private int GetRequiredSavedWeaponEnhanceLevelCap()
@@ -1046,6 +1048,50 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     {
         return Mathf.Max(0, defaultWeaponEnhanceCost)
             + Mathf.Max(0, defaultWeaponEnhanceCostIncreasePerLevel) * Mathf.Max(0, levelIndex);
+    }
+
+    private void ApplyDefaultWeaponAttackIncreases(WeaponEnhancement enhancement)
+    {
+        if (enhancement?.enhancementLevels == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < enhancement.enhancementLevels.Count; i++)
+        {
+            WeaponEnhancementLevel levelData = enhancement.enhancementLevels[i];
+            if (levelData == null)
+            {
+                continue;
+            }
+
+            levelData.statIncreases ??= new List<WeaponStatIncrease>();
+            WeaponStatIncrease attackIncrease = levelData.statIncreases.Find(
+                statIncrease => statIncrease != null && statIncrease.stat == WeaponEnhancementStat.AttackDamage);
+            float defaultAttackIncreaseForLevel = GetDefaultWeaponAttackIncrease(i);
+
+            if (attackIncrease == null)
+            {
+                levelData.statIncreases.Add(new WeaponStatIncrease
+                {
+                    stat = WeaponEnhancementStat.AttackDamage,
+                    amount = defaultAttackIncreaseForLevel
+                });
+                continue;
+            }
+
+            if (Mathf.Approximately(attackIncrease.amount, defaultWeaponAttackIncrease)
+                || Mathf.Approximately(attackIncrease.amount, defaultAttackIncreaseForLevel))
+            {
+                attackIncrease.amount = defaultAttackIncreaseForLevel;
+            }
+        }
+    }
+
+    private float GetDefaultWeaponAttackIncrease(int levelIndex)
+    {
+        return Mathf.Max(0f, defaultWeaponAttackIncrease)
+            + Mathf.Max(0f, defaultWeaponAttackIncreasePerLevel) * Mathf.Max(0, levelIndex);
     }
 
     private int GetWeaponEnhanceLevelCap()
@@ -1153,6 +1199,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         defaultWeaponEnhanceCost = Mathf.Max(0, defaultWeaponEnhanceCost);
         defaultWeaponEnhanceCostIncreasePerLevel = Mathf.Max(0, defaultWeaponEnhanceCostIncreasePerLevel);
         defaultWeaponAttackIncrease = Mathf.Max(0f, defaultWeaponAttackIncrease);
+        defaultWeaponAttackIncreasePerLevel = Mathf.Max(0f, defaultWeaponAttackIncreasePerLevel);
         defaultDroneEnhanceCost = Mathf.Max(0, defaultDroneEnhanceCost);
         defaultDroneAttackIncrease = Mathf.Max(0f, defaultDroneAttackIncrease);
         NormalizeDroneEnhancements();
