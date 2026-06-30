@@ -463,7 +463,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
             option.Bind(
                 $"{drone.DisplayName} Lv.{GetFactoryDroneLevel(drone)}",
-                $"갯수 {drone.DroneCount}",
+                $"{drone.DroneCount}마리",
                 $"Lv.{GetFactoryDroneLevel(drone)} / 피해량 {GetEnhancedDroneDamage(drone):0.##}",
                 drone == selectedDrone,
                 () =>
@@ -623,10 +623,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetIcon(detailIconWeapon, weapon != null ? weapon.Icon : null);
         SetDroneIcon(detailIconDrone, null);
         SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하세요.");
-        SetText(detailCategoryText, weapon != null ? $"Type: {weapon.WeaponCategory}" : string.Empty);
+        SetText(detailCategoryText, weapon != null ? $"{weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
             ? $"공장강화 Lv. {weaponEnhanceLevel}\n"
                 + $"수집강화 Lv. {GetCollectionWeaponLevel(weapon)}\n"
+                + "\n"
                 + $"피해량: {weapon.AttackDamage:0.##} (+ {weaponEnhancedDamage:0.##})\n"
                 + $"발사간격: {weapon.Speed:0.##}"
             : string.Empty);
@@ -641,9 +642,10 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetIcon(detailIconWeapon, null);
         SetDroneIcon(detailIconDrone, drone);
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
-        SetText(detailCategoryText, drone != null ? $"갯수: {drone.DroneCount}" : string.Empty);
+        SetText(detailCategoryText, drone != null ? $"{drone.DroneCount}마리" : string.Empty);
         SetText(detailStatsText, drone != null
             ? $"공장강화 Lv. {droneEnhanceLevel}\n"
+                + "\n"
                 + $"피해량: {drone.AttackDamage:0.##} (+ {droneEnhancedDamage:0.##})\n"
                 + $"사거리: {drone.AttackRange:0.##}\n"
                 + $"발사간격: {drone.AttackInterval:0.##}"
@@ -657,9 +659,10 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetIcon(detailIconWeapon, skill != null ? skill.Icon : null);
         SetDroneIcon(detailIconDrone, null);
         SetText(detailNameText, skill != null ? skill.DisplayName : "스킬을 선택하세요.");
-        SetText(detailCategoryText, skill != null ? "Type: 스킬" : string.Empty);
+        SetText(detailCategoryText, skill != null ? "스킬" : string.Empty);
         SetText(detailStatsText, skill != null
             ? $"수집강화 Lv. {GetCollectionSkillLevel(skill)}\n"
+                + "\n"
                 + $"쿨타임: {skill.GetCooldown(GetCollectionSkillLevel(skill)):0.##}\n"
                 + $"범위: {skill.EffectRadius:0.##}\n"
                 + BuildSkillSummary(skill)
