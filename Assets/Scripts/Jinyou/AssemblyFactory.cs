@@ -1199,6 +1199,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         defaultWeaponEnhanceCost = Mathf.Max(0, defaultWeaponEnhanceCost);
         defaultWeaponEnhanceCostIncreasePerLevel = Mathf.Max(0, defaultWeaponEnhanceCostIncreasePerLevel);
         defaultWeaponAttackIncrease = Mathf.Max(0f, defaultWeaponAttackIncrease);
+        defaultWeaponAttackIncreasePerLevel = Mathf.Max(0f, defaultWeaponAttackIncreasePerLevel);
         defaultDroneEnhanceCost = Mathf.Max(0, defaultDroneEnhanceCost);
         defaultDroneAttackIncrease = Mathf.Max(0f, defaultDroneAttackIncrease);
         NormalizeDroneEnhancements();

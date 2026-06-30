@@ -368,7 +368,7 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupWeaponCategoryText, weapon != null ? weapon.WeaponCategory : "무기 카테고리");
         SetIcon(tankPopupEquipWeaponIcon, weapon != null ? weapon.Icon : null);
         SetDronePreview(tankPopupEquipDroneIcon, drone);
-        SetText(tankPopupWeaponDamageText, $"{player.WeaponAttackDamage:0.##}");
+        SetText(tankPopupWeaponDamageText, $"{player.WeaponAttackDamage:0}");
         SetText(tankPopupWeaponRangeText, $"{player.AttackRange:0.##}");
         SetText(tankPopupWeaponFireIntervalText, $"{player.AttackInterval:0.##}");
         SetText(tankPopupWeaponSpeedText, $"{player.ProjectileSpeed:0.##}");

@@ -429,7 +429,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             option.Bind(
                 $"{weapon.DisplayName} Lv.{GetFactoryWeaponLevel(weapon)}",
                 weapon.WeaponCategory,
-                $"Lv.{GetFactoryWeaponLevel(weapon)} / 피해량 {GetEnhancedWeaponDamage(weapon):0.##}",
+                $"Lv.{GetFactoryWeaponLevel(weapon)} / 피해량 {GetEnhancedWeaponDamage(weapon):0}",
                 weapon == selectedWeapon,
                 () =>
                 {
@@ -627,7 +627,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetText(detailStatsText, weapon != null
             ? $"공장강화 Lv. {weaponEnhanceLevel}\n"
                 + $"수집강화 Lv. {GetCollectionWeaponLevel(weapon)}\n"
-                + $"피해량: {weapon.AttackDamage:0.##} (+ {weaponEnhancedDamage:0.##})\n"
+                + $"피해량: {weapon.AttackDamage:0} (+ {weaponEnhancedDamage:0})\n"
                 + $"발사간격: {weapon.Speed:0.##}"
             : string.Empty);
     }
