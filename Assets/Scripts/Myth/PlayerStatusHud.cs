@@ -35,6 +35,7 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupMoveSpeedText;
     [SerializeField] private TMP_Text tankPopupRangeText;
     [SerializeField] private TMP_Text tankPopupFireIntervalText;
+    [SerializeField] private TMP_Text tankPopupRotateSpeedText;
     [SerializeField] private TMP_Text tankPopupCritChanceText;
     [SerializeField] private TMP_Text tankPopupCritMultiplierText;
     
@@ -380,6 +381,7 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
         SetText(tankPopupRangeText, $"{player.AttackRange:0.##}");
         SetText(tankPopupFireIntervalText, $"{player.AttackInterval:0.##}");
+        SetText(tankPopupRotateSpeedText, $"{player.RotationSpeed:0.##}");
         SetText(tankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
         SetText(tankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
         

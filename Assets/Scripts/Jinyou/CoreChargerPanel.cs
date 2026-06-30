@@ -378,7 +378,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         PlayerUnitConfig current = stage.currentUnit;
         PlayerUnitConfig next = stage.nextUnit;
-        // 순서 => 체력, 공격력, 공격범위, 공격간격, 이동 속도, 회전속도, 치명타 확률, 치명타 피해
+        // 순서 => 내구도, 피해량, 사거리, 발사간격, 이동 속도, 회전속도, 치명타 확률, 치명타 피해
         return $"{FormatStatChange(current.MaxHealth, next.MaxHealth)}\n"
             + $"{FormatStatChange(current.AttackDamage, next.AttackDamage)}\n"
             + $"{FormatStatChange(current.AttackRange, next.AttackRange)}\n"
