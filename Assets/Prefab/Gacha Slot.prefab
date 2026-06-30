@@ -238,6 +238,10 @@ MonoBehaviour:
   _levelText: {fileID: 7176642832195271406}
   _progressText: {fileID: 4095097587955027933}
   _progressImage: {fileID: 4636610540736941241}
+  _rarityFrame: {fileID: 0}
+  _rarityText: {fileID: 0}
+  _tintNameByRarity: 0
+  _playRevealPop: 1
 --- !u!114 &75737019785308726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -915,8 +919,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

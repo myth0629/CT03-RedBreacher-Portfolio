@@ -242,11 +242,41 @@ public class EquipmentPartsPanel : MonoBehaviour
             frameImage.color = GetRarityFrameColor(part.rarity);
         }
 
-        TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
-        if (label != null)
+        // 이름/레벨/등급을 분리된 텍스트로 표시한다(프리팹에 NameText/LevelText/RarityText 자식이 있을 때).
+        // 셋 다 없으면 기존처럼 첫 TMP_Text에 합본으로 폴백한다.
+        bool isEquipped = loadout != null && loadout.IsEquipped(part.instanceId);
+        string equippedSuffix = isEquipped ? " [장착]" : string.Empty;
+
+        TMP_Text nameLabel = FindChildText(button.transform, "NameText");
+        TMP_Text levelLabel = FindChildText(button.transform, "LevelText");
+        TMP_Text rarityLabel = FindChildText(button.transform, "RarityText");
+
+        if (nameLabel != null || levelLabel != null || rarityLabel != null)
         {
-            string equipped = loadout != null && loadout.IsEquipped(part.instanceId) ? " [장착]" : string.Empty;
-            label.text = $"{GetDisplayName(config, part)} / Lv.{part.level} / {GetRarityName(part.rarity)}{equipped}";
+            if (nameLabel != null)
+            {
+                nameLabel.text = GetDisplayName(config, part) + equippedSuffix;
+            }
+
+            if (levelLabel != null)
+            {
+                levelLabel.text = $"Lv.{part.level}";
+            }
+
+            if (rarityLabel != null)
+            {
+                rarityLabel.text = GetRarityName(part.rarity);
+                // 등급 색으로 가시성을 높인다(프레임 색과 동일 기준).
+                rarityLabel.color = GetRarityFrameColor(part.rarity);
+            }
+        }
+        else
+        {
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+            {
+                label.text = $"{GetDisplayName(config, part)} / Lv.{part.level} / {GetRarityName(part.rarity)}{equippedSuffix}";
+            }
         }
 
         // 아직 확인하지 않은 신규 파츠에는 "New" 뱃지를 표시한다(프리팹에 "New" 자식이 있을 때만).
@@ -263,6 +293,12 @@ public class EquipmentPartsPanel : MonoBehaviour
         string capturedId = part.instanceId;
         button.onClick.AddListener(() => Select(capturedId));
         spawnedButtons.Add(button);
+    }
+
+    private static TMP_Text FindChildText(Transform root, string childName)
+    {
+        Transform found = FindChildObject(root, childName);
+        return found != null ? found.GetComponent<TMP_Text>() : null;
     }
 
     private static Transform FindChildObject(Transform root, string childName)
