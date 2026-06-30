@@ -174,11 +174,12 @@ public class FirebaseAuthManager : MonoBehaviour
             return false;
         }
 
-        // 이미 로그인(자동 로그인/익명 포함)되어 있으면 그대로 사용한다.
+        // 기존 세션(이전 구글/익명 로그인)을 게스트로 재사용하지 않도록 먼저 정리한다.
+        // 이래야 게스트가 항상 '새 익명 계정'으로 처음부터 시작하고, 이전 계정 데이터가 딸려오지 않는다.
         if (IsSignedIn)
         {
-            SetState(ConnectionState.SignedIn);
-            return true;
+            googleSignIn?.SignOut();
+            auth.SignOut();
         }
 
         SetState(ConnectionState.SigningIn);
