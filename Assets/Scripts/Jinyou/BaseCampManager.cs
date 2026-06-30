@@ -682,6 +682,11 @@ public class BaseCampManager : MonoBehaviour
         }
     }
 
+    public void ConfirmResetAllSave()
+    {
+        ResetAllPlayerPrefsDebug();
+    }
+
     [ContextMenu("Debug/Reset All PlayerPrefs")]
     private void ResetAllPlayerPrefsDebug()
     {
