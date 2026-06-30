@@ -802,8 +802,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
         int required = inventory.GetRequiredDuplicates(skill);
         return required > 0
-            ? $"중복 {inventory.GetDuplicateProgress(skill)} / {required}"
-            : "MAX";
+            ? $"중복 <color=#EC9A0E>{inventory.GetDuplicateProgress(skill)}</color> / <color=#EC9A0E>{required}</color>"
+            : "<color=#4AD787>MAX</color>";
     }
 
     private DroneConfig RegisterInitialDrone()
