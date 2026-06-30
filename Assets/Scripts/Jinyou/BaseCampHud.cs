@@ -124,7 +124,9 @@ public class BaseCampHud : MonoBehaviour
     {
         CreditRefinery refinery = baseCampManager != null ? baseCampManager.CreditRefinery : null;
         int collectedCredits = refinery != null ? refinery.StoredCredits : 0;
-        Vector3 sourcePosition = collectButton != null ? collectButton.transform.position : Vector3.zero;
+        Vector3 sourcePosition = collectButton != null
+            ? RewardFlyAnimator.GetRectWorldCenter(collectButton.transform as RectTransform)
+            : Vector3.zero;
 
         baseCampManager?.CollectRefineryCredits();
 

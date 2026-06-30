@@ -86,7 +86,9 @@ public class CreditRefineryPanel : MonoBehaviour
 
         // 수집 직전의 저장량과 버튼 위치를 캡처한다(수집 후 상태가 바뀌므로).
         int collectedCredits = refinery != null ? refinery.StoredCredits : 0;
-        Vector3 sourcePosition = collectButton != null ? collectButton.transform.position : Vector3.zero;
+        Vector3 sourcePosition = collectButton != null
+            ? RewardFlyAnimator.GetRectWorldCenter(collectButton.transform as RectTransform)
+            : Vector3.zero;
 
         baseCampManager?.CollectRefineryCredits();
 

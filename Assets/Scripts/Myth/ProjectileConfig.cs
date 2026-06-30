@@ -77,6 +77,7 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private string id = "weapon_default";
     [SerializeField] private string displayName = "기본 무기";
     [SerializeField] private Sprite icon;
+    [SerializeField] private Rarity rarity = Rarity.Common;
 
     [Header("Combat")]
     [SerializeField] private float attackDamage = 0f;
@@ -114,6 +115,7 @@ public class ProjectileConfig : ScriptableObject, IDuplicateLevelConfig
     public string Id => id;
     public string DisplayName => displayName;
     public Sprite Icon => icon;
+    public Rarity Rarity => rarity;
     public string WeaponCategory => attackType switch
     {
         WeaponAttackType.Area => "폭발탄",

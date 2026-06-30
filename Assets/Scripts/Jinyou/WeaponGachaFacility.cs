@@ -23,6 +23,9 @@ public class GachaDrawResult
     public Sprite Icon => category == GachaCategory.Weapon
         ? weaponConfig != null ? weaponConfig.Icon : null
         : skillConfig != null ? skillConfig.Icon : null;
+    public Rarity Rarity => category == GachaCategory.Weapon
+        ? weaponConfig != null ? weaponConfig.Rarity : Rarity.Common
+        : skillConfig != null ? skillConfig.Rarity : Rarity.Common;
 }
 
 public class WeaponGachaFacility : MonoBehaviour
@@ -43,6 +46,20 @@ public class WeaponGachaFacility : MonoBehaviour
         public bool enabled = true;
     }
 
+    [Serializable]
+    public class RarityOdds
+    {
+        public Rarity rarity;
+        [Min(0f)] public float percent;
+    }
+
+    private struct RarityCandidate
+    {
+        public UnityEngine.Object config;
+        public float weight;
+        public Rarity rarity;
+    }
+
     [Header("Gacha Pools")]
     [SerializeField] private GachaPoolConfig weaponPool;
     [SerializeField] private GachaPoolConfig skillPool;
@@ -51,6 +68,24 @@ public class WeaponGachaFacility : MonoBehaviour
     [SerializeField] private int weaponDrawCost = 10;
     [SerializeField] private int skillDrawCost = 10;
     [SerializeField] private int multiDrawCount = 10;
+
+    [Header("Rarity Odds (%)")]
+    [SerializeField] private List<RarityOdds> weaponRarityOdds = new List<RarityOdds>
+    {
+        new RarityOdds { rarity = Rarity.Common, percent = 60f },
+        new RarityOdds { rarity = Rarity.Rare, percent = 27f },
+        new RarityOdds { rarity = Rarity.Epic, percent = 10f },
+        new RarityOdds { rarity = Rarity.Legendary, percent = 3f }
+    };
+    [SerializeField] private List<RarityOdds> skillRarityOdds = new List<RarityOdds>
+    {
+        new RarityOdds { rarity = Rarity.Common, percent = 50f },
+        new RarityOdds { rarity = Rarity.Rare, percent = 30f },
+        new RarityOdds { rarity = Rarity.Epic, percent = 15f },
+        new RarityOdds { rarity = Rarity.Legendary, percent = 5f }
+    };
+    [Tooltip("멀티(10연차) 뽑기에서 희귀 이상이 하나도 없으면 마지막 1개를 희귀 이상으로 보장한다.")]
+    [SerializeField] private bool guaranteeRareOnMultiDraw = true;
 
     [Header("Legacy Weapon Table")]
     [SerializeField] private List<WeaponGachaEntry> drawTable = new List<WeaponGachaEntry>();
@@ -194,12 +229,13 @@ public class WeaponGachaFacility : MonoBehaviour
 
     private List<UnityEngine.Object> PickConfigs(GachaCategory category, int count)
     {
+        List<RarityCandidate> candidates = BuildCandidates(category);
+        float[] oddsTable = BuildOddsTable(category);
+
         List<UnityEngine.Object> results = new List<UnityEngine.Object>(count);
         for (int i = 0; i < count; i++)
         {
-            UnityEngine.Object config = category == GachaCategory.Weapon
-                ? PickWeapon()
-                : PickSkill();
+            UnityEngine.Object config = PickFromCandidates(candidates, oddsTable, Rarity.Common);
             if (config == null)
             {
                 results.Clear();
@@ -207,6 +243,19 @@ public class WeaponGachaFacility : MonoBehaviour
             }
 
             results.Add(config);
+        }
+
+        // 10연차(멀티) 최소 보장: 희귀 이상이 하나도 없으면 마지막 1개를 희귀 이상으로 교체한다.
+        if (guaranteeRareOnMultiDraw
+            && count >= MultiDrawCount
+            && !ContainsRareOrHigher(results, category)
+            && HasCandidateOfAtLeast(candidates, Rarity.Rare))
+        {
+            UnityEngine.Object guaranteed = PickFromCandidates(candidates, oddsTable, Rarity.Rare);
+            if (guaranteed != null)
+            {
+                results[results.Count - 1] = guaranteed;
+            }
         }
 
         return results;
@@ -279,78 +328,268 @@ public class WeaponGachaFacility : MonoBehaviour
         };
     }
 
-    private ProjectileConfig PickWeapon()
+    // 풀에 실제 존재하는 등급만 반영해 합이 100이 되도록 정규화한 확률(UI 확률표기용).
+    public IReadOnlyList<RarityOdds> GetNormalizedRarityOdds(GachaCategory category)
     {
-        IReadOnlyList<WeaponGachaEntry> entries = GetWeaponEntries();
-        float totalWeight = 0f;
-        for (int i = 0; i < entries.Count; i++)
+        List<RarityCandidate> candidates = BuildCandidates(category);
+        float[] oddsTable = BuildOddsTable(category);
+
+        bool[] present = new bool[4];
+        for (int i = 0; i < candidates.Count; i++)
         {
-            WeaponGachaEntry entry = entries[i];
-            if (IsValid(entry))
+            present[(int)candidates[i].rarity] = true;
+        }
+
+        float total = 0f;
+        for (int r = 0; r < present.Length; r++)
+        {
+            if (present[r])
             {
-                totalWeight += entry.weight;
+                total += oddsTable[r];
             }
         }
 
-        if (totalWeight <= 0f)
+        List<RarityOdds> result = new List<RarityOdds>();
+        for (int r = 0; r < present.Length; r++)
         {
-            return null;
-        }
-
-        float roll = UnityEngine.Random.Range(0f, totalWeight);
-        for (int i = 0; i < entries.Count; i++)
-        {
-            WeaponGachaEntry entry = entries[i];
-            if (!IsValid(entry))
+            if (!present[r])
             {
                 continue;
             }
 
-            roll -= entry.weight;
+            result.Add(new RarityOdds
+            {
+                rarity = (Rarity)r,
+                percent = total > 0f ? oddsTable[r] / total * 100f : 0f
+            });
+        }
+
+        return result;
+    }
+
+    private List<RarityCandidate> BuildCandidates(GachaCategory category)
+    {
+        List<RarityCandidate> list = new List<RarityCandidate>();
+        if (category == GachaCategory.Weapon)
+        {
+            IReadOnlyList<WeaponGachaEntry> entries = GetWeaponEntries();
+            for (int i = 0; i < entries.Count; i++)
+            {
+                WeaponGachaEntry entry = entries[i];
+                if (IsValid(entry))
+                {
+                    list.Add(new RarityCandidate
+                    {
+                        config = entry.weaponConfig,
+                        weight = entry.weight,
+                        rarity = entry.weaponConfig.Rarity
+                    });
+                }
+            }
+        }
+        else
+        {
+            IReadOnlyList<SkillGachaEntry> entries = GetSkillEntries();
+            for (int i = 0; i < entries.Count; i++)
+            {
+                SkillGachaEntry entry = entries[i];
+                if (IsValid(entry))
+                {
+                    list.Add(new RarityCandidate
+                    {
+                        config = entry.skillConfig,
+                        weight = entry.weight,
+                        rarity = entry.skillConfig.Rarity
+                    });
+                }
+            }
+        }
+
+        return list;
+    }
+
+    private float[] BuildOddsTable(GachaCategory category)
+    {
+        float[] table = new float[4];
+        List<RarityOdds> odds = category == GachaCategory.Weapon ? weaponRarityOdds : skillRarityOdds;
+        if (odds == null)
+        {
+            return table;
+        }
+
+        for (int i = 0; i < odds.Count; i++)
+        {
+            if (odds[i] == null)
+            {
+                continue;
+            }
+
+            int index = (int)odds[i].rarity;
+            if (index >= 0 && index < table.Length)
+            {
+                table[index] += Mathf.Max(0f, odds[i].percent);
+            }
+        }
+
+        return table;
+    }
+
+    // 1단계: 등급을 확률로 뽑고 → 2단계: 그 등급 안에서 가중치로 아이템을 뽑는다.
+    private UnityEngine.Object PickFromCandidates(List<RarityCandidate> candidates, float[] oddsTable, Rarity minRarity)
+    {
+        if (candidates == null || candidates.Count == 0)
+        {
+            return null;
+        }
+
+        bool[] present = new bool[4];
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if ((int)candidates[i].rarity >= (int)minRarity)
+            {
+                present[(int)candidates[i].rarity] = true;
+            }
+        }
+
+        float totalRarityWeight = 0f;
+        for (int r = 0; r < present.Length; r++)
+        {
+            if (present[r])
+            {
+                totalRarityWeight += oddsTable[r];
+            }
+        }
+
+        // 등급 확률이 전혀 없으면(미설정) 최소등급 이상에서 바로 가중치로 뽑는다.
+        if (totalRarityWeight <= 0f)
+        {
+            return PickByWeight(candidates, minRarity, null);
+        }
+
+        float roll = UnityEngine.Random.Range(0f, totalRarityWeight);
+        Rarity chosenRarity = Rarity.Common;
+        bool found = false;
+        for (int r = 0; r < present.Length; r++)
+        {
+            if (!present[r])
+            {
+                continue;
+            }
+
+            roll -= oddsTable[r];
+            chosenRarity = (Rarity)r;
             if (roll <= 0f)
             {
-                return entry.weaponConfig;
+                found = true;
+                break;
+            }
+        }
+
+        // 부동소수 오차로 못 정했으면 존재하는 가장 높은 등급으로 보정.
+        if (!found)
+        {
+            for (int r = present.Length - 1; r >= 0; r--)
+            {
+                if (present[r])
+                {
+                    chosenRarity = (Rarity)r;
+                    break;
+                }
+            }
+        }
+
+        return PickByWeight(candidates, minRarity, chosenRarity);
+    }
+
+    private static UnityEngine.Object PickByWeight(List<RarityCandidate> candidates, Rarity minRarity, Rarity? rarityFilter)
+    {
+        float total = 0f;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if (!MatchesFilter(candidates[i], minRarity, rarityFilter))
+            {
+                continue;
+            }
+
+            total += Mathf.Max(0f, candidates[i].weight);
+        }
+
+        if (total <= 0f)
+        {
+            // 가중치 합이 0이면 조건에 맞는 첫 후보를 반환한다.
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                if (MatchesFilter(candidates[i], minRarity, rarityFilter))
+                {
+                    return candidates[i].config;
+                }
+            }
+
+            return null;
+        }
+
+        float roll = UnityEngine.Random.Range(0f, total);
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if (!MatchesFilter(candidates[i], minRarity, rarityFilter))
+            {
+                continue;
+            }
+
+            roll -= Mathf.Max(0f, candidates[i].weight);
+            if (roll <= 0f)
+            {
+                return candidates[i].config;
             }
         }
 
         return null;
     }
 
-    private PlayerSkillConfig PickSkill()
+    private static bool MatchesFilter(RarityCandidate candidate, Rarity minRarity, Rarity? rarityFilter)
     {
-        IReadOnlyList<SkillGachaEntry> entries = GetSkillEntries();
-        float totalWeight = 0f;
-        for (int i = 0; i < entries.Count; i++)
+        if ((int)candidate.rarity < (int)minRarity)
         {
-            SkillGachaEntry entry = entries[i];
-            if (IsValid(entry))
+            return false;
+        }
+
+        return !rarityFilter.HasValue || candidate.rarity == rarityFilter.Value;
+    }
+
+    private static bool HasCandidateOfAtLeast(List<RarityCandidate> candidates, Rarity minRarity)
+    {
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if ((int)candidates[i].rarity >= (int)minRarity)
             {
-                totalWeight += entry.weight;
+                return true;
             }
         }
 
-        if (totalWeight <= 0f)
-        {
-            return null;
-        }
+        return false;
+    }
 
-        float roll = UnityEngine.Random.Range(0f, totalWeight);
-        for (int i = 0; i < entries.Count; i++)
+    private static bool ContainsRareOrHigher(List<UnityEngine.Object> configs, GachaCategory category)
+    {
+        for (int i = 0; i < configs.Count; i++)
         {
-            SkillGachaEntry entry = entries[i];
-            if (!IsValid(entry))
+            if ((int)GetConfigRarity(configs[i], category) >= (int)Rarity.Rare)
             {
-                continue;
-            }
-
-            roll -= entry.weight;
-            if (roll <= 0f)
-            {
-                return entry.skillConfig;
+                return true;
             }
         }
 
-        return null;
+        return false;
+    }
+
+    private static Rarity GetConfigRarity(UnityEngine.Object config, GachaCategory category)
+    {
+        if (category == GachaCategory.Weapon)
+        {
+            return config is ProjectileConfig weapon ? weapon.Rarity : Rarity.Common;
+        }
+
+        return config is PlayerSkillConfig skill ? skill.Rarity : Rarity.Common;
     }
 
     private int GetValidDrawEntryCount(GachaCategory category)

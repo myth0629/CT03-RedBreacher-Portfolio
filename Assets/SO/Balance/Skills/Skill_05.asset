@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
   id: 05
   displayName: "\uACF5\uACA9\uD5EC\uAE30"
-  icon: {fileID: 21300000, guid: b89d6071a298e964db6b1349a3a308af, type: 3}
+  icon: {fileID: 21300000, guid: 56a740f8df9de014b95387966c265dbc, type: 3}
+  rarity: 3
   skillType: 4
   description: "\uD654\uB825\uC9C0\uC6D0\r\n\r\n\uACF5\uC911\uC5D0\uC11C \uC801\uC744
     \uCD94\uC801\uD558\uBA70 \uC77C\uC815 \uC2DC\uAC04 \uB3D9\uC548 \uD654\uB825\uC744
@@ -38,7 +39,7 @@ MonoBehaviour:
   maxLevelDuplicateCoreCrystalReward: 1
   impactDelay: 0.5
   warningEffectPrefab: {fileID: 0}
-  impactEffectPrefab: {fileID: 0}
+  impactEffectPrefab: {fileID: 1320533090949476, guid: f20077a0be0f3fa4495d97be6faa09bc, type: 3}
   effectCleanupDelay: 2
   _airplanePrefab: {fileID: 0}
   _airplaneSpeed: 15
@@ -84,10 +85,10 @@ MonoBehaviour:
   stealthBomberShadowDarkness: 0.55
   attackHelicopterPrefab: {fileID: 214164098778057125, guid: 402a7cb78ddd1794ea4bffc598e0bb89, type: 3}
   helicopterProjectileConfig: {fileID: 11400000, guid: 7eb1b98301c03438e9df49bfd1f36277, type: 2}
-  helicopterRocketPrefab: {fileID: 0}
+  helicopterRocketPrefab: {fileID: 1678767144466112, guid: e2ba727a17e461d44b33e480e2f56d18, type: 3}
   attackHelicopterDuration: 15
   attackHelicopterAttackInterval: 0.9
-  attackHelicopterAttackRange: 8
+  attackHelicopterAttackRange: 7
   attackHelicopterMoveSpeed: 6
   attackHelicopterFollowOffset: 2.5
   attackHelicopterMaxDistanceFromPlayer: 6

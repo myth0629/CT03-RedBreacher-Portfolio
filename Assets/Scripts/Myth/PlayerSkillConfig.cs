@@ -16,6 +16,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private string id = "skill_default";
     [SerializeField] private string displayName = "자동 스킬";
     [SerializeField] private Sprite icon;
+    [SerializeField] private Rarity rarity = Rarity.Common;
     [SerializeField] private PlayerSkillType skillType;
     [TextArea(4, 8)]
     [SerializeField] private string description;
@@ -116,6 +117,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public string Id => id;
     public string DisplayName => displayName;
     public Sprite Icon => icon;
+    public Rarity Rarity => rarity;
     public PlayerSkillType SkillType => skillType;
     public string Description => description;
     public float Cooldown => Mathf.Max(0.1f, cooldown);

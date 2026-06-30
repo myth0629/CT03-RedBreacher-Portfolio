@@ -116,7 +116,8 @@ public class AchievementPopup : MonoBehaviour
             {
                 PlayButtonAudio();
                 // 클레임 성공 시 Rebuild로 이 아이템이 파괴되므로 위치를 먼저 캡처한다.
-                Vector3 sourcePosition = claimRect != null ? claimRect.position : Vector3.zero;
+                // 도착 지점과 같은 기준(시각적 중심)으로 잡아야 pivot이 중앙이 아니어도 시작이 어긋나지 않는다.
+                Vector3 sourcePosition = RewardFlyAnimator.GetRectWorldCenter(claimRect);
                 float iconSize = claimRect != null ? claimRect.rect.width : 56f;
                 if (achievementManager.TryClaimReward(achievementId))
                 {

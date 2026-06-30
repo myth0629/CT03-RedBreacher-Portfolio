@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
   id: 03
   displayName: "\uBBF8\uC0AC\uC77C \uD130\uB81B"
-  icon: {fileID: 21300000, guid: bbd403d4773f76b45ade50e436a00ab5, type: 3}
+  icon: {fileID: 21300000, guid: 7349ef115b6234fa69d16fb7c4d862dd, type: 3}
+  rarity: 1
   skillType: 2
   description: "\uC13C\uD2B8\uB9AC(\uBBF8\uC0AC\uC77C)\r\n\r\n\uC720\uB3C4 \uBBF8\uC0AC\uC77C\uB85C
     \uC801\uC744 \uCD94\uC801\uD574 \uAC15\uB825\uD55C \uBC94\uC704 \uD53C\uD574\uB97C
@@ -60,13 +61,13 @@ MonoBehaviour:
   turretPlacementDistance: 1.5
   turretFirePointName: FirePoint
   missileTurretPrefab: {fileID: 214164098778057125, guid: 8dc1caa0f7a72fe49ad89b03b03c5c9b, type: 3}
-  missileProjectilePrefab: {fileID: 1574670682615188, guid: bf47747033cc923438e2bbcd2a09a383, type: 3}
+  missileProjectilePrefab: {fileID: 1439816204641800, guid: 3d873118a8346a74bb1ea9ec62d17fd7, type: 3}
   missileTurretDuration: 8
   missileTurretAttackInterval: 1.2
   missileTurretAttackRange: 7
   missileTurretRotationSpeed: 240
   missileTurretPlacementDistance: 1.8
-  missileExplosionRadius: 1.5
+  missileExplosionRadius: 2.2
   missileProjectileSpeed: 12
   missileTurretFirePointName: FirePoint
   missileImpactEffectPrefab: {fileID: 0}

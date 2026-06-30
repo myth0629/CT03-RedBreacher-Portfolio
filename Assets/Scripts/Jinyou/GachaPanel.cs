@@ -44,12 +44,24 @@ public class GachaPanel : MonoBehaviour
     [Header("Tween")]
     [SerializeField] private GachaTweenTransition gachaTweenTransition;
 
+    [Header("Draw Video")]
+    [SerializeField] private GachaVideoPlayer gachaVideoPlayer;
+
+    [Header("Draw Confirm")]
+    [Tooltip("뽑기 버튼을 누르면 먼저 뜨는 확인창 루트. 비우면 확인 없이 바로 뽑힌다(기존 동작).")]
+    [SerializeField] private GameObject confirmPopup;
+    [SerializeField] private TMP_Text confirmMessageText;
+    [SerializeField] private Button confirmYesButton;
+    [SerializeField] private Button confirmNoButton;
+
     private readonly List<WeaponItemOdd> _weaponItemOdds = new List<WeaponItemOdd>();
     private readonly List<SkillItemOdd> _skillItemOdds = new List<SkillItemOdd>();
 
     private readonly List<GachaResultSlot> resultSlots = new List<GachaResultSlot>();
     private GachaCategory selectedCategory = GachaCategory.Weapon;
     private bool isDrawing;
+    private GachaCategory pendingCategory = GachaCategory.Weapon;
+    private int pendingCount = 1;
 
     private void OnEnable()
     {
@@ -58,6 +70,13 @@ public class GachaPanel : MonoBehaviour
         weaponDrawMultiButton?.onClick.AddListener(DrawWeaponMulti);
         skillDrawOnceButton?.onClick.AddListener(DrawSkillOnce);
         skillDrawMultiButton?.onClick.AddListener(DrawSkillMulti);
+        confirmYesButton?.onClick.AddListener(ConfirmDraw);
+        confirmNoButton?.onClick.AddListener(CancelDraw);
+        if (confirmPopup != null)
+        {
+            confirmPopup.SetActive(false);
+        }
+
         Refresh();
     }
 
@@ -67,6 +86,8 @@ public class GachaPanel : MonoBehaviour
         weaponDrawMultiButton?.onClick.RemoveListener(DrawWeaponMulti);
         skillDrawOnceButton?.onClick.RemoveListener(DrawSkillOnce);
         skillDrawMultiButton?.onClick.RemoveListener(DrawSkillMulti);
+        confirmYesButton?.onClick.RemoveListener(ConfirmDraw);
+        confirmNoButton?.onClick.RemoveListener(CancelDraw);
         gachaTweenTransition?.ResetAll();
     }
 
@@ -77,24 +98,81 @@ public class GachaPanel : MonoBehaviour
 
     public void DrawWeaponOnce()
     {
-        Draw(GachaCategory.Weapon, 1);
+        RequestDraw(GachaCategory.Weapon, 1);
     }
 
     public void DrawWeaponMulti()
     {
         ResolveReferences();
-        Draw(GachaCategory.Weapon, weaponGacha != null ? weaponGacha.MultiDrawCount : 10);
+        RequestDraw(GachaCategory.Weapon, weaponGacha != null ? weaponGacha.MultiDrawCount : 10);
     }
 
     public void DrawSkillOnce()
     {
-        Draw(GachaCategory.Skill, 1);
+        RequestDraw(GachaCategory.Skill, 1);
     }
 
     public void DrawSkillMulti()
     {
         ResolveReferences();
-        Draw(GachaCategory.Skill, weaponGacha != null ? weaponGacha.MultiDrawCount : 10);
+        RequestDraw(GachaCategory.Skill, weaponGacha != null ? weaponGacha.MultiDrawCount : 10);
+    }
+
+    // 뽑기 버튼 → 확인창 표시. 확인창이 없거나 뽑을 수 없으면 기존처럼 바로 처리한다.
+    private void RequestDraw(GachaCategory category, int count)
+    {
+        ResolveReferences();
+        if (isDrawing || weaponGacha == null)
+        {
+            return;
+        }
+
+        if (!weaponGacha.CanDraw(category, count))
+        {
+            // 재화 부족 등으로 못 뽑으면 확인창도 띄우지 않는다.
+            return;
+        }
+
+        if (confirmPopup == null)
+        {
+            Draw(category, count);
+            return;
+        }
+
+        pendingCategory = category;
+        pendingCount = count;
+        UpdateConfirmMessage(category, count);
+        confirmPopup.SetActive(true);
+    }
+
+    public void ConfirmDraw()
+    {
+        if (confirmPopup != null)
+        {
+            confirmPopup.SetActive(false);
+        }
+
+        Draw(pendingCategory, pendingCount);
+    }
+
+    public void CancelDraw()
+    {
+        if (confirmPopup != null)
+        {
+            confirmPopup.SetActive(false);
+        }
+    }
+
+    private void UpdateConfirmMessage(GachaCategory category, int count)
+    {
+        if (confirmMessageText == null)
+        {
+            return;
+        }
+
+        int cost = weaponGacha != null ? weaponGacha.GetDrawCost(category, count) : 0;
+        string kind = category == GachaCategory.Weapon ? "무기" : "스킬";
+        confirmMessageText.text = $"{kind} {count}회 뽑기\n코어 크리스탈 {cost}개를 사용할까요?";
     }
 
     private void Draw(GachaCategory category, int count)
@@ -114,12 +192,26 @@ public class GachaPanel : MonoBehaviour
         {
             ReportDrawMissions(category, count);
             IReadOnlyList<GachaDrawResult> results = weaponGacha.LastResults;
-            PlayDrawTween(category, () =>
+            Rarity highestRarity = GetHighestRarity(results);
+
+            System.Action showResults = () =>
             {
                 ShowResults(results);
                 isDrawing = false;
                 Refresh();
-            });
+            };
+
+            if (gachaVideoPlayer != null && gachaVideoPlayer.HasAnyClip)
+            {
+                // 영상이 기존 박스 연출(PlayTitle)을 대체한다. 끝나면 바로 결과로.
+                gachaVideoPlayer.Play(highestRarity, showResults);
+            }
+            else
+            {
+                // 영상이 없으면 기존 박스 연출로 폴백.
+                PlayDrawTween(category, showResults);
+            }
+
             return;
         }
 
@@ -361,6 +453,25 @@ public class GachaPanel : MonoBehaviour
         {
             gachaTweenTransition = gameObject.AddComponent<GachaTweenTransition>();
         }
+    }
+
+    private static Rarity GetHighestRarity(IReadOnlyList<GachaDrawResult> results)
+    {
+        Rarity highest = Rarity.Common;
+        if (results == null)
+        {
+            return highest;
+        }
+
+        for (int i = 0; i < results.Count; i++)
+        {
+            if (results[i] != null && (int)results[i].Rarity > (int)highest)
+            {
+                highest = results[i].Rarity;
+            }
+        }
+
+        return highest;
     }
 
     private void PlayDrawTween(GachaCategory category, System.Action onComplete)

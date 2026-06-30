@@ -140,10 +140,13 @@ public class RewardFlyAnimator : MonoBehaviour
         target.DOPunchScale(new Vector3(0.25f, 0.25f, 0f), 0.18f, 1, 0.5f).SetUpdate(true);
     }
 
-    private static Vector3 GetRectWorldCenter(RectTransform rect)
+    /// <summary>
+    /// pivot/anchor와 무관하게 사각형의 중심을 월드 좌표로 반환한다.
+    /// 호출부가 시작 위치를 잡을 때도 이걸 써야 도착 지점과 같은 기준(시각적 중심)이 되어 어긋나지 않는다.
+    /// </summary>
+    public static Vector3 GetRectWorldCenter(RectTransform rect)
     {
-        // pivot/anchor와 무관하게 사각형의 중심을 월드 좌표로 반환한다.
-        return rect.TransformPoint(rect.rect.center);
+        return rect != null ? rect.TransformPoint(rect.rect.center) : Vector3.zero;
     }
 
     private bool EnsureReferences()

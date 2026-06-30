@@ -100,6 +100,7 @@ public static class BalanceCsvImporter
             SetString(serializedObject, "id", id);
             SetString(serializedObject, "displayName", Get(row, "displayName"));
             SetObject(serializedObject, "icon", GetAsset<Sprite>(row, "icon"));
+            SetEnum(serializedObject, "rarity", row, "rarity");
             SetFloat(serializedObject, "attackDamage", row, "attackDamage");
             SetEnum(serializedObject, "attackType", row, "attackType");
             SetFloat(serializedObject, "areaRadius", row, "areaRadius");
@@ -139,6 +140,7 @@ public static class BalanceCsvImporter
             SetString(serializedObject, "id", id);
             SetString(serializedObject, "displayName", Get(row, "displayName"));
             SetObject(serializedObject, "icon", GetAsset<Sprite>(row, "icon"));
+            SetEnum(serializedObject, "rarity", row, "rarity");
             SetEnum(serializedObject, "skillType", row, "skillType");
             SetFloat(serializedObject, "cooldown", row, "cooldown");
             SetFloat(serializedObject, "castRange", row, "castRange");
@@ -373,7 +375,7 @@ public static class BalanceCsvImporter
             "maxAreaTargets", "maxPierceTargets", "maxLevel", "damagePercentPerLevel", "maxLevelDuplicateCoreCrystalReward",
             "speed", "lifetime", "collisionRadius", "knockbackForce",
             "multiMuzzleFireMode", "maxBurstMuzzleCount", "muzzleNamePrefix", "fireFlashEffect",
-            "projectileEffect", "hitEffect", "effectCleanupDelay"
+            "projectileEffect", "hitEffect", "effectCleanupDelay", "rarity"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -403,7 +405,8 @@ public static class BalanceCsvImporter
                 GetAssetPath(config.FireFlashEffectPrefab),
                 GetAssetPath(config.ProjectileEffectPrefab),
                 GetAssetPath(config.HitEffectPrefab),
-                FormatFloat(config.EffectCleanupDelay)
+                FormatFloat(config.EffectCleanupDelay),
+                config.Rarity.ToString()
             });
         }
 
@@ -437,7 +440,7 @@ public static class BalanceCsvImporter
             "attackHelicopterPrefab", "helicopterRocketPrefab", "attackHelicopterDuration",
             "attackHelicopterAttackInterval", "attackHelicopterAttackRange", "attackHelicopterMoveSpeed",
             "attackHelicopterFollowOffset", "helicopterOpeningRocketCount", "helicopterRocketRadius",
-            "helicopterRocketSpeed"
+            "helicopterRocketSpeed", "rarity"
         };
 
         List<string[]> rows = new List<string[]>();
@@ -517,7 +520,8 @@ public static class BalanceCsvImporter
                 FormatFloat(config.AttackHelicopterFollowOffset),
                 config.HelicopterOpeningRocketCount.ToString(CultureInfo.InvariantCulture),
                 FormatFloat(config.HelicopterRocketRadius),
-                FormatFloat(config.HelicopterRocketSpeed)
+                FormatFloat(config.HelicopterRocketSpeed),
+                config.Rarity.ToString()
             });
         }
 

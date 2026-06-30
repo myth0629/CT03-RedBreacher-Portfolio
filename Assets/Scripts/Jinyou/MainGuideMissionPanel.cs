@@ -104,9 +104,12 @@ public class MainGuideMissionPanel : MonoBehaviour
         }
 
         GuideMissionConfig.GuideStepData step = guideManager.CurrentStep;
+        // 도착 지점과 같은 기준(시각적 중심)으로 시작 위치를 잡아 pivot 차이로 어긋나지 않게 한다.
         Vector3 sourcePosition = rewardIcon != null
-            ? rewardIcon.rectTransform.position
-            : (claimButton != null ? claimButton.transform.position : transform.position);
+            ? RewardFlyAnimator.GetRectWorldCenter(rewardIcon.rectTransform)
+            : (claimButton != null
+                ? RewardFlyAnimator.GetRectWorldCenter(claimButton.transform as RectTransform)
+                : transform.position);
 
         if (guideManager.TryClaimCurrent() && step != null && step.rewardAmount > 0)
         {

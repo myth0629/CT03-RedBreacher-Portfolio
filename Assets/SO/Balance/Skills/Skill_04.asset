@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
   id: 04
   displayName: "\uC2A4\uD154\uC2A4 \uD3ED\uACA9\uAE30"
-  icon: {fileID: 21300000, guid: c82f273e502f1c746bd71682de12c876, type: 3}
+  icon: {fileID: 21300000, guid: 4f4f1aa41489c0e49b2ea724cf771a2b, type: 3}
+  rarity: 2
   skillType: 3
   description: "\uC804\uB7B5 \uD3ED\uACA9\uAE30\r\n\r\n\uC804\uC7A5\uC744 \uAC00\uB85C\uC9C0\uB974\uBA70
     \uD3ED\uD0C4\uC744 \uD22C\uD558\uD574 \uB113\uC740 \uC9C0\uC5ED\uC744 \uD0C0\uACA9\uD55C\uB2E4."
@@ -37,7 +38,7 @@ MonoBehaviour:
   maxLevelDuplicateCoreCrystalReward: 1
   impactDelay: 0.25
   warningEffectPrefab: {fileID: 9179389450710726649, guid: 0309f63716c8a4a4e84bead042662d12, type: 3}
-  impactEffectPrefab: {fileID: 1221116321114522, guid: 13e7b1908d4d5094e9ba37c20eb5a0a0, type: 3}
+  impactEffectPrefab: {fileID: 1320533090949476, guid: f20077a0be0f3fa4495d97be6faa09bc, type: 3}
   effectCleanupDelay: 2
   _airplanePrefab: {fileID: 0}
   _airplaneSpeed: 15
@@ -48,7 +49,7 @@ MonoBehaviour:
   _bombCount: 1
   _bombInterval: 0.15
   _screenShakeDuration: 0.28
-  _screenShakeStrength: 0.8
+  _screenShakeStrength: 0.55
   _screenShakeFrequency: 1.8
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 0}
@@ -70,14 +71,14 @@ MonoBehaviour:
   missileTurretFirePointName: FirePoint
   missileImpactEffectPrefab: {fileID: 0}
   stealthBomberPrefab: {fileID: 214164098778057125, guid: 8fd535507b2293c479d0b5d315d95e60, type: 3}
-  stealthBomberSpeed: 18
+  stealthBomberSpeed: 24
   stealthBomberTravelDistance: 18
   stealthBomberHeight: 6
-  stealthBomberRows: 3
-  stealthBomberColumns: 4
-  stealthBomberSpacing: 2.5
-  stealthBomberBombInterval: 0.15
-  stealthBomberExplosionRadius: 2
+  stealthBomberRows: 1
+  stealthBomberColumns: 3
+  stealthBomberSpacing: 2.2
+  stealthBomberBombInterval: 0.12
+  stealthBomberExplosionRadius: 2.5
   stealthBomberShadowSprite: {fileID: 0}
   stealthBomberShadowSize: 4
   stealthBomberShadowDarkness: 0.55

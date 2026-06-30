@@ -15,6 +15,7 @@ MonoBehaviour:
   id: 12
   displayName: "DRK \uD3EC\uD0C4"
   icon: {fileID: 21300000, guid: cee525eda3f33514bbef131c4ed45d04, type: 3}
+  rarity: 1
   attackDamage: 41
   attackType: 0
   areaRadius: 2
@@ -33,6 +34,6 @@ MonoBehaviour:
   muzzleNamePrefix: FireMuzzle
   fireFlashEffectPrefab: {fileID: 1840367976591474, guid: e9d1f52e709876143b75f93f52a48156, type: 3}
   projectileEffectPrefab: {fileID: 1066843573042574, guid: c98ce42aa8b5fb64fa955a3b0924a0e6, type: 3}
-  hitEffectPrefab: {fileID: 1767841913861676, guid: 7e33fe33aff4f49449f51ed88f138e9c, type: 3}
+  hitEffectPrefab: {fileID: 1066843573042574, guid: c98ce42aa8b5fb64fa955a3b0924a0e6, type: 3}
   effectCleanupDelay: 2
   sfxFire: {fileID: 8300000, guid: 58c50fa09cbd34725a9c31588d366841, type: 3}
