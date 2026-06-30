@@ -10,6 +10,18 @@ public class BossEncounterManager : MonoBehaviour
     [SerializeField] private Transform bossSpawnParent;
     [SerializeField] private BossEncounterHud bossEncounterHud;
 
+    [Header("Player-Level Scaling")]
+    [Tooltip("켜면 보스 능력치를 플레이어 레벨에 따라 추가로 스케일링한다(난이도 배수 위에 곱해짐).")]
+    [SerializeField] private bool scaleBossByPlayerLevel = true;
+    [Tooltip("이 레벨에서 레벨 배수 1.0 기준(이하 레벨은 1.0).")]
+    [SerializeField] private int scalingBaseLevel = 1;
+    [Tooltip("기준 레벨 초과 1레벨당 체력 증가율.")]
+    [SerializeField] private float healthPerLevel = 0.1f;
+    [Tooltip("기준 레벨 초과 1레벨당 공격력 증가율.")]
+    [SerializeField] private float damagePerLevel = 0.05f;
+    [Tooltip("기준 레벨 초과 1레벨당 보상 증가율.")]
+    [SerializeField] private float rewardPerLevel = 0.05f;
+
     private BossEnemyController activeBoss;
     private CombatHealth activeBossHealth;
     private bool encounterActive;
@@ -97,14 +109,16 @@ public class BossEncounterManager : MonoBehaviour
             return false;
         }
 
+        // 난이도 배수 위에 플레이어 레벨 스케일을 곱해 최종 수치를 만든다.
+        // (이동속도는 레벨 스케일 대상에서 제외 — 난이도 배수만 적용)
         // 보스 SO의 전투 수치를 적용하고 기존 보상/타겟 경로에 등록한다.
         activeBoss.InitializeBoss(
             config,
             enemySpawnManager.CurrentStage,
-            healthScale,
+            healthScale * GetPlayerLevelScale(healthPerLevel),
             moveSpeedScale,
-            damageScale,
-            rewardScale);
+            damageScale * GetPlayerLevelScale(damagePerLevel),
+            rewardScale * GetPlayerLevelScale(rewardPerLevel));
         encounterActive = true;
         bossEncounterHud?.Show(config, activeBossHealth);
         EncounterStarted?.Invoke();
@@ -147,5 +161,23 @@ public class BossEncounterManager : MonoBehaviour
         enemySpawnManager ??= FindFirstObjectByType<EnemySpawnManager>();
         player ??= FindFirstObjectByType<PlayerController>();
         bossEncounterHud ??= FindFirstObjectByType<BossEncounterHud>();
+    }
+
+    // 기준 레벨 초과분 1레벨당 perLevel 비율로 선형 증가하는 배수를 돌려준다.
+    private float GetPlayerLevelScale(float perLevel)
+    {
+        if (!scaleBossByPlayerLevel)
+        {
+            return 1f;
+        }
+
+        int over = Mathf.Max(0, GetPlayerLevel() - Mathf.Max(1, scalingBaseLevel));
+        return Mathf.Max(0.01f, 1f + perLevel * over);
+    }
+
+    private int GetPlayerLevel()
+    {
+        ResolveReferences();
+        return player != null && player.Progression != null ? player.Progression.Level : 1;
     }
 }

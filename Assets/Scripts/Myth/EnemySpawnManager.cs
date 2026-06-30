@@ -43,6 +43,8 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] private Transform enemySpawnParent;
     [SerializeField] private Transform spawnCenter;
     [SerializeField] private float spawnRadius = 8f;
+    [Tooltip("플레이어로부터 이 거리 안쪽에는 적이 스폰되지 않는다(0이면 제한 없음).")]
+    [SerializeField] private float minSpawnDistanceFromPlayer = 4f;
     [SerializeField] private float spawnInterval = 0.25f;
 
     [Header("Spawn Bounds")]
@@ -459,6 +461,12 @@ public class EnemySpawnManager : MonoBehaviour
 
     private bool IsSpawnPositionValid(Vector3 position)
     {
+        // 플레이어와 너무 가까운 위치는 후보에서 제외한다(다른 각도로 재시도됨).
+        if (!IsFarEnoughFromPlayer(position))
+        {
+            return false;
+        }
+
         if (spawnObstacleMask.value == 0)
         {
             return true;
@@ -470,6 +478,28 @@ public class EnemySpawnManager : MonoBehaviour
             Mathf.Max(0.01f, spawnCollisionRadius),
             spawnObstacleMask,
             QueryTriggerInteraction.Ignore);
+    }
+
+    private bool IsFarEnoughFromPlayer(Vector3 position)
+    {
+        float minDistance = Mathf.Max(0f, minSpawnDistanceFromPlayer);
+        if (minDistance <= 0f)
+        {
+            return true;
+        }
+
+        if (player == null)
+        {
+            player = FindFirstObjectByType<PlayerController>();
+        }
+
+        if (player == null)
+        {
+            return true;
+        }
+
+        Vector3 playerPosition = CombatPlane.WithFixedY(player.transform.position);
+        return CombatPlane.DistanceSqr(position, playerPosition) >= minDistance * minDistance;
     }
 
     private Vector3 ClampSpawnPositionToBounds(Vector3 position)
