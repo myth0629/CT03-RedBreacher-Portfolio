@@ -15,7 +15,7 @@ MonoBehaviour:
   id: 02
   displayName: "\uBA54\uAC00\uD3EC \uC804\uCC28"
   enemyPrefab: {fileID: 5508998916971657268, guid: 8f79bf266866e9746a0e4e52e7b913ed, type: 3}
-  maxHealth: 14000
+  maxHealth: 10000
   moveSpeed: 0.95
   stopDistance: 1.1
   contactDamage: 8
@@ -28,9 +28,9 @@ MonoBehaviour:
   deathExplosionCleanupDelay: 0.6
   deathExplosionOffset: {x: 0, y: 0, z: 0}
   deathExplosionScale: 1
-  portrait: {fileID: 21300000, guid: 047ae6ddbf30c4c5aa9815417ded8eb4, type: 3}
+  portrait: {fileID: 2046642088, guid: cbce280544bf04854b6556d5e5eb911b, type: 3}
   rangedAttackRange: 7
-  rangedAttackDamage: 260
+  rangedAttackDamage: 150
   rangedAttackInterval: 1.8
   projectileSpeed: 7
   projectileLifetime: 3.5
@@ -38,9 +38,9 @@ MonoBehaviour:
   firePointNamePrefix: FirePoint
   projectilesPerFirePoint: 7
   spreadAngle: 75
-  fireEffectPrefab: {fileID: 1040091274170476, guid: 4dc3813479a19d149be60c7c1cea13e9, type: 3}
-  projectileEffectPrefab: {fileID: 1745751436853880, guid: 2e67eb66973abec448716e2c9c3ecb64, type: 3}
-  hitEffectPrefab: {fileID: 1282465575348918, guid: b077b8f66a284634cb92797eb3bc985b, type: 3}
+  fireEffectPrefab: {fileID: 1936875904811050, guid: 13b7c7d5b11e55f4c99d0dd318cfc704, type: 3}
+  projectileEffectPrefab: {fileID: 1787684039401618, guid: 83a4e6d5a5abe884bad2a55ba29c7fca, type: 3}
+  hitEffectPrefab: {fileID: 1598860718775302, guid: 607071240cd7cde4d8ad70e485d70f28, type: 3}
   effectCleanupDelay: 2
   laserCooldown: 7
   laserDamage: 160
@@ -49,7 +49,7 @@ MonoBehaviour:
   laserWarningDuration: 1.8
   laserActiveDuration: 0.3
   laserFirePointName: LaserFirePoint
-  laserBeamEffectPrefab: {fileID: 1310484524390396, guid: 39de359d72f20024fa83f16530b3283c, type: 3}
+  laserBeamEffectPrefab: {fileID: 1657981230171060, guid: 6cf36a334a0e5754ea36fca06014b86a, type: 3}
   laserProjectileSpeed: 18
   laserProjectileScale: 2.4
   laserBeamRotationOffset: {x: 0, y: 0, z: 0}

@@ -73,6 +73,12 @@ public sealed class PlayerDebugModeController : MonoBehaviour
                 {
                     AddDebugCrystals(100);
                 }
+
+                // 3키: 보스 티켓 지급
+                if (Keyboard.current.digit3Key.wasPressedThisFrame)
+                {
+                    AddDebugBossTickets(5);
+                }
             }
         }
 #endif
@@ -107,12 +113,28 @@ public sealed class PlayerDebugModeController : MonoBehaviour
         {
             if (IsDebugModeEnabled)
             {
-                _debugStatusText.text = $"[디버그 모드]\n1: 무적 상태: {(_invulnerableInDebugMode ? "ON" : "OFF")}\n2: 크리스탈 +100";
+                _debugStatusText.text = $"[디버그 모드]\n1: 무적 상태: {(_invulnerableInDebugMode ? "ON" : "OFF")}\n2: 크리스탈 +100\n3: 보스 티켓 +5";
             }
             else
             {
                 _debugStatusText.text = string.Empty;
             }
+        }
+    }
+
+    private void AddDebugBossTickets(int amount)
+    {
+        CommandCenter commandCenter = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.CommandCenter
+            : FindFirstObjectByType<CommandCenter>(FindObjectsInactive.Include);
+        if (commandCenter != null)
+        {
+            commandCenter.AddBossTickets(amount);
+            Debug.Log($"[디버그 모드] 보스 티켓 +{amount} 지급 완료 (현재: {commandCenter.BossTickets})", this);
+        }
+        else
+        {
+            Debug.LogWarning("[디버그 모드] CommandCenter를 찾지 못해 보스 티켓을 지급하지 못했습니다.", this);
         }
     }
 
