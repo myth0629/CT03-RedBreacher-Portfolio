@@ -242,11 +242,16 @@ public class EquipmentPartsPanel : MonoBehaviour
             frameImage.color = GetRarityFrameColor(part.rarity);
         }
 
+        // 장착 표시는 텍스트 대신 "Equip_Icon" 오브젝트의 활성/비활성으로 한다(프리팹에 있을 때).
+        bool isEquipped = loadout != null && loadout.IsEquipped(part.instanceId);
+        Transform equipIcon = FindChildObject(button.transform, "Equip_Icon");
+        if (equipIcon != null)
+        {
+            equipIcon.gameObject.SetActive(isEquipped);
+        }
+
         // 이름/레벨/등급을 분리된 텍스트로 표시한다(프리팹에 NameText/LevelText/RarityText 자식이 있을 때).
         // 셋 다 없으면 기존처럼 첫 TMP_Text에 합본으로 폴백한다.
-        bool isEquipped = loadout != null && loadout.IsEquipped(part.instanceId);
-        string equippedSuffix = isEquipped ? " [장착]" : string.Empty;
-
         TMP_Text nameLabel = FindChildText(button.transform, "NameText");
         TMP_Text levelLabel = FindChildText(button.transform, "LevelText");
         TMP_Text rarityLabel = FindChildText(button.transform, "RarityText");
@@ -255,7 +260,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         {
             if (nameLabel != null)
             {
-                nameLabel.text = GetDisplayName(config, part) + equippedSuffix;
+                nameLabel.text = GetDisplayName(config, part);
             }
 
             if (levelLabel != null)
@@ -275,7 +280,7 @@ public class EquipmentPartsPanel : MonoBehaviour
             TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
             if (label != null)
             {
-                label.text = $"{GetDisplayName(config, part)} / Lv.{part.level} / {GetRarityName(part.rarity)}{equippedSuffix}";
+                label.text = $"{GetDisplayName(config, part)} / Lv.{part.level} / {GetRarityName(part.rarity)}";
             }
         }
 
