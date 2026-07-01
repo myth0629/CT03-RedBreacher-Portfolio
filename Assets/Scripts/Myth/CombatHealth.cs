@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
@@ -63,12 +63,16 @@ public class CombatHealth : MonoBehaviour
     [SerializeField] private Vector3 damageNumberOffset = new Vector3(0f, 0.8f, 0f);
     [SerializeField] private int damageNumberSortingOrder = 50;
 
+    [Header("Audio Sources")]
+    [SerializeField] private AudioSource hitAudioSource;
+    
     private float currentHealth;
     private float lastDamageTime = float.NegativeInfinity;
     private float invulnerableUntil;
     private bool debugInvulnerable;
     private bool isDead;
     private bool deathRewardClaimed;
+    private EnemyController enemyController;
 
     public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
@@ -83,6 +87,7 @@ public class CombatHealth : MonoBehaviour
     private void Awake()
     {
         currentHealth = maxHealth;
+        enemyController = GetComponent<EnemyController>();
         EnsureDamageFeedback();
     }
 
@@ -144,6 +149,7 @@ public class CombatHealth : MonoBehaviour
             isCritical,
             currentHealth <= 0f,
             transform.position);
+        PlayHitSound();
 
         // 타격감 전용 연출은 이 이벤트를 구독해서 데미지 계산/사망 판정과 분리한다.
         OnDamaged?.Invoke(damageEvent);
@@ -166,6 +172,54 @@ public class CombatHealth : MonoBehaviour
         if (currentHealth <= 0f)
         {
             Die(damageEvent);
+        }
+    }
+
+    // 플레이어의 무기 및 스킬에 피격할 때마다 사운드 출력
+    private void PlayHitSound()
+    {
+        if (hitAudioSource == null)
+        {
+            return;
+        }
+
+        enemyController ??= GetComponent<EnemyController>();
+        AudioClip[] hitSounds = enemyController != null && enemyController.CurrentConfig != null
+            ? enemyController.CurrentConfig.HitSounds
+            : null;
+        if (hitSounds == null || hitSounds.Length == 0)
+        {
+            return;
+        }
+
+        int validCount = 0;
+        for (int i = 0; i < hitSounds.Length; i++)
+        {
+            if (hitSounds[i] != null)
+            {
+                validCount++;
+            }
+        }
+
+        if (validCount <= 0)
+        {
+            return;
+        }
+
+        int selectedIndex = Random.Range(0, validCount);
+        for (int i = 0; i < hitSounds.Length; i++)
+        {
+            AudioClip clip = hitSounds[i];
+            if (clip == null)
+            {
+                continue;
+            }
+
+            if (selectedIndex-- == 0)
+            {
+                hitAudioSource.PlayOneShot(clip);
+                return;
+            }
         }
     }
 
@@ -848,3 +902,4 @@ public class DamageNumberVisual : MonoBehaviour
         Pool.Enqueue(this);
     }
 }
+
