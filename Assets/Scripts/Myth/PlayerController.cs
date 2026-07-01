@@ -73,9 +73,11 @@ public class PlayerController : MonoBehaviour
     private List<int> skillSlotRequiredSkillHangerLevels = new List<int> { 0, 2, 3, 4 };
     [SerializeField] private bool saveLoadoutToPlayerPrefs = true;
 
-    [Header("Audio Source")] 
+    [Header("Audio Source")]
     [SerializeField] private AudioSource sfxFireSource;
-    
+    [Tooltip("같은 발사음이 이 시간(초) 안에 다시 나지 않도록 막는다(연사 시 소리 겹침 방지).")]
+    [SerializeField] private float fireSfxMinInterval = 0.03f;
+
     private readonly List<Transform> fireMuzzles = new List<Transform>();
     private CombatHealth health;
     private PlayerProgression progression;
@@ -1393,7 +1395,8 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        sfxFireSource.PlayOneShot(clip);
+        // 같은 발사음이 짧은 시간에 겹치지 않도록 스로틀을 거쳐 재생한다.
+        SfxThrottle.PlayOneShot(sfxFireSource, clip, fireSfxMinInterval);
     }
 
     private float CalculateAttackDamage(ProjectileConfig activeProjectileConfig, out bool isCritical)

@@ -65,7 +65,9 @@ public class CombatHealth : MonoBehaviour
 
     [Header("Audio Sources")]
     [SerializeField] private AudioSource hitAudioSource;
-    
+    [Tooltip("같은 피격음이 이 시간(초) 안에 다시 나지 않도록 막는다(동시 다중 피격 시 소리 겹침 방지).")]
+    [SerializeField] private float hitSfxMinInterval = 0.05f;
+
     private float currentHealth;
     private float lastDamageTime = float.NegativeInfinity;
     private float invulnerableUntil;
@@ -217,7 +219,8 @@ public class CombatHealth : MonoBehaviour
 
             if (selectedIndex-- == 0)
             {
-                hitAudioSource.PlayOneShot(clip);
+                // 같은 피격음이 짧은 시간에 겹치지 않도록 스로틀을 거쳐 재생한다.
+                SfxThrottle.PlayOneShot(hitAudioSource, clip, hitSfxMinInterval);
                 return;
             }
         }
