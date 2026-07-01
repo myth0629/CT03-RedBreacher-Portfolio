@@ -122,6 +122,7 @@ public class PlayerController : MonoBehaviour
     public float TotalAttackDamage => GetTotalAttackDamage(ProjectileConfigValue);
     public float AttackInterval => AttackIntervalValue;
     public float MoveSpeed => MoveSpeedValue;
+    public float RotationSpeed => RotationSpeedValue;
     public float CritChance => CritChanceValue;
     public float CritMultiplier => CritMultiplierValue;
     public float ProjectileSpeed => GetProjectileSpeed(ProjectileConfigValue);

@@ -27,6 +27,9 @@ public class EnemyConfig : ScriptableObject
     [SerializeField] private Vector3 deathExplosionOffset;
     [SerializeField] private float deathExplosionScale = 1f;
 
+    [Header("Sounds")] 
+    [SerializeField] private AudioClip[] hitSounds;
+
     public string Id => id;
     public string DisplayName => displayName;
     public GameObject EnemyPrefab => enemyPrefab;
@@ -43,4 +46,5 @@ public class EnemyConfig : ScriptableObject
     public float DeathExplosionCleanupDelay => Mathf.Max(0f, deathExplosionCleanupDelay);
     public Vector3 DeathExplosionOffset => deathExplosionOffset;
     public float DeathExplosionScale => Mathf.Max(0.01f, deathExplosionScale);
+    public AudioClip[] HitSounds => hitSounds;
 }

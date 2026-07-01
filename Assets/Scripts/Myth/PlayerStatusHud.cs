@@ -33,17 +33,25 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupHealthText;
     [SerializeField] private TMP_Text tankPopupDpsText;
     [SerializeField] private TMP_Text tankPopupMoveSpeedText;
-    [SerializeField] private TMP_Text tankPopupCritText;
+    [SerializeField] private TMP_Text tankPopupRangeText;
+    [SerializeField] private TMP_Text tankPopupFireIntervalText;
+    [SerializeField] private TMP_Text tankPopupRotateSpeedText;
     [SerializeField] private TMP_Text tankPopupCritChanceText;
     [SerializeField] private TMP_Text tankPopupCritMultiplierText;
+    
+    [Header("Tank Popup Weapon")]
     [SerializeField] private TMP_Text tankPopupWeaponNameText;
+    [SerializeField] private TMP_Text tankPopupWeaponRarityText;
     [SerializeField] private TMP_Text tankPopupWeaponCategoryText;
     [SerializeField] private TMP_Text tankPopupWeaponDamageText;
-    [SerializeField] private TMP_Text tankPopupWeaponRangeText;
-    [SerializeField] private TMP_Text tankPopupWeaponFireIntervalText;
     [SerializeField] private TMP_Text tankPopupWeaponSpeedText;
     [SerializeField] private TMP_Text tankPopupWeaponRadiusText;
+    [SerializeField] private TMP_Text tankPopupWeaponMaxPierceTargetsText;
     [SerializeField] private TMP_Text tankPopupWeaponKnockbackText;
+    [SerializeField] private GameObject tankPopupWeaponRadiusGroup;
+    [SerializeField] private GameObject tankPopupWeaponPierceGroup;
+    
+    [Header("Tank Popup Drone")]
     [SerializeField] private TMP_Text tankPopupDroneNameText;
     [SerializeField] private TMP_Text tankPopupDroneCountText;
     [SerializeField] private TMP_Text tankPopupDroneDamageText;
@@ -52,6 +60,8 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupDroneRangeText;
     [SerializeField] private TMP_Text tankPopupDroneWeaponSpeedText;
     [SerializeField] private TMP_Text tankPopupDroneFollowSpeedText;
+    
+    [Header("Tank Popup Icons")]
     [SerializeField] private Image tankPopupEquipWeaponIcon;
     [SerializeField] private RawImage tankPopupEquipDroneIcon;
     private Image tankPopupEquipDronePlaceholderImage;
@@ -369,18 +379,23 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
         SetText(tankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
         SetText(tankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
-        SetText(tankPopupCritText, $"{player.CritChance * 100f:0.#}% / {player.CritMultiplier:0.##}x");
+        SetText(tankPopupRangeText, $"{player.AttackRange:0.##}");
+        SetText(tankPopupFireIntervalText, $"{player.AttackInterval:0.##}");
+        SetText(tankPopupRotateSpeedText, $"{player.RotationSpeed:0.##}");
         SetText(tankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
         SetText(tankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
+        
+        // 무기
         SetText(tankPopupWeaponNameText, weapon != null ? weapon.DisplayName : "장착한 무기 없음");
-        SetText(tankPopupWeaponCategoryText, weapon != null ? weapon.WeaponCategory : "무기 카테고리");
+        SetRarityText(tankPopupWeaponRarityText, weapon);
+        SetText(tankPopupWeaponCategoryText, weapon != null ? $"유형: {weapon.WeaponCategory}" : "무기 카테고리");
+        SetWeaponAttackTypeGroups(weapon);
         SetIcon(tankPopupEquipWeaponIcon, weapon != null ? weapon.Icon : null);
         SetDronePreview(tankPopupEquipDroneIcon, drone);
-        SetText(tankPopupWeaponDamageText, $"{weapon.AttackDamage:0.##}");
-        SetText(tankPopupWeaponRangeText, $"{player.AttackRange:0.##}");
-        SetText(tankPopupWeaponFireIntervalText, $"{player.AttackInterval:0.##}");
+        SetText(tankPopupWeaponDamageText, weapon != null ? $"{player.WeaponAttackDamage:0.##}" : "0");
         SetText(tankPopupWeaponSpeedText, $"{weapon.Speed * weapon.Lifetime:0.##}");
         SetText(tankPopupWeaponRadiusText, weapon != null ? $"{weapon.AreaRadius:0.##}" : "0");
+        SetText(tankPopupWeaponMaxPierceTargetsText, weapon != null ? $"{weapon.MaxPierceTargets}" : "0");
         SetText(tankPopupWeaponKnockbackText, $"{player.KnockbackForce:0.##}");
         SetText(stattankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
         SetText(stattankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
@@ -388,9 +403,10 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(stattankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
         SetText(stattankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
         
+        // 드론
         SetText(tankPopupDroneNameText, drone.DisplayName);
         SetText(tankPopupDroneCountText, $" {drone.DroneCount}마리");
-        SetText(tankPopupDroneDamageText, $"{drone.AttackDamage:0.##}");
+        SetText(tankPopupDroneDamageText, drone != null ? $"{GetEnhancedDroneDamage(drone):0.##}" : "0");
         SetText(tankPopupDroneWeaponText, drone.ProjectileConfig.DisplayName);
         SetText(tankPopupDroneIntervalText, $"{drone.AttackInterval:0.##}");
         SetText(tankPopupDroneRangeText, $"{drone.AttackRange * drone.ProjectileLifetime:0.##}");
@@ -431,6 +447,53 @@ public class PlayerStatusHud : MonoBehaviour
         {
             target.text = value;
         }
+    }
+
+    private static void SetRarityText(TMP_Text target, ProjectileConfig weapon)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        if (weapon == null)
+        {
+            target.text = "--";
+            target.color = Color.white;
+            return;
+        }
+
+        Rarity rarity = weapon.Rarity;
+        target.text = RarityVisuals.GetLabel(rarity);
+        target.color = RarityVisuals.GetColor(rarity);
+    }
+
+    // 관통/범위 무기유형을 구분시켜 따로 드러내거나 감추게한다.
+    private void SetWeaponAttackTypeGroups(ProjectileConfig weapon)
+    {
+        bool isArea = weapon != null && weapon.AttackType == WeaponAttackType.Area;
+        bool isPiercing = weapon != null && weapon.AttackType == WeaponAttackType.Piercing;
+
+        SetActive(tankPopupWeaponRadiusGroup, isArea);
+        SetActive(tankPopupWeaponPierceGroup, isPiercing);
+    }
+
+    // 조립공장으로 강화한 드론 데미지 보너스 수치를 기존 데미지와 합산하기 위해 가져온다.
+    private static float GetEnhancedDroneDamage(DroneConfig drone)
+    {
+        if (drone == null)
+        {
+            return 0f;
+        }
+
+        AssemblyFactory assemblyFactory = BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.AssemblyFactory
+            : FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
+        float factoryBonus = assemblyFactory != null
+            ? assemblyFactory.GetDroneAttackDamageBonus(drone)
+            : 0f;
+
+        return drone.AttackDamage + factoryBonus;
     }
 
     private static void SetIcon(Image target, Sprite sprite)

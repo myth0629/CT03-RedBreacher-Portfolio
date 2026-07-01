@@ -4,9 +4,11 @@ using UnityEngine;
 public class BombardmentSkill : MonoBehaviour
 {
     private static readonly Quaternion SkillSpawnRotation = Quaternion.Euler(90f, 0f, 0f);
+    private const string ImpactAudioSourceName = "Audio Source_SFX Impact";
 
     private PlayerController _owner;
     private PlayerSkillConfig _config;
+    private AudioSource _impactAudioSource;
     private Vector3 _impactPosition;
     private int _bombCount;
 
@@ -168,7 +170,102 @@ public class BombardmentSkill : MonoBehaviour
 
                 CombatObjectPool.ReleaseEffect(impact, _config.EffectCleanupDelay);
             }
+
+            PlayImpactSfx();
         }
+    }
+
+    private void PlayImpactSfx()
+    {
+        AudioClip clip = GetRandomImpactSfx();
+        if (clip == null)
+        {
+            return;
+        }
+
+        _impactAudioSource ??= ResolveImpactAudioSource();
+        if (_impactAudioSource != null)
+        {
+            _impactAudioSource.PlayOneShot(clip);
+        }
+    }
+
+    private AudioClip GetRandomImpactSfx()
+    {
+        AudioClip[] clips = _config != null ? _config.ImpactSfx : null;
+        if (clips == null || clips.Length == 0)
+        {
+            return null;
+        }
+
+        int validCount = 0;
+        for (int i = 0; i < clips.Length; i++)
+        {
+            if (clips[i] != null)
+            {
+                validCount++;
+            }
+        }
+
+        if (validCount <= 0)
+        {
+            return null;
+        }
+
+        int targetIndex = Random.Range(0, validCount);
+        for (int i = 0; i < clips.Length; i++)
+        {
+            if (clips[i] == null)
+            {
+                continue;
+            }
+
+            if (targetIndex == 0)
+            {
+                return clips[i];
+            }
+
+            targetIndex--;
+        }
+
+        return null;
+    }
+
+    private AudioSource ResolveImpactAudioSource()
+    {
+        Transform sourceRoot = _owner != null ? _owner.transform : null;
+        Transform sourceTransform = FindChildByName(sourceRoot, ImpactAudioSourceName);
+        if (sourceTransform != null && sourceTransform.TryGetComponent(out AudioSource source))
+        {
+            source.spatialBlend = 0f;
+            return source;
+        }
+
+        return null;
+    }
+
+    private static Transform FindChildByName(Transform root, string childName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(childName))
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindChildByName(root.GetChild(i), childName);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private IEnumerator MoveAirplane(GameObject plane, Vector3 start, Vector3 end, float speed)

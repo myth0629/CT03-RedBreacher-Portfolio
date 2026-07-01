@@ -9,11 +9,13 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private Image weaponIcon;
     [SerializeField] private RawImage droneIcon;
-    [SerializeField] private TMP_Text categoryText;
+    [SerializeField] private TMP_Text rarityText;
     [SerializeField] private TMP_Text summaryText;
     [SerializeField] private GameObject selectedMark;
 
     private System.Action onClick;
+    private Color rarityTextDefaultColor = Color.white;
+    private bool hasRarityTextDefaultColor;
 
     private void Awake()
     {
@@ -21,6 +23,8 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
         {
             button = GetComponent<Button>() ?? GetComponentInChildren<Button>();
         }
+
+        CacheRarityTextDefaultColor();
     }
 
     private void OnEnable()
@@ -35,16 +39,18 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
 
     public void Bind(
         string title,
-        string category,
+        string rarityLabel,
         string summary,
         bool selected,
         System.Action clickAction,
         Sprite iconSprite = null,
-        DroneConfig droneConfig = null)
+        DroneConfig droneConfig = null,
+        Color? rarityColor = null)
     {
         onClick = clickAction;
         SetText(nameText, title);
-        SetText(categoryText, category);
+        SetText(rarityText, rarityLabel);
+        SetRarityTextColor(rarityColor);
         SetText(summaryText, summary);
         SetWeaponIcon(iconSprite);
         SetDroneIcon(droneConfig);
@@ -73,6 +79,28 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
     }
 
     // 무기는 스프라이트 이미지로 동기화
+    private void CacheRarityTextDefaultColor()
+    {
+        if (rarityText == null || hasRarityTextDefaultColor)
+        {
+            return;
+        }
+
+        rarityTextDefaultColor = rarityText.color;
+        hasRarityTextDefaultColor = true;
+    }
+
+    private void SetRarityTextColor(Color? color)
+    {
+        if (rarityText == null)
+        {
+            return;
+        }
+
+        CacheRarityTextDefaultColor();
+        rarityText.color = color ?? rarityTextDefaultColor;
+    }
+
     private void SetWeaponIcon(Sprite sprite)
     {
         if (weaponIcon == null)

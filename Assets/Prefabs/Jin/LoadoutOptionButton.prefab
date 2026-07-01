@@ -140,7 +140,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.32941177, g: 0.32941177, b: 0.3882353, a: 1}
+  m_Color: {r: 0.2469295, g: 0.2469295, b: 0.2924528, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -217,7 +217,7 @@ MonoBehaviour:
   nameText: {fileID: 4557426776889340999}
   weaponIcon: {fileID: 4613888536832966248}
   droneIcon: {fileID: 5765340630698287211}
-  categoryText: {fileID: 6801045115364511260}
+  rarityText: {fileID: 6801045115364511260}
   summaryText: {fileID: 0}
   selectedMark: {fileID: 8945620010825750817}
 --- !u!1 &5593595109998646346
@@ -304,7 +304,7 @@ GameObject:
   - component: {fileID: 3926925610255802509}
   - component: {fileID: 6801045115364511260}
   m_Layer: 5
-  m_Name: Category Text
+  m_Name: Rarity Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -357,7 +357,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uCE74\uD14C\uACE0\uB9AC"
+  m_text: "\uB4F1\uAE09"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a5e325fc73a121645b8bb045804e62a4, type: 2}
   m_sharedMaterial: {fileID: 1596942730205844513, guid: a5e325fc73a121645b8bb045804e62a4, type: 2}

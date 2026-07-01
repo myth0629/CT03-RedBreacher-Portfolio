@@ -60,6 +60,8 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float _screenShakeDuration = 0.22f;
     [SerializeField] private float _screenShakeStrength = 0.4f;
     [SerializeField] private float _screenShakeFrequency = 1.5f;
+    [SerializeField] private AudioClip _airplaneTakeOffSfx;
+    [SerializeField] private AudioClip[] impactSfx;
 
     [Header("Auto Turret")]
     [SerializeField] private GameObject turretPrefab;
@@ -70,6 +72,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float turretRotationSpeed = 360f;
     [SerializeField] private float turretPlacementDistance = 1.5f;
     [SerializeField] private string turretFirePointName = "FirePoint";
+    [SerializeField] private AudioClip turretFireSfx;
 
     [Header("Missile Turret")]
     [SerializeField] private GameObject missileTurretPrefab;
@@ -83,6 +86,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float missileProjectileSpeed = 12f;
     [SerializeField] private string missileTurretFirePointName = "FirePoint";
     [SerializeField] private GameObject missileImpactEffectPrefab;
+    [SerializeField] private AudioClip missileTurretFireSfx;
 
     [Header("Stealth Bomber")]
     [SerializeField] private GameObject stealthBomberPrefab;
@@ -113,6 +117,8 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float helicopterRocketSpeed = 16f;
     [SerializeField] private string helicopterRotorName = "Propeller"; // 회전시킬 자식 이름(비우면 비활성)
     [SerializeField] private float helicopterRotorSpeed = 900f;
+    [SerializeField] private AudioClip helicopterRocketLunchSfx;
+    [SerializeField] private AudioClip firstRocketLunchSfx;
 
     public string Id => id;
     public string DisplayName => displayName;
@@ -140,6 +146,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float ImpactDelay => Mathf.Max(0f, impactDelay);
     public GameObject WarningEffectPrefab => warningEffectPrefab;
     public GameObject ImpactEffectPrefab => impactEffectPrefab;
+    public AudioClip[] ImpactSfx => impactSfx;
     public float EffectCleanupDelay => Mathf.Max(0f, effectCleanupDelay);
     public GameObject AirplanePrefab => _airplanePrefab;
     public float AirplaneSpeed => Mathf.Max(0.1f, _airplaneSpeed);
@@ -152,6 +159,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float ScreenShakeDuration => Mathf.Max(0f, _screenShakeDuration);
     public float ScreenShakeStrength => Mathf.Max(0f, _screenShakeStrength);
     public float ScreenShakeFrequency => Mathf.Max(0.01f, _screenShakeFrequency);
+    public AudioClip AirplaneTakeOffSfx => _airplaneTakeOffSfx;
     public GameObject TurretPrefab => turretPrefab;
     public ProjectileConfig TurretProjectileConfig => turretProjectileConfig;
     public ProjectileConfig MissileProjectileConfig => turretProjectileConfig;
@@ -161,6 +169,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float TurretRotationSpeed => Mathf.Max(0f, turretRotationSpeed);
     public float TurretPlacementDistance => Mathf.Max(0f, turretPlacementDistance);
     public string TurretFirePointName => turretFirePointName;
+    public AudioClip TurretFireSfx => turretFireSfx;
     public GameObject MissileTurretPrefab => missileTurretPrefab;
     public GameObject MissileProjectilePrefab => missileProjectilePrefab;
     public float MissileTurretDuration => Mathf.Max(0.1f, missileTurretDuration);
@@ -172,6 +181,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float MissileProjectileSpeed => Mathf.Max(0.1f, missileProjectileSpeed);
     public string MissileTurretFirePointName => missileTurretFirePointName;
     public GameObject MissileImpactEffectPrefab => missileImpactEffectPrefab;
+    public AudioClip MissileTurretFireSfx => missileTurretFireSfx;
     public GameObject StealthBomberPrefab => stealthBomberPrefab;
     public float StealthBomberSpeed => Mathf.Max(0.1f, stealthBomberSpeed);
     public float StealthBomberTravelDistance => Mathf.Max(1f, stealthBomberTravelDistance);
@@ -198,6 +208,8 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float HelicopterRocketSpeed => Mathf.Max(0.1f, helicopterRocketSpeed);
     public string HelicopterRotorName => helicopterRotorName;
     public float HelicopterRotorSpeed => helicopterRotorSpeed;
+    public AudioClip HelicopterRocketLunchSfx => helicopterRocketLunchSfx;
+    public AudioClip FirstRocketLunchSfx => firstRocketLunchSfx;
 
     public float GetCooldown(int level)
     {

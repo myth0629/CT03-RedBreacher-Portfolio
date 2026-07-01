@@ -3,9 +3,14 @@ using UnityEngine;
 
 public class AttackHelicopterSkill : MonoBehaviour
 {
+    private const string RocketLaunchAudioSourceName = "Audio Source RocketLunch";
+    private const string FirstRocketLaunchAudioSourceName = "Audio Source_SFX SkillRocket";
+
     private PlayerController owner;
     private PlayerSkillConfig config;
     private GameObject helicopterVisual;
+    private AudioSource rocketLaunchAudioSource;
+    private AudioSource firstRocketLaunchAudioSource;
     private CombatHealth currentTarget;
     private float expireTime;
     private float nextAttackTime;
@@ -198,6 +203,8 @@ public class AttackHelicopterSkill : MonoBehaviour
             return;
         }
 
+        PlayRocketLaunchSfx();
+
         float damage = PlayerSkillCombat.CalculateDamage(owner, config, out bool isCritical);
         PlayerProjectile projectile = CombatObjectPool.GetProjectile();
         projectile.transform.position = startPosition;
@@ -211,6 +218,65 @@ public class AttackHelicopterSkill : MonoBehaviour
             projectileConfig.Lifetime,
             owner.Health,
             isCritical);
+    }
+
+    private void PlayRocketLaunchSfx()
+    {
+        AudioClip clip = config != null ? config.HelicopterRocketLunchSfx : null;
+        if (clip == null)
+        {
+            return;
+        }
+
+        rocketLaunchAudioSource ??= ResolveRocketLaunchAudioSource();
+        if (rocketLaunchAudioSource != null)
+        {
+            rocketLaunchAudioSource.PlayOneShot(clip);
+        }
+    }
+
+    private AudioSource ResolveRocketLaunchAudioSource()
+    {
+        if (helicopterVisual == null)
+        {
+            return null;
+        }
+
+        Transform sourceTransform = FindChildByName(helicopterVisual.transform, RocketLaunchAudioSourceName);
+        if (sourceTransform != null && sourceTransform.TryGetComponent(out AudioSource source))
+        {
+            return source;
+        }
+
+        return helicopterVisual.GetComponentInChildren<AudioSource>(true);
+    }
+
+    private void PlayFirstRocketLaunchSfx()
+    {
+        AudioClip clip = config != null ? config.FirstRocketLunchSfx : null;
+        if (clip == null)
+        {
+            return;
+        }
+
+        firstRocketLaunchAudioSource ??= ResolveFirstRocketLaunchAudioSource();
+        if (firstRocketLaunchAudioSource != null)
+        {
+            firstRocketLaunchAudioSource.PlayOneShot(clip);
+        }
+    }
+
+    private AudioSource ResolveFirstRocketLaunchAudioSource()
+    {
+        Transform sourceRoot = owner != null ? owner.transform : null;
+        Transform sourceTransform = FindChildByName(sourceRoot, FirstRocketLaunchAudioSourceName);
+        if (sourceTransform != null && sourceTransform.TryGetComponent(out AudioSource source))
+        {
+            source.spatialBlend = 0f;
+            return source;
+        }
+
+        return null;
     }
 
     private bool HasValidTarget()
@@ -245,6 +311,7 @@ public class AttackHelicopterSkill : MonoBehaviour
         helicopterVisual = Instantiate(config.AttackHelicopterPrefab, entryStart, FaceRotation(-entryDirection));
         transform.position = helicopterVisual.transform.position;
         lastFacing = -entryDirection;
+        rocketLaunchAudioSource = ResolveRocketLaunchAudioSource();
         EnsureRotorSpin(helicopterVisual);
 
         // 진입이 끝난 뒤부터 체류시간을 센다.
@@ -303,6 +370,7 @@ public class AttackHelicopterSkill : MonoBehaviour
 
         GameObject rocket = Instantiate(config.HelicopterRocketPrefab, startPosition, Quaternion.identity);
         rocket.transform.position = startPosition;
+        PlayFirstRocketLaunchSfx();
 
         Vector3 direction = CombatPlane.Direction(startPosition, impactPosition);
         if (direction.sqrMagnitude > 0f)

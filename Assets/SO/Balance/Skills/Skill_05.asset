@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
   id: 05
   displayName: "\uACF5\uACA9\uD5EC\uAE30"
-  icon: {fileID: 21300000, guid: 56a740f8df9de014b95387966c265dbc, type: 3}
+  icon: {fileID: 21300000, guid: b89d6071a298e964db6b1349a3a308af, type: 3}
   rarity: 3
   skillType: 4
   description: "\uD654\uB825\uC9C0\uC6D0\r\n\r\n\uACF5\uC911\uC5D0\uC11C \uC801\uC744
@@ -52,6 +52,7 @@ MonoBehaviour:
   _screenShakeDuration: 0.22
   _screenShakeStrength: 0.4
   _screenShakeFrequency: 1.5
+  _airplaneTakeOffSfx: {fileID: 0}
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 0}
   turretDuration: 8
@@ -60,6 +61,7 @@ MonoBehaviour:
   turretRotationSpeed: 360
   turretPlacementDistance: 1.5
   turretFirePointName: FirePoint
+  turretFireSfx: {fileID: 0}
   missileTurretPrefab: {fileID: 0}
   missileProjectilePrefab: {fileID: 0}
   missileTurretDuration: 8
@@ -71,6 +73,7 @@ MonoBehaviour:
   missileProjectileSpeed: 12
   missileTurretFirePointName: FirePoint
   missileImpactEffectPrefab: {fileID: 0}
+  missileTurretFireSfx: {fileID: 0}
   stealthBomberPrefab: {fileID: 0}
   stealthBomberSpeed: 24
   stealthBomberTravelDistance: 18
@@ -97,3 +100,5 @@ MonoBehaviour:
   helicopterRocketSpeed: 16
   helicopterRotorName: Propeller
   helicopterRotorSpeed: 900
+  helicopterRocketLunchSfx: {fileID: 8300000, guid: 52035620ae8284191b0da0815ea997ee, type: 3}
+  firstRocketLunchSfx: {fileID: 8300000, guid: 072d79b407e0f4bf1babcecce732d747, type: 3}

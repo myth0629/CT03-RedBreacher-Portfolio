@@ -7,6 +7,7 @@ public class MissileTurretSkill : MonoBehaviour
     private PlayerController owner;
     private PlayerSkillConfig config;
     private Transform firePoint;
+    private AudioSource fireAudioSource;
     private CombatHealth currentTarget;
     private float expireTime;
     private float nextAttackTime;
@@ -56,6 +57,8 @@ public class MissileTurretSkill : MonoBehaviour
         {
             firePoint = transform;
         }
+
+        fireAudioSource = ResolveFireAudioSource();
     }
 
     private void Update()
@@ -137,6 +140,8 @@ public class MissileTurretSkill : MonoBehaviour
             return;
         }
 
+        PlayFireSfx();
+
         ProjectileConfig projectileConfig = config.MissileProjectileConfig;
         float damage = PlayerSkillCombat.CalculateDamage(owner, config, out bool isCritical);
         PlayerProjectile projectile = CombatObjectPool.GetProjectile();
@@ -151,6 +156,33 @@ public class MissileTurretSkill : MonoBehaviour
             projectileConfig.Lifetime,
             owner.Health,
             isCritical);
+    }
+
+    private void PlayFireSfx()
+    {
+        AudioClip clip = config != null ? config.MissileTurretFireSfx : null;
+        if (clip == null)
+        {
+            return;
+        }
+
+        fireAudioSource ??= ResolveFireAudioSource();
+        if (fireAudioSource != null)
+        {
+            fireAudioSource.PlayOneShot(clip);
+        }
+    }
+
+    private AudioSource ResolveFireAudioSource()
+    {
+        Transform sourceTransform = FindChildByName(transform, "Audio Source Fire");
+        if (sourceTransform != null && sourceTransform.TryGetComponent(out AudioSource source))
+        {
+            return source;
+        }
+
+        // Audio Source Fire라는 이름이 안 맞는 경우를 대비
+        return GetComponentInChildren<AudioSource>(true);
     }
 
     private static Transform FindChildByName(Transform root, string childName)

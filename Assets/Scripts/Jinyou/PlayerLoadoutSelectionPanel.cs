@@ -428,7 +428,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
             option.Bind(
                 $"{weapon.DisplayName} Lv.{GetFactoryWeaponLevel(weapon)}",
-                weapon.WeaponCategory,
+                RarityVisuals.GetLabel(weapon.Rarity),
                 $"Lv.{GetFactoryWeaponLevel(weapon)} / 피해량 {GetEnhancedWeaponDamage(weapon):0.##}",
                 weapon == selectedWeapon,
                 () =>
@@ -436,7 +436,9 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                     PlayOptionButtonAudio();
                     SelectWeapon(weapon);
                 },
-                weapon.Icon);
+                weapon.Icon,
+                null,
+                RarityVisuals.GetColor(weapon.Rarity));
         }
     }
 
@@ -463,7 +465,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
             option.Bind(
                 $"{drone.DisplayName} Lv.{GetFactoryDroneLevel(drone)}",
-                $"{drone.DroneCount}마리",
+                GetDroneWeaponName(drone),
                 $"Lv.{GetFactoryDroneLevel(drone)} / 피해량 {GetEnhancedDroneDamage(drone):0.##}",
                 drone == selectedDrone,
                 () =>
@@ -502,7 +504,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
             option.Bind(
                 $"{skill.DisplayName} Lv.{GetCollectionSkillLevel(skill)}",
-                "스킬",
+                RarityVisuals.GetLabel(skill.Rarity),
                 BuildSkillSummary(skill),
                 skill == selectedSkill,
                 () =>
@@ -510,7 +512,9 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                     PlayOptionButtonAudio();
                     SelectSkill(skill);
                 },
-                skill.Icon);
+                skill.Icon,
+                null,
+                RarityVisuals.GetColor(skill.Rarity));
         }
     }
 
@@ -640,17 +644,18 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         ResolveDetailIconReferences();
 
         int droneEnhanceLevel = drone != null ? GetFactoryDroneLevel(drone) : 0;
-        float droneEnhancedDamage = droneEnhanceLevel > 0 ? GetEnhancedDroneDamage(drone) : 0f;
+        float droneDamageBonus = droneEnhanceLevel > 0 ? GetFactoryDroneDamageBonus(drone) : 0f;
         SetIcon(detailIconWeapon, null);
         SetDroneIcon(detailIconDrone, drone);
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
-        SetText(detailCategoryText, drone != null ? $"{drone.DroneCount}마리" : string.Empty);
+        SetText(detailCategoryText, drone != null ? $"장착무기: {drone.ProjectileConfig.DisplayName}" : string.Empty);
         SetText(detailStatsText, drone != null
-            ? $"공장강화 Lv. {droneEnhanceLevel}\n"
+            ? $"공장강화 Lv. <color=#4AD787>{droneEnhanceLevel}</color>\n"
                 + "\n"
-                + $"피해량: {drone.AttackDamage:0.##} (+ {droneEnhancedDamage:0.##})\n"
-                + $"사거리: {drone.AttackRange:0.##}\n"
-                + $"발사간격: {drone.AttackInterval:0.##}"
+                + $"드론갯수: <color=#EC9A0E>{drone.DroneCount:0.##}마리</color>\n"
+                + $"피해량: <color=#EC9A0E>{drone.AttackDamage:0.##}</color> (+ <color=#4AD787>{droneDamageBonus:0.##}</color>)\n"
+                + $"사거리: <color=#EC9A0E>{drone.AttackRange:0.##}</color>\n"
+                + $"발사간격: <color=#EC9A0E>{drone.AttackInterval:0.##}</color>"
             : string.Empty);
     }
 
@@ -661,12 +666,12 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetIcon(detailIconWeapon, skill != null ? skill.Icon : null);
         SetDroneIcon(detailIconDrone, null);
         SetText(detailNameText, skill != null ? skill.DisplayName : "스킬을 선택하세요.");
-        SetText(detailCategoryText, skill != null ? "스킬" : string.Empty);
+        SetText(detailCategoryText, skill != null ? GetSkillTypeLabel(skill.SkillType) : string.Empty);
         SetText(detailStatsText, skill != null
-            ? $"수집강화 Lv. {GetCollectionSkillLevel(skill)}\n"
+            ? $"수집강화 Lv. <color=#4AD787>{GetCollectionSkillLevel(skill)}</color>\n"
                 + "\n"
-                + $"쿨타임: {skill.GetCooldown(GetCollectionSkillLevel(skill)):0.##}\n"
-                + $"범위: {skill.EffectRadius:0.##}\n"
+                + $"쿨타임: <color=#EC9A0E>{skill.GetCooldown(GetCollectionSkillLevel(skill)):0.##}</color>\n"
+                + $"범위: <color=#EC9A0E>{skill.EffectRadius:0.##}</color>\n"
                 + BuildSkillSummary(skill)
             : string.Empty);
     }
@@ -797,8 +802,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
         int required = inventory.GetRequiredDuplicates(skill);
         return required > 0
-            ? $"중복 {inventory.GetDuplicateProgress(skill)} / {required}"
-            : "MAX";
+            ? $"중복 <color=#EC9A0E>{inventory.GetDuplicateProgress(skill)}</color> / <color=#EC9A0E>{required}</color>"
+            : "<color=#4AD787>MAX</color>";
     }
 
     private DroneConfig RegisterInitialDrone()
@@ -866,9 +871,14 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     private float GetEnhancedDroneDamage(DroneConfig drone)
     {
         return drone != null
-            ? drone.AttackDamage + (assemblyFactory != null
-                ? assemblyFactory.GetDroneAttackDamageBonus(drone)
-                : 0f)
+            ? drone.AttackDamage + GetFactoryDroneDamageBonus(drone)
+            : 0f;
+    }
+
+    private float GetFactoryDroneDamageBonus(DroneConfig drone)
+    {
+        return drone != null && assemblyFactory != null
+            ? assemblyFactory.GetDroneAttackDamageBonus(drone)
             : 0f;
     }
 
@@ -878,6 +888,26 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         {
             target.text = value;
         }
+    }
+
+    private static string GetSkillTypeLabel(PlayerSkillType skillType)
+    {
+        return skillType switch
+        {
+            PlayerSkillType.Bombardment => "단일 폭격기",
+            PlayerSkillType.AutoTurret => "센트리(개틀링)",
+            PlayerSkillType.MissileTurret => "센트리(미사일)",
+            PlayerSkillType.StealthBomber => "전략 폭격기",
+            PlayerSkillType.AttackHelicopter => "화력지원",
+            _ => "스킬"
+        };
+    }
+
+    private static string GetDroneWeaponName(DroneConfig drone)
+    {
+        return drone != null && drone.ProjectileConfig != null
+            ? drone.ProjectileConfig.DisplayName
+            : "장착무기 없음";
     }
 
     private void EnsureAudioSource()

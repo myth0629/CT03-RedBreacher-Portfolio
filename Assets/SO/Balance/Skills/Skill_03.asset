@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillConfig
   id: 03
   displayName: "\uBBF8\uC0AC\uC77C \uD130\uB81B"
-  icon: {fileID: 21300000, guid: 7349ef115b6234fa69d16fb7c4d862dd, type: 3}
+  icon: {fileID: 21300000, guid: bbd403d4773f76b45ade50e436a00ab5, type: 3}
   rarity: 1
   skillType: 2
   description: "\uC13C\uD2B8\uB9AC(\uBBF8\uC0AC\uC77C)\r\n\r\n\uC720\uB3C4 \uBBF8\uC0AC\uC77C\uB85C
@@ -60,6 +60,7 @@ MonoBehaviour:
   turretRotationSpeed: 360
   turretPlacementDistance: 1.5
   turretFirePointName: FirePoint
+  turretFireSfx: {fileID: 0}
   missileTurretPrefab: {fileID: 214164098778057125, guid: 8dc1caa0f7a72fe49ad89b03b03c5c9b, type: 3}
   missileProjectilePrefab: {fileID: 1439816204641800, guid: 3d873118a8346a74bb1ea9ec62d17fd7, type: 3}
   missileTurretDuration: 8
@@ -70,7 +71,8 @@ MonoBehaviour:
   missileExplosionRadius: 2.2
   missileProjectileSpeed: 12
   missileTurretFirePointName: FirePoint
-  missileImpactEffectPrefab: {fileID: 0}
+  missileImpactEffectPrefab: {fileID: 1098451438589226, guid: afa1163e40fd2904fbf38e4c00924127, type: 3}
+  missileTurretFireSfx: {fileID: 8300000, guid: 912873cbed9c0c3479e6a7d9adedd25c, type: 3}
   stealthBomberPrefab: {fileID: 0}
   stealthBomberSpeed: 24
   stealthBomberTravelDistance: 18

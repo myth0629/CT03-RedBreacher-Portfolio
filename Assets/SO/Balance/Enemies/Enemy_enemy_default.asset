@@ -21,3 +21,15 @@ MonoBehaviour:
   contactDamage: 5
   contactInterval: 1
   experienceReward: 10
+  creditReward: 10
+  coreCrystalReward: 0
+  partDropChance: 0.05
+  deathExplosionEffectPrefab: {fileID: 0}
+  deathExplosionCleanupDelay: 0.6
+  deathExplosionOffset: {x: 0, y: 0, z: 0}
+  deathExplosionScale: 1
+  hitSounds:
+  - {fileID: 8300000, guid: 3a73663132fdbbb4ca6abfc111e5d7f3, type: 3}
+  - {fileID: 8300000, guid: 8ddda2ddc1a1fb14986c8f45c96fd4d8, type: 3}
+  - {fileID: 8300000, guid: 7801cb71e186218409a255b415aa6def, type: 3}
+  - {fileID: 8300000, guid: b78121d6f010ab446886ef6c9d149510, type: 3}
