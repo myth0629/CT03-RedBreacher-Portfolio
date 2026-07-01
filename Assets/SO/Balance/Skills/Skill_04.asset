@@ -51,7 +51,11 @@ MonoBehaviour:
   _screenShakeDuration: 0.28
   _screenShakeStrength: 0.55
   _screenShakeFrequency: 1.8
-  _airplaneTakeOffSfx: {fileID: 8300000, guid: 81a83ce1f1b2843319f547139da89763, type: 3}
+  _airplaneTakeOffSfx: {fileID: 8300000, guid: d16f6f59791a540daba31b6c69785f99, type: 3}
+  impactSfx:
+  - {fileID: 8300000, guid: 1ac4c40ba4b4e4946bb10f9a4a4a227d, type: 3}
+  - {fileID: 8300000, guid: 3de63ca7328b03a4a9dc79237f1fc171, type: 3}
+  - {fileID: 8300000, guid: c9f0dfc8ff448b94f89f8fe9ba41ce07, type: 3}
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 0}
   turretDuration: 8
@@ -99,3 +103,5 @@ MonoBehaviour:
   helicopterRocketSpeed: 16
   helicopterRotorName: Propeller
   helicopterRotorSpeed: 900
+  helicopterRocketLunchSfx: {fileID: 0}
+  firstRocketLunchSfx: {fileID: 0}

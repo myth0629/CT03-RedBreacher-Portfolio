@@ -61,6 +61,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float _screenShakeStrength = 0.4f;
     [SerializeField] private float _screenShakeFrequency = 1.5f;
     [SerializeField] private AudioClip _airplaneTakeOffSfx;
+    [SerializeField] private AudioClip[] impactSfx;
 
     [Header("Auto Turret")]
     [SerializeField] private GameObject turretPrefab;
@@ -116,6 +117,8 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float helicopterRocketSpeed = 16f;
     [SerializeField] private string helicopterRotorName = "Propeller"; // 회전시킬 자식 이름(비우면 비활성)
     [SerializeField] private float helicopterRotorSpeed = 900f;
+    [SerializeField] private AudioClip helicopterRocketLunchSfx;
+    [SerializeField] private AudioClip firstRocketLunchSfx;
 
     public string Id => id;
     public string DisplayName => displayName;
@@ -143,6 +146,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float ImpactDelay => Mathf.Max(0f, impactDelay);
     public GameObject WarningEffectPrefab => warningEffectPrefab;
     public GameObject ImpactEffectPrefab => impactEffectPrefab;
+    public AudioClip[] ImpactSfx => impactSfx;
     public float EffectCleanupDelay => Mathf.Max(0f, effectCleanupDelay);
     public GameObject AirplanePrefab => _airplanePrefab;
     public float AirplaneSpeed => Mathf.Max(0.1f, _airplaneSpeed);
@@ -204,6 +208,8 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public float HelicopterRocketSpeed => Mathf.Max(0.1f, helicopterRocketSpeed);
     public string HelicopterRotorName => helicopterRotorName;
     public float HelicopterRotorSpeed => helicopterRotorSpeed;
+    public AudioClip HelicopterRocketLunchSfx => helicopterRocketLunchSfx;
+    public AudioClip FirstRocketLunchSfx => firstRocketLunchSfx;
 
     public float GetCooldown(int level)
     {
