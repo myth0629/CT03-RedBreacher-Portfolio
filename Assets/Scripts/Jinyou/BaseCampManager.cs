@@ -30,10 +30,13 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private PlayerCurrencyWallet currencyWallet;
     [SerializeField] private PlayerProgression playerProgression;
 
+    // 타이틀 프리워밍 등 외부에서 동일 키를 참조하기 위한 기본 통합 세이브 키.
+    public const string DefaultUnifiedSaveKey = "Jinyou.SaveData";
+
     [Header("Unified Save")]
     [SerializeField] private bool useUnifiedSave = true;
     [SerializeField] private bool autoSaveUnifiedState = true;
-    [SerializeField] private string unifiedSaveKey = "Jinyou.SaveData";
+    [SerializeField] private string unifiedSaveKey = DefaultUnifiedSaveKey;
 
     // 구키→계정키 이관을 기기당 최초 1회만 수행하기 위한 가드 키.
     private const string LegacyMigrationFlagKey = "Jinyou.SaveData.LegacyMigrated";

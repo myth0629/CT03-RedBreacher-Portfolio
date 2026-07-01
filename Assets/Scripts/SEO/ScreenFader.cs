@@ -126,10 +126,35 @@ public class ScreenFader : MonoBehaviour
         // 그 프레임을 흘려보내 페이드인이 한 번에 끝나는 것을 막는다.
         yield return null;
         yield return null;
+
+        // 계정 세이브(클라우드 동기화 포함) 복원이 끝날 때까지 검은 화면을 유지한다.
+        // 그래야 유닛/드론이 기본값에서 저장값으로 바뀌는 과정이 화면에 노출되지 않는다.
+        yield return WaitForSceneDataReady(SceneDataReadyTimeout);
+
         yield return Fade(1f, 0f, fadeDuration);
 
         group.blocksRaycasts = false;
         transitioning = false;
+    }
+
+    // 세이브 복원이 지연되거나 실패해도 무한 대기하지 않도록 하는 안전 상한(초).
+    private const float SceneDataReadyTimeout = 12f;
+
+    // BaseCampManager가 있는 씬이면 통합 세이브 복원(IsUnifiedSaveLoaded)이 끝날 때까지 대기한다.
+    // 없는 씬(타이틀 등)이면 즉시 통과.
+    private IEnumerator WaitForSceneDataReady(float timeout)
+    {
+        BaseCampManager baseCamp = BaseCampManager.Instance;
+        if (baseCamp == null)
+        {
+            yield break;
+        }
+
+        float deadline = Time.unscaledTime + Mathf.Max(0.1f, timeout);
+        while (!baseCamp.IsUnifiedSaveLoaded && Time.unscaledTime < deadline)
+        {
+            yield return null;
+        }
     }
 
     private IEnumerator Fade(float from, float to, float duration)

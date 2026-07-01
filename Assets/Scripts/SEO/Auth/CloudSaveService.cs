@@ -42,6 +42,8 @@ public class CloudSaveService : MonoBehaviour
 
     private FirebaseFirestore firestore;
     private readonly Dictionary<string, Task> syncing = new Dictionary<string, Task>();
+    // 이번 세션에 이미 클라우드와 맞춘 키. 타이틀 프리워밍 후 같은 키를 재다운로드하지 않게 한다.
+    private readonly HashSet<string> syncedKeys = new HashSet<string>();
     private readonly HashSet<string> pendingPushKeys = new HashSet<string>();
     private float nextPushTime;
     private bool pushing;
@@ -91,6 +93,12 @@ public class CloudSaveService : MonoBehaviour
         if (syncing.TryGetValue(playerPrefsKey, out Task running) && !running.IsCompleted)
         {
             return running;
+        }
+
+        // 이번 세션에 이미 동기화한 키는 재다운로드하지 않는다(프리워밍 → 씬 로드 중복 방지).
+        if (syncedKeys.Contains(playerPrefsKey))
+        {
+            return Task.CompletedTask;
         }
 
         Task task = SyncAsync(playerPrefsKey);
@@ -161,6 +169,9 @@ public class CloudSaveService : MonoBehaviour
                 await PushAsync(key);
                 Debug.Log("[Cloud] 클라우드에 첫 세이브 업로드.");
             }
+
+            // 정상 동기화 완료 → 이번 세션에는 이 키를 다시 다운로드하지 않는다.
+            syncedKeys.Add(key);
         }
         catch (Exception e)
         {
