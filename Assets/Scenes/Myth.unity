@@ -353,6 +353,58 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3575268677808348271, guid: f48655f5eb5ea4fa3bff69ec215d0952, type: 3}
   m_PrefabInstance: {fileID: 116606424}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &132710201
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 132710202}
+  - component: {fileID: 132710203}
+  m_Layer: 0
+  m_Name: BGM Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &132710202
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132710201}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -4.80394, y: 14.91179, z: -28.83645}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 347728708}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &132710203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132710201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64fa84b97d25a453e82b794a221f433f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BGMManager
+  combatClip: {fileID: 8300000, guid: 71aa095364d2f4a43b878326ca4b8e28, type: 3}
+  bossClip: {fileID: 8300000, guid: cb5ee08f60d1e40e4b4a1f62e5595766, type: 3}
+  baseClip: {fileID: 8300000, guid: 91e37153bc5e14315852a32471ac6154, type: 3}
+  bgmMixerGroup: {fileID: 24300002, guid: 1cfefdfa7d9db89458183512a654f8db, type: 2}
+  volume: 0.8
+  crossfadeSeconds: 1
+  sceneFadeInSeconds: 1
+  autoHookBossEncounter: 1
 --- !u!114 &165805350 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8000221363892831899, guid: 5bf96e1c515374b21b21135491165caa, type: 3}
@@ -886,6 +938,7 @@ Transform:
   - {fileID: 2016881338}
   - {fileID: 1250891664}
   - {fileID: 1465734393}
+  - {fileID: 132710202}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &403550002

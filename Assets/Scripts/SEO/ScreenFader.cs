@@ -111,6 +111,9 @@ public class ScreenFader : MonoBehaviour
         transitioning = true;
         group.blocksRaycasts = true;
 
+        // 화면 페이드아웃과 동시에 현재 씬의 BGM도 페이드아웃(씬 언로드로 뚝 끊기지 않게).
+        BGMManager.Instance?.FadeOut(fadeDuration);
+
         yield return Fade(0f, 1f, fadeDuration);
 
         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);

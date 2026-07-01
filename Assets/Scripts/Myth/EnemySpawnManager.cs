@@ -322,6 +322,11 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         aliveEnemies.Add(enemyHealth);
+
+        // AutoSyncTransforms가 꺼져 있어, 방금 스폰한 콜라이더는 다음 물리 스텝 전까지
+        // Physics.OverlapSphere(투사체 히트 판정)에 잡히지 않는다. 즉시 동기화해 스폰 직후
+        // 공격이 통과(무시)되는 문제를 막는다.
+        Physics.SyncTransforms();
     }
 
     private EnemyConfig GetEnemyConfig()

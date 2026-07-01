@@ -34,6 +34,9 @@ public class PlayerProjectile : MonoBehaviour
     private GameObject projectileEffectInstance;
     private bool isReleased;
     private int _wallLayer;
+    private bool applyMuzzleFlashSorting;
+    private int muzzleFlashSortingLayerID;
+    private int muzzleFlashSortingOrder;
 
     public Vector3 TravelDirection => direction;
     public float TravelSpeed => speed;
@@ -64,6 +67,8 @@ public class PlayerProjectile : MonoBehaviour
         isReleased = false;
         hasHit = false;
         piercedTargets.Clear();
+        // 이전 사용자의 정렬 강제가 남지 않도록 초기화(각 발사 시 ConfigureEffects가 다시 설정).
+        applyMuzzleFlashSorting = false;
     }
 
     public void ResetForPool()
@@ -91,8 +96,19 @@ public class PlayerProjectile : MonoBehaviour
         }
     }
 
-    public void ConfigureEffects(GameObject fireFlashEffect, GameObject projectileEffect, GameObject hitEffect)
+    public void ConfigureEffects(
+        GameObject fireFlashEffect,
+        GameObject projectileEffect,
+        GameObject hitEffect,
+        bool overrideMuzzleFlashSorting = false,
+        int muzzleFlashSortingLayerId = 0,
+        int muzzleFlashOrder = 0)
     {
+        // 머즐 플래시가 본체(유닛) 위에 그려지도록 정렬을 강제할지 지정한다.
+        applyMuzzleFlashSorting = overrideMuzzleFlashSorting;
+        muzzleFlashSortingLayerID = muzzleFlashSortingLayerId;
+        muzzleFlashSortingOrder = muzzleFlashOrder;
+
         // 플레이어 쪽에서 지정한 이펙트가 있으면 투사체 프리팹 기본값보다 우선 사용한다.
         if (fireFlashEffect != null)
         {
@@ -234,7 +250,33 @@ public class PlayerProjectile : MonoBehaviour
 
         // 발사 순간 총구 위치에 플래시를 한 번 재생한다.
         GameObject flash = CombatObjectPool.GetEffect(fireFlashEffectPrefab, transform.position, transform.rotation);
+        if (applyMuzzleFlashSorting)
+        {
+            ApplyMuzzleFlashSorting(flash);
+        }
+
         CombatObjectPool.ReleaseEffect(flash, effectCleanupDelay);
+    }
+
+    // 머즐 플래시의 모든 렌더러를 유닛보다 위에 그려지도록 정렬 레이어/순서를 맞춘다.
+    private void ApplyMuzzleFlashSorting(GameObject flash)
+    {
+        if (flash == null)
+        {
+            return;
+        }
+
+        Renderer[] renderers = flash.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] == null)
+            {
+                continue;
+            }
+
+            renderers[i].sortingLayerID = muzzleFlashSortingLayerID;
+            renderers[i].sortingOrder = muzzleFlashSortingOrder;
+        }
     }
 
     private void SpawnProjectileEffect()

@@ -508,6 +508,7 @@ MonoBehaviour:
   signOutButton: {fileID: 2120414397}
   signOutGroup: {fileID: 2120414395}
   guestLoginButton: {fileID: 1249179076}
+  guestGroup: {fileID: 0}
   toastFont: {fileID: 11400000, guid: a5e325fc73a121645b8bb045804e62a4, type: 2}
   welcomeFormat: "{0}\uB2D8, \uD658\uC601\uD569\uB2C8\uB2E4!"
   welcomeFallback: "\uD658\uC601\uD569\uB2C8\uB2E4!"
@@ -651,6 +652,58 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
+--- !u!1 &1125060541
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1125060543}
+  - component: {fileID: 1125060544}
+  m_Layer: 0
+  m_Name: BGM
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1125060543
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125060541}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 10, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1125060544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125060541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64fa84b97d25a453e82b794a221f433f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BGMManager
+  combatClip: {fileID: 8300000, guid: a049908c7faff4c87a42ea4e7ec186ef, type: 3}
+  bossClip: {fileID: 0}
+  baseClip: {fileID: 0}
+  bgmMixerGroup: {fileID: 24300002, guid: 1cfefdfa7d9db89458183512a654f8db, type: 2}
+  volume: 0.8
+  crossfadeSeconds: 1
+  sceneFadeInSeconds: 1
+  autoHookBossEncounter: 1
 --- !u!114 &1249179076 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5284209534662242299, guid: 339b68f2af2de5e47827e34da1b45d39, type: 3}
@@ -862,3 +915,4 @@ SceneRoots:
   - {fileID: 1566015684}
   - {fileID: 607543828}
   - {fileID: 823740552}
+  - {fileID: 1125060543}
