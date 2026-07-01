@@ -51,6 +51,7 @@ MonoBehaviour:
   _screenShakeDuration: 0.28
   _screenShakeStrength: 0.55
   _screenShakeFrequency: 1.8
+  _airplaneTakeOffSfx: {fileID: 8300000, guid: 81a83ce1f1b2843319f547139da89763, type: 3}
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 0}
   turretDuration: 8
@@ -59,6 +60,7 @@ MonoBehaviour:
   turretRotationSpeed: 360
   turretPlacementDistance: 1.5
   turretFirePointName: FirePoint
+  turretFireSfx: {fileID: 0}
   missileTurretPrefab: {fileID: 0}
   missileProjectilePrefab: {fileID: 0}
   missileTurretDuration: 8
@@ -70,6 +72,7 @@ MonoBehaviour:
   missileProjectileSpeed: 12
   missileTurretFirePointName: FirePoint
   missileImpactEffectPrefab: {fileID: 0}
+  missileTurretFireSfx: {fileID: 0}
   stealthBomberPrefab: {fileID: 214164098778057125, guid: 8fd535507b2293c479d0b5d315d95e60, type: 3}
   stealthBomberSpeed: 24
   stealthBomberTravelDistance: 18

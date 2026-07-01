@@ -7,6 +7,7 @@ public class AutoTurretSkill : MonoBehaviour
     private PlayerController owner;
     private PlayerSkillConfig config;
     private Transform firePoint;
+    private AudioSource fireAudioSource;
     private float aimAngleDeg;
     private CombatHealth currentTarget;
     private float expireTime;
@@ -95,6 +96,8 @@ public class AutoTurretSkill : MonoBehaviour
         {
             firePoint = transform;
         }
+
+        fireAudioSource = ResolveFireAudioSource();
 
         _originalScale = transform.localScale;
         transform.localScale = Vector3.zero;
@@ -197,6 +200,8 @@ public class AutoTurretSkill : MonoBehaviour
 
     private void Fire(CombatHealth target)
     {
+        PlayFireSfx();
+
         float damage = PlayerSkillCombat.CalculateDamage(owner, config, out bool isCritical);
         ProjectileConfig projectileConfig = config.TurretProjectileConfig;
         if (projectileConfig == null)
@@ -227,6 +232,33 @@ public class AutoTurretSkill : MonoBehaviour
             projectileConfig.Lifetime,
             owner.Health,
             isCritical);
+    }
+
+    private void PlayFireSfx()
+    {
+        AudioClip clip = config != null ? config.TurretFireSfx : null;
+        if (clip == null)
+        {
+            return;
+        }
+
+        fireAudioSource ??= ResolveFireAudioSource();
+        if (fireAudioSource != null)
+        {
+            fireAudioSource.PlayOneShot(clip);
+        }
+    }
+
+    private AudioSource ResolveFireAudioSource()
+    {
+        Transform sourceTransform = FindChildByName(transform, "Audio Source Fire");
+        if (sourceTransform != null && sourceTransform.TryGetComponent(out AudioSource source))
+        {
+            return source;
+        }
+
+        // Audio Source Fire이라는 이름이 틀려도 여전히 동작하도록 fallback을 넣음.
+        return GetComponentInChildren<AudioSource>(true);
     }
 
     private static Transform FindChildByName(Transform root, string childName)
