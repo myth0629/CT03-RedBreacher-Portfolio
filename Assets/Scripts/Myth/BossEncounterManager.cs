@@ -58,7 +58,14 @@ public class BossEncounterManager : MonoBehaviour
             return;
         }
 
-        if (activeBossHealth == null || activeBossHealth.IsDead)
+        if (activeBossHealth == null)
+        {
+            // 보스가 죽지 않고 외부에서 파괴됨(스테이지 리셋 등) → 승리가 아니라 중단으로 처리한다.
+            AbortEncounter();
+            return;
+        }
+
+        if (activeBossHealth.IsDead)
         {
             HandleBossDefeat();
         }
@@ -134,6 +141,19 @@ public class BossEncounterManager : MonoBehaviour
         enemySpawnManager?.ResumePausedRound();
         MainGuideMissionManager.ReportBossDefeated();
         EncounterEnded?.Invoke(true);
+    }
+
+    // 보스가 처치되지 않고 사라진 경우(스테이지 리셋 등 외부 파괴)의 중단 처리.
+    // 승리 보상/미션 보고 없이 상태만 정리한다. ResumePausedRound는 bossEncounterActive가
+    // 이미 해제된 경우(리셋 경로) 내부 가드로 no-op이라 리셋된 라운드를 되돌리지 않는다.
+    private void AbortEncounter()
+    {
+        encounterActive = false;
+        activeBoss = null;
+        activeBossHealth = null;
+        bossEncounterHud?.Hide();
+        enemySpawnManager?.ResumePausedRound();
+        EncounterEnded?.Invoke(false);
     }
 
     private void HandlePlayerDefeat()

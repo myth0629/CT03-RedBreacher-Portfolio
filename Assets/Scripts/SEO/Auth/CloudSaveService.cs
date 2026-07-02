@@ -42,9 +42,13 @@ public class CloudSaveService : MonoBehaviour
 
     private FirebaseFirestore firestore;
     private readonly Dictionary<string, Task> syncing = new Dictionary<string, Task>();
+    // 이번 세션에 이미 클라우드와 맞춘 키. 타이틀 프리워밍 후 같은 키를 재다운로드하지 않게 한다.
+    private readonly HashSet<string> syncedKeys = new HashSet<string>();
     private readonly HashSet<string> pendingPushKeys = new HashSet<string>();
     private float nextPushTime;
     private bool pushing;
+    // 종료 지연 플러시가 진행 중인 업로드까지 기다릴 수 있도록 마지막 푸시 작업을 추적한다.
+    private Task lastPushTask = Task.CompletedTask;
 
     [Serializable]
     private class SaveMeta
@@ -93,6 +97,12 @@ public class CloudSaveService : MonoBehaviour
             return running;
         }
 
+        // 이번 세션에 이미 동기화한 키는 재다운로드하지 않는다(프리워밍 → 씬 로드 중복 방지).
+        if (syncedKeys.Contains(playerPrefsKey))
+        {
+            return Task.CompletedTask;
+        }
+
         Task task = SyncAsync(playerPrefsKey);
         syncing[playerPrefsKey] = task;
         return task;
@@ -120,7 +130,34 @@ public class CloudSaveService : MonoBehaviour
 
         List<string> keys = new List<string>(pendingPushKeys);
         pendingPushKeys.Clear();
-        _ = PushManyAsync(keys);
+        lastPushTask = PushManyAsync(keys);
+    }
+
+    /// <summary>대기/진행 중인 업로드가 있는지(종료 지연 플러시 판단용).</summary>
+    public bool HasPendingUploads => pendingPushKeys.Count > 0 || pushing;
+
+    /// <summary>대기 중인 키를 즉시 업로드하고, 진행 중인 업로드까지 포함해 완료를 기다릴 수 있는 Task를 돌려준다.</summary>
+    public Task FlushNowAsync()
+    {
+        if (IsReady() && pendingPushKeys.Count > 0 && !pushing)
+        {
+            List<string> keys = new List<string>(pendingPushKeys);
+            pendingPushKeys.Clear();
+            lastPushTask = PushManyAsync(keys);
+        }
+
+        return lastPushTask;
+    }
+
+    /// <summary>
+    /// 로그아웃/계정 전환 시 이전 계정의 대기 업로드와 세션 캐시를 정리한다.
+    /// 대기 키를 남겨두면 푸시 시점의 Doc()이 '현재 UID' 문서를 가리키므로,
+    /// 이전 계정의 데이터가 다음 계정의 클라우드 문서로 업로드될 수 있다.
+    /// </summary>
+    public void HandleAccountChanged()
+    {
+        pendingPushKeys.Clear();
+        syncedKeys.Clear();
     }
 
     // ───────── 내부 구현 ─────────
@@ -161,6 +198,9 @@ public class CloudSaveService : MonoBehaviour
                 await PushAsync(key);
                 Debug.Log("[Cloud] 클라우드에 첫 세이브 업로드.");
             }
+
+            // 정상 동기화 완료 → 이번 세션에는 이 키를 다시 다운로드하지 않는다.
+            syncedKeys.Add(key);
         }
         catch (Exception e)
         {

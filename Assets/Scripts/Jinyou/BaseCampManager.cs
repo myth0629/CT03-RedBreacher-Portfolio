@@ -30,10 +30,13 @@ public class BaseCampManager : MonoBehaviour
     [SerializeField] private PlayerCurrencyWallet currencyWallet;
     [SerializeField] private PlayerProgression playerProgression;
 
+    // 타이틀 프리워밍 등 외부에서 동일 키를 참조하기 위한 기본 통합 세이브 키.
+    public const string DefaultUnifiedSaveKey = "Jinyou.SaveData";
+
     [Header("Unified Save")]
     [SerializeField] private bool useUnifiedSave = true;
     [SerializeField] private bool autoSaveUnifiedState = true;
-    [SerializeField] private string unifiedSaveKey = "Jinyou.SaveData";
+    [SerializeField] private string unifiedSaveKey = DefaultUnifiedSaveKey;
 
     // 구키→계정키 이관을 기기당 최초 1회만 수행하기 위한 가드 키.
     private const string LegacyMigrationFlagKey = "Jinyou.SaveData.LegacyMigrated";
@@ -59,6 +62,7 @@ public class BaseCampManager : MonoBehaviour
     private int loadedUnifiedSaveVersion;
     private bool confirmPlayerPrefsReset;
     private bool skipNextBackupRotation;
+    private bool quitFlushCompleted;
     private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
 
     public CommandCenter CommandCenter => commandCenter;
@@ -99,6 +103,10 @@ public class BaseCampManager : MonoBehaviour
         ConnectFacilities();
         EnsureDailyMissionManager();
         EnsureMainGuideMissionManager();
+
+        // 종료 직전 마지막 저장의 클라우드 업로드가 완료될 때까지 잠깐(최대 2초) 종료를 보류한다.
+        // (OnApplicationQuit의 fire-and-forget 업로드는 프로세스 종료로 유실될 수 있음)
+        Application.wantsToQuit += HandleWantsToQuit;
     }
 
     private async void Start()
@@ -117,6 +125,14 @@ public class BaseCampManager : MonoBehaviour
             ApplyEquippedLoadoutAtBoot();
         }
         ConfigureUnifiedPersistence();
+
+        // 신규 계정(통합 세이브 없음) 첫 부팅: UID 스코프가 없는 전역 키에서 Awake 때 읽힌
+        // 이전 계정의 Myth 진행도(레벨/스탯/라운드)가 첫 저장으로 굳어지기 전에 기본값으로 되돌린다.
+        if (useUnifiedSave && loadedUnifiedSaveVersion <= 0 && HasLegacyMythGlobalKeys())
+        {
+            ResetMythProgressionForFreshAccount();
+        }
+
         SubscribeUnifiedSaveEvents();
         unifiedSaveReady = true;
         SaveUnifiedGame();
@@ -155,7 +171,9 @@ public class BaseCampManager : MonoBehaviour
 
     private void OnApplicationPause(bool pauseStatus)
     {
-        if (pauseStatus)
+        // 클라우드 동기화/복원이 끝나기 전(unifiedSaveReady=false)에는 모든 시스템이 기본값 상태다.
+        // 이때 저장하면 기본값이 진짜 세이브를 덮어쓰고 최신 타임스탬프로 클라우드까지 오염시키므로 스킵한다.
+        if (pauseStatus && unifiedSaveReady)
         {
             SaveUnifiedGame();
             CloudSaveService.Instance.FlushNow(); // 일시정지 중엔 Update가 멈추므로 즉시 업로드.
@@ -164,8 +182,52 @@ public class BaseCampManager : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+        if (!unifiedSaveReady)
+        {
+            return; // 복원 전 종료: 기본값으로 세이브를 덮어쓰지 않는다.
+        }
+
         SaveUnifiedGame();
         CloudSaveService.Instance.FlushNow();
+    }
+
+    // 종료 요청 시 마지막 상태를 저장하고, 업로드가 남아 있으면 완료(최대 2초)까지 종료를 보류한 뒤 다시 종료한다.
+    private bool HandleWantsToQuit()
+    {
+        if (quitFlushCompleted || !unifiedSaveReady)
+        {
+            return true; // 이미 플러시했거나(재진입), 복원 전이라 저장할 것이 없다.
+        }
+
+        SaveUnifiedGame(); // 마지막 상태 캡처(RequestPush로 업로드 예약).
+        if (!CloudSaveService.Instance.HasPendingUploads)
+        {
+            return true;
+        }
+
+        FlushThenQuitAsync();
+        return false;
+    }
+
+    private async void FlushThenQuitAsync()
+    {
+        try
+        {
+            System.Threading.Tasks.Task timeout = System.Threading.Tasks.Task.Delay(2000);
+            // 진행 중 푸시가 있으면 대기 키가 남을 수 있어, 시간 안에서 반복 플러시한다.
+            while (CloudSaveService.Instance.HasPendingUploads && !timeout.IsCompleted)
+            {
+                await System.Threading.Tasks.Task.WhenAny(
+                    CloudSaveService.Instance.FlushNowAsync(), timeout);
+            }
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"[Cloud] 종료 전 업로드 실패(로컬 저장은 완료됨): {exception.Message}");
+        }
+
+        quitFlushCompleted = true;
+        Application.Quit();
     }
 
     // 로그인 상태면 클라우드 세이브를 내려받아 로컬과 최신본을 맞춘다. 실패해도 로컬로 계속 진행.
@@ -226,6 +288,8 @@ public class BaseCampManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        Application.wantsToQuit -= HandleWantsToQuit;
+
         if (registeredCurrencyWallet != null)
         {
             registeredCurrencyWallet.OnCreditsChanged.RemoveListener(HandleCreditsChanged);
@@ -858,11 +922,37 @@ public class BaseCampManager : MonoBehaviour
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.SetStandaloneSaveEnabled(false, false);
+
+        // Myth 진행도(레벨/스탯/라운드)는 키가 UID 스코프가 아니라, 개별 저장을 켜두면
+        // 계정 전환 시 이전 계정의 진행도가 새 계정으로 샌다. 통합 세이브로 일원화한다.
+        FindFirstObjectByType<PlayerProgression>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, false);
+        FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, false);
+        FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, false);
     }
 
     public void RequestUnifiedSave()
     {
         SaveUnifiedGameIfReady();
+    }
+
+    // 계정 전환 누수 대상인 전역 Myth 키가 기기에 남아 있는지 확인한다.
+    // (SetStandaloneSaveEnabled(false, true) 정리가 한 번 돌면 사라져 이후엔 false)
+    private static bool HasLegacyMythGlobalKeys()
+    {
+        return PlayerPrefs.HasKey("PlayerProgression.Level")
+            || PlayerPrefs.HasKey("PlayerStatAllocator.AttackLevel")
+            || PlayerPrefs.HasKey("EnemySpawnManager.CurrentRound");
+    }
+
+    private void ResetMythProgressionForFreshAccount()
+    {
+        FindFirstObjectByType<PlayerProgression>(FindObjectsInactive.Include)?.ResetProgression();
+        FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include)?.ResetAllocations();
+        FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include)?.ResetStageProgress();
+        Debug.Log("[Save] 신규 계정: 전역 키에 남아 있던 이전 계정의 Myth 진행도를 기본값으로 초기화했습니다.", this);
     }
 
     private void ClearLegacyStandaloneData()
@@ -891,6 +981,15 @@ public class BaseCampManager : MonoBehaviour
         AchievementManager achievementManager = AchievementManager.Instance
             ?? FindFirstObjectByType<AchievementManager>();
         achievementManager?.SetStandaloneSaveEnabled(false, true);
+
+        // Myth 진행도 전역 키도 통합 세이브 확정 후 제거해 계정 간 오염을 차단한다.
+        // (현재 메모리 상태는 이미 위의 SaveUnifiedGame으로 통합 세이브에 반영됨)
+        FindFirstObjectByType<PlayerProgression>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, true);
+        FindFirstObjectByType<PlayerStatAllocator>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, true);
+        FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include)
+            ?.SetStandaloneSaveEnabled(false, true);
     }
 
     private void HandleCreditsChanged(int value)

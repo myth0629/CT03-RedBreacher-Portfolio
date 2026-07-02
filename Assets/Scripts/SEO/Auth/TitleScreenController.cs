@@ -51,6 +51,7 @@ public class TitleScreenController : MonoBehaviour
 
     private bool busy;
     private bool welcomeShown;
+    private bool cloudPrewarmStarted;
 
     private void Awake()
     {
@@ -134,6 +135,9 @@ public class TitleScreenController : MonoBehaviour
         {
             ShowSignedIn();
 
+            // 느린 클라우드 다운로드를 타이틀에서 미리 시작해, Myth 진입 시 대기(검은 화면)를 최소화한다.
+            TryPrewarmCloudSave();
+
             // 로그인 성공(자동/버튼 무관) 시 1회 환영 토스트.
             if (!welcomeShown)
             {
@@ -145,6 +149,7 @@ public class TitleScreenController : MonoBehaviour
 
         // 비로그인: 로그인 버튼이 보이는 초기 상태로 복귀.
         welcomeShown = false; // 다음 로그인 때 다시 환영하도록 리셋.
+        cloudPrewarmStarted = false; // 재로그인(다른 계정) 시 다시 프리워밍.
         ShowSignedOut();
         if (!busy)
         {
@@ -239,6 +244,27 @@ public class TitleScreenController : MonoBehaviour
         {
             HandleAuthState();
         }
+    }
+
+    // 로그인 직후, 계정 세이브의 클라우드 다운로드를 미리 시작한다(느린 네트워크 대기를 타이틀로 이동).
+    // Myth의 BaseCampManager가 같은 키로 EnsureSyncedAsync를 호출할 때, 이미 동기화됐으면 즉시 통과한다.
+    private void TryPrewarmCloudSave()
+    {
+        if (cloudPrewarmStarted)
+        {
+            return;
+        }
+
+        FirebaseAuthManager auth = FirebaseAuthManager.Instance;
+        if (auth == null || !auth.IsSignedIn)
+        {
+            return;
+        }
+
+        cloudPrewarmStarted = true;
+        string key = auth.ScopedSaveKey(BaseCampManager.DefaultUnifiedSaveKey);
+        _ = CloudSaveService.Instance.EnsureSyncedAsync(key);
+        Debug.Log("[Title] 계정 세이브 프리워밍 시작");
     }
 
     private void OnSignOutClicked()

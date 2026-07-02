@@ -20,6 +20,9 @@ public class TutorialManager : MonoBehaviour
     private const string BaseStepIdPrefix = "base_";
     private const string BasePopupName = "Base_Popup";
     private const float ResolveInterval = 0.5f;
+    // 이름 기반 씬 전체 스캔(FindInScene)의 최소 간격. 타겟을 못 찾는 동안 매 프레임
+    // Resources.FindObjectsOfTypeAll 전체 힙 스캔이 돌던 것을 막는다(모바일 프레임 스파이크 방지).
+    private const float SceneScanInterval = 0.25f;
 
     private TutorialConfig config;
     private TutorialOverlay overlay;
@@ -41,6 +44,8 @@ public class TutorialManager : MonoBehaviour
     private AssemblyFactory subscribedFactory;
     private CoreCharger subscribedCharger;
     private float nextResolveTime;
+    private float nextSceneScanTime;
+    private bool allowSceneScan;
     private bool missingOverlayPrefab;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -127,6 +132,13 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        // 씬 전체 스캔은 간격을 두고만 허용한다(찾은 타겟 추적 등 싼 경로는 매 프레임 유지).
+        allowSceneScan = Time.unscaledTime >= nextSceneScanTime;
+        if (allowSceneScan)
+        {
+            nextSceneScanTime = Time.unscaledTime + SceneScanInterval;
+        }
+
         ResolveActiveTarget();
         PollPanelOpened();
     }
@@ -173,6 +185,7 @@ public class TutorialManager : MonoBehaviour
 
         running = true;
         overlay.Show(activeStep.bodyText, null, activeStep.advanceType, OnTapAdvance);
+        allowSceneScan = true; // 스텝 시작 시엔 즉시 1회 스캔 허용.
         ResolveActiveTarget();
         Save();
     }
@@ -379,6 +392,11 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        if (!allowSceneScan)
+        {
+            return; // 전체 스캔은 SceneScanInterval 간격으로만.
+        }
+
         Transform found = FindInScene(activeStep.highlightTargetName);
         resolvedTarget = found as RectTransform;
         if (resolvedTarget != null)
@@ -438,6 +456,11 @@ public class TutorialManager : MonoBehaviour
         if (string.IsNullOrWhiteSpace(name))
         {
             return;
+        }
+
+        if (!allowSceneScan)
+        {
+            return; // 전체 스캔은 SceneScanInterval 간격으로만.
         }
 
         Transform panel = FindInScene(name);

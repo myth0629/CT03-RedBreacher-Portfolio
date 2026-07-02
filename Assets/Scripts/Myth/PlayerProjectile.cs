@@ -34,6 +34,14 @@ public class PlayerProjectile : MonoBehaviour
     private GameObject projectileEffectInstance;
     private bool isReleased;
     private int _wallLayer;
+    private bool applyMuzzleFlashSorting;
+    private int muzzleFlashSortingLayerID;
+    private int muzzleFlashSortingOrder;
+
+    // 프레임 간 이동 구간 스윕 판정용(빠른 투사체의 관통 누락 방지).
+    private static readonly RaycastHit[] sweepHits = new RaycastHit[16];
+    private Vector3 lastSweepPosition;
+    private bool hasSweepOrigin;
 
     public Vector3 TravelDirection => direction;
     public float TravelSpeed => speed;
@@ -51,6 +59,7 @@ public class PlayerProjectile : MonoBehaviour
     {
         CombatPlane.ClampTransform(transform);
         CombatPlane.ClampVelocity(body);
+        CheckSweptHit();
         CheckOverlapHit();
 
         if (Time.time >= expireTime)
@@ -64,6 +73,8 @@ public class PlayerProjectile : MonoBehaviour
         isReleased = false;
         hasHit = false;
         piercedTargets.Clear();
+        // 이전 사용자의 정렬 강제가 남지 않도록 초기화(각 발사 시 ConfigureEffects가 다시 설정).
+        applyMuzzleFlashSorting = false;
     }
 
     public void ResetForPool()
@@ -77,6 +88,7 @@ public class PlayerProjectile : MonoBehaviour
         direction = Vector3.zero;
         isCritical = false;
         piercedTargets.Clear();
+        hasSweepOrigin = false;
 
         if (body != null)
         {
@@ -91,8 +103,19 @@ public class PlayerProjectile : MonoBehaviour
         }
     }
 
-    public void ConfigureEffects(GameObject fireFlashEffect, GameObject projectileEffect, GameObject hitEffect)
+    public void ConfigureEffects(
+        GameObject fireFlashEffect,
+        GameObject projectileEffect,
+        GameObject hitEffect,
+        bool overrideMuzzleFlashSorting = false,
+        int muzzleFlashSortingLayerId = 0,
+        int muzzleFlashOrder = 0)
     {
+        // 머즐 플래시가 본체(유닛) 위에 그려지도록 정렬을 강제할지 지정한다.
+        applyMuzzleFlashSorting = overrideMuzzleFlashSorting;
+        muzzleFlashSortingLayerID = muzzleFlashSortingLayerId;
+        muzzleFlashSortingOrder = muzzleFlashOrder;
+
         // 플레이어 쪽에서 지정한 이펙트가 있으면 투사체 프리팹 기본값보다 우선 사용한다.
         if (fireFlashEffect != null)
         {
@@ -169,6 +192,10 @@ public class PlayerProjectile : MonoBehaviour
         SpawnFireFlashEffect();
         SpawnProjectileEffect();
 
+        // 스윕 판정 기준점을 발사 위치로 초기화한다(풀 재사용 시 이전 위치 잔재 방지).
+        lastSweepPosition = transform.position;
+        hasSweepOrigin = true;
+
         // 투사체 본체는 플레이어 정면 방향으로만 직진한다.
         body.linearVelocity = direction * speed;
     }
@@ -234,7 +261,33 @@ public class PlayerProjectile : MonoBehaviour
 
         // 발사 순간 총구 위치에 플래시를 한 번 재생한다.
         GameObject flash = CombatObjectPool.GetEffect(fireFlashEffectPrefab, transform.position, transform.rotation);
+        if (applyMuzzleFlashSorting)
+        {
+            ApplyMuzzleFlashSorting(flash);
+        }
+
         CombatObjectPool.ReleaseEffect(flash, effectCleanupDelay);
+    }
+
+    // 머즐 플래시의 모든 렌더러를 유닛보다 위에 그려지도록 정렬 레이어/순서를 맞춘다.
+    private void ApplyMuzzleFlashSorting(GameObject flash)
+    {
+        if (flash == null)
+        {
+            return;
+        }
+
+        Renderer[] renderers = flash.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] == null)
+            {
+                continue;
+            }
+
+            renderers[i].sortingLayerID = muzzleFlashSortingLayerID;
+            renderers[i].sortingOrder = muzzleFlashSortingOrder;
+        }
     }
 
     private void SpawnProjectileEffect()
@@ -346,6 +399,93 @@ public class PlayerProjectile : MonoBehaviour
             return;
         }
         TryHit(collision.collider.GetComponentInParent<CombatHealth>());
+    }
+
+    // 빠른 투사체가 물리 스텝 사이에 적을 지나쳐 데미지가 누락되는 것을 막는다.
+    // (트리거 콜라이더에는 Continuous 충돌 감지가 적용되지 않고, OverlapSphere는 현재 지점만 본다)
+    // 직전 프레임 위치 → 현재 위치 구간을 스피어캐스트로 검사해 그 사이의 적/벽을 잡는다.
+    private void CheckSweptHit()
+    {
+        Vector3 current = transform.position;
+        if (hasHit)
+        {
+            lastSweepPosition = current;
+            return;
+        }
+
+        if (!hasSweepOrigin)
+        {
+            lastSweepPosition = current;
+            hasSweepOrigin = true;
+            return;
+        }
+
+        Vector3 delta = current - lastSweepPosition;
+        float travel = delta.magnitude;
+        Vector3 origin = lastSweepPosition;
+        lastSweepPosition = current;
+        if (travel <= 0.0001f)
+        {
+            return;
+        }
+
+        int hitCount = Physics.SphereCastNonAlloc(
+            origin,
+            Mathf.Max(0.01f, collisionRadius),
+            delta / travel,
+            sweepHits,
+            travel,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore);
+        if (hitCount <= 0)
+        {
+            return;
+        }
+
+        // 가까운 순으로 처리해야 벽 뒤의 적을 맞히지 않는다.
+        SortSweepHitsByDistance(hitCount);
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hitCollider = sweepHits[i].collider;
+            if (hitCollider == null)
+            {
+                continue;
+            }
+
+            if (IsWall(hitCollider.gameObject))
+            {
+                HitWall();
+                return;
+            }
+
+            CombatHealth target = hitCollider.GetComponentInParent<CombatHealth>();
+            if (target == null || target == owner)
+            {
+                continue;
+            }
+
+            TryHit(target);
+            if (hasHit)
+            {
+                return;
+            }
+        }
+    }
+
+    private static void SortSweepHitsByDistance(int count)
+    {
+        for (int i = 1; i < count; i++)
+        {
+            RaycastHit key = sweepHits[i];
+            int j = i - 1;
+            while (j >= 0 && sweepHits[j].distance > key.distance)
+            {
+                sweepHits[j + 1] = sweepHits[j];
+                j--;
+            }
+
+            sweepHits[j + 1] = key;
+        }
     }
 
     private void CheckOverlapHit()

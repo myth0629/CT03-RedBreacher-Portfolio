@@ -103,9 +103,39 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void Start()
     {
-        if (startOnAwake)
+        if (!startOnAwake)
         {
-            StartRounds();
+            return;
+        }
+
+        // 클라우드 복원 전에 라운드를 시작하면, 복원이 라운드 진행 중에 도착해
+        // 진행 중이던 라운드의 currentRound++가 복원된 라운드를 덮어써 한 라운드가 건너뛰어진다.
+        // 복원이 끝날 때까지는 ScreenFader가 화면을 가리고 있어 대기가 보이지 않는다.
+        BaseCampManager baseCamp = BaseCampManager.Instance;
+        if (baseCamp != null && !baseCamp.IsUnifiedSaveLoaded)
+        {
+            baseCamp.UnifiedSaveLoaded += HandleUnifiedSaveLoadedForStart;
+            return;
+        }
+
+        StartRounds();
+    }
+
+    private void HandleUnifiedSaveLoadedForStart()
+    {
+        if (BaseCampManager.Instance != null)
+        {
+            BaseCampManager.Instance.UnifiedSaveLoaded -= HandleUnifiedSaveLoadedForStart;
+        }
+
+        StartRounds();
+    }
+
+    private void OnDestroy()
+    {
+        if (BaseCampManager.Instance != null)
+        {
+            BaseCampManager.Instance.UnifiedSaveLoaded -= HandleUnifiedSaveLoadedForStart;
         }
     }
 
@@ -173,6 +203,10 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         spawningRound = false;
+        // 보스전 중 리셋되면 보스도 ClearSpawnedEnemies로 파괴된다. 플래그를 함께 해제해야
+        // StartRounds가 막히지 않고, BossEncounterManager의 중단 처리(ResumePausedRound)가
+        // 리셋된 라운드를 보스 소환 전 라운드로 되돌리지 않는다.
+        bossEncounterActive = false;
         ClearSpawnedEnemies();
         RevivePlayer();
         currentRound = Mathf.Max(1, startRound);
@@ -322,6 +356,11 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         aliveEnemies.Add(enemyHealth);
+
+        // AutoSyncTransforms가 꺼져 있어, 방금 스폰한 콜라이더는 다음 물리 스텝 전까지
+        // Physics.OverlapSphere(투사체 히트 판정)에 잡히지 않는다. 즉시 동기화해 스폰 직후
+        // 공격이 통과(무시)되는 문제를 막는다.
+        Physics.SyncTransforms();
     }
 
     private EnemyConfig GetEnemyConfig()
@@ -719,6 +758,22 @@ public class EnemySpawnManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    /// <summary>
+    /// 통합 세이브 사용 시 전역 PlayerPrefs 개별 저장을 끈다. 키가 UID 스코프가 아니라서
+    /// 계정 전환 시 이전 계정의 라운드 진행이 새 계정으로 새는 것을 막는다.
+    /// </summary>
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveToPlayerPrefs = enabled;
+        if (!clearStoredData)
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(CurrentRoundKey);
+        PlayerPrefs.Save();
+    }
+
     /// <summary>클라우드 동기화용 스테이지 진행(라운드) 스냅샷(통합 세이브에 편입).</summary>
     public JinyouEnemySpawnSaveData CaptureSaveData()
     {
@@ -738,6 +793,8 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         currentRound = Mathf.Max(1, data.currentRound);
+        // 복원 직후 스테이지/라운드 파생 상태를 갱신해 적 스케일링·배경(StageChanged)이 어긋나지 않게 한다.
+        RefreshStageRoundState();
         SaveProgress();
     }
 }

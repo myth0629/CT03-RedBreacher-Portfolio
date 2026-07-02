@@ -25,6 +25,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerUnitConfig unitConfig;
     [SerializeField, FormerlySerializedAs("projectileConfig")] private ProjectileConfig weaponConfig;
     [SerializeField] private Transform unitRoot;
+    [Tooltip("머즐 플래시를 유닛 최상단 스프라이트보다 몇 단계 위에 그릴지(유닛 위에 확실히 보이게).")]
+    [SerializeField] private int muzzleFlashSortingOffset = 1;
     [SerializeField] private string displayName = "탱크이름";
 
     [Header("Stats")]
@@ -97,6 +99,9 @@ public class PlayerController : MonoBehaviour
     private CombatHealth currentTarget;
     private PlayerUnitConfig appliedUnitConfig;
     private GameObject spawnedUnitObject;
+    private bool unitFlashSortingValid;
+    private int unitFlashSortingLayerID;
+    private int unitFlashSortingOrder;
     private Vector3 weaponAimDirection;
     private float appliedMaxHealth;
     private float nextAttackTime;
@@ -1140,6 +1145,42 @@ public class PlayerController : MonoBehaviour
         // 기체 프리팹을 교체하면 이전 타겟/총구 참조가 어긋날 수 있어 다시 잡는다.
         currentTarget = null;
         firePoint = FindChildByName(spawnedUnitObject.transform, "FirePoint");
+
+        // 유닛 교체 후 머즐 플래시가 유닛 아래에 깔리지 않도록 최상단 정렬을 다시 계산한다.
+        RefreshUnitFlashSorting();
+    }
+
+    // 현재 유닛의 스프라이트 중 가장 위에 그려지는 정렬(레이어/순서)을 찾아, 머즐 플래시 기준으로 캐시한다.
+    private void RefreshUnitFlashSorting()
+    {
+        unitFlashSortingValid = false;
+        if (spawnedUnitObject == null)
+        {
+            return;
+        }
+
+        Renderer[] renderers = spawnedUnitObject.GetComponentsInChildren<Renderer>(true);
+        int topOrder = int.MinValue;
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            if (renderer.sortingOrder > topOrder)
+            {
+                topOrder = renderer.sortingOrder;
+                unitFlashSortingLayerID = renderer.sortingLayerID;
+                unitFlashSortingValid = true;
+            }
+        }
+
+        if (unitFlashSortingValid)
+        {
+            unitFlashSortingOrder = topOrder + muzzleFlashSortingOffset;
+        }
     }
 
     private Transform GetOrCreateUnitRoot()
@@ -1268,14 +1309,10 @@ public class PlayerController : MonoBehaviour
 
         // 사거리 경계까지만 이동해 타겟을 지나치지 않게 한다. (아레나 경계로 제한해 벽 밖으로 못 나가게 함)
         Vector3 nextPosition = ClampRepositionPosition(transform.position + direction * moveDistance);
-        if (_rigidbody != null)
-        {
-            _rigidbody.MovePosition(nextPosition);
-        }
-        else
-        {
-            transform.position = nextPosition;
-        }
+        // kinematic Rigidbody에 Update 주기로 MovePosition을 호출하면 이동이 물리 스텝(50Hz)에서만
+        // 반영돼 프레임 간 호출이 덮어써지고(이동량 유실) 스텝 단위로 끊겨 보인다(떨림).
+        // 회피/자동 재배치와 동일하게 transform을 직접 이동해 매 프레임 부드럽게 움직인다.
+        transform.position = nextPosition;
         SetVehicleMoveInput(moveDistance > 0f ? 1f : 0f, 0f);
     }
 
@@ -1377,7 +1414,13 @@ public class PlayerController : MonoBehaviour
         projectile.ConfigureRuntimeStats(
             GetProjectileCollisionRadius(activeProjectileConfig),
             GetProjectileKnockback(activeProjectileConfig));
-        projectile.ConfigureEffects(fireFlashEffectPrefab, projectileEffectPrefab, hitEffectPrefab);
+        projectile.ConfigureEffects(
+            fireFlashEffectPrefab,
+            projectileEffectPrefab,
+            hitEffectPrefab,
+            unitFlashSortingValid,
+            unitFlashSortingLayerID,
+            unitFlashSortingOrder);
         projectile.Launch(
             direction,
             damage,

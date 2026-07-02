@@ -28,12 +28,19 @@ public class TapToStartGame : MonoBehaviour
     [SerializeField] private GameObject gameQuitPopup;
 
     private bool starting;
+    private bool inputLocked;
+
+    /// <summary>로고 인트로 등에서 탭 입력을 잠그고 풀 때 사용한다.</summary>
+    public void SetInputLocked(bool locked)
+    {
+        inputLocked = locked;
+    }
 
     private void Update()
     {
         BlinkTapText();
 
-        if (starting)
+        if (starting || inputLocked)
         {
             return;
         }
