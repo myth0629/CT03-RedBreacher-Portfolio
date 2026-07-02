@@ -44,6 +44,8 @@ public class JinyouTutorialSaveData
     public bool captured;
     public bool completed;
     public int stepIndex;
+    public bool baseCompleted;
+    public int baseStepIndex;
 }
 
 [Serializable]

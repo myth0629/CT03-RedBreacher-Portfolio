@@ -79,7 +79,7 @@ MonoBehaviour:
     bodyText: "\uB4DC\uB860 \uC785\uB2C8\uB2E4. \uC774 \uBCD1\uAE30\uB294 \uD0F1\uD06C\uB97C
       \uC5C4\uD638\uD558\uAE30 \uC704\uD574 \uB9CC\uB4E4\uC5B4\uC84C\uC73C\uBA70
       \uBCF4\uC870\uC801\uC73C\uB85C \uD654\uB825\uC9C0\uC6D0\uC744 \uD22C\uC0AC\uD569\uB2C8\uB2E4.\n\n\uB4DC\uB860
-      \uC544\uC774\uCF58\uC744 \uD074\uB9AD\uD558\uC5EC \uC0B4\uD3B4\uBCF4\uC138\uC694. "
+      \uC544\uC774\uCF58\uC744 \uB20C\uB7EC \uC0B4\uD3B4\uBCF4\uC138\uC694. "
     highlightTargetName: Drone_Image_Button
     advanceType: 1
     eventType: 0
@@ -205,6 +205,44 @@ MonoBehaviour:
       \uB098\uB9CC\uC758 \uD0F1\uD06C\uB97C \uC131\uC7A5\uD558\uC5EC\n \uC804\uC7A5\uC744
       \uB3CC\uD30C\uD558\uC138\uC694!"
     highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 2
+    id: base_popup_intro
+    bodyText: "\uAE30\uC9C0\uC5D0 \uC624\uC2E0 \uAC78 \uD658\uC601\uD569\uB2C8\uB2E4.
+      \n\uC774\uACF3\uC5D0\uC11C\uB294 \uC790\uC6D0\uC744 \uC218\uC9D1\uD558\uACE0
+      \uC2DC\uC124\uC744 \uC5C5\uADF8\uB808\uC774\uB4DC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 2
+    id: base_popup_intro
+    bodyText: "\uBA3C\uC800 \uBCF8\uBD80\uBD80\uD130 \uC548\uB0B4\uD574\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4.\n\n\uC0AC\uB839\uBD80\uB97C
+      \uB204\uB974\uC2ED\uC2DC\uC624. "
+    highlightTargetName: Command Center
+    advanceType: 1
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 2
+    id: base_command_center_intro
+    bodyText: "\uC0AC\uB839\uBD80\uB294 \uBAA8\uB4E0 \uAE30\uC9C0\uB97C \uD55C \uB208\uC5D0
+      \uD30C\uC545\uD560 \uC218 \uC788\uB294 \uD575\uC2EC \uC2DC\uC124\uC785\uB2C8\uB2E4.\n\uC0AC\uB839\uBD80
+      \uB808\uBCA8\uC774 \uC624\uB974\uBA74 \uC0C8\uB85C\uC6B4 \uC2DC\uC124\uC774
+      \uD574\uAE08\uB429\uB2C8\uB2E4."
+    highlightTargetName: Panel
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 2
+    id: base_command_center_intro
+    bodyText: "\uAE30\uC9C0\uB97C \uC5C5\uADF8\uB808\uC774\uB4DC \uD558\uC138\uC694."
+    highlightTargetName: Upgrade_Button
     advanceType: 0
     eventType: 0
     targetAmount: 0

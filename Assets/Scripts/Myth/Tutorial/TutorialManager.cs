@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -15,6 +15,10 @@ public class TutorialManager : MonoBehaviour
 
     private const string StepIndexKey = "Tutorial.StepIndex";
     private const string CompletedKey = "Tutorial.Completed";
+    private const string BaseStepIndexKey = "Tutorial.BasePopup.StepIndex";
+    private const string BaseCompletedKey = "Tutorial.BasePopup.Completed";
+    private const string BaseStepIdPrefix = "base_";
+    private const string BasePopupName = "Base_Popup";
     private const float ResolveInterval = 0.5f;
 
     private TutorialConfig config;
@@ -22,7 +26,10 @@ public class TutorialManager : MonoBehaviour
 
     private int stepIndex;
     private bool completed;
+    private int baseStepIndex;
+    private bool baseCompleted;
     private bool running;
+    private bool runningBaseTutorial;
 
     private TutorialConfig.TutorialStep activeStep;
     private int eventProgress;
@@ -40,7 +47,8 @@ public class TutorialManager : MonoBehaviour
     private static void Bootstrap()
     {
         // 이미 완료했거나 인스턴스가 있으면 생성하지 않는다.
-        if (PlayerPrefs.GetInt(CompletedKey, 0) == 1)
+        if (PlayerPrefs.GetInt(CompletedKey, 0) == 1
+            && PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1)
         {
             return;
         }
@@ -71,6 +79,8 @@ public class TutorialManager : MonoBehaviour
         config = TutorialConfig.Current;
         completed = PlayerPrefs.GetInt(CompletedKey, 0) == 1;
         stepIndex = Mathf.Max(0, PlayerPrefs.GetInt(StepIndexKey, 0));
+        baseCompleted = PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1;
+        baseStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BaseStepIndexKey, 0));
     }
 
     private void OnDestroy()
@@ -84,7 +94,7 @@ public class TutorialManager : MonoBehaviour
 
     private void Update()
     {
-        if (completed || config == null || config.Steps.Count == 0)
+        if (config == null || config.Steps.Count == 0)
         {
             return;
         }
@@ -103,7 +113,17 @@ public class TutorialManager : MonoBehaviour
 
         if (!running)
         {
-            BeginStep(stepIndex);
+            if (!completed && HasTutorialSteps(false))
+            {
+                BeginStep(stepIndex, false);
+                return;
+            }
+
+            if (!baseCompleted && HasTutorialSteps(true) && IsPanelOpen(BasePopupName))
+            {
+                BeginStep(baseStepIndex, true);
+            }
+
             return;
         }
 
@@ -114,14 +134,29 @@ public class TutorialManager : MonoBehaviour
     // ── 진행 ────────────────────────────────────────────────────────────────
     private void BeginStep(int index)
     {
-        if (index >= config.Steps.Count)
+        BeginStep(index, false);
+    }
+
+    private void BeginStep(int index, bool baseTutorial)
+    {
+        int stepCount = GetTutorialStepCount(baseTutorial);
+        if (index >= stepCount)
         {
-            Complete();
+            Complete(baseTutorial);
             return;
         }
 
-        stepIndex = index;
-        activeStep = config.Steps[index];
+        runningBaseTutorial = baseTutorial;
+        if (baseTutorial)
+        {
+            baseStepIndex = index;
+        }
+        else
+        {
+            stepIndex = index;
+        }
+
+        activeStep = GetTutorialStep(index, baseTutorial);
         eventProgress = 0;
         resolvedTarget = null;
         ClearArmedButton();
@@ -171,15 +206,31 @@ public class TutorialManager : MonoBehaviour
 
     private void AdvanceStep()
     {
+        bool baseTutorial = runningBaseTutorial;
+        int nextIndex = (baseTutorial ? baseStepIndex : stepIndex) + 1;
         ClearArmedButton();
         running = false;
-        BeginStep(stepIndex + 1);
+        BeginStep(nextIndex, baseTutorial);
     }
 
     private void Complete()
     {
-        completed = true;
+        Complete(false);
+    }
+
+    private void Complete(bool baseTutorial)
+    {
+        if (baseTutorial)
+        {
+            baseCompleted = true;
+        }
+        else
+        {
+            completed = true;
+        }
+
         running = false;
+        runningBaseTutorial = false;
         activeStep = null;
         ClearArmedButton();
         if (overlay != null)
@@ -187,9 +238,12 @@ public class TutorialManager : MonoBehaviour
             overlay.Hide();
         }
 
-        PlayerPrefs.SetInt(CompletedKey, 1);
+        PlayerPrefs.SetInt(baseTutorial ? BaseCompletedKey : CompletedKey, 1);
         PlayerPrefs.Save();
-        UnsubscribeEvents();
+        if (completed && baseCompleted)
+        {
+            UnsubscribeEvents();
+        }
     }
 
     // ── 클라우드 동기화(통합 세이브 편입) ──────────────────────────────────────
@@ -203,6 +257,8 @@ public class TutorialManager : MonoBehaviour
             captured = true,
             completed = PlayerPrefs.GetInt(CompletedKey, 0) == 1,
             stepIndex = Mathf.Max(0, PlayerPrefs.GetInt(StepIndexKey, 0)),
+            baseCompleted = PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1,
+            baseStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BaseStepIndexKey, 0)),
         };
     }
 
@@ -216,6 +272,8 @@ public class TutorialManager : MonoBehaviour
 
         PlayerPrefs.SetInt(CompletedKey, data.completed ? 1 : 0);
         PlayerPrefs.SetInt(StepIndexKey, Mathf.Max(0, data.stepIndex));
+        PlayerPrefs.SetInt(BaseCompletedKey, data.baseCompleted ? 1 : 0);
+        PlayerPrefs.SetInt(BaseStepIndexKey, Mathf.Max(0, data.baseStepIndex));
         PlayerPrefs.Save();
 
         TutorialManager live = Instance;
@@ -236,9 +294,78 @@ public class TutorialManager : MonoBehaviour
                 live.stepIndex = Mathf.Max(0, data.stepIndex);
             }
         }
+
+        live.baseCompleted = data.baseCompleted;
+        if (!live.running)
+        {
+            live.baseStepIndex = Mathf.Max(0, data.baseStepIndex);
+        }
     }
 
     // 강조 타깃을 이름으로 계속 탐색해 늦게 활성화되는 패널 내부 요소도 따라간다.
+    private bool HasTutorialSteps(bool baseTutorial)
+    {
+        return GetTutorialStepCount(baseTutorial) > 0;
+    }
+
+    private int GetTutorialStepCount(bool baseTutorial)
+    {
+        if (config == null || config.Steps == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 0; i < config.Steps.Count; i++)
+        {
+            if (IsBaseTutorialStep(config.Steps[i]) == baseTutorial)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private TutorialConfig.TutorialStep GetTutorialStep(int index, bool baseTutorial)
+    {
+        if (config == null || config.Steps == null)
+        {
+            return null;
+        }
+
+        int currentIndex = 0;
+        for (int i = 0; i < config.Steps.Count; i++)
+        {
+            TutorialConfig.TutorialStep step = config.Steps[i];
+            if (IsBaseTutorialStep(step) != baseTutorial)
+            {
+                continue;
+            }
+
+            if (currentIndex == index)
+            {
+                return step;
+            }
+
+            currentIndex++;
+        }
+
+        return null;
+    }
+
+    private static bool IsBaseTutorialStep(TutorialConfig.TutorialStep step)
+    {
+        return step != null
+            && !string.IsNullOrWhiteSpace(step.id)
+            && step.id.StartsWith(BaseStepIdPrefix, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsPanelOpen(string panelName)
+    {
+        Transform panel = FindInScene(panelName);
+        return panel != null && panel.gameObject.activeInHierarchy;
+    }
     private void ResolveActiveTarget()
     {
         if (activeStep == null || string.IsNullOrWhiteSpace(activeStep.highlightTargetName))
@@ -392,8 +519,17 @@ public class TutorialManager : MonoBehaviour
 
     private void Save()
     {
-        PlayerPrefs.SetInt(StepIndexKey, stepIndex);
-        PlayerPrefs.SetInt(CompletedKey, completed ? 1 : 0);
+        if (runningBaseTutorial)
+        {
+            PlayerPrefs.SetInt(BaseStepIndexKey, baseStepIndex);
+            PlayerPrefs.SetInt(BaseCompletedKey, baseCompleted ? 1 : 0);
+        }
+        else
+        {
+            PlayerPrefs.SetInt(StepIndexKey, stepIndex);
+            PlayerPrefs.SetInt(CompletedKey, completed ? 1 : 0);
+        }
+
         PlayerPrefs.Save();
     }
 
@@ -419,3 +555,4 @@ public class TutorialManager : MonoBehaviour
         return null;
     }
 }
+
