@@ -6,6 +6,9 @@ public class AttackHelicopterSkill : MonoBehaviour
     private const string RocketLaunchAudioSourceName = "Audio Source RocketLunch";
     private const string FirstRocketLaunchAudioSourceName = "Audio Source_SFX SkillRocket";
 
+    // 전투 중 조준 회전 속도(초당 도). 타겟이 바뀔 때 확 도는 대신 헬기처럼 서서히 선회하게 한다.
+    private const float TurnSpeedDegreesPerSecond = 200f;
+
     private PlayerController owner;
     private PlayerSkillConfig config;
     private GameObject helicopterVisual;
@@ -159,7 +162,11 @@ public class AttackHelicopterSkill : MonoBehaviour
         if (faceDir.sqrMagnitude > 0f)
         {
             lastFacing = faceDir;
-            helicopterVisual.transform.rotation = FaceRotation(faceDir);
+            // 즉시 스냅 대신 회전 속도 제한을 둬 자연스럽게 선회시킨다.
+            helicopterVisual.transform.rotation = Quaternion.RotateTowards(
+                helicopterVisual.transform.rotation,
+                FaceRotation(faceDir),
+                TurnSpeedDegreesPerSecond * Time.deltaTime);
         }
     }
 

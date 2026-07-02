@@ -201,6 +201,8 @@ public class FirebaseAuthManager : MonoBehaviour
     {
         googleSignIn?.SignOut();
         auth?.SignOut();
+        // 이전 계정의 대기 업로드/세션 캐시를 정리해, 다음 계정의 클라우드 문서로 새는 것을 막는다.
+        CloudSaveService.Instance.HandleAccountChanged();
         SetState(ConnectionState.Ready);
     }
 

@@ -18,6 +18,13 @@ public class MenuAlertController : MonoBehaviour
     private const string CollectionSeenKey = "MenuAlert.CollectionSeenSignature";
     private const string EquipmentSeenKey = "MenuAlert.EquipmentSeenSignature";
     private const string BaseSeenKey = "MenuAlert.BaseSeenSignature";
+
+    // "확인함" 기준선을 계정(UID)별로 분리한다. 전역 키를 쓰면 계정 전환 시 배지 상태가 샌다.
+    private static string Scoped(string baseKey)
+    {
+        FirebaseAuthManager auth = FirebaseAuthManager.Instance;
+        return auth != null ? auth.ScopedSaveKey(baseKey) : baseKey;
+    }
     private const float RescanInterval = 1f;
 
     private class AlertBinding
@@ -30,6 +37,7 @@ public class MenuAlertController : MonoBehaviour
     private readonly List<AlertBinding> bindings = new List<AlertBinding>();
     private readonly HashSet<Button> wiredButtons = new HashSet<Button>();
 
+    private Transform cachedMenuPanel;
     private BaseCampManager baseCampManager;
     private InventoryFacility inventory;
     private AchievementManager achievementManager;
@@ -48,6 +56,10 @@ public class MenuAlertController : MonoBehaviour
         }
 
         GameObject host = new GameObject(nameof(MenuAlertController));
+        // Bootstrap은 앱 시작(Title 씬)에서 1회만 실행된다. DontDestroyOnLoad가 없으면
+        // Title→Myth 전환에서 파괴된 뒤 재생성되지 않아, 빌드에서 알림 배지 시스템이 통째로 죽는다.
+        // (TutorialManager가 같은 문제를 겪고 동일하게 고친 전례가 있다.)
+        DontDestroyOnLoad(host);
         host.AddComponent<MenuAlertController>();
     }
 
@@ -101,10 +113,27 @@ public class MenuAlertController : MonoBehaviour
 
     private void ResolveReferences()
     {
-        baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>(FindObjectsInactive.Include);
-        inventory ??= baseCampManager != null ? baseCampManager.Inventory : InventoryFacility.FindAny();
-        achievementManager ??= AchievementManager.Instance ?? FindFirstObjectByType<AchievementManager>(FindObjectsInactive.Include);
-        gachaFacility ??= FindFirstObjectByType<WeaponGachaFacility>(FindObjectsInactive.Include);
+        // DontDestroyOnLoad로 씬을 넘어 살아남으므로, 파괴된 참조(fake-null)는 ??=에 걸리지 않는다.
+        // Unity의 == null 비교로 명시적으로 다시 잡는다.
+        if (baseCampManager == null)
+        {
+            baseCampManager = BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>(FindObjectsInactive.Include);
+        }
+
+        if (inventory == null)
+        {
+            inventory = baseCampManager != null ? baseCampManager.Inventory : InventoryFacility.FindAny();
+        }
+
+        if (achievementManager == null)
+        {
+            achievementManager = AchievementManager.Instance ?? FindFirstObjectByType<AchievementManager>(FindObjectsInactive.Include);
+        }
+
+        if (gachaFacility == null)
+        {
+            gachaFacility = FindFirstObjectByType<WeaponGachaFacility>(FindObjectsInactive.Include);
+        }
     }
 
     private void SubscribeEvents()
@@ -210,9 +239,9 @@ public class MenuAlertController : MonoBehaviour
 
     private void InitializeSeenSignatures()
     {
-        InitializeSignature(CollectionSeenKey, BuildCollectionSignature());
-        InitializeSignature(EquipmentSeenKey, BuildEquipmentSignature());
-        InitializeSignature(BaseSeenKey, BuildBaseSignature());
+        InitializeSignature(Scoped(CollectionSeenKey), BuildCollectionSignature());
+        InitializeSignature(Scoped(EquipmentSeenKey), BuildEquipmentSignature());
+        InitializeSignature(Scoped(BaseSeenKey), BuildBaseSignature());
     }
 
     private static void InitializeSignature(string key, string signature)
@@ -228,7 +257,14 @@ public class MenuAlertController : MonoBehaviour
 
     private void RefreshBindings()
     {
-        Transform menuPanel = FindMenuButtonsPanel();
+        // FindMenuButtonsPanel은 씬의 모든 Transform을 순회하므로(1초 주기 Update에서 호출됨)
+        // 한 번 찾은 패널은 캐시하고, 파괴(씬 전환)됐을 때만 다시 찾는다.
+        if (cachedMenuPanel == null)
+        {
+            cachedMenuPanel = FindMenuButtonsPanel();
+        }
+
+        Transform menuPanel = cachedMenuPanel;
         if (menuPanel == null)
         {
             return;
@@ -266,8 +302,8 @@ public class MenuAlertController : MonoBehaviour
 
     private void RefreshAlerts()
     {
-        bool aircraftAlert = HasNewToken(CollectionSeenKey, BuildCollectionSignature());
-        bool equipmentAlert = HasNewToken(EquipmentSeenKey, BuildEquipmentSignature());
+        bool aircraftAlert = HasNewToken(Scoped(CollectionSeenKey), BuildCollectionSignature());
+        bool equipmentAlert = HasNewToken(Scoped(EquipmentSeenKey), BuildEquipmentSignature());
         bool baseAlert = HasBaseUpgradeCompleted(BuildBaseSignature());
         bool achievementAlert = HasCompletedAchievement();
         bool shopAlert = CanUseShop();
@@ -298,13 +334,13 @@ public class MenuAlertController : MonoBehaviour
         switch (category)
         {
             case AlertCategory.Aircraft:
-                PlayerPrefs.SetString(CollectionSeenKey, BuildCollectionSignature());
+                PlayerPrefs.SetString(Scoped(CollectionSeenKey), BuildCollectionSignature());
                 break;
             case AlertCategory.Equipment:
-                PlayerPrefs.SetString(EquipmentSeenKey, BuildEquipmentSignature());
+                PlayerPrefs.SetString(Scoped(EquipmentSeenKey), BuildEquipmentSignature());
                 break;
             case AlertCategory.Base:
-                PlayerPrefs.SetString(BaseSeenKey, BuildBaseSignature());
+                PlayerPrefs.SetString(Scoped(BaseSeenKey), BuildBaseSignature());
                 break;
         }
 
@@ -433,12 +469,13 @@ public class MenuAlertController : MonoBehaviour
 
     private static bool HasBaseUpgradeCompleted(string currentSignature)
     {
-        if (!PlayerPrefs.HasKey(BaseSeenKey))
+        string scopedBaseKey = Scoped(BaseSeenKey);
+        if (!PlayerPrefs.HasKey(scopedBaseKey))
         {
             return false;
         }
 
-        string[] seen = SplitSignature(PlayerPrefs.GetString(BaseSeenKey, string.Empty));
+        string[] seen = SplitSignature(PlayerPrefs.GetString(scopedBaseKey, string.Empty));
         string[] current = SplitSignature(currentSignature);
         int count = Mathf.Min(seen.Length, current.Length);
         for (int i = 0; i < count; i++)

@@ -1309,14 +1309,10 @@ public class PlayerController : MonoBehaviour
 
         // 사거리 경계까지만 이동해 타겟을 지나치지 않게 한다. (아레나 경계로 제한해 벽 밖으로 못 나가게 함)
         Vector3 nextPosition = ClampRepositionPosition(transform.position + direction * moveDistance);
-        if (_rigidbody != null)
-        {
-            _rigidbody.MovePosition(nextPosition);
-        }
-        else
-        {
-            transform.position = nextPosition;
-        }
+        // kinematic Rigidbody에 Update 주기로 MovePosition을 호출하면 이동이 물리 스텝(50Hz)에서만
+        // 반영돼 프레임 간 호출이 덮어써지고(이동량 유실) 스텝 단위로 끊겨 보인다(떨림).
+        // 회피/자동 재배치와 동일하게 transform을 직접 이동해 매 프레임 부드럽게 움직인다.
+        transform.position = nextPosition;
         SetVehicleMoveInput(moveDistance > 0f ? 1f : 0f, 0f);
     }
 

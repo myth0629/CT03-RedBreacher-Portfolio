@@ -12,7 +12,7 @@ public class PlayerProgression : MonoBehaviour
     [SerializeField] private int level = 1;
     [SerializeField] private float currentExperience;
     [SerializeField] private float experienceToNextLevel = 100f;
-    [SerializeField] private float experienceGrowthRate = 1.2f;
+    [SerializeField] private float experienceGrowthRate = 1.13f;
     [SerializeField] private int statPoints;
     [SerializeField] private bool saveToPlayerPrefs = true;
 

@@ -24,6 +24,15 @@ public class PlayerDroneUnit : MonoBehaviour
         assemblyFactory = BaseCampManager.Instance != null
             ? BaseCampManager.Instance.AssemblyFactory
             : FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include);
+
+        // 스폰 직후 곧바로 대형 슬롯에 위치시킨다. 이걸 안 하면 FollowPlayerSlot의 SmoothDamp가
+        // 프리팹 스폰 지점(부모/원점)에서 대형까지 미끄러져 들어와, 드론이 잠깐 이상한 곳에서 튀어나온 것처럼 보인다.
+        if (player != null && config != null)
+        {
+            transform.position = GetSlotPosition();
+            followVelocity = Vector3.zero;
+        }
+
         CombatPlane.ClampTransform(transform);
 
         // 드론 외형과 동일한 실루엣 그림자를 생성한다.
@@ -54,7 +63,11 @@ public class PlayerDroneUnit : MonoBehaviour
             CombatPlane.RotateZOnlyToward(transform, targetDirection, config.RotationSpeed * Time.deltaTime);
             if (IsFacing(targetDirection) && Time.time >= nextAttackTime)
             {
-                Fire(targetDirection);
+                // 타겟 방향이 아니라 실제 기수 방향으로 발사한다(탱크 터렛과 동일).
+                // 타겟 방향으로 쏘면 정렬이 끝나기 전(스폰 직후 등) 탄이 기수에서
+                // 게이트 각도만큼 꺾여 나가 이상한 곳으로 튀는 것처럼 보인다.
+                Vector3 noseDirection = CombatPlane.DirectionFromZRotation(transform);
+                Fire(noseDirection.sqrMagnitude > 0f ? noseDirection : targetDirection);
                 nextAttackTime = Time.time + GetAttackInterval();
             }
             return;

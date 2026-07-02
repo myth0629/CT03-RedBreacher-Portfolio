@@ -240,6 +240,25 @@ public class PlayerStatAllocator : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    /// <summary>
+    /// 통합 세이브 사용 시 전역 PlayerPrefs 개별 저장을 끈다. 키가 UID 스코프가 아니라서
+    /// 계정 전환 시 이전 계정의 스탯이 새 계정으로 새는 것을 막는다.
+    /// </summary>
+    public void SetStandaloneSaveEnabled(bool enabled, bool clearStoredData)
+    {
+        saveToPlayerPrefs = enabled;
+        if (!clearStoredData)
+        {
+            return;
+        }
+
+        PlayerPrefs.DeleteKey(AttackLevelKey);
+        PlayerPrefs.DeleteKey(HealthLevelKey);
+        PlayerPrefs.DeleteKey(CritChanceLevelKey);
+        PlayerPrefs.DeleteKey(CritMultiplierLevelKey);
+        PlayerPrefs.Save();
+    }
+
     private void MigrateLegacyTraitPoints()
     {
         int legacyPoints = PlayerPrefs.GetInt(LegacyAttackPointKey, 0)

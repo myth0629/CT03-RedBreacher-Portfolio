@@ -42,6 +42,13 @@ public class PlayerDroneController : MonoBehaviour
 
     public void SetDroneConfig(DroneConfig config)
     {
+        // 같은 드론이면 재생성하지 않는다. 무의미한 ClearDrones+재스폰은 드론 팝(대형 재진입)만 유발한다.
+        if (appliedConfig == config && drones.Count > 0)
+        {
+            droneConfig = config;
+            return;
+        }
+
         droneConfig = config;
         RefreshDrones();
     }

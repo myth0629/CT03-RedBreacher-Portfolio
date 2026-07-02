@@ -24,11 +24,12 @@ MonoBehaviour:
   targetMask:
     serializedVersion: 2
     m_Bits: 0
-  projectileSpeed: 10
+  projectileSpeed: 20
   projectileLifetime: 2
   droneCount: 1
   followRadius: 1.2
   followSpeed: 8
+  followSmoothTime: 0.35
   startAngle: 180
   angleStep: 45
   muzzleNamePrefix: FireMuzzle

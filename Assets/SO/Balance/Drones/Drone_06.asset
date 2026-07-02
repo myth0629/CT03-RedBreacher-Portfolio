@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Drone_06
   m_EditorClassIdentifier: Assembly-CSharp::DroneConfig
   id: 06
-  displayName: "\uCEF4\uD329\uD2B8\uB4DC\uB860-EX"
+  displayName: "\uB4DC\uB86006"
   dronePrefab: {fileID: 214164098778057125, guid: d4a59ad3829d0854fb9e7afb65420a7d, type: 3}
   projectileConfig: {fileID: 11400000, guid: 74fba0a59bdac460b88e300c14c8b741, type: 2}
   attackDamage: 10
@@ -24,7 +24,7 @@ MonoBehaviour:
   targetMask:
     serializedVersion: 2
     m_Bits: 0
-  projectileSpeed: 15
+  projectileSpeed: 20
   projectileLifetime: 2
   droneCount: 2
   followRadius: 1.3
