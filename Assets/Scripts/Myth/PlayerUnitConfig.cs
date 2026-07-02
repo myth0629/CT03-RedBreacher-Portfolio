@@ -24,6 +24,9 @@ public class PlayerUnitConfig : ScriptableObject
     [Header("Auto Reposition")]
     [SerializeField] private float repositionDistance = 1.8f;
     [SerializeField] private float repositionCooldown = 5f;
+    
+    [Header("boss Reposition")]
+    [SerializeField] private float bossDodgeCooldown = 1.5f;
 
     public string Id => id;
     public string DisplayName => displayName;
@@ -39,4 +42,5 @@ public class PlayerUnitConfig : ScriptableObject
     public float FireAngleTolerance => fireAngleTolerance;
     public float RepositionDistance => repositionDistance;
     public float RepositionCooldown => repositionCooldown;
+    public float BossDodgeCooldown => Mathf.Max(0f, bossDodgeCooldown);
 }

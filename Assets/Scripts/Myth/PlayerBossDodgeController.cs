@@ -67,6 +67,9 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     public float AttackDamageMultiplier => IsAttackBuffActive
         ? 1f + Mathf.Max(0f, perfectDodgeAttackBonus)
         : 1f;
+    private float DodgeCooldownValue => player != null && player.UnitConfig != null
+        ? player.UnitConfig.BossDodgeCooldown
+        : Mathf.Max(0f, dodgeCooldown);
 
     public static PlayerBossDodgeController Ensure(PlayerController owner)
     {
@@ -262,7 +265,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         dodgeDestination = CombatPlane.WithFixedY(dodgeStartPosition + direction * distance);
         dodgeElapsed = 0f;
         IsDodging = true;
-        nextDodgeTime = Time.time + Mathf.Max(0f, dodgeCooldown);
+        nextDodgeTime = Time.time + DodgeCooldownValue;
         float invulnerability = Mathf.Max(0f, invulnerabilityDuration);
         perfectDodgeWindowUntil = Time.time + invulnerability;
         perfectDodgeTriggered = false;
@@ -502,7 +505,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
             dodgeUiRoot.SetActive(encounterActive);
         }
 
-        float cooldown = Mathf.Max(0.01f, dodgeCooldown);
+        float cooldown = Mathf.Max(0.01f, DodgeCooldownValue);
         float remaining = CooldownRemaining;
         if (cooldownOverlay != null)
         {
