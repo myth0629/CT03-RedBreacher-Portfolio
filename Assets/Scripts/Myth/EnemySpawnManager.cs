@@ -327,9 +327,9 @@ public class EnemySpawnManager : MonoBehaviour
     private EnemyConfig GetEnemyConfig()
     {
         int validConfigCount = CountValidEnemyConfigs(enemyConfigs)
-            + (currentStage >= 10 ? CountValidEnemyConfigs(enemyConfigStage2) : 0)
-            + (currentStage >= 20 ? CountValidEnemyConfigs(enemyConfigStage3) : 0)
-            + (currentStage >= 30 ? CountValidEnemyConfigs(enemyConfigFinalStage) : 0);
+            + (currentStage >= 11 ? CountValidEnemyConfigs(enemyConfigStage2) : 0)
+            + (currentStage >= 21 ? CountValidEnemyConfigs(enemyConfigStage3) : 0)
+            + (currentStage >= 31 ? CountValidEnemyConfigs(enemyConfigFinalStage) : 0);
 
         if (validConfigCount > 0)
         {
@@ -337,9 +337,9 @@ public class EnemySpawnManager : MonoBehaviour
             // 스테이지 10 이상 넘어갈 때 마다 새로운 적 SO를 추가해 스폰에 포함시킨다.
             int targetIndex = Random.Range(0, validConfigCount);
             if (TryGetEnemyConfigAt(enemyConfigs, ref targetIndex, out EnemyConfig selectedConfig)
-                || currentStage >= 10 && TryGetEnemyConfigAt(enemyConfigStage2, ref targetIndex, out selectedConfig)
-                || currentStage >= 20 && TryGetEnemyConfigAt(enemyConfigStage3, ref targetIndex, out selectedConfig)
-                || currentStage >= 30 && TryGetEnemyConfigAt(enemyConfigFinalStage, ref targetIndex, out selectedConfig))
+                || currentStage >= 11 && TryGetEnemyConfigAt(enemyConfigStage2, ref targetIndex, out selectedConfig)
+                || currentStage >= 21 && TryGetEnemyConfigAt(enemyConfigStage3, ref targetIndex, out selectedConfig)
+                || currentStage >= 31 && TryGetEnemyConfigAt(enemyConfigFinalStage, ref targetIndex, out selectedConfig))
             {
                 return selectedConfig;
             }
