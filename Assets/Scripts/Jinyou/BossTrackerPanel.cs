@@ -8,16 +8,22 @@ public class BossTrackerPanel : MonoBehaviour
     [Header("Source")]
     [SerializeField] private BaseCampManager baseCampManager;
     [SerializeField] private BossTracker bossTracker;
+    [SerializeField] private PlayerController player;
+    [SerializeField] private CombatHealth playerHealth;
+    [SerializeField] private PlayerDroneController playerDroneController;
 
     [Header("Ticket")]
     [SerializeField] private TMP_Text ticketText;
     [SerializeField] private TMP_Text productionText;
-    [SerializeField] private TMP_Text difficultyText;
     [SerializeField] private Image ticketProgressFill;
 
-    [Header("Boss Info")]
+    [Header("Boss Info")] 
+    [SerializeField] private Image bossLockIcon;
+    [SerializeField] private TMP_Text bossLockStateText;
     [SerializeField] private TMP_Text bossNameText;
     [SerializeField] private TMP_Text bossHealthText;
+    [SerializeField] private TMP_Text bossDifficultyText;
+    [SerializeField] private TMP_Text recommendedPowerText;
     [SerializeField] private TMP_Text rangedAttackText;
     [SerializeField] private TMP_Text laserAttackText;
     [SerializeField] private TMP_Text creditRewardText;
@@ -32,10 +38,14 @@ public class BossTrackerPanel : MonoBehaviour
     [SerializeField] private Button previousDifficultyButton;
     [SerializeField] private Button nextDifficultyButton;
 
+    private Color defaultBossDifficultyTextColor = Color.white;
+    private bool hasDefaultBossDifficultyTextColor;
+
     private void OnEnable()
     {
         ResolveReferences();
         ResolvePanelWidgets();
+        CacheDefaultColors();
         BindButtons();
         if (bossTracker != null)
         {
@@ -70,8 +80,8 @@ public class BossTrackerPanel : MonoBehaviour
         {
             SetText(ticketText, "티켓 --/--");
             SetText(productionText, "티켓 생산 정보 없음");
-            SetText(difficultyText, "보스 트래커가 연결되지 않았습니다.");
             SetBossInfo(null, null);
+            SetBossLockIcon(null);
             SetFill(ticketProgressFill, 0f);
             return;
         }
@@ -83,8 +93,12 @@ public class BossTrackerPanel : MonoBehaviour
 
         SetText(ticketText, $"티켓 {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}");
         SetText(productionText, $"하루 {commandCenter.BossTicketsProducedPerDay}개 지급");
-        SetText(difficultyText, BuildDifficultySummary(difficulty));
+        SetText(bossLockStateText, BossLockState(difficulty));
+        SetText(bossDifficultyText, $"({difficulty.displayName})");
+        SetDifficultyTextColor(difficulty);
+        SetText(recommendedPowerText, BuildRecommendedPowerText(difficulty));
         SetBossInfo(boss, difficulty);
+        SetBossLockIcon(difficulty);
         SetFill(ticketProgressFill, commandCenter.BossTicketCapacity > 0
             ? (float)commandCenter.BossTickets / commandCenter.BossTicketCapacity
             : 0f);
@@ -95,24 +109,59 @@ public class BossTrackerPanel : MonoBehaviour
         SetInteractable(previousDifficultyButton, bossTracker != null && bossTracker.Difficulties.Count > 1);
         SetInteractable(nextDifficultyButton, bossTracker != null && bossTracker.Difficulties.Count > 1);
     }
-
-    /// <summary>
-    /// 난이도 정보를 표시하는 UI 로직
-    /// 난이도(일반>) | 해금, 미해금 | 권장 전투력
-    /// </summary>
-    /// <param name="difficulty"></param>
-    /// <returns></returns>
-    private string BuildDifficultySummary(BossTracker.BossDifficulty difficulty)
+    
+    // 해금 정보를 표시하는 UI 로직
+    private string BossLockState(BossTracker.BossDifficulty difficulty)
     {
         if (bossTracker == null || difficulty == null)
         {
-            return "난이도 정보 없음";
+            return "해금 정보 없음";
         }
 
         string state = bossTracker.IsDifficultyUnlocked(difficulty)
             ? "해금됨"
-            : $"사령부 Lv.{difficulty.requiredResearchLabLevel} 필요";
-        return $"{difficulty.displayName} | {state} | 권장 전투력 {difficulty.recommendedPower:N0}";
+            : $"사령부 Lv.\n{difficulty.requiredResearchLabLevel} 필요";
+        return $"{state}";
+    }
+
+    /// <summary>
+    /// 플레이어의 전투력과 보스전 진입 시 권장 전투력을 UI로 비교해가는 함수
+    /// </summary>
+    /// <param name="difficulty"></param>
+    /// <returns></returns>
+    private string BuildRecommendedPowerText(BossTracker.BossDifficulty difficulty)
+    {
+        DroneConfig drone = playerDroneController != null ? playerDroneController.DroneConfig : null;
+        string currentPower = PlayerStatusHud.BuildPlayerPowerText(player, playerHealth, drone);
+        float recommendedPower = difficulty != null ? difficulty.recommendedPower : 0f;
+
+        return $"권장 전투력: {currentPower} / {recommendedPower:N0}";
+    }
+
+    private void SetBossLockIcon(BossTracker.BossDifficulty difficulty)
+    {
+        if (bossLockIcon == null)
+        {
+            return;
+        }
+
+        bool unlocked = bossTracker != null && bossTracker.IsDifficultyUnlocked(difficulty);
+        bossLockIcon.gameObject.SetActive(!unlocked);
+    }
+
+    private void SetDifficultyTextColor(BossTracker.BossDifficulty difficulty)
+    {
+        if (bossDifficultyText == null)
+        {
+            return;
+        }
+
+        bossDifficultyText.color = difficulty?.difficultyId switch
+        {
+            "hard" => new Color32(0xFF, 0x81, 0x00, 0xFF),
+            "elite" => new Color32(0xFF, 0x00, 0x00, 0xFF),
+            _ => defaultBossDifficultyTextColor
+        };
     }
 
     /// <summary>
@@ -165,6 +214,16 @@ public class BossTrackerPanel : MonoBehaviour
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
         bossTracker ??= FindFirstObjectByType<BossTracker>();
+        player ??= FindFirstObjectByType<PlayerController>();
+
+        if (playerHealth == null && player != null)
+        {
+            player.TryGetComponent(out playerHealth);
+        }
+
+        playerDroneController ??= player != null
+            ? player.GetComponentInChildren<PlayerDroneController>(true)
+            : FindFirstObjectByType<PlayerDroneController>(FindObjectsInactive.Include);
     }
 
     private void ResolvePanelWidgets()
@@ -179,6 +238,17 @@ public class BossTrackerPanel : MonoBehaviour
         creditRewardText ??= FindByName(texts, "CreditReward_txt");
         coreRewardText ??= FindByName(texts, "CoreReward_txt");
         bossIcon ??= FindByName(images, "Boss_Icon");
+    }
+
+    private void CacheDefaultColors()
+    {
+        if (hasDefaultBossDifficultyTextColor || bossDifficultyText == null)
+        {
+            return;
+        }
+
+        defaultBossDifficultyTextColor = bossDifficultyText.color;
+        hasDefaultBossDifficultyTextColor = true;
     }
 
     private void BindButtons()

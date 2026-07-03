@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -63,6 +63,9 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupDroneRangeText;
     [SerializeField] private TMP_Text tankPopupDroneWeaponSpeedText;
     [SerializeField] private TMP_Text tankPopupDroneFollowSpeedText;
+
+    [Header("Tank Player Power")] 
+    [SerializeField] private TMP_Text tankPlayerPowerText;
     
     [Header("Tank Popup Icons")]
     [SerializeField] private Image tankPopupEquipWeaponIcon;
@@ -435,6 +438,8 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(stattankPopupRotateSpeedText, $"{player.RotationSpeed:0.##}");
         SetText(stattankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
         SetText(stattankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
+        
+        SetText(tankPlayerPowerText, $"종합 전투력: {BuildPlayerPowerText(player, health, drone)}");
     }
 
     private void RefreshStatUpgradePopup(PlayerProgression progression)
@@ -471,6 +476,47 @@ public class PlayerStatusHud : MonoBehaviour
             : 0f;
     }
 
+    // 종합 전투력을 텍스트로 표시하기 위한 함수
+    public static string BuildPlayerPowerText(PlayerController player, CombatHealth health, DroneConfig drone)
+    {
+        int power = CalculatePlayerPower(player, health, drone);
+        return power.ToString("N0");
+    }
+
+    // 종합 전투력을 계산하기 위한 공식함수
+    // 구조: 탱크 내구도 + 탱크 화력(무기 피해량 / 발사간격) + 치명타(확률/배율)
+    // + 기동력(보스전 회피 쿨타임 / 이동속도 / 회전속도) + 드론 화력(발사간격 / 피해량)
+    // 이렇게 종합해서 int로 치환.
+    private static int CalculatePlayerPower(PlayerController player, CombatHealth health, DroneConfig drone)
+    {
+        if (player == null)
+        {
+            return 0;
+        }
+
+        float survivalPower = (health != null ? health.MaxHealth : 0f) * 2f;
+
+        float attackInterval = Mathf.Max(0.1f, player.AttackInterval);
+        float weaponDps = player.WeaponAttackDamage / attackInterval;
+        float weaponPower = weaponDps * 100f;
+
+        float dronePower = 0f;
+        if (drone != null)
+        {
+            float droneInterval = Mathf.Max(0.1f, drone.AttackInterval);
+            float droneDps = GetEnhancedDroneDamage(drone) / droneInterval * Mathf.Max(1, drone.DroneCount);
+            dronePower = droneDps * 80f;
+        }
+
+        float critExpectedMultiplier = 1f + Mathf.Clamp01(player.CritChance) * Mathf.Max(0f, player.CritMultiplier - 1f);
+        float critPower = weaponDps * Mathf.Max(0f, critExpectedMultiplier - 1f) * 100f;
+
+        float dodgeCooldown = GetBossDodgeCooldown(player);
+        float dodgePower = dodgeCooldown > 0f ? 300f / Mathf.Max(0.5f, dodgeCooldown) : 0f;
+        float mobilityPower = player.MoveSpeed * 40f + player.RotationSpeed * 0.05f + dodgePower;
+
+        return Mathf.Max(0, Mathf.RoundToInt(survivalPower + weaponPower + dronePower + critPower + mobilityPower));
+    }
     private static void SetText(TMP_Text target, string value)
     {
         if (target != null)
@@ -757,3 +803,4 @@ public class PlayerStatusHud : MonoBehaviour
         }
     }
 }
+

@@ -60,7 +60,7 @@ public class BossTracker : MonoBehaviour
             difficultyId = "normal",
             displayName = "일반",
             requiredResearchLabLevel = 1,
-            recommendedPower = 1000,
+            recommendedPower = 10000,
             rewardSummary = "크레딧 / 부품"
         },
         new BossDifficulty
@@ -68,7 +68,7 @@ public class BossTracker : MonoBehaviour
             difficultyId = "hard",
             displayName = "어려움",
             requiredResearchLabLevel = 3,
-            recommendedPower = 3000,
+            recommendedPower = 30000,
             rewardSummary = "희귀 부품",
             healthMultiplier = 1.75f,
             moveSpeedMultiplier = 1.1f,
@@ -80,7 +80,7 @@ public class BossTracker : MonoBehaviour
             difficultyId = "elite",
             displayName = "정예",
             requiredResearchLabLevel = 5,
-            recommendedPower = 6000,
+            recommendedPower = 60000,
             rewardSummary = "코어 재료",
             healthMultiplier = 3f,
             moveSpeedMultiplier = 1.2f,
