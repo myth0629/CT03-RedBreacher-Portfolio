@@ -356,9 +356,9 @@ public class CoreChargerPanel : MonoBehaviour
 
         PlayerUnitConfig current = stage.currentUnit;
         PlayerUnitConfig next = stage.nextUnit;
-        SetText(enhanceUnitHealthText, FormatPlainStatChange(current.MaxHealth, next.MaxHealth));
-        SetText(enhanceUnitDamageText, FormatPlainStatChange(current.AttackDamage, next.AttackDamage));
-        SetText(enhanceUnitSpeedText, FormatPlainStatChange(current.MoveSpeed, next.MoveSpeed));
+        SetText(enhanceUnitHealthText, FormatDodgeCooldownSecChange(current.MaxHealth, next.MaxHealth));
+        SetText(enhanceUnitDamageText, FormatDodgeCooldownSecChange(current.AttackDamage, next.AttackDamage));
+        SetText(enhanceUnitSpeedText, FormatDodgeCooldownSecChange(current.MoveSpeed, next.MoveSpeed));
         SetText(enhanceUnitCritChanceText, FormatPlainPercentChange(current.CritChance, next.CritChance));
     }
 
@@ -387,7 +387,7 @@ public class CoreChargerPanel : MonoBehaviour
             + $"{FormatStatChange(current.RotationSpeed, next.RotationSpeed)}\n"
             + $"{FormatPercentChange(current.CritChance, next.CritChance)}\n"
             + $"{FormatPercentChange(current.CritMultiplier, next.CritMultiplier)}\n"
-            + $"{FormatPercentChange(current.BossDodgeCooldown, next.BossDodgeCooldown)}\n";
+            + $"{FormatDodgeCooldownSecChange(current.BossDodgeCooldown, next.BossDodgeCooldown)}\n";
     }
 
     // 탱크 유닛 유/무 판별
@@ -403,9 +403,9 @@ public class CoreChargerPanel : MonoBehaviour
         return $"{current:0.##} -> <color=#4AD787>{next:0.##} ({next - current:+0.##;-0.##;0})</color>";
     }
 
-    private static string FormatPlainStatChange(float current, float next)
+    private static string FormatDodgeCooldownSecChange(float current, float next)
     {
-        return $"{current:0.##} > <color=#4AD787>{next:0.##}</color>";
+        return $"{current:0.##}초 > <color=#4AD787>{next:0.##}초</color>";
     }
 
     private static string FormatPlainPercentChange(float current, float next)
