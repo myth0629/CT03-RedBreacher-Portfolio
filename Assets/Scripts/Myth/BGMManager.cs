@@ -57,6 +57,10 @@ public class BGMManager : MonoBehaviour
         }
 
         Instance = this;
+        AudioVolumeSettings.ApplyVolumeToMixer(
+            bgmMixerGroup != null ? bgmMixerGroup.audioMixer : null,
+            AudioVolumeSettings.BgmMixerParameter,
+            AudioVolumeSettings.GetSavedVolume(AudioVolumeSettings.BgmVolumePrefKey));
         sourceA = CreateSource("BGM Source A");
         sourceB = CreateSource("BGM Source B");
         activeSource = sourceA;

@@ -38,6 +38,8 @@ public readonly struct CombatDamageEvent
 
 public class CombatHealth : MonoBehaviour
 {
+    private const string BossDeathAudioSourceName = "Audio Source_SFX BossDeath";
+
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private bool destroyOnDeath = true;
     [SerializeField] private bool autoAddDamageFeedback = true;
@@ -75,6 +77,7 @@ public class CombatHealth : MonoBehaviour
     private bool isDead;
     private bool deathRewardClaimed;
     private EnemyController enemyController;
+    private static AudioSource bossDeathAudioSource;
 
     public float MaxHealth => maxHealth;
     public float CurrentHealth => currentHealth;
@@ -314,12 +317,114 @@ public class CombatHealth : MonoBehaviour
         }
 
         // 적 사망 연출은 제거 직전에 월드 이펙트로 분리해 재생한다.
+        PlayBossDeathSound();
         GetComponent<EnemyController>()?.PlayDeathExplosionEffect();
 
         if (destroyOnDeath)
         {
             Destroy(gameObject);
         }
+    }
+
+    private void PlayBossDeathSound()
+    {
+        BossEnemyController bossController = GetComponent<BossEnemyController>();
+        AudioClip[] clips = bossController != null && bossController.BossConfig != null
+            ? bossController.BossConfig.DeathSoundsSfx
+            : null;
+        AudioClip clip = PickRandomClip(clips);
+        if (clip == null)
+        {
+            return;
+        }
+
+        AudioSource source = ResolveBossDeathAudioSource();
+        if (source != null)
+        {
+            source.PlayOneShot(clip);
+        }
+    }
+
+    private static AudioClip PickRandomClip(AudioClip[] clips)
+    {
+        if (clips == null || clips.Length == 0)
+        {
+            return null;
+        }
+
+        int validCount = 0;
+        for (int i = 0; i < clips.Length; i++)
+        {
+            if (clips[i] != null)
+            {
+                validCount++;
+            }
+        }
+
+        if (validCount <= 0)
+        {
+            return null;
+        }
+
+        int selectedIndex = Random.Range(0, validCount);
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AudioClip clip = clips[i];
+            if (clip == null)
+            {
+                continue;
+            }
+
+            if (selectedIndex-- == 0)
+            {
+                return clip;
+            }
+        }
+
+        return null;
+    }
+
+    private static AudioSource ResolveBossDeathAudioSource()
+    {
+        if (bossDeathAudioSource != null)
+        {
+            return bossDeathAudioSource;
+        }
+
+        PlayerController player = FindFirstObjectByType<PlayerController>();
+        Transform sourceTransform = FindChildByName(
+            player != null ? player.transform : null,
+            BossDeathAudioSourceName);
+        if (sourceTransform != null && sourceTransform.TryGetComponent(out AudioSource source))
+        {
+            bossDeathAudioSource = source;
+        }
+
+        return bossDeathAudioSource;
+    }
+
+    private static Transform FindChildByName(Transform root, string childName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(childName))
+        {
+            return null;
+        }
+
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform result = FindChildByName(root.GetChild(i), childName);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
     }
 
     private void EnsureDamageFeedback()

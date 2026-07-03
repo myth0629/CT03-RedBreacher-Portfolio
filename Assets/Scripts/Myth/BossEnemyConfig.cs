@@ -20,6 +20,7 @@ public class BossEnemyConfig : EnemyConfig
     [SerializeField] private GameObject projectileEffectPrefab;
     [SerializeField] private GameObject hitEffectPrefab;
     [SerializeField] private float effectCleanupDelay = 2f;
+    [SerializeField] private AudioClip fireSfx;
 
     [Header("Laser Pattern")]
     [SerializeField] private float laserCooldown = 6f;
@@ -36,6 +37,8 @@ public class BossEnemyConfig : EnemyConfig
     [SerializeField] private Material laserLineMaterial;
     [SerializeField] private Color laserWarningColor = new Color(1f, 0.2f, 0.1f, 0.55f);
     [SerializeField] private Color laserActiveColor = Color.red;
+    [SerializeField] private AudioClip laserWarningSfx;
+    [SerializeField] private AudioClip laserLunchSfx;
 
     [Header("Soft Enrage (방치형 DPS 체크)")]
     [Tooltip("이 시간(초)이 지나면 보스 공격력/연사가 점점 강해진다. 0 이하면 비활성.")]
@@ -54,9 +57,13 @@ public class BossEnemyConfig : EnemyConfig
     [SerializeField] private float dodgeSpeed = 6f;
     [SerializeField] private float dodgePredictionTime = 0.8f;
     [SerializeField] private float dodgeCollisionRadius = 0.75f;
+    [SerializeField] private float dodgeMinPlayerDistance = 2.25f;
     [SerializeField] private float dodgeCheckInterval = 0.1f;
     [SerializeField] private LayerMask dodgeObstacleMask;
 
+    [Header("DeathSounds Boss")]
+    [SerializeField] private AudioClip[] deathSoundsSfx;
+    
     public Sprite Portrait => portrait;
     public float RangedAttackRange => Mathf.Max(0.1f, rangedAttackRange);
     public float RangedAttackDamage => Mathf.Max(0f, rangedAttackDamage);
@@ -95,10 +102,12 @@ public class BossEnemyConfig : EnemyConfig
     public float DodgeSpeed => Mathf.Max(0.1f, dodgeSpeed);
     public float DodgePredictionTime => Mathf.Max(0.01f, dodgePredictionTime);
     public float DodgeCollisionRadius => Mathf.Max(0.01f, dodgeCollisionRadius);
+    public float DodgeMinPlayerDistance => Mathf.Max(0.1f, dodgeMinPlayerDistance);
     public float DodgeCheckInterval => Mathf.Max(0.02f, dodgeCheckInterval);
     public LayerMask DodgeObstacleMask => dodgeObstacleMask;
     public bool EnableProjectileDodge => enableProjectileDodge;
     public float EnrageStartSeconds => enrageStartSeconds;
     public float EnrageRampPerSecond => Mathf.Max(0f, enrageRampPerSecond);
     public float EnrageMaxMultiplier => Mathf.Max(1f, enrageMaxMultiplier);
+    public AudioClip[] DeathSoundsSfx => deathSoundsSfx;
 }

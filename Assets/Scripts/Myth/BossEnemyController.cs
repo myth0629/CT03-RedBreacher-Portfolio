@@ -28,6 +28,7 @@ public class BossEnemyController : EnemyController
     private float attackDamageMultiplier = 1f;
     private float encounterStartTime;
     private bool isDodging;
+    public BossEnemyConfig BossConfig => bossConfig;
 
     protected override void Awake()
     {
