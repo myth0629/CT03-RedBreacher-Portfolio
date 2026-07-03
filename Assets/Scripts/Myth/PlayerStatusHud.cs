@@ -39,6 +39,9 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text tankPopupCritChanceText;
     [SerializeField] private TMP_Text tankPopupCritMultiplierText;
     
+    [Header("Tank Popup DetailStatus")]
+    [SerializeField] private TMP_Text unitStatusDetailText;
+    
     [Header("Tank Popup Weapon")]
     [SerializeField] private TMP_Text tankPopupWeaponNameText;
     [SerializeField] private TMP_Text tankPopupWeaponRarityText;
@@ -85,6 +88,9 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private TMP_Text stattankPopupHealthText;
     [SerializeField] private TMP_Text stattankPopupDpsText;
     [SerializeField] private TMP_Text stattankPopupMoveSpeedText;
+    [SerializeField] private TMP_Text stattankPopupRangeText;
+    [SerializeField] private TMP_Text stattankPopupFireIntervalText;
+    [SerializeField] private TMP_Text stattankPopupRotateSpeedText;
     [SerializeField] private TMP_Text stattankPopupCritChanceText;
     [SerializeField] private TMP_Text stattankPopupCritMultiplierText;
     
@@ -385,6 +391,18 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
         SetText(tankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
         
+        // 탱크(자세히 보기)
+        SetText(unitStatusDetailText, $"{health.CurrentHealth:0}\n"
+                                      + $"{player.AttackRange:0.##}\n"
+                                      + $"{player.AttackRange:0.##}\n"
+                                      + $"{player.AttackInterval:0.##}\n"
+                                      + $"{player.MoveSpeed:0.##}\n"
+                                      + $"{player.RotationSpeed:0.##}\n"
+                                      + $"{player.CritChance * 100f:0.#}%\n"
+                                      + $"{player.CritMultiplier:0.##}x\n"
+                                      + $"{player.CritMultiplier:0.##}x\n"
+                                      + $"{GetBossDodgeCooldown(player):0.##}초\n");
+        
         // 무기
         SetText(tankPopupWeaponNameText, weapon != null ? weapon.DisplayName : "장착한 무기 없음");
         SetRarityText(tankPopupWeaponRarityText, weapon);
@@ -397,11 +415,6 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupWeaponRadiusText, weapon != null ? $"{weapon.AreaRadius:0.##}" : "0");
         SetText(tankPopupWeaponMaxPierceTargetsText, weapon != null ? $"{weapon.MaxPierceTargets}" : "0");
         SetText(tankPopupWeaponKnockbackText, $"{player.KnockbackForce:0.##}");
-        SetText(stattankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
-        SetText(stattankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
-        SetText(stattankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
-        SetText(stattankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
-        SetText(stattankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
         
         // 드론
         SetText(tankPopupDroneNameText, drone.DisplayName);
@@ -412,6 +425,16 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupDroneRangeText, $"{drone.AttackRange * drone.ProjectileLifetime:0.##}");
         SetText(tankPopupDroneWeaponSpeedText, $"{drone.ProjectileSpeed:0.##}");
         SetText(tankPopupDroneFollowSpeedText, $"{drone.FollowSpeed:0.##}");
+        
+        // 탱크(스탯강화소)
+        SetText(stattankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
+        SetText(stattankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
+        SetText(stattankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
+        SetText(stattankPopupRangeText, $"{player.AttackRange:0.##}");
+        SetText(stattankPopupFireIntervalText, $"{player.AttackInterval:0.##}");
+        SetText(stattankPopupRotateSpeedText, $"{player.RotationSpeed:0.##}");
+        SetText(stattankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
+        SetText(stattankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
     }
 
     private void RefreshStatUpgradePopup(PlayerProgression progression)
@@ -439,6 +462,13 @@ public class PlayerStatusHud : MonoBehaviour
         SetButtonInteractable(healthUpgradeButton, hasPoint && allocator.CanUpgradeHealth);
         SetButtonInteractable(critChanceUpgradeButton, hasPoint && allocator.CanUpgradeCritChance);
         SetButtonInteractable(critMultiplierUpgradeButton, hasPoint && allocator.CanUpgradeCritMultiplier);
+    }
+
+    private static float GetBossDodgeCooldown(PlayerController player)
+    {
+        return player != null && player.UnitConfig != null
+            ? player.UnitConfig.BossDodgeCooldown
+            : 0f;
     }
 
     private static void SetText(TMP_Text target, string value)

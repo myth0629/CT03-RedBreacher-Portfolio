@@ -385,7 +385,9 @@ public class CoreChargerPanel : MonoBehaviour
             + $"{FormatStatChange(current.AttackInterval, next.AttackInterval)}\n"
             + $"{FormatStatChange(current.MoveSpeed, next.MoveSpeed)}\n"
             + $"{FormatStatChange(current.RotationSpeed, next.RotationSpeed)}\n"
-            + $"{FormatPercentChange(current.CritChance, next.CritChance)}\n";
+            + $"{FormatPercentChange(current.CritChance, next.CritChance)}\n"
+            + $"{FormatPercentChange(current.CritMultiplier, next.CritMultiplier)}\n"
+            + $"{FormatPercentChange(current.BossDodgeCooldown, next.BossDodgeCooldown)}\n";
     }
 
     // 탱크 유닛 유/무 판별
