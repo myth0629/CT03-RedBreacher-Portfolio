@@ -24,10 +24,10 @@ MonoBehaviour:
   creditReward: 26
   coreCrystalReward: 24
   partDropChance: 0.2
-  deathExplosionEffectPrefab: {fileID: 0}
+  deathExplosionEffectPrefab: {fileID: 1320533090949476, guid: be4499a93e8bc3f4f9d4afbd8d4e347d, type: 3}
   deathExplosionCleanupDelay: 0.6
   deathExplosionOffset: {x: 0, y: 0, z: 0}
-  deathExplosionScale: 1
+  deathExplosionScale: 3
   hitSounds:
   - {fileID: 8300000, guid: 3a73663132fdbbb4ca6abfc111e5d7f3, type: 3}
   - {fileID: 8300000, guid: 8ddda2ddc1a1fb14986c8f45c96fd4d8, type: 3}
@@ -44,7 +44,7 @@ MonoBehaviour:
   projectilesPerFirePoint: 9
   spreadAngle: 80
   fireEffectPrefab: {fileID: 1357030889595668, guid: 31d15199ffdbd87468857df8492d57ae, type: 3}
-  projectileEffectPrefab: {fileID: 1830508508936448, guid: 5d777067c17b96c43a3bd547d25cb893, type: 3}
+  projectileEffectPrefab: {fileID: 1678767144466112, guid: e2ba727a17e461d44b33e480e2f56d18, type: 3}
   hitEffectPrefab: {fileID: 1444971686239000, guid: 2a08b3071ec108040959cc25cf08be4b, type: 3}
   effectCleanupDelay: 2
   laserCooldown: 7
@@ -54,14 +54,14 @@ MonoBehaviour:
   laserWarningDuration: 2.4
   laserActiveDuration: 0.4
   laserFirePointName: LaserFirePoint
-  laserBeamEffectPrefab: {fileID: 1657981230171060, guid: 080168af0fb1a0f48bd653b0def3737e, type: 3}
+  laserBeamEffectPrefab: {fileID: 1183884577445174, guid: 4f19f76b262eb1f4ea21bf18b8870e2c, type: 3}
   laserProjectileSpeed: 25
   laserProjectileScale: 3.4
   laserBeamRotationOffset: {x: 0, y: 0, z: 0}
   laserLineMaterial: {fileID: -876546973899608171, guid: f090c02c15e42bf41ba8388b37b3c21e, type: 3}
   laserWarningColor: {r: 0.05098039, g: 0.5030982, b: 1, a: 0.55}
   laserActiveColor: {r: 0, g: 0.15383482, b: 1, a: 1}
-  enrageStartSeconds: 0
+  enrageStartSeconds: 1
   enrageRampPerSecond: 0.04
   enrageMaxMultiplier: 3
   enableProjectileDodge: 0

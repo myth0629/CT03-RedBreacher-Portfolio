@@ -24,10 +24,10 @@ MonoBehaviour:
   creditReward: 18
   coreCrystalReward: 14
   partDropChance: 0.08
-  deathExplosionEffectPrefab: {fileID: 0}
+  deathExplosionEffectPrefab: {fileID: 1320533090949476, guid: f20077a0be0f3fa4495d97be6faa09bc, type: 3}
   deathExplosionCleanupDelay: 0.6
   deathExplosionOffset: {x: 0, y: 0, z: 0}
-  deathExplosionScale: 1
+  deathExplosionScale: 2
   hitSounds:
   - {fileID: 8300000, guid: 3a73663132fdbbb4ca6abfc111e5d7f3, type: 3}
   - {fileID: 8300000, guid: 8ddda2ddc1a1fb14986c8f45c96fd4d8, type: 3}
