@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f20b74b75695450a81bb73172856bd0, type: 3}
-  m_Name: Boss02
+  m_Name: Boss03
   m_EditorClassIdentifier: Assembly-CSharp::BossEnemyConfig
-  id: 02
-  displayName: "\uBA54\uAC00\uD3EC \uC804\uCC28"
-  enemyPrefab: {fileID: 5508998916971657268, guid: 8f79bf266866e9746a0e4e52e7b913ed, type: 3}
-  maxHealth: 10000
-  moveSpeed: 0.95
+  id: 03
+  displayName: "\uB9E5\uC2A4\uC5D0\uC5B4 \uD3EC\uD2B8\uB9AC\uC2A4"
+  enemyPrefab: {fileID: 5508998916971657268, guid: c4f7be4a54c917e478d45e578ce48f84, type: 3}
+  maxHealth: 20000
+  moveSpeed: 1.5
   stopDistance: 1.1
   contactDamage: 8
   contactInterval: 1
-  experienceReward: 15
-  creditReward: 18
-  coreCrystalReward: 14
-  partDropChance: 0.08
+  experienceReward: 25
+  creditReward: 26
+  coreCrystalReward: 24
+  partDropChance: 0.2
   deathExplosionEffectPrefab: {fileID: 0}
   deathExplosionCleanupDelay: 0.6
   deathExplosionOffset: {x: 0, y: 0, z: 0}
@@ -33,34 +33,34 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 8ddda2ddc1a1fb14986c8f45c96fd4d8, type: 3}
   - {fileID: 8300000, guid: 7801cb71e186218409a255b415aa6def, type: 3}
   - {fileID: 8300000, guid: b78121d6f010ab446886ef6c9d149510, type: 3}
-  portrait: {fileID: 2046642088, guid: cbce280544bf04854b6556d5e5eb911b, type: 3}
-  rangedAttackRange: 7
-  rangedAttackDamage: 150
+  portrait: {fileID: 21300000, guid: e38e6db42eba69c45a0521ccc626c0a8, type: 3}
+  rangedAttackRange: 8
+  rangedAttackDamage: 230
   rangedAttackInterval: 1.8
-  projectileSpeed: 7
-  projectileLifetime: 3.5
-  projectileCollisionRadius: 0.3
+  projectileSpeed: 8
+  projectileLifetime: 4
+  projectileCollisionRadius: 0.4
   firePointNamePrefix: FirePoint
-  projectilesPerFirePoint: 7
-  spreadAngle: 75
-  fireEffectPrefab: {fileID: 1936875904811050, guid: 13b7c7d5b11e55f4c99d0dd318cfc704, type: 3}
-  projectileEffectPrefab: {fileID: 1787684039401618, guid: 83a4e6d5a5abe884bad2a55ba29c7fca, type: 3}
-  hitEffectPrefab: {fileID: 1598860718775302, guid: 607071240cd7cde4d8ad70e485d70f28, type: 3}
+  projectilesPerFirePoint: 9
+  spreadAngle: 80
+  fireEffectPrefab: {fileID: 1357030889595668, guid: 31d15199ffdbd87468857df8492d57ae, type: 3}
+  projectileEffectPrefab: {fileID: 1830508508936448, guid: 5d777067c17b96c43a3bd547d25cb893, type: 3}
+  hitEffectPrefab: {fileID: 1444971686239000, guid: 2a08b3071ec108040959cc25cf08be4b, type: 3}
   effectCleanupDelay: 2
   laserCooldown: 7
-  laserDamage: 160
-  laserLength: 14
-  laserWidth: 1.8
-  laserWarningDuration: 1.8
-  laserActiveDuration: 0.3
+  laserDamage: 220
+  laserLength: 16
+  laserWidth: 2.4
+  laserWarningDuration: 2.4
+  laserActiveDuration: 0.4
   laserFirePointName: LaserFirePoint
-  laserBeamEffectPrefab: {fileID: 1657981230171060, guid: 6cf36a334a0e5754ea36fca06014b86a, type: 3}
-  laserProjectileSpeed: 18
-  laserProjectileScale: 2.4
+  laserBeamEffectPrefab: {fileID: 1657981230171060, guid: 080168af0fb1a0f48bd653b0def3737e, type: 3}
+  laserProjectileSpeed: 25
+  laserProjectileScale: 3.4
   laserBeamRotationOffset: {x: 0, y: 0, z: 0}
   laserLineMaterial: {fileID: -876546973899608171, guid: f090c02c15e42bf41ba8388b37b3c21e, type: 3}
-  laserWarningColor: {r: 1, g: 0.45, b: 0.05, a: 0.55}
-  laserActiveColor: {r: 1, g: 0.25, b: 0, a: 1}
+  laserWarningColor: {r: 0.05098039, g: 0.5030982, b: 1, a: 0.55}
+  laserActiveColor: {r: 0, g: 0.15383482, b: 1, a: 1}
   enrageStartSeconds: 0
   enrageRampPerSecond: 0.04
   enrageMaxMultiplier: 3
