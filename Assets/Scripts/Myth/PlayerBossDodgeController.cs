@@ -45,6 +45,8 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     private readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
     private PlayerController player;
     private BossEncounterManager bossEncounterManager;
+    private const float BossEncounterSearchInterval = 1f;
+    private float nextBossEncounterSearchTime;
     private CombatHealth health;
     private Camera mainCamera;
     private Vector2 dragStartPosition;
@@ -354,7 +356,14 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
 
     private void ResolveReferences()
     {
-        bossEncounterManager ??= FindFirstObjectByType<BossEncounterManager>();
+        // 매 프레임 호출된다. 보스 매니저가 없는 씬에서는 ??=로 매 프레임 전체 씬 스캔이 되므로,
+        // 미발견 시 1초 간격으로만 재탐색한다(보스가 늦게 스폰돼도 곧 잡힘).
+        if (bossEncounterManager == null && Time.unscaledTime >= nextBossEncounterSearchTime)
+        {
+            nextBossEncounterSearchTime = Time.unscaledTime + BossEncounterSearchInterval;
+            bossEncounterManager = FindFirstObjectByType<BossEncounterManager>();
+        }
+
         mainCamera ??= Camera.main;
     }
 
@@ -383,7 +392,10 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
 
     private IEnumerator PlayPerfectDodgeFeedback()
     {
-        perfectDodgeSound.Play();
+        if (perfectDodgeSound != null)
+        {
+            perfectDodgeSound.Play();
+        }
         CleanupPerfectDodgeFeedback();
         CreatePerfectDodgeText();
         CacheFlashRenderers();

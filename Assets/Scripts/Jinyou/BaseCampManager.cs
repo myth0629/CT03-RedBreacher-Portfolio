@@ -63,6 +63,11 @@ public class BaseCampManager : MonoBehaviour
     private bool confirmPlayerPrefsReset;
     private bool skipNextBackupRotation;
     private bool quitFlushCompleted;
+    // 초당 발생하는 크레딧 틱 등 잦은 저장 이벤트를 디스크 플러시로 매번 처리하지 않도록
+    // 더티 플래그로 코얼레스하고, Update에서 이 간격마다만 실제 저장한다(일시정지/종료 시 즉시 플러시).
+    private const float UnifiedSaveDebounceSeconds = 3f;
+    private bool unifiedSaveDirty;
+    private float nextUnifiedSaveFlushTime;
     private JinyouOfflineRewardSaveData lastOfflineReward = new JinyouOfflineRewardSaveData();
 
     public CommandCenter CommandCenter => commandCenter;
@@ -155,6 +160,25 @@ public class BaseCampManager : MonoBehaviour
     private void Update()
     {
         TickInactiveFacilities(Time.deltaTime);
+        FlushUnifiedSaveIfDue();
+    }
+
+    // 디바운스된 더티 저장을 간격이 지난 시점에 한 번 실제 저장으로 밀어낸다.
+    private void FlushUnifiedSaveIfDue()
+    {
+        if (!unifiedSaveDirty || Time.unscaledTime < nextUnifiedSaveFlushTime)
+        {
+            return;
+        }
+
+        FlushUnifiedSaveNow();
+    }
+
+    // 대기 중인 더티 저장을 즉시 반영한다(일시정지/종료 등 Update가 멈추는 경로 포함).
+    private void FlushUnifiedSaveNow()
+    {
+        unifiedSaveDirty = false;
+        SaveUnifiedGame();
     }
 
     // 저장된 장착 무기/드론을 부팅 시 적용한다. 로드아웃 패널이 닫힌 팝업 안에 있어
@@ -175,7 +199,7 @@ public class BaseCampManager : MonoBehaviour
         // 이때 저장하면 기본값이 진짜 세이브를 덮어쓰고 최신 타임스탬프로 클라우드까지 오염시키므로 스킵한다.
         if (pauseStatus && unifiedSaveReady)
         {
-            SaveUnifiedGame();
+            FlushUnifiedSaveNow(); // 대기 중인 더티 저장까지 즉시 반영.
             CloudSaveService.Instance.FlushNow(); // 일시정지 중엔 Update가 멈추므로 즉시 업로드.
         }
     }
@@ -187,7 +211,7 @@ public class BaseCampManager : MonoBehaviour
             return; // 복원 전 종료: 기본값으로 세이브를 덮어쓰지 않는다.
         }
 
-        SaveUnifiedGame();
+        FlushUnifiedSaveNow();
         CloudSaveService.Instance.FlushNow();
     }
 
@@ -199,7 +223,7 @@ public class BaseCampManager : MonoBehaviour
             return true; // 이미 플러시했거나(재진입), 복원 전이라 저장할 것이 없다.
         }
 
-        SaveUnifiedGame(); // 마지막 상태 캡처(RequestPush로 업로드 예약).
+        FlushUnifiedSaveNow(); // 마지막 상태 캡처(RequestPush로 업로드 예약).
         if (!CloudSaveService.Instance.HasPendingUploads)
         {
             return true;
@@ -575,8 +599,11 @@ public class BaseCampManager : MonoBehaviour
             loadedUnifiedSaveVersion = data != null ? data.version : 0;
             RestoreUnifiedSaveData(data);
         }
-        catch (ArgumentException exception)
+        catch (Exception exception)
         {
+            // JSON 파싱 실패(ArgumentException)뿐 아니라 복원 도중의 NRE 등 모든 예외를 여기서 봉인한다.
+            // 그러지 않으면 async void Start()로 예외가 전파돼 이후 저장 구독/unifiedSaveReady 활성화가
+            // 통째로 스킵되고, 그 세션 동안 자동 저장·클라우드 푸시가 전부 죽는다.
             Debug.LogWarning($"통합 저장 데이터를 읽지 못했습니다: {exception.Message}", this);
             string backupJson = PlayerPrefs.GetString(UnifiedSaveBackupKey, string.Empty);
             if (string.IsNullOrWhiteSpace(backupJson))
@@ -592,7 +619,7 @@ public class BaseCampManager : MonoBehaviour
                 skipNextBackupRotation = true;
                 Debug.LogWarning("통합 저장 데이터가 손상되어 백업 데이터로 복구했습니다.", this);
             }
-            catch (ArgumentException backupException)
+            catch (Exception backupException)
             {
                 Debug.LogWarning($"통합 백업 데이터도 읽지 못했습니다: {backupException.Message}", this);
             }
@@ -1324,9 +1351,17 @@ public class BaseCampManager : MonoBehaviour
 
     private void SaveUnifiedGameIfReady()
     {
-        if (autoSaveUnifiedState && unifiedSaveReady)
+        if (!autoSaveUnifiedState || !unifiedSaveReady)
         {
-            SaveUnifiedGame();
+            return;
+        }
+
+        // 즉시 저장하지 않고 더티로 표시만 한다. clean→dirty 전환 시에만 마감 시각을 잡아,
+        // 크레딧처럼 연속으로 이벤트가 쏟아져도 마감 시각이 계속 밀려나지 않고 간격마다 한 번씩 저장된다.
+        if (!unifiedSaveDirty)
+        {
+            unifiedSaveDirty = true;
+            nextUnifiedSaveFlushTime = Time.unscaledTime + UnifiedSaveDebounceSeconds;
         }
     }
 

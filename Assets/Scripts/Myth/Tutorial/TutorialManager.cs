@@ -116,6 +116,14 @@ public class TutorialManager : MonoBehaviour
             SubscribeEvents();
         }
 
+        // 씬 전체 스캔은 간격을 두고만 허용한다(찾은 타겟 추적 등 싼 경로는 매 프레임 유지).
+        // running 여부와 무관하게 계산해, 아래 !running 분기의 IsPanelOpen 전체 스캔도 함께 스로틀한다.
+        allowSceneScan = Time.unscaledTime >= nextSceneScanTime;
+        if (allowSceneScan)
+        {
+            nextSceneScanTime = Time.unscaledTime + SceneScanInterval;
+        }
+
         if (!running)
         {
             if (!completed && HasTutorialSteps(false))
@@ -124,19 +132,12 @@ public class TutorialManager : MonoBehaviour
                 return;
             }
 
-            if (!baseCompleted && HasTutorialSteps(true) && IsPanelOpen(BasePopupName))
+            if (allowSceneScan && !baseCompleted && HasTutorialSteps(true) && IsPanelOpen(BasePopupName))
             {
                 BeginStep(baseStepIndex, true);
             }
 
             return;
-        }
-
-        // 씬 전체 스캔은 간격을 두고만 허용한다(찾은 타겟 추적 등 싼 경로는 매 프레임 유지).
-        allowSceneScan = Time.unscaledTime >= nextSceneScanTime;
-        if (allowSceneScan)
-        {
-            nextSceneScanTime = Time.unscaledTime + SceneScanInterval;
         }
 
         ResolveActiveTarget();
