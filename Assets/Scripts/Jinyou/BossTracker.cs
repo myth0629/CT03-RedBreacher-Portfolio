@@ -38,7 +38,6 @@ public class BossTracker : MonoBehaviour
         public string displayName;
         public int requiredResearchLabLevel = 1;
         public int recommendedPower;
-        public string rewardSummary;
         public BossEnemyConfig bossConfig;
         [Min(0.01f)] public float healthMultiplier = 1f;
         [Min(0.01f)] public float moveSpeedMultiplier = 1f;
@@ -61,7 +60,6 @@ public class BossTracker : MonoBehaviour
             displayName = "일반",
             requiredResearchLabLevel = 1,
             recommendedPower = 10000,
-            rewardSummary = "크레딧 / 부품"
         },
         new BossDifficulty
         {
@@ -69,7 +67,6 @@ public class BossTracker : MonoBehaviour
             displayName = "어려움",
             requiredResearchLabLevel = 3,
             recommendedPower = 30000,
-            rewardSummary = "희귀 부품",
             healthMultiplier = 1.75f,
             moveSpeedMultiplier = 1.1f,
             damageMultiplier = 1.5f,
@@ -81,7 +78,6 @@ public class BossTracker : MonoBehaviour
             displayName = "정예",
             requiredResearchLabLevel = 5,
             recommendedPower = 60000,
-            rewardSummary = "코어 재료",
             healthMultiplier = 3f,
             moveSpeedMultiplier = 1.2f,
             damageMultiplier = 2.25f,

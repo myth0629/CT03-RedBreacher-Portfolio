@@ -47,7 +47,7 @@ MonoBehaviour:
   projectileEffectPrefab: {fileID: 1678767144466112, guid: e2ba727a17e461d44b33e480e2f56d18, type: 3}
   hitEffectPrefab: {fileID: 1444971686239000, guid: 2a08b3071ec108040959cc25cf08be4b, type: 3}
   effectCleanupDelay: 2
-  fireSfx: {fileID: 0}
+  fireSfx: {fileID: 8300000, guid: fd0c3c7dc3a64ad4486d44b28a35a8af, type: 3}
   laserCooldown: 7
   laserDamage: 220
   laserLength: 16
@@ -62,8 +62,8 @@ MonoBehaviour:
   laserLineMaterial: {fileID: -876546973899608171, guid: f090c02c15e42bf41ba8388b37b3c21e, type: 3}
   laserWarningColor: {r: 0.05098039, g: 0.5030982, b: 1, a: 0.55}
   laserActiveColor: {r: 0, g: 0.15383482, b: 1, a: 1}
-  laserWarningSfx: {fileID: 0}
-  laserLunchSfx: {fileID: 0}
+  laserWarningSfx: {fileID: 8300000, guid: 0dc9094f2b7fb413a8bbdfb8570210cf, type: 3}
+  laserLunchSfx: {fileID: 8300000, guid: 97fb673ab600046e8814af60083e04de, type: 3}
   enrageStartSeconds: 1
   enrageRampPerSecond: 0.04
   enrageMaxMultiplier: 3
@@ -74,6 +74,7 @@ MonoBehaviour:
   dodgeSpeed: 4
   dodgePredictionTime: 0.7
   dodgeCollisionRadius: 0.85
+  dodgeMinPlayerDistance: 2.25
   dodgeCheckInterval: 0.12
   dodgeObstacleMask:
     serializedVersion: 2

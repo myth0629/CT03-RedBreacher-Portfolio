@@ -22,6 +22,9 @@ public class GachaPanel : MonoBehaviour
     [SerializeField] private TMP_Text skillDrawOnceCostText;
     [SerializeField] private TMP_Text skillDrawMultiCostText;
 
+    [Header("Controls")]
+    [SerializeField] private Button exitButton;
+    
     // 기존의 Odd슬롯 프리팹 삭제를 까먹고 그대로 코드에 구현하는 바람에 연결 대상이 불명확해져
     // FormerlySerializedAs로 명시적 구현
     [Header("WeaponGachaDetailPopup_Slot")]
@@ -66,6 +69,7 @@ public class GachaPanel : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
+        EnsureExitButtonVisible();
         weaponDrawOnceButton?.onClick.AddListener(DrawWeaponOnce);
         weaponDrawMultiButton?.onClick.AddListener(DrawWeaponMulti);
         skillDrawOnceButton?.onClick.AddListener(DrawSkillOnce);
@@ -234,6 +238,7 @@ public class GachaPanel : MonoBehaviour
     private void Refresh()
     {
         ResolveReferences();
+        EnsureExitButtonVisible();
         bool connected = weaponGacha != null;
         int crystals = baseCampManager != null ? baseCampManager.CoreCrystals : 0;
         int multiCount = connected ? weaponGacha.MultiDrawCount : 10;
@@ -507,6 +512,14 @@ public class GachaPanel : MonoBehaviour
         if (target != null)
         {
             target.color = canDraw ? Color.white : Color.red;
+        }
+    }
+    
+    private void EnsureExitButtonVisible()
+    {
+        if (exitButton != null && !exitButton.gameObject.activeSelf)
+        {
+            exitButton.gameObject.SetActive(true);
         }
     }
 }

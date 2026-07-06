@@ -80,6 +80,7 @@ public class BossEnemyConfig : EnemyConfig
     public GameObject ProjectileEffectPrefab => projectileEffectPrefab;
     public GameObject HitEffectPrefab => hitEffectPrefab;
     public float EffectCleanupDelay => Mathf.Max(0f, effectCleanupDelay);
+    public AudioClip FireSfx => fireSfx;
     public float LaserCooldown => Mathf.Max(0.1f, laserCooldown);
     public float LaserDamage => Mathf.Max(0f, laserDamage);
     public float LaserLength => Mathf.Max(0.1f, laserLength);
@@ -96,6 +97,8 @@ public class BossEnemyConfig : EnemyConfig
     public Material LaserLineMaterial => laserLineMaterial;
     public Color LaserWarningColor => laserWarningColor;
     public Color LaserActiveColor => laserActiveColor;
+    public AudioClip LaserWarningSfx => laserWarningSfx;
+    public AudioClip LaserLunchSfx => laserLunchSfx;
     public float DodgeDetectionRadius => Mathf.Max(0.1f, dodgeDetectionRadius);
     public float DodgeDistance => Mathf.Max(0.1f, dodgeDistance);
     public float DodgeCooldown => Mathf.Max(0.1f, dodgeCooldown);

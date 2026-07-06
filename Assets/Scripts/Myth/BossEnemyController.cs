@@ -15,6 +15,11 @@ public class BossEnemyController : EnemyController
 
     [SerializeField] private BossEnemyConfig bossConfig;
     [SerializeField] private Transform firePoint;
+    
+    [Header("Audio Sources")]
+    [SerializeField] private AudioSource fireSound;
+    [SerializeField] private AudioSource laserWarningSound;
+    [SerializeField] private AudioSource laserLunchSound;
 
     private readonly List<Transform> firePoints = new List<Transform>();
     private Transform laserFirePoint;
@@ -187,6 +192,9 @@ public class BossEnemyController : EnemyController
 
     private void FireSpread(Vector3 centerDirection)
     {
+        // 다중 투사체가 발사해도 소리는 발사 사이클당 한 번만 나오도록 FireSpread()의 앞부분에 재생.
+        PlayFireSfx();
+
         int muzzleCount = Mathf.Max(1, firePoints.Count);
         int projectilesPerMuzzle = bossConfig.ProjectilesPerFirePoint;
         int totalProjectileCount = muzzleCount * projectilesPerMuzzle;
@@ -210,8 +218,16 @@ public class BossEnemyController : EnemyController
                     Quaternion.AngleAxis(angle, Vector3.up) * centerDirection);
                 BossProjectile projectile = CombatObjectPool.GetBossProjectile();
                 projectile.transform.position = spawnPosition;
-                projectile.Launch(bossConfig, projectileDirection, damagePerProjectile);
+            projectile.Launch(bossConfig, projectileDirection, damagePerProjectile);
             }
+        }
+    }
+
+    private void PlayFireSfx()
+    {
+        if (fireSound != null && bossConfig != null && bossConfig.FireSfx != null)
+        {
+            fireSound.PlayOneShot(bossConfig.FireSfx);
         }
     }
 
@@ -398,6 +414,7 @@ public class BossEnemyController : EnemyController
         }
 
         // 경고가 시작된 순간의 방향을 고정해 플레이어가 범위를 보고 회피할 수 있게 한다.
+        PlayLaserWarningSfx();
         SetLaserLine(lockedDirection, bossConfig.LaserWarningColor, true);
         float warningEndTime = Time.time + bossConfig.LaserWarningDuration;
         while (Time.time < warningEndTime)
@@ -406,6 +423,7 @@ public class BossEnemyController : EnemyController
             yield return null;
         }
 
+        PlayLaserLunchSfx();
         SpawnLaserBeamEffect(lockedDirection);
         ApplyLaserDamage(lockedDirection);
         SetLaserLine(lockedDirection, bossConfig.LaserActiveColor, true);
@@ -526,6 +544,21 @@ public class BossEnemyController : EnemyController
 
             player.Health.TakeDamage(bossConfig.LaserDamage * attackDamageMultiplier * GetEnrageMultiplier());
             return;
+        }
+    }
+
+    private void PlayLaserWarningSfx()
+    {
+        if (laserWarningSound != null && bossConfig != null && bossConfig.LaserWarningSfx != null)
+        {
+            laserWarningSound.PlayOneShot(bossConfig.LaserWarningSfx);
+        }
+    }
+    private void PlayLaserLunchSfx()
+    {
+        if (laserLunchSound != null && bossConfig != null && bossConfig.LaserLunchSfx != null)
+        {
+            laserLunchSound.PlayOneShot(bossConfig.LaserLunchSfx);
         }
     }
 
