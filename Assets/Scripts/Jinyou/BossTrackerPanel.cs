@@ -17,6 +17,9 @@ public class BossTrackerPanel : MonoBehaviour
     [SerializeField] private TMP_Text productionText;
     [SerializeField] private Image ticketProgressFill;
 
+    [Header("CommandCenter Level")]
+    [SerializeField] private TMP_Text levelText;
+    
     [Header("Boss Info")] 
     [SerializeField] private Image bossLockIcon;
     [SerializeField] private TMP_Text bossLockStateText;
@@ -80,6 +83,7 @@ public class BossTrackerPanel : MonoBehaviour
         {
             SetText(ticketText, "티켓 --/--");
             SetText(productionText, "티켓 생산 정보 없음");
+            SetText(levelText, "사령부 Lv. --");
             SetBossInfo(null, null);
             SetBossLockIcon(null);
             SetFill(ticketProgressFill, 0f);
@@ -93,6 +97,7 @@ public class BossTrackerPanel : MonoBehaviour
 
         SetText(ticketText, $"티켓 {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}");
         SetText(productionText, $"하루 {commandCenter.BossTicketsProducedPerDay}개 지급");
+        SetText(levelText, $"사령부 Lv. {commandCenter.Level:0}");
         SetText(bossLockStateText, BossLockState(difficulty));
         SetText(bossDifficultyText, $"({difficulty.displayName})");
         SetDifficultyTextColor(difficulty);

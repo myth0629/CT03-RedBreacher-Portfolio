@@ -96,7 +96,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         }
         else
         {
-            Debug.LogError($"코어 충전소 밸런스 초기화 실패: {error}", this);
+            Debug.LogError($"코어 차저 밸런스 초기화 실패: {error}", this);
         }
     }
 

@@ -20,7 +20,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
     [SerializeField] private Image upgradeProgressFill;
     [SerializeField] private Image coinIcon;
     
-    [Header("WeaponEnhanceTexts")]
+    [Header("AssemblyFactory Base Texts")]
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text pleasSelectText;
     [SerializeField] private TMP_Text weaponCurrentAttackText;
