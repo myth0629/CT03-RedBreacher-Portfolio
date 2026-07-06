@@ -35,6 +35,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     [SerializeField] private float perfectDodgeFeedbackDuration = 0.6f;
     [SerializeField] private Vector3 perfectDodgeTextOffset = new Vector3(0f, 1.2f, 0f);
     [SerializeField] private Color perfectDodgeFlashColor = new Color(0.45f, 1f, 1f, 1f);
+    [SerializeField] private AudioSource perfectDodgeSound;
 
     [Header("회피 쿨타임 UI")]
     [SerializeField] private GameObject dodgeUiRoot;
@@ -382,6 +383,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
 
     private IEnumerator PlayPerfectDodgeFeedback()
     {
+        perfectDodgeSound.Play();
         CleanupPerfectDodgeFeedback();
         CreatePerfectDodgeText();
         CacheFlashRenderers();
