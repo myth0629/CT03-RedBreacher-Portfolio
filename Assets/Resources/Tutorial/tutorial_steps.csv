@@ -78,3 +78,12 @@ order,id,bodyText,highlightTargetName,advanceType,eventType,targetAmount,targetI
 76,base_outtro,마지막으로 '코어 차저'를 간략하게 소개하겠습니다. 이곳을 통해 탱크를 강화하고 새 드론을 해금할 수 있습니다.,Core Charger,Tap,None,0,
 77,base_outtro,아직 사령부 레벨이 3이상에 도달되지 않은 상태라 레벨업 시 다시 한 번 안내해드리겠습니다.,LockState_CC,Tap,None,0,
 79,base_outtro,이것으로 기지에 대한 설명을 마치도록 하겠습니다. 그럼 행운이 있기를 바랍니다.,,Tap,None,0,
+79,base_core_charger_intro,코어 차저가 해금되었습니다. 이 시설에서는 탱크 유닛 강화와 드론 해금을 진행할 수 있습니다.,Panel,Tap,None,0
+80,base_core_charger_intro,이곳에서는 현재 탱크와 다음 강화 단계를 비교할 수 있습니다.,Tank_Unit_Conversion_SubPanel,Tap,None,0
+81,base_core_charger_intro,현재 탱크와 다음 탱크의 수치를 확인하는 창입니다.,Tank Route Status,Tap,None,0,
+82,base_core_charger_intro,아래의 화살표 버튼을 누르면 상세한 정보를 살펴보실 수 있습니다.,RouteDetailButton,Tap,None,0,
+83,base_core_charger_intro,코어 차저를 업그레이드하면 다음유닛 강화 버튼이 활성화됩니다.,Enhance Unit Button,Tap,None,0
+84,base_core_charger_intro,다음으로 드론 해금을 소개하겠습니다. 해당 버튼을 눌러주세요.,Button_DroneUnlock,TargetClicked,None,0,
+85,base_core_charger_intro,드론 해금 메뉴에서는 다음 드론 해금 조건을 확인할 수 있습니다.,DroneUnlock_Conversion_SubPanel,Tap,None,0
+86,base_core_charger_intro,다음 해금 드론의 수치를 보여주는 창입니다. 탱크해금과 동일하게 아래의 화살표 버튼으로 자세히 살펴볼 수 있습니다.,Drone Status,Tap,None,0,
+86,base_core_charger_intro,마찬가지로 기지를 업그레이드하면 더 강력한 드론을 해금할 수 있는 단계가 늘어납니다.,Unlock Drone Button,Tap,None,0

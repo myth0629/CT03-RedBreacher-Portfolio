@@ -44,9 +44,14 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private TMP_Text unlockDroneEmptyText;
 
     [Header("DroneUnlock subPanel")]
+    [SerializeField] private TMP_Text unlockDroneCountText;
+    [SerializeField] private TMP_Text unlockDroneEquipWeaponText;
     [SerializeField] private TMP_Text unlockDroneDamageText;
     [SerializeField] private TMP_Text unlockDroneProjSpeedText;
     [SerializeField] private TMP_Text unlockDroneMoveSpeedText;
+    
+    [Header("Drone DetailStatus")]
+    [SerializeField] private TMP_Text droneStatusDetailText;
 
     private CoreCharger coreCharger;
     private InventoryFacility inventory;
@@ -263,8 +268,11 @@ public class CoreChargerPanel : MonoBehaviour
             SetText(unlockDroneButtonStateText, "해금 불가");
             SetUnlockDroneConditionText("코어 차저가 연결되지 않았습니다.");
             SetText(unlockDroneText, string.Empty);
+            SetText(unlockDroneCountText, string.Empty);
+            SetText(unlockDroneEquipWeaponText, string.Empty);
             SetDronePreview(unlockDronePreviewImage, null);
             RefreshUnlockDroneStatTexts(null);
+            SetText(droneStatusDetailText, string.Empty);
             return;
         }
 
@@ -275,8 +283,13 @@ public class CoreChargerPanel : MonoBehaviour
         SetText(unlockDroneButtonStateText, BuildUnlockDroneButtonStateText(nextUnlock));
         SetUnlockDroneConditionText(BuildUnlockDroneConditionText(nextUnlock));
         SetText(unlockDroneText, nextDrone != null ? nextDrone.DisplayName : "모든 드론 해금 완료");
+        SetText(unlockDroneCountText, nextDrone != null ? $"{nextDrone.DroneCount}마리" : string.Empty);
+        SetText(unlockDroneEquipWeaponText, nextDrone?.ProjectileConfig != null
+            ? nextDrone.ProjectileConfig.DisplayName
+            : string.Empty);
         SetDronePreview(unlockDronePreviewImage, nextDrone);
         RefreshUnlockDroneStatTexts(nextDrone);
+        SetText(droneStatusDetailText, BuildDroneDetailStatusText(nextDrone));
     }
 
     /// <summary>
@@ -343,6 +356,25 @@ public class CoreChargerPanel : MonoBehaviour
     }
 
     // TankUnit subPanel Status에 연결
+    private static string BuildDroneDetailStatusText(DroneConfig drone)
+    {
+        if (drone == null)
+        {
+            return string.Empty;
+        }
+
+        string weaponName = drone.ProjectileConfig != null
+            ? drone.ProjectileConfig.DisplayName
+            : string.Empty;
+        return $"{drone.DroneCount}마리\n"
+            + $"{weaponName}\n"
+            + $"{drone.AttackDamage:0.##}\n"
+            + $"{drone.AttackRange:0.##}\n"
+            + $"{drone.AttackInterval:0.##}\n"
+            + $"{drone.FollowSpeed:0.##}\n"
+            + $"{drone.FollowRadius:0.##}";
+    }
+
     private void RefreshEnhanceUnitStatTexts(CoreCharger.UnitConversionStage stage)
     {
         if (stage == null || stage.currentUnit == null || stage.nextUnit == null)

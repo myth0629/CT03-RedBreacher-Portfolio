@@ -46,6 +46,8 @@ public class JinyouTutorialSaveData
     public int stepIndex;
     public bool baseCompleted;
     public int baseStepIndex;
+    public bool coreChargerCompleted;
+    public int coreChargerStepIndex;
 }
 
 [Serializable]

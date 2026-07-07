@@ -261,7 +261,7 @@ MonoBehaviour:
     highlightTargetName: Stage_Panel
     advanceType: 0
     eventType: 0
-    targetAmount: 0
+    targetAmount: 1
     targetId: 
   - order: 27
     id: open_player
@@ -621,7 +621,7 @@ MonoBehaviour:
     targetId: 
   - order: 65
     id: base_SkillHanger_intro
-    bodyText: "\uB2E4\uC74C\uC73C\uB85C \uAD00\uC81C\uC18C\uB97C \uC548\uB0B4\uD558\uACA0\uC2B5\uB2C8\uB2E4.
+    bodyText: "\uB2E4\uC74C\uC73C\uB85C \uAD00\uC81C\uD0D1\uB97C \uC548\uB0B4\uD558\uACA0\uC2B5\uB2C8\uB2E4.
       \uB3CC\uC544\uAC00\uAE30 \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
     highlightTargetName: ExitButton_SH
     advanceType: 1
@@ -630,7 +630,7 @@ MonoBehaviour:
     targetId: 
   - order: 66
     id: base_BossTracker_intro
-    bodyText: "\uAD00\uC81C\uC18C\uB97C \uB204\uB974\uC138\uC694."
+    bodyText: "\uAD00\uC81C\uD0D1\uB97C \uB204\uB974\uC138\uC694."
     highlightTargetName: Boss Tracker
     advanceType: 1
     eventType: 0
@@ -638,9 +638,8 @@ MonoBehaviour:
     targetId: 
   - order: 67
     id: base_BossTracker_intro
-    bodyText: "\uAD00\uC81C\uC18C\uC785\uB2C8\uB2E4. \uC5EC\uAE30\uC11C\uB294 \uBCF4\uC2A4\uC815\uBCF4\uB97C
-      \uC9C1\uC811\uC5F4\uB78C \uBC0F \uB09C\uC774\uB3C4 \uCD94\uAC00\uC870\uC815\uC744
-      \uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    bodyText: "\uC5EC\uAE30\uC11C\uB294 \uBCF4\uC2A4\uC815\uBCF4\uB97C \uC9C1\uC811\uC5F4\uB78C
+      \uBC0F \uB09C\uC774\uB3C4 \uCD94\uAC00\uC870\uC815\uC744 \uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: Panel
     advanceType: 0
     eventType: 0
@@ -648,7 +647,7 @@ MonoBehaviour:
     targetId: 
   - order: 68
     id: base_BossTracker_intro
-    bodyText: "\uAD00\uC81C\uC18C \uB808\uBCA8\uC740 \uC2E4\uC81C \uC0AC\uB839\uBD80
+    bodyText: "\uAD00\uC81C\uD0D1 \uB808\uBCA8\uC740 \uC2E4\uC81C \uC0AC\uB839\uBD80
       \uB808\uBCA8\uACFC \uC5F0\uB3D9\uB429\uB2C8\uB2E4. \uB530\uB77C\uC11C \uC0AC\uB839\uBD80
       \uB808\uBCA8\uC774 \uC624\uB974\uBA74 \uACE0\uB09C\uC774\uB3C4 \uD574\uAE08,
       \uD2F0\uCF13 \uBCF4\uC720\uB7C9 \uBC0F \uC218\uAE09\uB7C9\uC774 \uC99D\uAC00\uD569\uB2C8\uB2E4."
@@ -751,6 +750,91 @@ MonoBehaviour:
       \uB9C8\uCE58\uB3C4\uB85D \uD558\uACA0\uC2B5\uB2C8\uB2E4. \uADF8\uB7FC \uD589\uC6B4\uC774
       \uC788\uAE30\uB97C \uBC14\uB78D\uB2C8\uB2E4."
     highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 79
+    id: base_core_charger_intro
+    bodyText: "\uCF54\uC5B4 \uCC28\uC800\uAC00 \uD574\uAE08\uB418\uC5C8\uC2B5\uB2C8\uB2E4.
+      \uC774 \uC2DC\uC124\uC5D0\uC11C\uB294 \uD0F1\uD06C \uC720\uB2DB \uAC15\uD654\uC640
+      \uB4DC\uB860 \uD574\uAE08\uC744 \uC9C4\uD589\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: Panel
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 80
+    id: base_core_charger_intro
+    bodyText: "\uC774\uACF3\uC5D0\uC11C\uB294 \uD604\uC7AC \uD0F1\uD06C\uC640 \uB2E4\uC74C
+      \uAC15\uD654 \uB2E8\uACC4\uB97C \uBE44\uAD50\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: Tank_Unit_Conversion_SubPanel
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 81
+    id: base_core_charger_intro
+    bodyText: "\uD604\uC7AC \uD0F1\uD06C\uC640 \uB2E4\uC74C \uD0F1\uD06C\uC758 \uC218\uCE58\uB97C
+      \uD655\uC778\uD558\uB294 \uCC3D\uC785\uB2C8\uB2E4."
+    highlightTargetName: Tank Route Status
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 82
+    id: base_core_charger_intro
+    bodyText: "\uC544\uB798\uC758 \uD654\uC0B4\uD45C \uBC84\uD2BC\uC744 \uB204\uB974\uBA74
+      \uC0C1\uC138\uD55C \uC815\uBCF4\uB97C \uC0B4\uD3B4\uBCF4\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: RouteDetailButton
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 83
+    id: base_core_charger_intro
+    bodyText: "\uCF54\uC5B4 \uCC28\uC800\uB97C \uC5C5\uADF8\uB808\uC774\uB4DC\uD558\uBA74
+      \uB2E4\uC74C\uC720\uB2DB \uAC15\uD654 \uBC84\uD2BC\uC774 \uD65C\uC131\uD654\uB429\uB2C8\uB2E4."
+    highlightTargetName: Enhance Unit Button
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 84
+    id: base_core_charger_intro
+    bodyText: "\uB2E4\uC74C\uC73C\uB85C \uB4DC\uB860 \uD574\uAE08\uC744 \uC18C\uAC1C\uD558\uACA0\uC2B5\uB2C8\uB2E4.
+      \uD574\uB2F9 \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
+    highlightTargetName: Button_DroneUnlock
+    advanceType: 1
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 85
+    id: base_core_charger_intro
+    bodyText: "\uB4DC\uB860 \uD574\uAE08 \uBA54\uB274\uC5D0\uC11C\uB294 \uB2E4\uC74C
+      \uB4DC\uB860 \uD574\uAE08 \uC870\uAC74\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: DroneUnlock_Conversion_SubPanel
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 86
+    id: base_core_charger_intro
+    bodyText: "\uB2E4\uC74C \uD574\uAE08 \uB4DC\uB860\uC758 \uC218\uCE58\uB97C \uBCF4\uC5EC\uC8FC\uB294
+      \uCC3D\uC785\uB2C8\uB2E4. \uD0F1\uD06C\uD574\uAE08\uACFC \uB3D9\uC77C\uD558\uAC8C
+      \uC544\uB798\uC758 \uD654\uC0B4\uD45C \uBC84\uD2BC\uC73C\uB85C \uC790\uC138\uD788
+      \uC0B4\uD3B4\uBCFC \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: Drone Status
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 86
+    id: base_core_charger_intro
+    bodyText: "\uB9C8\uCC2C\uAC00\uC9C0\uB85C \uAE30\uC9C0\uB97C \uC5C5\uADF8\uB808\uC774\uB4DC\uD558\uBA74
+      \uB354 \uAC15\uB825\uD55C \uB4DC\uB860\uC744 \uD574\uAE08\uD560 \uC218 \uC788\uB294
+      \uB2E8\uACC4\uAC00 \uB298\uC5B4\uB0A9\uB2C8\uB2E4."
+    highlightTargetName: Unlock Drone Button
     advanceType: 0
     eventType: 0
     targetAmount: 0

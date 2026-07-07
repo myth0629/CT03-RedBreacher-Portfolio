@@ -17,8 +17,12 @@ public class TutorialManager : MonoBehaviour
     private const string CompletedKey = "Tutorial.Completed";
     private const string BaseStepIndexKey = "Tutorial.BasePopup.StepIndex";
     private const string BaseCompletedKey = "Tutorial.BasePopup.Completed";
+    private const string CoreChargerStepIndexKey = "Tutorial.CoreCharger.StepIndex";
+    private const string CoreChargerCompletedKey = "Tutorial.CoreCharger.Completed";
     private const string BaseStepIdPrefix = "base_";
+    private const string CoreChargerStepIdPrefix = "base_core_charger_";
     private const string BasePopupName = "Base_Popup";
+    private const string CoreChargerFacilityId = "core_charger";
     private const float ResolveInterval = 0.5f;
     // 이름 기반 씬 전체 스캔(FindInScene)의 최소 간격. 타겟을 못 찾는 동안 매 프레임
     // Resources.FindObjectsOfTypeAll 전체 힙 스캔이 돌던 것을 막는다(모바일 프레임 스파이크 방지).
@@ -31,8 +35,11 @@ public class TutorialManager : MonoBehaviour
     private bool completed;
     private int baseStepIndex;
     private bool baseCompleted;
+    private int coreChargerStepIndex;
+    private bool coreChargerCompleted;
     private bool running;
     private bool runningBaseTutorial;
+    private bool runningCoreChargerTutorial;
 
     private TutorialConfig.TutorialStep activeStep;
     private int eventProgress;
@@ -53,7 +60,8 @@ public class TutorialManager : MonoBehaviour
     {
         // 이미 완료했거나 인스턴스가 있으면 생성하지 않는다.
         if (PlayerPrefs.GetInt(CompletedKey, 0) == 1
-            && PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1)
+            && PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1
+            && PlayerPrefs.GetInt(CoreChargerCompletedKey, 0) == 1)
         {
             return;
         }
@@ -86,6 +94,8 @@ public class TutorialManager : MonoBehaviour
         stepIndex = Mathf.Max(0, PlayerPrefs.GetInt(StepIndexKey, 0));
         baseCompleted = PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1;
         baseStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BaseStepIndexKey, 0));
+        coreChargerCompleted = PlayerPrefs.GetInt(CoreChargerCompletedKey, 0) == 1;
+        coreChargerStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(CoreChargerStepIndexKey, 0));
     }
 
     private void OnDestroy()
@@ -135,6 +145,15 @@ public class TutorialManager : MonoBehaviour
             if (allowSceneScan && !baseCompleted && HasTutorialSteps(true) && IsPanelOpen(BasePopupName))
             {
                 BeginStep(baseStepIndex, true);
+                return;
+            }
+
+            if (allowSceneScan
+                && !coreChargerCompleted
+                && HasCoreChargerTutorialSteps()
+                && IsCoreChargerTutorialReady())
+            {
+                BeginStep(coreChargerStepIndex, false, true);
             }
 
             return;
@@ -152,15 +171,25 @@ public class TutorialManager : MonoBehaviour
 
     private void BeginStep(int index, bool baseTutorial)
     {
-        int stepCount = GetTutorialStepCount(baseTutorial);
+        BeginStep(index, baseTutorial, false);
+    }
+
+    private void BeginStep(int index, bool baseTutorial, bool coreChargerTutorial)
+    {
+        int stepCount = GetTutorialStepCount(baseTutorial, coreChargerTutorial);
         if (index >= stepCount)
         {
-            Complete(baseTutorial);
+            Complete(baseTutorial, coreChargerTutorial);
             return;
         }
 
         runningBaseTutorial = baseTutorial;
-        if (baseTutorial)
+        runningCoreChargerTutorial = coreChargerTutorial;
+        if (coreChargerTutorial)
+        {
+            coreChargerStepIndex = index;
+        }
+        else if (baseTutorial)
         {
             baseStepIndex = index;
         }
@@ -169,7 +198,7 @@ public class TutorialManager : MonoBehaviour
             stepIndex = index;
         }
 
-        activeStep = GetTutorialStep(index, baseTutorial);
+        activeStep = GetTutorialStep(index, baseTutorial, coreChargerTutorial);
         eventProgress = 0;
         resolvedTarget = null;
         ClearArmedButton();
@@ -221,10 +250,13 @@ public class TutorialManager : MonoBehaviour
     private void AdvanceStep()
     {
         bool baseTutorial = runningBaseTutorial;
-        int nextIndex = (baseTutorial ? baseStepIndex : stepIndex) + 1;
+        bool coreChargerTutorial = runningCoreChargerTutorial;
+        int nextIndex = (coreChargerTutorial
+            ? coreChargerStepIndex
+            : baseTutorial ? baseStepIndex : stepIndex) + 1;
         ClearArmedButton();
         running = false;
-        BeginStep(nextIndex, baseTutorial);
+        BeginStep(nextIndex, baseTutorial, coreChargerTutorial);
     }
 
     private void Complete()
@@ -234,7 +266,16 @@ public class TutorialManager : MonoBehaviour
 
     private void Complete(bool baseTutorial)
     {
-        if (baseTutorial)
+        Complete(baseTutorial, false);
+    }
+
+    private void Complete(bool baseTutorial, bool coreChargerTutorial)
+    {
+        if (coreChargerTutorial)
+        {
+            coreChargerCompleted = true;
+        }
+        else if (baseTutorial)
         {
             baseCompleted = true;
         }
@@ -245,6 +286,7 @@ public class TutorialManager : MonoBehaviour
 
         running = false;
         runningBaseTutorial = false;
+        runningCoreChargerTutorial = false;
         activeStep = null;
         ClearArmedButton();
         if (overlay != null)
@@ -252,9 +294,13 @@ public class TutorialManager : MonoBehaviour
             overlay.Hide();
         }
 
-        PlayerPrefs.SetInt(baseTutorial ? BaseCompletedKey : CompletedKey, 1);
+        PlayerPrefs.SetInt(
+            coreChargerTutorial
+                ? CoreChargerCompletedKey
+                : baseTutorial ? BaseCompletedKey : CompletedKey,
+            1);
         PlayerPrefs.Save();
-        if (completed && baseCompleted)
+        if (completed && baseCompleted && coreChargerCompleted)
         {
             UnsubscribeEvents();
         }
@@ -273,6 +319,8 @@ public class TutorialManager : MonoBehaviour
             stepIndex = Mathf.Max(0, PlayerPrefs.GetInt(StepIndexKey, 0)),
             baseCompleted = PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1,
             baseStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BaseStepIndexKey, 0)),
+            coreChargerCompleted = PlayerPrefs.GetInt(CoreChargerCompletedKey, 0) == 1,
+            coreChargerStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(CoreChargerStepIndexKey, 0)),
         };
     }
 
@@ -288,6 +336,8 @@ public class TutorialManager : MonoBehaviour
         PlayerPrefs.SetInt(StepIndexKey, Mathf.Max(0, data.stepIndex));
         PlayerPrefs.SetInt(BaseCompletedKey, data.baseCompleted ? 1 : 0);
         PlayerPrefs.SetInt(BaseStepIndexKey, Mathf.Max(0, data.baseStepIndex));
+        PlayerPrefs.SetInt(CoreChargerCompletedKey, data.coreChargerCompleted ? 1 : 0);
+        PlayerPrefs.SetInt(CoreChargerStepIndexKey, Mathf.Max(0, data.coreChargerStepIndex));
         PlayerPrefs.Save();
 
         TutorialManager live = Instance;
@@ -310,19 +360,26 @@ public class TutorialManager : MonoBehaviour
         }
 
         live.baseCompleted = data.baseCompleted;
+        live.coreChargerCompleted = data.coreChargerCompleted;
         if (!live.running)
         {
             live.baseStepIndex = Mathf.Max(0, data.baseStepIndex);
+            live.coreChargerStepIndex = Mathf.Max(0, data.coreChargerStepIndex);
         }
     }
 
     // 강조 타깃을 이름으로 계속 탐색해 늦게 활성화되는 패널 내부 요소도 따라간다.
     private bool HasTutorialSteps(bool baseTutorial)
     {
-        return GetTutorialStepCount(baseTutorial) > 0;
+        return GetTutorialStepCount(baseTutorial, false) > 0;
     }
 
-    private int GetTutorialStepCount(bool baseTutorial)
+    private bool HasCoreChargerTutorialSteps()
+    {
+        return GetTutorialStepCount(false, true) > 0;
+    }
+
+    private int GetTutorialStepCount(bool baseTutorial, bool coreChargerTutorial)
     {
         if (config == null || config.Steps == null)
         {
@@ -332,7 +389,7 @@ public class TutorialManager : MonoBehaviour
         int count = 0;
         for (int i = 0; i < config.Steps.Count; i++)
         {
-            if (IsBaseTutorialStep(config.Steps[i]) == baseTutorial)
+            if (IsStepInGroup(config.Steps[i], baseTutorial, coreChargerTutorial))
             {
                 count++;
             }
@@ -341,7 +398,7 @@ public class TutorialManager : MonoBehaviour
         return count;
     }
 
-    private TutorialConfig.TutorialStep GetTutorialStep(int index, bool baseTutorial)
+    private TutorialConfig.TutorialStep GetTutorialStep(int index, bool baseTutorial, bool coreChargerTutorial)
     {
         if (config == null || config.Steps == null)
         {
@@ -352,7 +409,7 @@ public class TutorialManager : MonoBehaviour
         for (int i = 0; i < config.Steps.Count; i++)
         {
             TutorialConfig.TutorialStep step = config.Steps[i];
-            if (IsBaseTutorialStep(step) != baseTutorial)
+            if (!IsStepInGroup(step, baseTutorial, coreChargerTutorial))
             {
                 continue;
             }
@@ -368,11 +425,50 @@ public class TutorialManager : MonoBehaviour
         return null;
     }
 
+    private static bool IsStepInGroup(
+        TutorialConfig.TutorialStep step,
+        bool baseTutorial,
+        bool coreChargerTutorial)
+    {
+        if (coreChargerTutorial)
+        {
+            return IsCoreChargerTutorialStep(step);
+        }
+
+        bool isBaseStep = IsBaseTutorialStep(step);
+        bool isCoreChargerStep = IsCoreChargerTutorialStep(step);
+        return baseTutorial
+            ? isBaseStep && !isCoreChargerStep
+            : !isBaseStep && !isCoreChargerStep;
+    }
+
     private static bool IsBaseTutorialStep(TutorialConfig.TutorialStep step)
     {
         return step != null
             && !string.IsNullOrWhiteSpace(step.id)
             && step.id.StartsWith(BaseStepIdPrefix, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsCoreChargerTutorialStep(TutorialConfig.TutorialStep step)
+    {
+        return step != null
+            && !string.IsNullOrWhiteSpace(step.id)
+            && step.id.StartsWith(CoreChargerStepIdPrefix, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsCoreChargerTutorialReady()
+    {
+        BaseCampManager camp = BaseCampManager.Instance;
+        CommandCenter commandCenter = camp != null
+            ? camp.CommandCenter
+            : FindFirstObjectByType<CommandCenter>(FindObjectsInactive.Include);
+        if (commandCenter == null || !commandCenter.IsFacilityUnlocked(CoreChargerFacilityId))
+        {
+            return false;
+        }
+
+        CoreChargerPanel panel = FindFirstObjectByType<CoreChargerPanel>(FindObjectsInactive.Include);
+        return panel != null && panel.gameObject.activeInHierarchy;
     }
 
     private static bool IsPanelOpen(string panelName)
@@ -543,7 +639,12 @@ public class TutorialManager : MonoBehaviour
 
     private void Save()
     {
-        if (runningBaseTutorial)
+        if (runningCoreChargerTutorial)
+        {
+            PlayerPrefs.SetInt(CoreChargerStepIndexKey, coreChargerStepIndex);
+            PlayerPrefs.SetInt(CoreChargerCompletedKey, coreChargerCompleted ? 1 : 0);
+        }
+        else if (runningBaseTutorial)
         {
             PlayerPrefs.SetInt(BaseStepIndexKey, baseStepIndex);
             PlayerPrefs.SetInt(BaseCompletedKey, baseCompleted ? 1 : 0);
