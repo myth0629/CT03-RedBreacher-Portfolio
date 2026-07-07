@@ -253,6 +253,16 @@ public class AchievementManager : MonoBehaviour
         Load();
     }
 
+    private void OnDestroy()
+    {
+        // 파괴 시 정적 Instance를 비워, 씬 전환 후 파괴된 인스턴스에 진행도가 기록돼
+        // 조용히 유실되는 것을 막는다(C# null 연산자는 Unity fake-null을 우회하므로 명시적으로 해제).
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     public static void ReportPlayerLevelReached(int level)
     {
         Instance?.SetProgress(AchievementProgressType.PlayerLevel, level);

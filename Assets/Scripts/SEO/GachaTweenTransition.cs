@@ -91,6 +91,9 @@ public class GachaTweenTransition : MonoBehaviour
     private bool hasSkillGachaOddPanelStartLocalPosition;
     private bool wasWeaponGachaOddPanelActive;
     private bool wasSkillGachaOddPanelActive;
+    // Update 폴링에서 오드패널 참조가 아직 없을 때만 재해석하는 스로틀(프레임당 전체 힙 스캔 방지).
+    private const float OddPanelResolveInterval = 0.5f;
+    private float nextOddPanelResolveTime;
     private Tween activeTween;
     private Tween resultPanelTween;
     private Tween weaponGachaOddPanelTween;
@@ -478,7 +481,16 @@ public class GachaTweenTransition : MonoBehaviour
 
     private void PlayOddPanelTweensOnOpen()
     {
-        ResolveReferences();
+        // Update 폴링은 오드패널 두 개의 활성 전환만 감지한다. 참조가 이미 잡혀 있으면
+        // 매 프레임 ResolveReferences(미해결 필드마다 전체 힙 스캔)를 돌 필요가 없다.
+        // 미해결일 때만 간격을 두고 재해석해, 씬에 패널이 없을 때의 프레임당 다중 힙 스캔을 막는다.
+        if ((weaponGachaOddPanel == null || skillGachaOddPanel == null)
+            && Time.unscaledTime >= nextOddPanelResolveTime)
+        {
+            nextOddPanelResolveTime = Time.unscaledTime + OddPanelResolveInterval;
+            ResolveReferences();
+        }
+
         bool isWeaponOddPanelActive = weaponGachaOddPanel != null && weaponGachaOddPanel.gameObject.activeInHierarchy;
         bool isSkillOddPanelActive = skillGachaOddPanel != null && skillGachaOddPanel.gameObject.activeInHierarchy;
 

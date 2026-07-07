@@ -11,6 +11,8 @@ public class PlayerStatusHud : MonoBehaviour
     [SerializeField] private EnemySpawnManager spawnManager;
     [SerializeField] private PlayerCurrencyWallet currencyWallet;
     [SerializeField] private BossEncounterManager bossEncounterManager;
+    private const float BossEncounterSearchInterval = 1f;
+    private float nextBossEncounterSearchTime;
 
     [Header("inGamePanels")]
     [SerializeField] private GameObject stagePanel;
@@ -395,7 +397,8 @@ public class PlayerStatusHud : MonoBehaviour
         SetText(tankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
         
         // 탱크(자세히 보기)
-        SetText(unitStatusDetailText, $"{health.CurrentHealth:0}\n"
+        float detailHealth = health != null ? health.CurrentHealth : 0f;
+        SetText(unitStatusDetailText, $"{detailHealth:0}\n"
                                       + $"{player.AttackRange:0.##}\n"
                                       + $"{player.AttackRange:0.##}\n"
                                       + $"{player.AttackInterval:0.##}\n"
@@ -414,20 +417,20 @@ public class PlayerStatusHud : MonoBehaviour
         SetIcon(tankPopupEquipWeaponIcon, weapon != null ? weapon.Icon : null);
         SetDronePreview(tankPopupEquipDroneIcon, drone);
         SetText(tankPopupWeaponDamageText, weapon != null ? $"{player.WeaponAttackDamage:0.##}" : "0");
-        SetText(tankPopupWeaponSpeedText, $"{weapon.Speed * weapon.Lifetime:0.##}");
+        SetText(tankPopupWeaponSpeedText, weapon != null ? $"{weapon.Speed * weapon.Lifetime:0.##}" : "0");
         SetText(tankPopupWeaponRadiusText, weapon != null ? $"{weapon.AreaRadius:0.##}" : "0");
         SetText(tankPopupWeaponMaxPierceTargetsText, weapon != null ? $"{weapon.MaxPierceTargets}" : "0");
         SetText(tankPopupWeaponKnockbackText, $"{player.KnockbackForce:0.##}");
         
         // 드론
-        SetText(tankPopupDroneNameText, drone.DisplayName);
-        SetText(tankPopupDroneCountText, $" {drone.DroneCount}마리");
+        SetText(tankPopupDroneNameText, drone != null ? drone.DisplayName : "장착한 드론 없음");
+        SetText(tankPopupDroneCountText, drone != null ? $" {drone.DroneCount}마리" : " 0마리");
         SetText(tankPopupDroneDamageText, drone != null ? $"{GetEnhancedDroneDamage(drone):0.##}" : "0");
-        SetText(tankPopupDroneWeaponText, drone.ProjectileConfig.DisplayName);
-        SetText(tankPopupDroneIntervalText, $"{drone.AttackInterval:0.##}");
-        SetText(tankPopupDroneRangeText, $"{drone.AttackRange * drone.ProjectileLifetime:0.##}");
-        SetText(tankPopupDroneWeaponSpeedText, $"{drone.ProjectileSpeed:0.##}");
-        SetText(tankPopupDroneFollowSpeedText, $"{drone.FollowSpeed:0.##}");
+        SetText(tankPopupDroneWeaponText, drone != null && drone.ProjectileConfig != null ? drone.ProjectileConfig.DisplayName : "-");
+        SetText(tankPopupDroneIntervalText, drone != null ? $"{drone.AttackInterval:0.##}" : "0");
+        SetText(tankPopupDroneRangeText, drone != null ? $"{drone.AttackRange * drone.ProjectileLifetime:0.##}" : "0");
+        SetText(tankPopupDroneWeaponSpeedText, drone != null ? $"{drone.ProjectileSpeed:0.##}" : "0");
+        SetText(tankPopupDroneFollowSpeedText, drone != null ? $"{drone.FollowSpeed:0.##}" : "0");
         
         // 탱크(스탯강화소)
         SetText(stattankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
@@ -774,7 +777,15 @@ public class PlayerStatusHud : MonoBehaviour
 
     private void ResolveBossEncounterManager()
     {
-        bossEncounterManager ??= FindFirstObjectByType<BossEncounterManager>();
+        // 매 프레임 Refresh에서 호출된다. 씬에 매니저가 없으면(보스 없는 스테이지/기지) ??=로는
+        // 매 프레임 전체 씬 스캔이 되므로, 미발견 시 1초 간격으로만 재탐색한다(늦게 스폰돼도 곧 잡힘).
+        if (bossEncounterManager != null || Time.unscaledTime < nextBossEncounterSearchTime)
+        {
+            return;
+        }
+
+        nextBossEncounterSearchTime = Time.unscaledTime + BossEncounterSearchInterval;
+        bossEncounterManager = FindFirstObjectByType<BossEncounterManager>();
     }
 
     private void RefreshStagePanelVisibility()

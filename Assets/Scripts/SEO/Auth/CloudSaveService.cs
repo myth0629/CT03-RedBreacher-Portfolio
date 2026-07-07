@@ -169,9 +169,22 @@ public class CloudSaveService : MonoBehaviour
             return;
         }
 
+        string uid = CurrentUid();
+        if (string.IsNullOrEmpty(uid))
+        {
+            return;
+        }
+
         try
         {
-            DocumentSnapshot snap = await Doc().GetSnapshotAsync();
+            DocumentSnapshot snap = await Doc(uid).GetSnapshotAsync();
+
+            // 스냅샷 대기 중 계정이 바뀌었으면(로그아웃/전환) 이전 계정 데이터를 로컬/클라우드에 반영하지 않는다.
+            if (CurrentUid() != uid)
+            {
+                return;
+            }
+
             long localTs = GetLocalTimestamp(key);
 
             if (snap.Exists
@@ -189,13 +202,13 @@ public class CloudSaveService : MonoBehaviour
                 }
                 else if (localTs > cloudTs)
                 {
-                    await PushAsync(key);
+                    await PushAsync(key, uid);
                     Debug.Log($"[Cloud] 로컬 세이브 업로드 (local {localTs} > cloud {cloudTs}).");
                 }
             }
             else if (localTs >= 0)
             {
-                await PushAsync(key);
+                await PushAsync(key, uid);
                 Debug.Log("[Cloud] 클라우드에 첫 세이브 업로드.");
             }
 
@@ -213,9 +226,15 @@ public class CloudSaveService : MonoBehaviour
         pushing = true;
         try
         {
+            string uid = CurrentUid();
+            if (string.IsNullOrEmpty(uid))
+            {
+                return;
+            }
+
             foreach (string key in keys)
             {
-                await PushAsync(key);
+                await PushAsync(key, uid);
             }
         }
         catch (Exception e)
@@ -228,9 +247,9 @@ public class CloudSaveService : MonoBehaviour
         }
     }
 
-    private async Task PushAsync(string key)
+    private async Task PushAsync(string key, string uid)
     {
-        if (!IsReady())
+        if (!IsReady() || string.IsNullOrEmpty(uid))
         {
             return;
         }
@@ -250,12 +269,24 @@ public class CloudSaveService : MonoBehaviour
             { UpdatedAtField, FieldValue.ServerTimestamp },
         };
 
-        await Doc().SetAsync(payload, SetOptions.MergeAll);
+        // 업로드 직전 계정이 바뀌었으면 이전 계정 데이터를 새 계정 문서에 쓰지 않도록 중단한다.
+        if (CurrentUid() != uid)
+        {
+            return;
+        }
+
+        await Doc(uid).SetAsync(payload, SetOptions.MergeAll);
     }
 
-    private DocumentReference Doc()
+    private DocumentReference Doc(string uid)
     {
-        return firestore.Collection(UsersCollection).Document(FirebaseAuthManager.Instance.Uid);
+        return firestore.Collection(UsersCollection).Document(uid);
+    }
+
+    private static string CurrentUid()
+    {
+        FirebaseAuthManager auth = FirebaseAuthManager.Instance;
+        return auth != null ? auth.Uid : null;
     }
 
     private bool IsReady()

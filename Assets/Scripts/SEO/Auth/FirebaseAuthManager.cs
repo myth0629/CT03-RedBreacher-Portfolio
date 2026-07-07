@@ -87,26 +87,36 @@ public class FirebaseAuthManager : MonoBehaviour
 
     private async void Start()
     {
-        DependencyStatus status = await FirebaseApp.CheckAndFixDependenciesAsync();
-        if (status != DependencyStatus.Available)
+        // 전체를 감싸 초기화/무음 로그인 도중의 예외가 async void로 삼켜져
+        // 상태가 Connecting("접속 중...")에 영구히 고착되는 것을 막는다.
+        try
         {
-            Debug.LogError($"[Auth] Firebase 의존성 사용 불가: {status}");
+            DependencyStatus status = await FirebaseApp.CheckAndFixDependenciesAsync();
+            if (status != DependencyStatus.Available)
+            {
+                Debug.LogError($"[Auth] Firebase 의존성 사용 불가: {status}");
+                SetState(ConnectionState.ConnectFailed);
+                return;
+            }
+
+            auth = FirebaseAuth.DefaultInstance;
+            IsReady = true;
+
+            // 1) 이전 Firebase 세션이 남아 있으면 그대로 자동 로그인.
+            if (IsSignedIn)
+            {
+                SetState(ConnectionState.SignedIn);
+                return;
+            }
+
+            // 2) 무음 자동 연결 시도. 네이티브 구글은 무음 미지원이라 버튼을 노출하고, 재방문자는 위의 Firebase 세션 복원으로 자동 로그인된다.
+            await TrySilentSignIn();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[Auth] 초기화 실패: {e.Message}");
             SetState(ConnectionState.ConnectFailed);
-            return;
         }
-
-        auth = FirebaseAuth.DefaultInstance;
-        IsReady = true;
-
-        // 1) 이전 Firebase 세션이 남아 있으면 그대로 자동 로그인.
-        if (IsSignedIn)
-        {
-            SetState(ConnectionState.SignedIn);
-            return;
-        }
-
-        // 2) 무음 자동 연결 시도. 네이티브 구글은 무음 미지원이라 버튼을 노출하고, 재방문자는 위의 Firebase 세션 복원으로 자동 로그인된다.
-        await TrySilentSignIn();
     }
 
     private async Task TrySilentSignIn()

@@ -77,6 +77,7 @@ public class CombatHealth : MonoBehaviour
     private bool isDead;
     private bool deathRewardClaimed;
     private EnemyController enemyController;
+    private bool isPlayer;
     private static AudioSource bossDeathAudioSource;
 
     public float MaxHealth => maxHealth;
@@ -93,6 +94,7 @@ public class CombatHealth : MonoBehaviour
     {
         currentHealth = maxHealth;
         enemyController = GetComponent<EnemyController>();
+        isPlayer = GetComponent<PlayerController>() != null;
         EnsureDamageFeedback();
     }
 
@@ -248,7 +250,6 @@ public class CombatHealth : MonoBehaviour
             return;
         }
 
-        bool isPlayer = GetComponent<PlayerController>() != null;
         Color color = isCritical
             ? criticalDamageColor
             : isPlayer ? playerDamageColor : enemyDamageColor;
@@ -285,7 +286,7 @@ public class CombatHealth : MonoBehaviour
             return;
         }
 
-        if (playerOnlyRegen && GetComponent<PlayerController>() == null)
+        if (playerOnlyRegen && !isPlayer)
         {
             return;
         }
@@ -310,7 +311,7 @@ public class CombatHealth : MonoBehaviour
         isDead = true;
         OnDied?.Invoke(damageEvent);
 
-        if (GetComponent<PlayerController>() != null)
+        if (isPlayer)
         {
             Debug.Log($"{name} 사망: 플레이어 자동 전투를 중지합니다.");
             return;
