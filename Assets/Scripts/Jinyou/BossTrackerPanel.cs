@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -139,10 +139,25 @@ public class BossTrackerPanel : MonoBehaviour
         DroneConfig drone = playerDroneController != null ? playerDroneController.DroneConfig : null;
         string currentPower = PlayerStatusHud.BuildPlayerPowerText(player, playerHealth, drone);
         float recommendedPower = difficulty != null ? difficulty.recommendedPower : 0f;
+        int currentPowerValue = ParsePowerValue(currentPower);
+        
+        // 현재 전투력이 권장 전투력보다 낮으면 빨간색(#FF0000) : 길거나 같으면 초록색 (#0E9A3C)
+        string currentPowerColor = currentPowerValue < recommendedPower ? "#FF0000" : "#0E9A3C";
 
-        return $"권장 전투력: {currentPower} / {recommendedPower:N0}";
+        return $"권장 전투력: <color={currentPowerColor}>{currentPower}</color> / {recommendedPower:N0}";
     }
 
+    private static int ParsePowerValue(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return 0;
+        }
+
+        return int.TryParse(value.Replace(",", string.Empty), out int result)
+            ? result
+            : 0;
+    }
     private void SetBossLockIcon(BossTracker.BossDifficulty difficulty)
     {
         if (bossLockIcon == null)
