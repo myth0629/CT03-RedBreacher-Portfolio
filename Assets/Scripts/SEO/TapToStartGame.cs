@@ -23,6 +23,7 @@ public class TapToStartGame : MonoBehaviour
     [Header("Optional - 'Tap to Start' 깜빡임")]
     [SerializeField] private TMP_Text tapText;
     [SerializeField] private float blinkSpeed = 2f;
+    [SerializeField] private AudioSource tapToStartSound;
     
     [Header("GameQuit Popup(안드로이드 한정)")]
     [SerializeField] private GameObject gameQuitPopup;
@@ -88,6 +89,7 @@ public class TapToStartGame : MonoBehaviour
         }
 
         // 페이드 아웃 → 비동기 로드 → 페이드 인으로 전환.
+        PlayTapToStartSound();
         ScreenFader.Instance.LoadScene(gameSceneName, fadeDuration);
     }
 
@@ -160,5 +162,16 @@ public class TapToStartGame : MonoBehaviour
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
+    }
+    
+    private void PlayTapToStartSound()
+    {
+        if (tapToStartSound == null)
+        {
+            Debug.LogWarning($"{nameof(TapToStartGame)}: tapToStartSound가 연결되지 않았습니다.", this);
+            return;
+        }
+
+        tapToStartSound.Play();
     }
 }
