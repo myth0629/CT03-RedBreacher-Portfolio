@@ -190,7 +190,11 @@ public class EquipmentPartsPanel : MonoBehaviour
         EquipmentPartInstance part = GetSelectedPart();
         if (part != null && loadout != null)
         {
-            loadout.Equip(part);
+            if (loadout.Equip(part))
+            {
+                // 파츠 장착 성공 여부를 확인하기 위해 게임이벤트를 호출 (튜토리얼)
+                TutorialManager.RaiseGameEvent("InventoryPartEquipped");
+            }
         }
     }
 
