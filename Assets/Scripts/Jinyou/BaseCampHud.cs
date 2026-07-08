@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,9 +6,14 @@ public class BaseCampHud : MonoBehaviour
 {
     [SerializeField] private BaseCampManager baseCampManager;
 
-    [Header("Commander")]
-    [SerializeField] private TMP_Text commanderLevelText;
-    [SerializeField] private TMP_Text commandCenterLevelText;
+    [Header("Base(Name / Level)")]
+    [SerializeField] private TMP_Text commandCenterTitleText;
+    [SerializeField] private TMP_Text creditRefineryTitleText;
+    [SerializeField] private TMP_Text assemblyFactoryTitleText;
+    [SerializeField] private TMP_Text bossTrackerTitleText;
+    [SerializeField] private TMP_Text coreChargerTitleText;
+    [SerializeField] private TMP_Text traitPointTitleText;
+    [SerializeField] private TMP_Text skillHangerTitleText;
 
     [Header("Boss Ticket")]
     [SerializeField] private TMP_Text bossTicketText;
@@ -22,12 +27,10 @@ public class BaseCampHud : MonoBehaviour
     [SerializeField] private Button exitButton;
 
     [Header("BaseUnlockStatus")]
-    [SerializeField] private TMP_Text energyRefineryUnlockText;
     [SerializeField] private TMP_Text assemblyFactoryUnlockText;
     [SerializeField] private GameObject assemblyFactoryUnlockPanel;
     [SerializeField] private TMP_Text coreChargerUnlockText;
     [SerializeField] private GameObject coreChargerUnlockPanel;
-    [SerializeField] private TMP_Text controlTowerUnlockText;
 
     private void OnEnable()
     {
@@ -49,13 +52,11 @@ public class BaseCampHud : MonoBehaviour
 
     public void Configure(
         BaseCampManager manager,
-        TMP_Text commanderLevel,
         TMP_Text bossTicket,
         TMP_Text refineryStorage,
         Image refineryFill)
     {
         baseCampManager = manager;
-        commanderLevelText = commanderLevel;
         bossTicketText = bossTicket;
         refineryStorageText = refineryStorage;
         refineryStorageFill = refineryFill;
@@ -69,8 +70,7 @@ public class BaseCampHud : MonoBehaviour
 
         if (baseCampManager == null)
         {
-            SetText(commandCenterLevelText, "사령부 Lv. --");
-            SetText(commanderLevelText, "지휘관 Lv. --");
+            RefreshFacilityTitleTexts(null, null, null);
             SetText(bossTicketText, "티켓 --/--");
             SetText(refineryStorageText, "--/--");
             SetFill(refineryStorageFill, 0f);
@@ -81,10 +81,7 @@ public class BaseCampHud : MonoBehaviour
 
         CommandCenter researchLab = baseCampManager.CommandCenter;
         CreditRefinery refinery = baseCampManager.CreditRefinery;
-        SetText(commanderLevelText, $"지휘관 Lv. {baseCampManager.CommanderLevel}");
-        SetText(commandCenterLevelText, researchLab != null
-            ? $"사령부 Lv. {researchLab.Level}"
-            : "사령부 Lv. --");
+        RefreshFacilityTitleTexts(researchLab, refinery, baseCampManager);
 
         if (researchLab != null)
         {
@@ -119,6 +116,55 @@ public class BaseCampHud : MonoBehaviour
         RefreshBaseUnlockStatus();
     }
 
+    private void RefreshFacilityTitleTexts(
+        CommandCenter commandCenter,
+        CreditRefinery refinery,
+        BaseCampManager manager)
+    {
+        SetFacilityTitle(commandCenterTitleText, "command_center", "사령부", commandCenter != null ? commandCenter.Level : (int?)null);
+        SetFacilityTitle(creditRefineryTitleText, "energy_refinery", "에너지 정제소", refinery != null ? refinery.Level : (int?)null);
+        SetFacilityTitle(assemblyFactoryTitleText, "assembly_factory", "조립 공장", manager?.AssemblyFactory != null ? manager.AssemblyFactory.Level : (int?)null);
+        SetFacilityTitle(bossTrackerTitleText, "boss_tracker", "관제소", commandCenter != null ? commandCenter.Level : (int?)null);
+        SetFacilityTitle(coreChargerTitleText, "core_charger", "코어 차저", manager?.CoreCharger != null ? manager.CoreCharger.Level : (int?)null);
+        SetFacilityTitle(traitPointTitleText, "trait_point_facility", "특성 연구소", 1);
+        SetFacilityTitle(skillHangerTitleText, "skill_hanger", "스킬 격납고", manager?.SkillHanger != null ? manager.SkillHanger.Level : (int?)null);
+        SetTitleVisibleByUnlock(assemblyFactoryTitleText, commandCenter, "assembly_factory");
+        SetTitleVisibleByUnlock(coreChargerTitleText, commandCenter, "core_charger");
+    }
+
+    private void SetFacilityTitle(TMP_Text target, string facilityId, string fallbackName, int? level)
+    {
+        string displayName = GetFacilityDisplayName(facilityId, fallbackName);
+        SetText(target, level.HasValue
+            ? $"{displayName} Lv. {level.Value}"
+            : $"{displayName} Lv. --");
+    }
+
+    private string GetFacilityDisplayName(string facilityId, string fallbackName)
+    {
+        CommandCenter.FacilityUnlock unlock = FindFacilityUnlock(
+            baseCampManager != null ? baseCampManager.CommandCenter : null,
+            facilityId);
+        if (unlock != null && !string.IsNullOrWhiteSpace(unlock.displayName))
+        {
+            return unlock.displayName;
+        }
+
+        BaseCampBalanceConfig.FacilityDefinition definition = BaseCampBalanceConfig.Current?.GetFacility(facilityId);
+        return definition != null && !string.IsNullOrWhiteSpace(definition.displayName)
+            ? definition.displayName
+            : fallbackName;
+    }
+
+    private static void SetTitleVisibleByUnlock(TMP_Text target, CommandCenter commandCenter, string facilityId)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        target.gameObject.SetActive(commandCenter != null && commandCenter.IsFacilityUnlocked(facilityId));
+    }
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
@@ -180,10 +226,8 @@ public class BaseCampHud : MonoBehaviour
     private void RefreshBaseUnlockStatus()
     {
         CommandCenter commandCenter = baseCampManager != null ? baseCampManager.CommandCenter : null;
-        SetUnlockStatusText(energyRefineryUnlockText, commandCenter, "energy_refinery");
         SetUnlockStatusText(assemblyFactoryUnlockText, commandCenter, "assembly_factory", assemblyFactoryUnlockPanel);
         SetUnlockStatusText(coreChargerUnlockText, commandCenter, "core_charger", coreChargerUnlockPanel);
-        SetUnlockStatusText(controlTowerUnlockText, commandCenter, "boss_tracker");
     }
 
     private void SetUnlockStatusText(
@@ -239,3 +283,4 @@ public class BaseCampHud : MonoBehaviour
         return null;
     }
 }
+
