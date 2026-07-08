@@ -42,10 +42,20 @@ public class TutorialOverlay : MonoBehaviour
     [SerializeField, Min(40f)] private float maxBubbleHeight = 220f;
     [SerializeField, Min(0f)] private float bubbleVerticalPadding = 68f;
 
+    [Header("Target Click Pulse")]
+    [SerializeField] private bool enableTargetClickPulse = true;
+    [SerializeField] private Color targetClickPulseColor = new Color(1f, 1f, 1f, 0.32f);
+    [SerializeField, Min(0.1f)] private float targetClickPulseSpeed = 2.4f;
+    [SerializeField, Range(0f, 1f)] private float targetClickPulseMinAlpha = 0.08f;
+    [SerializeField, Range(0f, 1f)] private float targetClickPulseMaxAlpha = 0.34f;
+
     private RectTransform highlightTarget;
     private bool tapArmed;
     private float tapReadyTime;
     private Action tapCallback;
+    private TutorialAdvanceType activeAdvanceType;
+    private RectTransform targetClickPulseRect;
+    private Image targetClickPulseImage;
 
     private readonly Vector3[] cornerBuffer = new Vector3[4];
 
@@ -170,6 +180,7 @@ public class TutorialOverlay : MonoBehaviour
 
         highlightTarget = target;
         tapCallback = onTap;
+        activeAdvanceType = advanceType;
         tapArmed = advanceType == TutorialAdvanceType.Tap;
         tapReadyTime = Time.unscaledTime + 0.2f; // 직전 입력이 곧장 다음 스텝을 넘기지 않도록.
 
@@ -199,7 +210,9 @@ public class TutorialOverlay : MonoBehaviour
     {
         tapArmed = false;
         tapCallback = null;
+        activeAdvanceType = TutorialAdvanceType.Tap;
         highlightTarget = null;
+        SetTargetClickPulseActive(false);
         gameObject.SetActive(false);
     }
 
@@ -210,6 +223,9 @@ public class TutorialOverlay : MonoBehaviour
         {
             RefreshSpotlight();
         }
+
+        // 타깃 강조 연출
+        UpdateTargetClickPulse();
     }
 
     private void Update()
@@ -249,6 +265,7 @@ public class TutorialOverlay : MonoBehaviour
 
         if (!hasTarget)
         {
+            SetTargetClickPulseActive(false);
             return;
         }
 
@@ -261,6 +278,85 @@ public class TutorialOverlay : MonoBehaviour
         SetAnchors(bottomQuad, 0f, 0f, 1f, yMin);
         SetAnchors(leftQuad, 0f, yMin, xMin, yMax);
         SetAnchors(rightQuad, xMax, yMin, 1f, yMax);
+        RefreshTargetClickPulseRect(xMin, yMin, xMax, yMax);
+    }
+
+    // TargetClicked 이벤트일 때 타깃 영역을 펄스로 강조연출
+    private void RefreshTargetClickPulseRect(float xMin, float yMin, float xMax, float yMax)
+    {
+        bool shouldShow = enableTargetClickPulse
+            && activeAdvanceType == TutorialAdvanceType.TargetClicked
+            && highlightTarget != null;
+        SetTargetClickPulseActive(shouldShow);
+        if (!shouldShow || targetClickPulseRect == null)
+        {
+            return;
+        }
+
+        SetAnchors(targetClickPulseRect, xMin, yMin, xMax, yMax);
+    }
+
+    private void UpdateTargetClickPulse()
+    {
+        // 타깃 영역이 없거나 튜토리얼이 닫히면 자동으로 비활성
+        if (targetClickPulseImage == null || !targetClickPulseImage.gameObject.activeSelf)
+        {
+            return;
+        }
+
+        // unscaledTime => 튜토리얼 매니저에 보스 튜토리얼 전개 시 Time.timeScale = 0 이 되어도 계속 동작
+        float pulse01 = (Mathf.Sin(Time.unscaledTime * targetClickPulseSpeed * Mathf.PI * 2f) + 1f) * 0.5f;
+        Color color = targetClickPulseColor;
+        color.a = Mathf.Lerp(targetClickPulseMinAlpha, targetClickPulseMaxAlpha, pulse01);
+        targetClickPulseImage.color = color;
+    }
+
+    private void SetTargetClickPulseActive(bool active)
+    {
+        EnsureTargetClickPulse();
+        if (targetClickPulseImage == null)
+        {
+            return;
+        }
+
+        if (targetClickPulseImage.gameObject.activeSelf != active)
+        {
+            targetClickPulseImage.gameObject.SetActive(active);
+        }
+    }
+
+    private void EnsureTargetClickPulse()
+    {
+        if (targetClickPulseImage != null)
+        {
+            return;
+        }
+
+        Transform existing = transform.Find("TargetClickPulse");
+        if (existing != null)
+        {
+            targetClickPulseRect = existing as RectTransform;
+            targetClickPulseImage = existing.GetComponent<Image>();
+        }
+        else
+        {
+            GameObject pulseObject = new GameObject("TargetClickPulse", typeof(RectTransform), typeof(Image));
+            pulseObject.transform.SetParent(root != null ? root : transform, false);
+            targetClickPulseRect = pulseObject.transform as RectTransform;
+            targetClickPulseImage = pulseObject.GetComponent<Image>();
+        }
+
+        if (targetClickPulseImage != null)
+        {
+            targetClickPulseImage.raycastTarget = false;
+            targetClickPulseImage.color = targetClickPulseColor;
+            targetClickPulseImage.gameObject.SetActive(false);
+        }
+
+        if (bubble != null && targetClickPulseRect != null)
+        {
+            targetClickPulseRect.SetSiblingIndex(Mathf.Max(0, bubble.GetSiblingIndex()));
+        }
     }
 
     private bool TryGetNormalizedRect(RectTransform target, out Rect normalized)

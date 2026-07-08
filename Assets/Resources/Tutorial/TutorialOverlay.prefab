@@ -190,6 +190,11 @@ MonoBehaviour:
   minBubbleHeight: 400
   maxBubbleHeight: 600
   bubbleVerticalPadding: 68
+  enableTargetClickPulse: 1
+  targetClickPulseColor: {r: 1, g: 1, b: 1, a: 0.32}
+  targetClickPulseSpeed: 1
+  targetClickPulseMinAlpha: 0.01
+  targetClickPulseMaxAlpha: 0.25
 --- !u!1 &2275269908556247925
 GameObject:
   m_ObjectHideFlags: 0
