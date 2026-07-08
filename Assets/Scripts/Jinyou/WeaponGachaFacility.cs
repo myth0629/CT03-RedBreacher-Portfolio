@@ -367,6 +367,90 @@ public class WeaponGachaFacility : MonoBehaviour
         return result;
     }
 
+    public float GetWeaponEntryProbabilityPercent(WeaponGachaEntry entry)
+    {
+        if (!IsValid(entry))
+        {
+            return 0f;
+        }
+
+        return GetEntryProbabilityPercent(GachaCategory.Weapon, entry.weaponConfig, entry.weight, entry.weaponConfig.Rarity);
+    }
+
+    public float GetSkillEntryProbabilityPercent(SkillGachaEntry entry)
+    {
+        if (!IsValid(entry))
+        {
+            return 0f;
+        }
+
+        return GetEntryProbabilityPercent(GachaCategory.Skill, entry.skillConfig, entry.weight, entry.skillConfig.Rarity);
+    }
+
+    /// <summary>
+    /// 정규화된 등급 확률 * 같은 등급 내에의 아이템 자체 확률(entry.weight)을 합쳐 최종적으로 확률을 출력한다.
+    /// </summary>
+    /// <param name="category">종류 (무기/스킬) 참조</param>
+    /// <param name="config"></param>
+    /// <param name="weight">아이템별 확률 참조</param>
+    /// <param name="rarity">등급별 확률 참조</param>
+    /// <returns></returns>
+    private float GetEntryProbabilityPercent(GachaCategory category, UnityEngine.Object config, float weight, Rarity rarity)
+    {
+        List<RarityCandidate> candidates = BuildCandidates(category);
+        float[] oddsTable = BuildOddsTable(category);
+
+        bool[] present = new bool[4];
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            present[(int)candidates[i].rarity] = true;
+        }
+
+        float totalRarityWeight = 0f;
+        for (int r = 0; r < present.Length; r++)
+        {
+            if (present[r])
+            {
+                totalRarityWeight += oddsTable[r];
+            }
+        }
+
+        if (totalRarityWeight <= 0f)
+        {
+            float totalWeight = 0f;
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                totalWeight += Mathf.Max(0f, candidates[i].weight);
+            }
+
+            return totalWeight > 0f ? Mathf.Max(0f, weight) / totalWeight * 100f : 0f;
+        }
+
+        int rarityIndex = (int)rarity;
+        if (rarityIndex < 0 || rarityIndex >= oddsTable.Length || !present[rarityIndex])
+        {
+            return 0f;
+        }
+
+        float sameRarityWeight = 0f;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if (candidates[i].rarity == rarity)
+            {
+                sameRarityWeight += Mathf.Max(0f, candidates[i].weight);
+            }
+        }
+
+        if (sameRarityWeight <= 0f)
+        {
+            return 0f;
+        }
+
+        float normalizedRarityPercent = oddsTable[rarityIndex] / totalRarityWeight * 100f;
+        float entryPercentInRarity = Mathf.Max(0f, weight) / sameRarityWeight;
+        return normalizedRarityPercent * entryPercentInRarity;
+    }
+
     private List<RarityCandidate> BuildCandidates(GachaCategory category)
     {
         List<RarityCandidate> list = new List<RarityCandidate>();

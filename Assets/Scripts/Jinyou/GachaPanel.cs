@@ -50,7 +50,7 @@ public class GachaPanel : MonoBehaviour
     [Header("Draw Video")]
     [SerializeField] private GachaVideoPlayer gachaVideoPlayer;
 
-    [Header("Draw Confirm")]
+    [Header("Draw Confirm(선택기능)")]
     [Tooltip("뽑기 버튼을 누르면 먼저 뜨는 확인창 루트. 비우면 확인 없이 바로 뽑힌다(기존 동작).")]
     [SerializeField] private GameObject confirmPopup;
     [SerializeField] private TMP_Text confirmMessageText;
@@ -270,7 +270,6 @@ public class GachaPanel : MonoBehaviour
         }
 
         IReadOnlyList<WeaponGachaFacility.WeaponGachaEntry> entries = weaponGacha.GetWeaponEntries();
-        float totalWeight = 0f;
         int validCount = 0;
         for (int i = 0; i < entries.Count; i++)
         {
@@ -280,7 +279,6 @@ public class GachaPanel : MonoBehaviour
                 continue;
             }
 
-            totalWeight += entry.weight;
             validCount++;
         }
 
@@ -302,7 +300,7 @@ public class GachaPanel : MonoBehaviour
 
             WeaponItemOdd slot = _weaponItemOdds[slotIndex++];
             slot.gameObject.SetActive(true);
-            slot.Setup(entry, totalWeight);
+            slot.Setup(entry, weaponGacha.GetWeaponEntryProbabilityPercent(entry));
         }
 
         for (int i = slotIndex; i < _weaponItemOdds.Count; i++)
@@ -330,7 +328,6 @@ public class GachaPanel : MonoBehaviour
         }
 
         IReadOnlyList<WeaponGachaFacility.SkillGachaEntry> entries = weaponGacha.GetSkillEntries();
-        float totalWeight = 0f;
         int validCount = 0;
         for (int i = 0; i < entries.Count; i++)
         {
@@ -340,7 +337,6 @@ public class GachaPanel : MonoBehaviour
                 continue;
             }
 
-            totalWeight += entry.weight;
             validCount++;
         }
 
@@ -362,7 +358,7 @@ public class GachaPanel : MonoBehaviour
 
             SkillItemOdd slot = _skillItemOdds[slotIndex++];
             slot.gameObject.SetActive(true);
-            slot.Setup(entry, totalWeight);
+            slot.Setup(entry, weaponGacha.GetSkillEntryProbabilityPercent(entry));
         }
 
         for (int i = slotIndex; i < _skillItemOdds.Count; i++)

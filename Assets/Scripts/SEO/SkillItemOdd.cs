@@ -7,8 +7,9 @@ public class SkillItemOdd : MonoBehaviour
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Text skillItemName;
     [SerializeField] private TMP_Text skillItemOddNum;
+    [SerializeField] private Image rarityBackground;
 
-    public void Setup(WeaponGachaFacility.SkillGachaEntry entry, float totalWeight)
+    public void Setup(WeaponGachaFacility.SkillGachaEntry entry, float probabilityPercent)
     {
         PlayerSkillConfig skill = entry != null ? entry.skillConfig : null;
         Sprite skillIcon = skill != null ? skill.Icon : null;
@@ -22,10 +23,8 @@ public class SkillItemOdd : MonoBehaviour
 
         SetText(skillItemName, skill != null ? skill.DisplayName : string.Empty);
 
-        float probability = entry != null && totalWeight > 0f
-            ? Mathf.Max(0f, entry.weight) / totalWeight * 100f
-            : 0f;
-        SetText(skillItemOddNum, $"{probability:0.##}%");
+        SetText(skillItemOddNum, $"{Mathf.Max(0f, probabilityPercent):0.##}%");
+        SetRarityBackground(skill != null ? skill.Rarity : Rarity.Common);
     }
 
     private static void SetText(TMP_Text target, string value)
@@ -34,5 +33,17 @@ public class SkillItemOdd : MonoBehaviour
         {
             target.text = value;
         }
+    }
+    
+    private void SetRarityBackground(Rarity rarity)
+    {
+        if (rarityBackground == null)
+        {
+            return;
+        }
+
+        Color rarityColor = RarityVisuals.GetColor(rarity);
+        rarityColor.a = rarityBackground.color.a;
+        rarityBackground.color = rarityColor;
     }
 }
