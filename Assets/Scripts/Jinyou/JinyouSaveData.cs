@@ -50,6 +50,8 @@ public class JinyouTutorialSaveData
     public int coreChargerStepIndex;
     public bool inventoryCompleted;
     public int inventoryStepIndex;
+    public bool bossEncounterCompleted;
+    public int bossEncounterStepIndex;
 }
 
 [Serializable]

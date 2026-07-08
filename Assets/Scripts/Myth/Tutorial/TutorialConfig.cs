@@ -20,7 +20,7 @@ public enum TutorialEventType
     EnemyKilled,        // 적 처치(정적 Report)
     PlayerLevelReached, // 레벨업(정적 Report)
     PartEquipped,       // 파츠 장착(정적 Report)
-    InventoryPartEquipped,
+    BossDodgeUsed,      // 보스전 회피 기동(정적 Report [PlayerBossDodgeController.StartDodge()])
     FacilityUpgraded,   // 시설 강화 완료(시설 OnUpgradeCompleted 구독)
     WeaponEnhanced,     // 무기 강화 완료(AssemblyFactory.OnWeaponEnhanced 구독)
     UnitEnhanced,       // 유닛 강화 완료(CoreCharger.OnUnitEnhanced 구독)

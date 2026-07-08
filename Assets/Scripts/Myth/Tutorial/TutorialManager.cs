@@ -21,9 +21,12 @@ public class TutorialManager : MonoBehaviour
     private const string CoreChargerCompletedKey = "Tutorial.CoreCharger.Completed";
     private const string InventoryStepIndexKey = "Tutorial.Inventory.StepIndex";
     private const string InventoryCompletedKey = "Tutorial.Inventory.Completed";
+    private const string BossEncounterStepIndexKey = "Tutorial.BossEncounter.StepIndex";
+    private const string BossEncounterCompletedKey = "Tutorial.BossEncounter.Completed";
     private const string BaseStepIdPrefix = "base_";
     private const string CoreChargerStepIdPrefix = "base_core_charger_";
     private const string InventoryStepIdPrefix = "inventory_";
+    private const string BossEncounterStepIdPrefix = "boss_";
     private const string BasePopupName = "Base_Popup";
     private const string InventoryPopupName = "Inventory_Popup";
     private const string CoreChargerFacilityId = "core_charger";
@@ -43,10 +46,13 @@ public class TutorialManager : MonoBehaviour
     private bool coreChargerCompleted;
     private int inventoryStepIndex;
     private bool inventoryCompleted;
+    private int bossEncounterStepIndex;
+    private bool bossEncounterCompleted;
     private bool running;
     private bool runningBaseTutorial;
     private bool runningCoreChargerTutorial;
     private bool runningInventoryTutorial;
+    private bool runningBossEncounterTutorial;
 
     private TutorialConfig.TutorialStep activeStep;
     private int eventProgress;
@@ -61,6 +67,7 @@ public class TutorialManager : MonoBehaviour
     private float nextSceneScanTime;
     private bool allowSceneScan;
     private bool missingOverlayPrefab;
+    private bool bossTutorialPausedTimeScale;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -69,7 +76,8 @@ public class TutorialManager : MonoBehaviour
         if (PlayerPrefs.GetInt(CompletedKey, 0) == 1
             && PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1
             && PlayerPrefs.GetInt(CoreChargerCompletedKey, 0) == 1
-            && PlayerPrefs.GetInt(InventoryCompletedKey, 0) == 1)
+            && PlayerPrefs.GetInt(InventoryCompletedKey, 0) == 1
+            && PlayerPrefs.GetInt(BossEncounterCompletedKey, 0) == 1)
         {
             return;
         }
@@ -106,10 +114,13 @@ public class TutorialManager : MonoBehaviour
         coreChargerStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(CoreChargerStepIndexKey, 0));
         inventoryCompleted = PlayerPrefs.GetInt(InventoryCompletedKey, 0) == 1;
         inventoryStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(InventoryStepIndexKey, 0));
+        bossEncounterCompleted = PlayerPrefs.GetInt(BossEncounterCompletedKey, 0) == 1;
+        bossEncounterStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BossEncounterStepIndexKey, 0));
     }
 
     private void OnDestroy()
     {
+        RestoreBossTutorialTimeScale();
         UnsubscribeEvents();
         if (Instance == this)
         {
@@ -129,7 +140,7 @@ public class TutorialManager : MonoBehaviour
         {
             return;
         }
-
+        
         if (Time.unscaledTime >= nextResolveTime)
         {
             nextResolveTime = Time.unscaledTime + ResolveInterval;
@@ -144,8 +155,31 @@ public class TutorialManager : MonoBehaviour
             nextSceneScanTime = Time.unscaledTime + SceneScanInterval;
         }
 
+        bool baseCampReady = BaseCampManager.Instance != null;
+        bool bossEncounterReady = allowSceneScan
+            && !bossEncounterCompleted
+            && HasBossEncounterTutorialSteps()
+            && IsBossEncounterTutorialReady();
+
+        // 일반/기지 튜토리얼은 BaseCampManager가 필요하지만, 보스전 튜토리얼은 전투 씬에서 독립 실행될 수 있다.
+        if (!baseCampReady && !bossEncounterReady)
+        {
+            return;
+        }
+
         if (!running)
         {
+            if (bossEncounterReady)
+            {
+                BeginStep(bossEncounterStepIndex, false, false, false, true);
+                return;
+            }
+
+            if (!baseCampReady)
+            {
+                return;
+            }
+
             if (!completed && HasTutorialSteps(false))
             {
                 BeginStep(stepIndex, false);
@@ -172,7 +206,7 @@ public class TutorialManager : MonoBehaviour
                 && HasInventoryTutorialSteps()
                 && IsInventoryTutorialReady())
             {
-                BeginStep(inventoryStepIndex, false, false, true);
+                BeginStep(inventoryStepIndex, false, false, true, false);
             }
 
             return;
@@ -195,26 +229,33 @@ public class TutorialManager : MonoBehaviour
 
     private void BeginStep(int index, bool baseTutorial, bool coreChargerTutorial)
     {
-        BeginStep(index, baseTutorial, coreChargerTutorial, false);
+        BeginStep(index, baseTutorial, coreChargerTutorial, false, false);
     }
 
     private void BeginStep(
         int index,
         bool baseTutorial,
         bool coreChargerTutorial,
-        bool inventoryTutorial)
+        bool inventoryTutorial,
+        bool bossEncounterTutorial)
     {
-        int stepCount = GetTutorialStepCount(baseTutorial, coreChargerTutorial, inventoryTutorial);
+        int stepCount = GetTutorialStepCount(baseTutorial, coreChargerTutorial, inventoryTutorial, bossEncounterTutorial);
         if (index >= stepCount)
         {
-            Complete(baseTutorial, coreChargerTutorial, inventoryTutorial);
+            Complete(baseTutorial, coreChargerTutorial, inventoryTutorial, bossEncounterTutorial);
             return;
         }
 
         runningBaseTutorial = baseTutorial;
         runningCoreChargerTutorial = coreChargerTutorial;
         runningInventoryTutorial = inventoryTutorial;
-        if (inventoryTutorial)
+        runningBossEncounterTutorial = bossEncounterTutorial;
+        if (bossEncounterTutorial)
+        {
+            bossEncounterStepIndex = index;
+            PauseForBossTutorial();
+        }
+        else if (inventoryTutorial)
         {
             inventoryStepIndex = index;
         }
@@ -231,7 +272,7 @@ public class TutorialManager : MonoBehaviour
             stepIndex = index;
         }
 
-        activeStep = GetTutorialStep(index, baseTutorial, coreChargerTutorial, inventoryTutorial);
+        activeStep = GetTutorialStep(index, baseTutorial, coreChargerTutorial, inventoryTutorial, bossEncounterTutorial);
         eventProgress = 0;
         resolvedTarget = null;
         ClearArmedButton();
@@ -285,14 +326,17 @@ public class TutorialManager : MonoBehaviour
         bool baseTutorial = runningBaseTutorial;
         bool coreChargerTutorial = runningCoreChargerTutorial;
         bool inventoryTutorial = runningInventoryTutorial;
-        int nextIndex = (inventoryTutorial
+        bool bossEncounterTutorial = runningBossEncounterTutorial;
+        int nextIndex = (bossEncounterTutorial
+            ? bossEncounterStepIndex
+            : inventoryTutorial
             ? inventoryStepIndex
             : coreChargerTutorial
             ? coreChargerStepIndex
             : baseTutorial ? baseStepIndex : stepIndex) + 1;
         ClearArmedButton();
         running = false;
-        BeginStep(nextIndex, baseTutorial, coreChargerTutorial, inventoryTutorial);
+        BeginStep(nextIndex, baseTutorial, coreChargerTutorial, inventoryTutorial, bossEncounterTutorial);
     }
 
     private void Complete()
@@ -307,12 +351,16 @@ public class TutorialManager : MonoBehaviour
 
     private void Complete(bool baseTutorial, bool coreChargerTutorial)
     {
-        Complete(baseTutorial, coreChargerTutorial, false);
+        Complete(baseTutorial, coreChargerTutorial, false, false);
     }
 
-    private void Complete(bool baseTutorial, bool coreChargerTutorial, bool inventoryTutorial)
+    private void Complete(bool baseTutorial, bool coreChargerTutorial, bool inventoryTutorial, bool bossEncounterTutorial)
     {
-        if (inventoryTutorial)
+        if (bossEncounterTutorial)
+        {
+            bossEncounterCompleted = true;
+        }
+        else if (inventoryTutorial)
         {
             inventoryCompleted = true;
         }
@@ -333,22 +381,26 @@ public class TutorialManager : MonoBehaviour
         runningBaseTutorial = false;
         runningCoreChargerTutorial = false;
         runningInventoryTutorial = false;
+        runningBossEncounterTutorial = false;
         activeStep = null;
         ClearArmedButton();
+        RestoreBossTutorialTimeScale();
         if (overlay != null)
         {
             overlay.Hide();
         }
 
         PlayerPrefs.SetInt(
-            inventoryTutorial
+            bossEncounterTutorial
+                ? BossEncounterCompletedKey
+                : inventoryTutorial
                 ? InventoryCompletedKey
                 : coreChargerTutorial
                 ? CoreChargerCompletedKey
                 : baseTutorial ? BaseCompletedKey : CompletedKey,
             1);
         PlayerPrefs.Save();
-        if (completed && baseCompleted && coreChargerCompleted && inventoryCompleted)
+        if (completed && baseCompleted && coreChargerCompleted && inventoryCompleted && bossEncounterCompleted)
         {
             UnsubscribeEvents();
         }
@@ -371,6 +423,8 @@ public class TutorialManager : MonoBehaviour
             coreChargerStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(CoreChargerStepIndexKey, 0)),
             inventoryCompleted = PlayerPrefs.GetInt(InventoryCompletedKey, 0) == 1,
             inventoryStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(InventoryStepIndexKey, 0)),
+            bossEncounterCompleted = PlayerPrefs.GetInt(BossEncounterCompletedKey, 0) == 1,
+            bossEncounterStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BossEncounterStepIndexKey, 0)),
         };
     }
 
@@ -390,6 +444,8 @@ public class TutorialManager : MonoBehaviour
         PlayerPrefs.SetInt(CoreChargerStepIndexKey, Mathf.Max(0, data.coreChargerStepIndex));
         PlayerPrefs.SetInt(InventoryCompletedKey, data.inventoryCompleted ? 1 : 0);
         PlayerPrefs.SetInt(InventoryStepIndexKey, Mathf.Max(0, data.inventoryStepIndex));
+        PlayerPrefs.SetInt(BossEncounterCompletedKey, data.bossEncounterCompleted ? 1 : 0);
+        PlayerPrefs.SetInt(BossEncounterStepIndexKey, Mathf.Max(0, data.bossEncounterStepIndex));
         PlayerPrefs.Save();
 
         TutorialManager live = Instance;
@@ -414,34 +470,42 @@ public class TutorialManager : MonoBehaviour
         live.baseCompleted = data.baseCompleted;
         live.coreChargerCompleted = data.coreChargerCompleted;
         live.inventoryCompleted = data.inventoryCompleted;
+        live.bossEncounterCompleted = data.bossEncounterCompleted;
         if (!live.running)
         {
             live.baseStepIndex = Mathf.Max(0, data.baseStepIndex);
             live.coreChargerStepIndex = Mathf.Max(0, data.coreChargerStepIndex);
             live.inventoryStepIndex = Mathf.Max(0, data.inventoryStepIndex);
+            live.bossEncounterStepIndex = Mathf.Max(0, data.bossEncounterStepIndex);
         }
     }
 
     // 강조 타깃을 이름으로 계속 탐색해 늦게 활성화되는 패널 내부 요소도 따라간다.
     private bool HasTutorialSteps(bool baseTutorial)
     {
-        return GetTutorialStepCount(baseTutorial, false, false) > 0;
+        return GetTutorialStepCount(baseTutorial, false, false, false) > 0;
     }
 
     private bool HasCoreChargerTutorialSteps()
     {
-        return GetTutorialStepCount(false, true, false) > 0;
+        return GetTutorialStepCount(false, true, false, false) > 0;
     }
 
     private bool HasInventoryTutorialSteps()
     {
-        return GetTutorialStepCount(false, false, true) > 0;
+        return GetTutorialStepCount(false, false, true, false) > 0;
+    }
+
+    private bool HasBossEncounterTutorialSteps()
+    {
+        return GetTutorialStepCount(false, false, false, true) > 0;
     }
 
     private int GetTutorialStepCount(
         bool baseTutorial,
         bool coreChargerTutorial,
-        bool inventoryTutorial)
+        bool inventoryTutorial,
+        bool bossEncounterTutorial)
     {
         if (config == null || config.Steps == null)
         {
@@ -451,7 +515,7 @@ public class TutorialManager : MonoBehaviour
         int count = 0;
         for (int i = 0; i < config.Steps.Count; i++)
         {
-            if (IsStepInGroup(config.Steps[i], baseTutorial, coreChargerTutorial, inventoryTutorial))
+            if (IsStepInGroup(config.Steps[i], baseTutorial, coreChargerTutorial, inventoryTutorial, bossEncounterTutorial))
             {
                 count++;
             }
@@ -465,7 +529,8 @@ public class TutorialManager : MonoBehaviour
         int index,
         bool baseTutorial,
         bool coreChargerTutorial,
-        bool inventoryTutorial)
+        bool inventoryTutorial,
+        bool bossEncounterTutorial)
     {
         if (config == null || config.Steps == null)
         {
@@ -476,7 +541,7 @@ public class TutorialManager : MonoBehaviour
         for (int i = 0; i < config.Steps.Count; i++)
         {
             TutorialConfig.TutorialStep step = config.Steps[i];
-            if (!IsStepInGroup(step, baseTutorial, coreChargerTutorial, inventoryTutorial))
+            if (!IsStepInGroup(step, baseTutorial, coreChargerTutorial, inventoryTutorial, bossEncounterTutorial))
             {
                 continue;
             }
@@ -497,8 +562,14 @@ public class TutorialManager : MonoBehaviour
         TutorialConfig.TutorialStep step,
         bool baseTutorial,
         bool coreChargerTutorial,
-        bool inventoryTutorial)
+        bool inventoryTutorial,
+        bool bossEncounterTutorial)
     {
+        if (bossEncounterTutorial)
+        {
+            return IsBossEncounterTutorialStep(step);
+        }
+
         if (inventoryTutorial)
         {
             return IsInventoryTutorialStep(step);
@@ -512,9 +583,10 @@ public class TutorialManager : MonoBehaviour
         bool isBaseStep = IsBaseTutorialStep(step);
         bool isCoreChargerStep = IsCoreChargerTutorialStep(step);
         bool isInventoryStep = IsInventoryTutorialStep(step);
+        bool isBossEncounterStep = IsBossEncounterTutorialStep(step);
         return baseTutorial
-            ? isBaseStep && !isCoreChargerStep && !isInventoryStep
-            : !isBaseStep && !isCoreChargerStep && !isInventoryStep;
+            ? isBaseStep && !isCoreChargerStep && !isInventoryStep && !isBossEncounterStep
+            : !isBaseStep && !isCoreChargerStep && !isInventoryStep && !isBossEncounterStep;
     }
 
     // 처음으로 기지 팝업창을 열었을 경우 전개시작 (* 단, 사령부 레벨은 초기레벨(1레벨)로 유지할 것)
@@ -539,6 +611,14 @@ public class TutorialManager : MonoBehaviour
         return step != null
             && !string.IsNullOrWhiteSpace(step.id)
             && step.id.StartsWith(InventoryStepIdPrefix, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    // 처음으로 보스전 버튼을 눌러 보스전이 시작되면 전개
+    private static bool IsBossEncounterTutorialStep(TutorialConfig.TutorialStep step)
+    {
+        return step != null
+            && !string.IsNullOrWhiteSpace(step.id)
+            && step.id.StartsWith(BossEncounterStepIdPrefix, System.StringComparison.OrdinalIgnoreCase);
     }
 
     // 코어치저 튜토리얼 조건문
@@ -569,6 +649,38 @@ public class TutorialManager : MonoBehaviour
         }
 
         return IsPanelOpen(InventoryPopupName);
+    }
+
+    // 보스전 튜토리얼 조건문
+    private static bool IsBossEncounterTutorialReady()
+    {
+        BossEncounterManager encounterManager =
+            FindFirstObjectByType<BossEncounterManager>(FindObjectsInactive.Include);
+        return encounterManager != null && encounterManager.IsEncounterActive;
+    }
+
+    // 보스전 튜토리얼 전개가 시작되면 timeScale=0으로 바꿔 일시정지한다.
+    private void PauseForBossTutorial()
+    {
+        if (!runningBossEncounterTutorial || bossTutorialPausedTimeScale)
+        {
+            return;
+        }
+
+        Time.timeScale = 0f;
+        bossTutorialPausedTimeScale = true;
+    }
+
+    // 보스전 튜토리얼이 끝나면 timeScale을 원상복귀하여 일시정지를 푼다.
+    private void RestoreBossTutorialTimeScale()
+    {
+        if (!bossTutorialPausedTimeScale)
+        {
+            return;
+        }
+
+        Time.timeScale = 1f;
+        bossTutorialPausedTimeScale = false;
     }
 
     private static bool IsPanelOpen(string panelName)
@@ -753,7 +865,12 @@ public class TutorialManager : MonoBehaviour
     // 튜토리얼 진행내역 저장
     private void Save()
     {
-        if (runningInventoryTutorial)
+        if (runningBossEncounterTutorial)
+        {
+            PlayerPrefs.SetInt(BossEncounterStepIndexKey, bossEncounterStepIndex);
+            PlayerPrefs.SetInt(BossEncounterCompletedKey, bossEncounterCompleted ? 1 : 0);
+        }
+        else if (runningInventoryTutorial)
         {
             PlayerPrefs.SetInt(InventoryStepIndexKey, inventoryStepIndex);
             PlayerPrefs.SetInt(InventoryCompletedKey, inventoryCompleted ? 1 : 0);

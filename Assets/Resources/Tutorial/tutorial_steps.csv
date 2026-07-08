@@ -22,13 +22,13 @@ order,id,bodyText,highlightTargetName,advanceType,eventType,targetAmount,targetI
 21,open_player,"적 처치, 가이드 미션 달성, 정제소에서 수급 등 여러가지 방법을 통해서 획득 가능합니다.",Credit,Tap,None,0,
 22,open_player,"희귀한 자원인 크리스탈 코어입니다. 상점을 통해서 무기, 스킬을 뽑을 때 사용합니다.",Core Crystal,Tap,None,0,
 23,open_player,보스처치 및 도전과제 완료 시 획득 가능합니다.,Core Crystal,Tap,None,0,
-24,open_player,스킬 표시창입니다. 스킬을 소지 시 하단에 아이콘 표시되며 최대 4개까지 사용가능합니다.,Skill Cooldown,Tap,None,0,
-25,open_player,쿨타임 타이머로 작동하며 0이 되면 바로 스킬이 발동됩니다.,Skill Cooldown,Tap,None,0,
+24,open_player,스킬 표시창입니다. 스킬을 소지 시 하단에 아이콘 표시되며 최대 4개까지 사용가능합니다.,SkillCooldown,Tap,None,0,
+25,open_player,쿨타임 타이머로 작동하며 0이 되면 바로 스킬이 발동됩니다.,SkillCooldown,Tap,None,0,
 26,open_player,"스테이지를 표시하는 창입니다.
 ",Stage_Panel,Tap,None,0,
 27,open_player,"단일 스테이지에 여러 라운드를 거치는 방식이며, 모두완료시 스테이지가 올라갑니다.",Stage_Panel,Tap,None,0,
 28,open_player,스테이지가 오를수록 더 많은 보상과 새로운 강적들이 나타납니다.,Stage_Panel,Tap,None,0,
-29,open_player,보스를 소환할 수 있는 버튼입니다. 버튼 클릭 시 티켓이 소모되며 적은 모두 사라지고 보스와 1:1로 상대합니다.,Boss Btn,Tap,None,0,
+29,open_player,보스를 소환할 수 있는 버튼입니다. 버튼 클릭 시 티켓이 소모되며 적은 모두 사라지고 보스와 1:1로 상대합니다.,Boss_Btn,Tap,None,0,
 30,open_player,이것으로 인게임 UI에 대한 소개를 마치겠습니다. 이제 나만의 탱크를 성장하여 전장을 돌파하세요!,,Tap,None,0,
 31,base_popup_intro,기지에 오신 걸 환영합니다. 이곳에서는 자원을 수집하고 시설을 업그레이드할 수 있습니다.,,Tap,None,0,
 32,base_popup_intro,먼저 본부부터 안내해드리겠습니다. 사령부를 누르세요.,Command Center,TargetClicked,None,0,
@@ -99,3 +99,10 @@ order,id,bodyText,highlightTargetName,advanceType,eventType,targetAmount,targetI
 97,inventory_intro,만약 '엔진'파츠만 따로 보고싶다면 버튼을 통해 필터링 가능합니다. 표시된 버튼을 눌러주세요.,Engine_Btn,TargetClicked,None,0,true
 98,inventory_intro,이제 파츠목록에서 '엔진'파츠만 보이는 것을 확인할 수 있습니다.,Scroll View,Tap,None,0,true
 99,inventory_intro,다시 원래상태로 복귀하려면 하단에 '카테고리 필터 초기화'버튼을 눌러주시면 됩니다. 표시된 버튼을 눌러주세요.,FillterReset_Button,TargetClicked,None,0,true
+100,boss_intro,보스전에 입장하셨습니다. 보스전 시작 시 모든 적이 사라지고 오직 1:1 전투로 진행됩니다.,,Tap,None,1
+101,boss_intro,보스 이름과 체력은 상단 보스 HUD에서 확인할 수 있습니다.,BossPanel,Tap,None,1
+102,boss_intro,보스전에 진입하는 순간 회피기동이 활성화됩니다. 위험한 공격을 피할 때 유용합니다.,DodgeCooldown,Tap,None,1
+103,boss_intro,그러나 회피기동하는 순간 쿨타임이 존재하니 상황에 맞춰서 회피하세요.,DodgeCooldown,Tap,None,1
+104,boss_intro,투사체 맞기 직전에 회피기동하면 <color=#59FFFF>PERFECT DODGE!!</color> 라는 무적판정을 받습니다.,,Tap,None,1,,
+105,boss_intro,화면을 좌우로 드래그해 회피기동을 사용하세요.,DodgeInputArea,GameEvent,BossDodgeUsed,1,,
+,,,,,,,,

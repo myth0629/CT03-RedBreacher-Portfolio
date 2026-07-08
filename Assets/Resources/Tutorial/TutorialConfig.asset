@@ -241,7 +241,7 @@ MonoBehaviour:
     bodyText: "\uC2A4\uD0AC \uD45C\uC2DC\uCC3D\uC785\uB2C8\uB2E4. \uC2A4\uD0AC\uC744
       \uC18C\uC9C0 \uC2DC \uD558\uB2E8\uC5D0 \uC544\uC774\uCF58 \uD45C\uC2DC\uB418\uBA70
       \uCD5C\uB300 4\uAC1C\uAE4C\uC9C0 \uC0AC\uC6A9\uAC00\uB2A5\uD569\uB2C8\uB2E4."
-    highlightTargetName: Skill Cooldown
+    highlightTargetName: SkillCooldown
     advanceType: 0
     eventType: 0
     targetAmount: 0
@@ -250,7 +250,7 @@ MonoBehaviour:
     id: open_player
     bodyText: "\uCFE8\uD0C0\uC784 \uD0C0\uC774\uBA38\uB85C \uC791\uB3D9\uD558\uBA70
       0\uC774 \uB418\uBA74 \uBC14\uB85C \uC2A4\uD0AC\uC774 \uBC1C\uB3D9\uB429\uB2C8\uB2E4."
-    highlightTargetName: Skill Cooldown
+    highlightTargetName: SkillCooldown
     advanceType: 0
     eventType: 0
     targetAmount: 0
@@ -288,7 +288,7 @@ MonoBehaviour:
       \uBC84\uD2BC \uD074\uB9AD \uC2DC \uD2F0\uCF13\uC774 \uC18C\uBAA8\uB418\uBA70
       \uC801\uC740 \uBAA8\uB450 \uC0AC\uB77C\uC9C0\uACE0 \uBCF4\uC2A4\uC640 1:1\uB85C
       \uC0C1\uB300\uD569\uB2C8\uB2E4."
-    highlightTargetName: Boss Btn
+    highlightTargetName: Boss_Btn
     advanceType: 0
     eventType: 0
     targetAmount: 0
@@ -958,3 +958,61 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 0
     targetId: true
+  - order: 100
+    id: boss_intro
+    bodyText: "\uBCF4\uC2A4\uC804\uC5D0 \uC785\uC7A5\uD558\uC168\uC2B5\uB2C8\uB2E4.
+      \uBCF4\uC2A4\uC804 \uC2DC\uC791 \uC2DC \uBAA8\uB4E0 \uC801\uC774 \uC0AC\uB77C\uC9C0\uACE0
+      \uC624\uC9C1 1:1 \uC804\uD22C\uB85C \uC9C4\uD589\uB429\uB2C8\uB2E4."
+    highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 1
+    targetId: 
+  - order: 101
+    id: boss_intro
+    bodyText: "\uBCF4\uC2A4 \uC774\uB984\uACFC \uCCB4\uB825\uC740 \uC0C1\uB2E8 \uBCF4\uC2A4
+      HUD\uC5D0\uC11C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: BossPanel
+    advanceType: 0
+    eventType: 0
+    targetAmount: 1
+    targetId: 
+  - order: 102
+    id: boss_intro
+    bodyText: "\uBCF4\uC2A4\uC804\uC5D0 \uC9C4\uC785\uD558\uB294 \uC21C\uAC04 \uD68C\uD53C\uAE30\uB3D9\uC774
+      \uD65C\uC131\uD654\uB429\uB2C8\uB2E4. \uC704\uD5D8\uD55C \uACF5\uACA9\uC744
+      \uD53C\uD560 \uB54C \uC720\uC6A9\uD569\uB2C8\uB2E4."
+    highlightTargetName: DodgeCooldown
+    advanceType: 0
+    eventType: 0
+    targetAmount: 1
+    targetId: 
+  - order: 103
+    id: boss_intro
+    bodyText: "\uADF8\uB7EC\uB098 \uD68C\uD53C\uAE30\uB3D9\uD558\uB294 \uC21C\uAC04
+      \uCFE8\uD0C0\uC784\uC774 \uC874\uC7AC\uD558\uB2C8 \uC0C1\uD669\uC5D0 \uB9DE\uCDB0\uC11C
+      \uD68C\uD53C\uD558\uC138\uC694."
+    highlightTargetName: DodgeCooldown
+    advanceType: 0
+    eventType: 0
+    targetAmount: 1
+    targetId: 
+  - order: 104
+    id: boss_intro
+    bodyText: "\uD22C\uC0AC\uCCB4 \uB9DE\uAE30 \uC9C1\uC804\uC5D0 \uD68C\uD53C\uAE30\uB3D9\uD558\uBA74
+      <color=#59FFFF>PERFECT DODGE!!</color> \uB77C\uB294 \uBB34\uC801\uD310\uC815\uC744
+      \uBC1B\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 1
+    targetId: 
+  - order: 105
+    id: boss_intro
+    bodyText: "\uD654\uBA74\uC744 \uC88C\uC6B0\uB85C \uB4DC\uB798\uADF8\uD574 \uD68C\uD53C\uAE30\uB3D9\uC744
+      \uC0AC\uC6A9\uD558\uC138\uC694."
+    highlightTargetName: DodgeInputArea
+    advanceType: 2
+    eventType: 4
+    targetAmount: 1
+    targetId: 

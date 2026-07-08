@@ -275,6 +275,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         health?.SetTemporaryInvulnerability(invulnerability);
 
         afterimageEmitter?.Emit(true);
+        TutorialManager.Report(TutorialEventType.BossDodgeUsed);
     }
 
     private void UpdateDodge()
