@@ -31,6 +31,10 @@ public class TutorialOverlay : MonoBehaviour
     [SerializeField] private TMP_Text bubbleText;
     [SerializeField] private GameObject tapHint;
 
+    [Header("Touch Icon Objects")] 
+    [Tooltip("특정 튜토리얼 구간이 나올 때 터치입력을 아이콘을 표시하는 UI 오브젝트")] 
+    [SerializeField] private GameObject touchDragIcon;
+    
     [Header("Bubble Layout")]
     [SerializeField, Range(0.2f, 1f)] private float bubbleWidthNormalized = 0.84f;
     [SerializeField, Range(0f, 0.4f)] private float bubbleMarginXNormalized = 0.08f;
@@ -45,6 +49,7 @@ public class TutorialOverlay : MonoBehaviour
     [Header("Target Click Pulse")]
     [SerializeField] private bool enableTargetClickPulse = true;
     [SerializeField] private Color targetClickPulseColor = new Color(1f, 1f, 1f, 0.32f);
+    [Tooltip("깜빡거리는 속도. 값이 높을수록 더 빨라짐.")]
     [SerializeField, Min(0.1f)] private float targetClickPulseSpeed = 2.4f;
     [SerializeField, Range(0f, 1f)] private float targetClickPulseMinAlpha = 0.08f;
     [SerializeField, Range(0f, 1f)] private float targetClickPulseMaxAlpha = 0.34f;
@@ -54,6 +59,7 @@ public class TutorialOverlay : MonoBehaviour
     private float tapReadyTime;
     private Action tapCallback;
     private TutorialAdvanceType activeAdvanceType;
+    private bool showTouchDragGuide;
     private RectTransform targetClickPulseRect;
     private Image targetClickPulseImage;
 
@@ -108,6 +114,7 @@ public class TutorialOverlay : MonoBehaviour
         bubble ??= FindRect("Bubble");
         bubbleText ??= FindComponent<TMP_Text>("Bubble/Body");
         tapHint ??= FindObject("Bubble/TapHint");
+        touchDragIcon ??= FindObject("TouchDragIcon");
     }
 
     private void ApplyFont()
@@ -163,6 +170,16 @@ public class TutorialOverlay : MonoBehaviour
     /// <summary>스텝을 표시한다. target이 null이면 전체 어둡힘.</summary>
     public void Show(string body, RectTransform target, TutorialAdvanceType advanceType, Action onTap)
     {
+        Show(body, target, advanceType, onTap, false);
+    }
+
+    public void Show(
+        string body,
+        RectTransform target,
+        TutorialAdvanceType advanceType,
+        Action onTap,
+        bool showTouchDragIcon)
+    {
         BindPrefabReferences();
         if (!HasRequiredReferences())
         {
@@ -181,6 +198,7 @@ public class TutorialOverlay : MonoBehaviour
         highlightTarget = target;
         tapCallback = onTap;
         activeAdvanceType = advanceType;
+        showTouchDragGuide = showTouchDragIcon;
         tapArmed = advanceType == TutorialAdvanceType.Tap;
         tapReadyTime = Time.unscaledTime + 0.2f; // 직전 입력이 곧장 다음 스텝을 넘기지 않도록.
 
@@ -189,6 +207,7 @@ public class TutorialOverlay : MonoBehaviour
             tapHint.SetActive(advanceType == TutorialAdvanceType.Tap);
         }
 
+        RefreshTouchDragIcon();
         UpdateBubbleAnchor();
         RefreshSpotlight();
     }
@@ -211,7 +230,9 @@ public class TutorialOverlay : MonoBehaviour
         tapArmed = false;
         tapCallback = null;
         activeAdvanceType = TutorialAdvanceType.Tap;
+        showTouchDragGuide = false;
         highlightTarget = null;
+        SetTouchDragIconActive(false);
         SetTargetClickPulseActive(false);
         gameObject.SetActive(false);
     }
@@ -400,6 +421,11 @@ public class TutorialOverlay : MonoBehaviour
         }
 
         float heightNormalized = GetBubbleHeightNormalized();
+        if (showTouchDragGuide)
+        {
+            SetBubbleBottom(heightNormalized);
+            return;
+        }
 
         // 타깃이 화면 아래쪽이면 말풍선을 위로, 아니면 아래로 둬 겹치지 않게 한다.
         bool targetIsLow = false;
@@ -415,12 +441,61 @@ public class TutorialOverlay : MonoBehaviour
         }
         else
         {
-            bubble.anchorMin = new Vector2(bubbleMarginXNormalized, bubbleBottomYNormalized);
-            bubble.anchorMax = new Vector2(bubbleMarginXNormalized + bubbleWidthNormalized, bubbleBottomYNormalized + heightNormalized);
+            SetBubbleBottom(heightNormalized);
         }
 
         bubble.offsetMin = Vector2.zero;
         bubble.offsetMax = Vector2.zero;
+    }
+
+    private void SetBubbleBottom(float heightNormalized)
+    {
+        if (bubble == null)
+        {
+            return;
+        }
+
+        bubble.anchorMin = new Vector2(bubbleMarginXNormalized, bubbleBottomYNormalized);
+        bubble.anchorMax = new Vector2(
+            bubbleMarginXNormalized + bubbleWidthNormalized,
+            bubbleBottomYNormalized + heightNormalized);
+        bubble.offsetMin = Vector2.zero;
+        bubble.offsetMax = Vector2.zero;
+    }
+
+    private void RefreshTouchDragIcon()
+    {
+        if (!showTouchDragGuide)
+        {
+            SetTouchDragIconActive(false);
+            return;
+        }
+
+        SetTouchDragIconActive(true);
+        RectTransform iconRect = touchDragIcon != null ? touchDragIcon.transform as RectTransform : null;
+        if (iconRect == null)
+        {
+            return;
+        }
+
+        iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+        iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+        iconRect.pivot = new Vector2(0.5f, 0.5f);
+        iconRect.anchoredPosition = Vector2.zero;
+
+        if (bubble != null)
+        {
+            iconRect.SetSiblingIndex(Mathf.Max(0, bubble.GetSiblingIndex()));
+            bubble.SetAsLastSibling();
+        }
+    }
+
+    private void SetTouchDragIconActive(bool active)
+    {
+        if (touchDragIcon != null && touchDragIcon.activeSelf != active)
+        {
+            touchDragIcon.SetActive(active);
+        }
     }
 
     private float GetBubbleHeightNormalized()

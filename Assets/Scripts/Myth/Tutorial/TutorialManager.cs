@@ -288,7 +288,12 @@ public class TutorialManager : MonoBehaviour
         }
 
         running = true;
-        overlay.Show(activeStep.bodyText, null, activeStep.advanceType, OnTapAdvance);
+        bool showTouchDragIcon = bossEncounterTutorial
+            && index == stepCount - 1
+            && activeStep != null
+            && activeStep.advanceType == TutorialAdvanceType.GameEvent
+            && activeStep.eventType == TutorialEventType.BossDodgeUsed;
+        overlay.Show(activeStep.bodyText, null, activeStep.advanceType, OnTapAdvance, showTouchDragIcon);
         allowSceneScan = true; // 스텝 시작 시엔 즉시 1회 스캔 허용.
         ResolveActiveTarget();
         Save();

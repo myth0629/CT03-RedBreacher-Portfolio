@@ -883,7 +883,7 @@ MonoBehaviour:
       \uB20C\uB7EC\uC8FC\uC138\uC694."
     highlightTargetName: Unequip_Button
     advanceType: 1
-    eventType: 4
+    eventType: 0
     targetAmount: 0
     targetId: true
   - order: 93
@@ -989,9 +989,10 @@ MonoBehaviour:
     targetId: 
   - order: 103
     id: boss_intro
-    bodyText: "\uADF8\uB7EC\uB098 \uD68C\uD53C\uAE30\uB3D9\uD558\uB294 \uC21C\uAC04
-      \uCFE8\uD0C0\uC784\uC774 \uC874\uC7AC\uD558\uB2C8 \uC0C1\uD669\uC5D0 \uB9DE\uCDB0\uC11C
-      \uD68C\uD53C\uD558\uC138\uC694."
+    bodyText: "\uD68C\uD53C\uAE30\uB3D9\uC5D0\uB3C4 \uB300\uAE30 \uCFE8\uD0C0\uC784\uC774
+      \uC874\uC7AC\uD569\uB2C8\uB2E4. \uD55C \uBC88 \uC4F0\uBA74 \uCFE8\uD0C0\uC784\uC774
+      \uC9C0\uB0A0 \uB54C\uAE4C\uC9C0 \uC0AC\uC6A9\uD560 \uC218\uAC00 \uC5C6\uC73C\uB2C8
+      \uC0C1\uD669\uC5D0 \uB9DE\uCDB0\uC11C \uD68C\uD53C\uD558\uC138\uC694."
     highlightTargetName: DodgeCooldown
     advanceType: 0
     eventType: 0
@@ -1009,7 +1010,7 @@ MonoBehaviour:
     targetId: 
   - order: 105
     id: boss_intro
-    bodyText: "\uD654\uBA74\uC744 \uC88C\uC6B0\uB85C \uB4DC\uB798\uADF8\uD574 \uD68C\uD53C\uAE30\uB3D9\uC744
+    bodyText: "\uD654\uBA74\uC744 \uB4DC\uB798\uADF8\uD558\uC5EC \uD68C\uD53C\uAE30\uB3D9\uC744
       \uC0AC\uC6A9\uD558\uC138\uC694."
     highlightTargetName: DodgeInputArea
     advanceType: 2
