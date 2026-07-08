@@ -63,6 +63,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform repositionBoundsCenter;
     [SerializeField] private Vector2 repositionBoundsSize = new Vector2(24f, 24f);
     [SerializeField] private float repositionBoundsPadding = 1f;
+    [SerializeField] private AudioClip[] repositionClips;
+    [SerializeField] private AudioSource repositionSource;
 
     [Header("Fallback Effects")]
     [SerializeField] private GameObject fireFlashEffectPrefab;
@@ -941,6 +943,7 @@ public class PlayerController : MonoBehaviour
         repositionStartPosition = CombatPlane.WithFixedY(transform.position);
         repositionElapsed = 0f;
         afterimageEmitter?.Emit(true);
+        PlayRepositionSfx();
         nextRepositionTime = Time.time + Mathf.Max(0.1f, RepositionCooldownValue);
     }
 
@@ -1008,6 +1011,62 @@ public class PlayerController : MonoBehaviour
     {
         isRepositioning = false;
         SetVehicleMoveInput(0f, 0f);
+    }
+
+    private void PlayRepositionSfx()
+    {
+        if (repositionSource == null || repositionClips == null || repositionClips.Length == 0)
+        {
+            return;
+        }
+
+        AudioClip clip = GetRandomClip(repositionClips);
+        if (clip == null)
+        {
+            return;
+        }
+
+        repositionSource.PlayOneShot(clip);
+    }
+
+    private static AudioClip GetRandomClip(AudioClip[] clips)
+    {
+        if (clips == null || clips.Length == 0)
+        {
+            return null;
+        }
+
+        int validCount = 0;
+        for (int i = 0; i < clips.Length; i++)
+        {
+            if (clips[i] != null)
+            {
+                validCount++;
+            }
+        }
+
+        if (validCount <= 0)
+        {
+            return null;
+        }
+
+        int selectedIndex = Random.Range(0, validCount);
+        for (int i = 0; i < clips.Length; i++)
+        {
+            if (clips[i] == null)
+            {
+                continue;
+            }
+
+            if (selectedIndex == 0)
+            {
+                return clips[i];
+            }
+
+            selectedIndex--;
+        }
+
+        return null;
     }
 
     private void TryAimAndAttackCurrentTarget()

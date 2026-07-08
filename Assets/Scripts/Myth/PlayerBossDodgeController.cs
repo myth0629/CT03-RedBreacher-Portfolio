@@ -18,6 +18,8 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     [SerializeField] private float collisionRadius = 0.45f;
     [SerializeField] private float wallClearance = 0.05f;
     [SerializeField] private LayerMask obstacleMask;
+    [SerializeField] private AudioClip[] dodgeClips;
+    [SerializeField] private AudioSource dodgeSource;
 
     [Header("회피 속도감 연출")]
     [Tooltip("값이 클수록 회피 초반이 더 폭발적으로 가속됩니다. (이전 기본값 3)")]
@@ -275,7 +277,64 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         health?.SetTemporaryInvulnerability(invulnerability);
 
         afterimageEmitter?.Emit(true);
+        PlayDodgeSfx();
         TutorialManager.Report(TutorialEventType.BossDodgeUsed);
+    }
+
+    private void PlayDodgeSfx()
+    {
+        if (dodgeSource == null || dodgeClips == null || dodgeClips.Length == 0)
+        {
+            return;
+        }
+
+        AudioClip clip = GetRandomClip(dodgeClips);
+        if (clip == null)
+        {
+            return;
+        }
+
+        dodgeSource.PlayOneShot(clip);
+    }
+
+    private static AudioClip GetRandomClip(AudioClip[] clips)
+    {
+        if (clips == null || clips.Length == 0)
+        {
+            return null;
+        }
+
+        int validCount = 0;
+        for (int i = 0; i < clips.Length; i++)
+        {
+            if (clips[i] != null)
+            {
+                validCount++;
+            }
+        }
+
+        if (validCount <= 0)
+        {
+            return null;
+        }
+
+        int selectedIndex = Random.Range(0, validCount);
+        for (int i = 0; i < clips.Length; i++)
+        {
+            if (clips[i] == null)
+            {
+                continue;
+            }
+
+            if (selectedIndex == 0)
+            {
+                return clips[i];
+            }
+
+            selectedIndex--;
+        }
+
+        return null;
     }
 
     private void UpdateDodge()
