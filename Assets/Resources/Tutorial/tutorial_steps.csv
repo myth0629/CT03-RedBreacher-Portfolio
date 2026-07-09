@@ -70,15 +70,15 @@ order,id,bodyText,highlightTargetName,advanceType,eventType,targetAmount,targetI
 69,base_BossTracker_intro,"보스 정보 표시창입니다. <b>체력, 권장 전투력, 난이도, 사용 무기, 처치 보상</b>으로 구분됩니다.",Boss Status_Group,Tap,None,0,
 70,base_BossTracker_intro,<b>보스 난이도</b>는 양쪽 버튼을 통해 선택할 수 있습니다.,DifficultySelectButton_Group,Tap,None,0,
 71,base_BossTracker_intro,<b>일반 > 어려움 > 정예</b> 순으로 나누며 난이도가 높아질수록 보스 능력치 및 보상이 점진적으로 상승합니다.,Boss Status_Group,Tap,None,0,
-72,base_BossTracker_intro,<b>티켓 보유 개수</b>를 표시하는 구간입니다.,BossTicket,Tap,None,0,
-73,base_BossTracker_intro,"보스전 돌입 시 티켓이 반드시 필요하며, <b>특정 시간이 지나면 자동으로 충전</b>됩니다.",BossTicket,Tap,None,0,
-74,base_BossTracker_intro,만약 <b>처음으로 보스 처치</b>에 성공했다면 <b>보너스로 티켓을 지급받을 수 있습니다.</b>,BossTicket,Tap,None,0,
+72,base_BossTracker_intro,<b>티켓 보유 개수</b>를 표시하는 구간입니다.,BossTicket_ForPanel,Tap,None,0,
+73,base_BossTracker_intro,"보스전 돌입 시 티켓이 반드시 필요하며, <b>특정 시간이 지나면 자동으로 충전</b>됩니다.",BossTicket_ForPanel,Tap,None,0,
+74,base_BossTracker_intro,만약 <b>처음으로 보스 처치</b>에 성공했다면 <b>보너스로 티켓을 지급받을 수 있습니다.</b>,BossTicket_ForPanel,Tap,None,0,
 75,base_BossTracker_intro,이제 <b>돌아가기 버튼</b>을 눌러주세요.,CloseButton,TargetClicked,None,0,
 76,base_outtro,마지막으로 <b>코어 강화소</b>를 간략하게 소개하겠습니다. 이곳을 통해 <b>탱크를 강화하고 새 드론을 해금</b>할 수 있습니다.,Core Charger,Tap,None,0,
 77,base_outtro,아직 <b>사령부 레벨이 3 이상</b>에 도달하지 않아 해금 시 다시 한 번 안내해드리겠습니다.,LockState_CC,Tap,None,0,
-79,base_outtro,이것으로 기지에 대한 설명을 마치겠습니다.,,Tap,None,0,
+78,base_outtro,이것으로 기지에 대한 설명을 마치겠습니다.,,Tap,None,0,
 79,base_core_charger_intro,사령부 레벨이 3으로 업그레이드되어 <b>코어 강화소</b>가 해금되었습니다. 표시된 시설을 누르세요.,Core Charger,TargetClicked,None,0
-80,base_core_charger_intro,이곳에서는 <b>현재 탱크와 다음 강화 단계</b>를 비교할 수 있습니다.,Tank_Unit_Conversion_SubPanel,Tap,None,0
+80,base_core_charger_intro,이곳에서는 <b>현재 탱크와 다음 강화 단계</b>를 비교할 수 있습니다.,,Tap,None,0
 81,base_core_charger_intro,<b>현재 탱크와 다음 탱크의 스탯</b>을 확인하는 창입니다.,Tank Route Status,Tap,None,0,
 82,base_core_charger_intro,아래의 <b>화살표 버튼</b>을 누르면 <b>상세한 정보</b>를 살펴보실 수 있습니다.,RouteDetailButton,Tap,None,0,
 83,base_core_charger_intro,코어 강화소를 업그레이드하면 <b>다음 유닛 강화 버튼이 활성화</b>됩니다.,Enhance Unit Button,Tap,None,0
@@ -86,21 +86,23 @@ order,id,bodyText,highlightTargetName,advanceType,eventType,targetAmount,targetI
 85,base_core_charger_intro,이곳에서는 <b>다음 드론 해금 조건</b>을 확인할 수 있습니다.,DroneUnlock_Conversion_SubPanel,Tap,None,0
 86,base_core_charger_intro,<b>다음 해금 드론의 스탯</b>을 보여주는 창입니다. 아래의 <b>화살표 버튼</b>을 통해 상세히 살펴볼 수 있습니다.,Drone Status,Tap,None,0,
 87,base_core_charger_intro,마찬가지로 기지를 업그레이드하면 더 강력한 드론을 해금할 수 있는 단계가 늘어납니다.,Unlock Drone Button,Tap,None,0
-88,inventory_intro,<b>장비 파츠</b>를 획득했습니다. 인벤토리를 통해 보유한 파츠를 확인할 수 있습니다.,,Tap,None,0,true
-89,inventory_intro,장착할 파츠를 선택하세요.,PartButtons(Clone),TargetClicked,None,0,true
-90,inventory_intro,파츠 선택 시 <b>등급과 능력치</b>를 확인할 수 있습니다.,Selected Panel,Tap,None,0,true,
-91,inventory_intro,실제 전투에 적용하려면 <b>파츠를 장착하세요.</b>,Equip_Button,TargetClicked,None,0,true
-92,inventory_intro,파츠 장착이 완료되었습니다. 탈착하려면 <b>장착해제 버튼</b>을 눌러주세요.,Unequip_Button,TargetClicked,InventoryPartEquipped,0,true
-93,inventory_intro,이제 파츠가 장착되어 <b>주 옵션/부가 옵션</b>이 실제로 적용됩니다. 등급과 레벨이 높을수록 능력치는 더욱 강해집니다.,Selected Panel,Tap,None,0,true
-94,inventory_intro,"목록 <b>아래의 버튼</b>을 통해서 <b>다른 파츠로 갈아탈 수 있고, 필요 없는 파츠들은 판매</b>할 수 있습니다.",Buttons Group,Tap,None,0,true,
-95,inventory_intro,<color=#FF0000>그러나 판매하는 순간 바로 처분되어 이 결정은 다시 되돌릴 수 없습니다.</color> 신중하게 결정해 주세요!,Sell_Button,Tap,None,0,true,
-96,inventory_intro,실제 장착한 파츠는 <b>카테고리 하단의 작은 글씨</b>에 표시됩니다.,PartSlots_Group,Tap,None,0,true
-97,inventory_intro,만약 <b>엔진 파츠</b>만 따로 보고 싶다면 버튼을 통해 필터링할 수 있습니다. 표시된 버튼을 눌러주세요.,Engine_Btn,TargetClicked,None,0,true
-98,inventory_intro,이제 파츠 목록에서 <b>엔진 파츠</b>만 보이는 것을 확인할 수 있습니다.,Scroll View,Tap,None,0,true
-99,inventory_intro,다시 원래 상태로 복귀하려면 하단의 <b>카테고리 필터 초기화 버튼</b>을 눌러주세요.,FillterReset_Button,TargetClicked,None,0,true
-100,boss_intro,보스전에 입장하셨습니다. 이제부터 <b>모든 적이 사라지고 오직 1:1 전투</b>로만 진행됩니다.,,Tap,None,1
-101,boss_intro,<b>보스 이름과 체력</b>은 상단 보스 HUD에서 확인할 수 있습니다.,BossPanel,Tap,None,1
-102,boss_intro,보스전에 진입하는 순간 <b>회피기동</b>이 활성화됩니다. 위험한 공격을 피할 때 유용합니다.,DodgeCooldown,Tap,None,1
-103,boss_intro,회피기동에도 <b>대기 쿨타임</b>이 존재합니다. 한 번 쓰면 쿨타임이 지날 때까지 사용할 수 없으니 상황에 맞춰 회피하세요.,DodgeCooldown,Tap,None,1
-104,boss_intro,투사체에 맞기 직전에 회피기동하면 <color=#59FFFF>PERFECT DODGE!!</color>라는 무적 판정을 받습니다.,,Tap,None,1,,
-105,boss_intro,<b>화면을 드래그</b>하여 회피기동을 사용하세요.,DodgeInputArea,GameEvent,BossDodgeUsed,1,,
+88,base_core_charger_intro,이것으로 <b>코어 강화소</b>의 설명을 마치겠습니다.,,Tap,None,0,,
+89,inventory_intro,<b>장비 파츠</b>를 획득했습니다. 인벤토리를 통해 보유한 파츠를 확인할 수 있습니다.,,Tap,None,0,true
+90,inventory_intro,장착할 파츠를 선택하세요.,PartButtons(Clone),TargetClicked,None,0,true
+91,inventory_intro,파츠 선택 시 <b>등급과 능력치</b>를 확인할 수 있습니다.,Selected Panel,Tap,None,0,true,
+92,inventory_intro,실제 전투에 적용하려면 <b>파츠를 장착하세요.</b>,Equip_Button,TargetClicked,None,0,true
+93,inventory_intro,파츠 장착이 완료되었습니다. 탈착하려면 <b>장착해제 버튼</b>을 눌러주세요.,Unequip_Button,TargetClicked,InventoryPartEquipped,0,true
+94,inventory_intro,이제 파츠가 장착되어 <b>주 옵션/부가 옵션</b>이 실제로 적용됩니다. 등급과 레벨이 높을수록 능력치는 더욱 강해집니다.,Selected Panel,Tap,None,0,true
+95,inventory_intro,"목록 <b>아래의 버튼</b>을 통해서 <b>다른 파츠로 갈아탈 수 있고, 필요 없는 파츠들은 판매</b>할 수 있습니다.",Buttons Group,Tap,None,0,true,
+96,inventory_intro,<color=#FF0000>그러나 판매하는 순간 바로 처분되어 이 결정은 다시 되돌릴 수 없습니다.</color> 신중하게 결정해 주세요!,Sell_Button,Tap,None,0,true,
+97,inventory_intro,실제 장착한 파츠는 <b>카테고리 하단의 작은 글씨</b>에 표시됩니다.,PartSlots_Group,Tap,None,0,true
+98,inventory_intro,만약 <b>엔진 파츠</b>만 따로 보고 싶다면 버튼을 통해 필터링할 수 있습니다. 표시된 버튼을 눌러주세요.,Engine_Btn,TargetClicked,None,0,true
+99,inventory_intro,이제 파츠 목록에서 <b>엔진 파츠</b>만 보이는 것을 확인할 수 있습니다.,Scroll View,Tap,None,0,true
+100,inventory_intro,다시 원래 상태로 복귀하려면 하단의 <b>카테고리 필터 초기화 버튼</b>을 눌러주세요.,FillterReset_Button,TargetClicked,None,0,true
+101,boss_intro,보스전에 입장하셨습니다. 이제부터 <b>모든 적이 사라지고 오직 1:1 전투</b>로만 진행됩니다.,,Tap,None,1
+102,boss_intro,<b>보스 이름과 체력</b>은 상단 보스 HUD에서 확인할 수 있습니다.,BossPanel,Tap,None,1
+103,boss_intro,보스전에 진입하는 순간 <b>회피기동</b>이 활성화됩니다. 위험한 공격을 피할 때 유용합니다.,DodgeCooldown,Tap,None,1
+104,boss_intro,회피기동에도 <b>대기 쿨타임</b>이 존재합니다. 한 번 쓰면 쿨타임이 지날 때까지 사용할 수 없으니 상황에 맞춰 회피하세요.,DodgeCooldown,Tap,None,1
+105,boss_intro,투사체에 맞기 직전에 회피기동하면 <color=#59FFFF>PERFECT DODGE!!</color>라는 무적 판정을 받습니다.,,Tap,None,1,,
+106,boss_intro,<b>화면을 드래그</b>하여 회피기동을 사용하세요.,DodgeInputArea,GameEvent,BossDodgeUsed,1,,
+107

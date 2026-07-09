@@ -54,10 +54,10 @@ MonoBehaviour:
     targetId: 
   - order: 5
     id: open_player
-    bodyText: "\uC798\uD558\uC168\uC2B5\uB2C8\uB2E4! \uC774\uC81C \uAE30\uCC44 \uD0ED\uC5D0
+    bodyText: "\uC798\uD558\uC168\uC2B5\uB2C8\uB2E4! \uC774\uC81C \uAE30\uCCB4 \uD0ED\uC5D0
       \uB300\uD574\uC11C \uC18C\uAC1C\uD558\uACA0\uC2B5\uB2C8\uB2E4. \uC7A5\uCC29\uD55C
-      \uBB34\uAE30/\uB4DC\uB860 \uC2A4\uD15F\uC740 \uC544\uB798\uC758 \uD328\uB110\uC5D0
-      \uD45C\uC2DC\uD569\uB2C8\uB2E4."
+      \uBB34\uAE30/\uB4DC\uB860 \uC2A4\uD0EF\uC740 \uC544\uB798 \uD328\uB110\uC5D0
+      \uD45C\uC2DC\uB429\uB2C8\uB2E4."
     highlightTargetName: Weapon/Drone Infos_BG_Frame
     advanceType: 0
     eventType: 0
@@ -65,8 +65,8 @@ MonoBehaviour:
     targetId: 
   - order: 6
     id: open_player
-    bodyText: "\uADF8 \uC704\uC5D0 \uBC84\uD2BC\uC744 \uD1B5\uD574\uC11C <b>\uBB34\uAE30/\uB4DC\uB860
-      \uC2A4\uD15F \uC815\uBCF4\uB97C \uC11C\uB85C \uBC88\uAC08\uC544 \uBCFC \uC218
+    bodyText: "\uADF8 \uC704 \uBC84\uD2BC\uC744 \uD1B5\uD574 <b>\uBB34\uAE30/\uB4DC\uB860
+      \uC2A4\uD0EF \uC815\uBCF4\uB97C \uC11C\uB85C \uBC88\uAC08\uC544 \uBCFC \uC218
       \uC788\uC2B5\uB2C8\uB2E4.</b>"
     highlightTargetName: InfoButtons Group
     advanceType: 0
@@ -75,9 +75,9 @@ MonoBehaviour:
     targetId: 
   - order: 7
     id: open_player
-    bodyText: "\uD0D1\uC2B9 \uC911\uC778 \uD0F1\uD06C \uC2A4\uD15F\uC744 \uD45C\uC2DC\uD558\uB294
-      \uAD6C\uAC04\uC785\uB2C8\uB2E4. \uB2A5\uB825\uCE58 \uBC0F \uD604\uC7AC \uD0F1\uD06C\uB808\uBCA8\uC744
-      \uD655\uC778 \uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    bodyText: "\uD0D1\uC2B9 \uC911\uC778 \uD0F1\uD06C \uC2A4\uD0EF\uC744 \uD45C\uC2DC\uD558\uB294
+      \uAD6C\uAC04\uC785\uB2C8\uB2E4. \uB2A5\uB825\uCE58 \uBC0F \uD604\uC7AC \uD0F1\uD06C
+      \uB808\uBCA8\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: Player nfos_BG_Frame
     advanceType: 0
     eventType: 0
@@ -86,7 +86,7 @@ MonoBehaviour:
   - order: 8
     id: open_player
     bodyText: "\uC544\uB798\uC758 <b>\uD654\uC0B4\uD45C \uBC84\uD2BC</b>\uC744 \uB204\uB974\uBA74
-      <b>\uB354 \uC0C1\uC138\uD55C \uC815\uBCF4</b>\uB97C \uC0B4\uD3B4 \uBCFC \uC218
+      <b>\uB354 \uC0C1\uC138\uD55C \uC815\uBCF4</b>\uB97C \uC0B4\uD3B4\uBCFC \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: RouteDetailButton
     advanceType: 0
@@ -97,7 +97,7 @@ MonoBehaviour:
     id: open_player
     bodyText: "\uB4DC\uB860\uC785\uB2C8\uB2E4. \uC774 \uBCD1\uAE30\uB294 <b>\uD0F1\uD06C\uB97C
       \uC5C4\uD638</b>\uD558\uAE30 \uC704\uD574 \uB9CC\uB4E4\uC5B4\uC84C\uC73C\uBA70
-      <b>\uBCF4\uC870\uC801\uC73C\uB85C \uD654\uB825\uC9C0\uC6D0</b>\uC744 \uD22C\uC0AC\uD569\uB2C8\uB2E4."
+      <b>\uBCF4\uC870\uC801\uC73C\uB85C \uD654\uB825 \uC9C0\uC6D0</b>\uC744 \uC81C\uACF5\uD569\uB2C8\uB2E4."
     highlightTargetName: Drone_Image_Button
     advanceType: 0
     eventType: 0
@@ -114,8 +114,9 @@ MonoBehaviour:
   - order: 11
     id: open_player
     bodyText: "\uB4DC\uB860 \uC778\uBCA4\uD1A0\uB9AC\uC785\uB2C8\uB2E4. \uC9C0\uAE08\uC740
-      1\uAE30 \uBC16\uC5D0 \uC5C6\uC9C0\uB9CC \uCD94\uD6C4 \uB2E4\uC591\uD55C \uC885\uB958\uAC00
-      \uD574\uAE08\uB420 \uB54C \uAC19\uC740 \uBC29\uC2DD\uC73C\uB85C \uAD50\uCC44\uAC00\uB2A5\uD569\uB2C8\uB2E4."
+      1\uAE30\uBC16\uC5D0 \uC5C6\uC9C0\uB9CC \uCD94\uD6C4 \uB2E4\uC591\uD55C \uC885\uB958\uAC00
+      \uD574\uAE08\uB420 \uB54C \uAC19\uC740 \uBC29\uC2DD\uC73C\uB85C \uAD50\uCCB4\uD560
+      \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: Viewport
     advanceType: 0
     eventType: 0
@@ -131,8 +132,8 @@ MonoBehaviour:
     targetId: 
   - order: 13
     id: open_player
-    bodyText: "\uD50C\uB808\uC774\uC5B4\uC758 \uB2A5\uB825\uCE58 \uC885\uD569\uD574\uC11C
-      \uD45C\uC2DC\uD558\uB294 <b>\uC885\uD569 \uC804\uD22C\uB825</b> \uC785\uB2C8\uB2E4."
+    bodyText: "\uD50C\uB808\uC774\uC5B4\uC758 \uB2A5\uB825\uCE58\uB97C \uC885\uD569\uD558\uC5EC
+      \uD45C\uC2DC\uD558\uB294 <b>\uC885\uD569 \uC804\uD22C\uB825</b>\uC785\uB2C8\uB2E4."
     highlightTargetName: PlayerPower_txt
     advanceType: 0
     eventType: 0
@@ -177,7 +178,7 @@ MonoBehaviour:
   - order: 18
     id: open_player
     bodyText: "\uB0B4\uAD6C\uB3C4\uAC00 <b>0\uC774 \uB418\uBA74 \uC804\uCC28\uAC00
-      \uD30C\uAD34\uB418\uC5B4 3\uCD08 \uD6C4\uC5D0 \uC790\uB3D9\uC73C\uB85C \uC7AC\uBC30\uCE58</b>\uD569\uB2C8\uB2E4."
+      \uD30C\uAD34\uB418\uC5B4 3\uCD08 \uD6C4\uC5D0 \uC790\uB3D9\uC73C\uB85C \uC7AC\uBC30\uCE58</b>\uB429\uB2C8\uB2E4."
     highlightTargetName: UserStatus_Panel
     advanceType: 0
     eventType: 0
@@ -185,9 +186,9 @@ MonoBehaviour:
     targetId: 
   - order: 19
     id: open_player
-    bodyText: "\uD50C\uB808\uC774\uC5B4\uC758 \uC131\uC7A5\uC744 \uB3C4\uC6B8 <b>\uAC00\uC774\uB4DC
-      \uC784\uBB34</b>\uC785\uB2C8\uB2E4. \uC694\uAD6C\uB41C \uC0AC\uD56D \uB2EC\uC131
-      \uC2DC \uC7AC\uD654\uBCF4\uC0C1\uC73C\uB85C \uC9C0\uAE09\uB429\uB2C8\uB2E4."
+    bodyText: "\uD50C\uB808\uC774\uC5B4\uC758 \uC131\uC7A5\uC744 \uB3D5\uB294 <b>\uAC00\uC774\uB4DC
+      \uC784\uBB34</b>\uC785\uB2C8\uB2E4. \uC694\uAD6C \uC0AC\uD56D\uC744 \uB2EC\uC131\uD558\uBA74
+      \uC7AC\uD654 \uBCF4\uC0C1\uC774 \uC9C0\uAE09\uB429\uB2C8\uB2E4."
     highlightTargetName: GuideMissionBar
     advanceType: 0
     eventType: 0
@@ -195,9 +196,9 @@ MonoBehaviour:
     targetId: 
   - order: 20
     id: open_player
-    bodyText: "\uACF5\uC6A9\uD654\uD3D0\uC778 <color=#EED96B><b>\uD06C\uB808\uB527</b></color>\uC785\uB2C8\uB2E4.
-      \uAE30\uC9C0\uC2DC\uC124, \uD0F1\uD06C \uB4F1 \uC5C5\uADF8\uB808\uC774\uB4DC
-      \uD558\uB294 \uB370 \uC0AC\uC6A9\uD569\uB2C8\uB2E4."
+    bodyText: "\uACF5\uC6A9 \uD654\uD3D0\uC778 <color=#EED96B><b>\uD06C\uB808\uB527</b></color>\uC785\uB2C8\uB2E4.
+      \uAE30\uC9C0 \uC2DC\uC124, \uD0F1\uD06C \uB4F1\uC744 \uC5C5\uADF8\uB808\uC774\uB4DC\uD558\uB294
+      \uB370 \uC0AC\uC6A9\uD569\uB2C8\uB2E4."
     highlightTargetName: Credit
     advanceType: 0
     eventType: 0
@@ -206,8 +207,8 @@ MonoBehaviour:
   - order: 21
     id: open_player
     bodyText: "<b>\uC801 \uCC98\uCE58, \uAC00\uC774\uB4DC \uBBF8\uC158 \uB2EC\uC131,
-      \uC815\uC81C\uC18C\uC5D0\uC11C \uC218\uAE09 \uB4F1</b> \uC5EC\uB7EC\uAC00\uC9C0
-      \uBC29\uBC95\uC744 \uD1B5\uD574\uC11C \uD68D\uB4DD \uAC00\uB2A5\uD569\uB2C8\uB2E4."
+      \uC815\uC81C\uC18C\uC5D0\uC11C \uC218\uAE09 \uB4F1</b> \uC5EC\uB7EC \uAC00\uC9C0
+      \uBC29\uBC95\uC73C\uB85C \uD68D\uB4DD\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: Credit
     advanceType: 0
     eventType: 0
@@ -215,9 +216,9 @@ MonoBehaviour:
     targetId: 
   - order: 22
     id: open_player
-    bodyText: "\uD76C\uADC0\uD55C \uC790\uC6D0\uC778 <color=#60C6DE><b>\uD06C\uB9AC\uC2A4\uD0C8
-      \uCF54\uC5B4</b></color>\uC785\uB2C8\uB2E4. \uC0C1\uC810\uC744 \uD1B5\uD574\uC11C
-      \uBB34\uAE30, \uC2A4\uD0AC\uC744 \uBF51\uC744 \uB54C \uC0AC\uC6A9\uD569\uB2C8\uB2E4."
+    bodyText: "\uD76C\uADC0\uD55C \uC790\uC6D0\uC778 <color=#60C6DE><b>\uCF54\uC5B4
+      \uD06C\uB9AC\uC2A4\uD0C8</b></color>\uC785\uB2C8\uB2E4. \uC0C1\uC810\uC744
+      \uD1B5\uD574\uC11C \uBB34\uAE30, \uC2A4\uD0AC\uC744 \uBF51\uC744 \uB54C \uC0AC\uC6A9\uD569\uB2C8\uB2E4."
     highlightTargetName: Core Crystal
     advanceType: 0
     eventType: 0
@@ -225,8 +226,8 @@ MonoBehaviour:
     targetId: 
   - order: 23
     id: open_player
-    bodyText: "<b>\uBCF4\uC2A4\uCC98\uCE58, \uB3C4\uC804\uACFC\uC81C \uC644\uB8CC</b>\uB97C
-      \uD1B5\uD574 \uD68D\uB4DD \uAC00\uB2A5\uD569\uB2C8\uB2E4."
+    bodyText: "<b>\uBCF4\uC2A4 \uCC98\uCE58, \uB3C4\uC804\uACFC\uC81C \uC644\uB8CC</b>\uB97C
+      \uD1B5\uD574 \uD68D\uB4DD\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: Core Crystal
     advanceType: 0
     eventType: 0
@@ -235,7 +236,7 @@ MonoBehaviour:
   - order: 24
     id: open_player
     bodyText: "<b>\uC2A4\uD0AC \uD45C\uC2DC\uCC3D</b>\uC785\uB2C8\uB2E4. \uC2A4\uD0AC\uC744
-      \uC18C\uC9C0 \uC2DC \uD558\uB2E8\uC5D0 \uC544\uC774\uCF58 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
+      \uC18C\uC9C0\uD558\uBA74 \uD558\uB2E8\uC5D0 \uC544\uC774\uCF58\uC774 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
     highlightTargetName: SkillCooldown
     advanceType: 0
     eventType: 0
@@ -256,12 +257,12 @@ MonoBehaviour:
     highlightTargetName: Stage_Panel
     advanceType: 0
     eventType: 0
-    targetAmount: 1
+    targetAmount: 0
     targetId: 
   - order: 27
     id: open_player
     bodyText: "<b>\uB2E8\uC77C \uC2A4\uD14C\uC774\uC9C0\uC5D0 \uC5EC\uB7EC \uB77C\uC6B4\uB4DC</b>\uB97C
-      \uAC70\uCE58\uB294 \uBC29\uC2DD\uC774\uBA70, \uBAA8\uB450\uC644\uB8CC\uC2DC
+      \uAC70\uCE58\uB294 \uBC29\uC2DD\uC774\uBA70, \uBAA8\uB450 \uC644\uB8CC \uC2DC
       \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC62C\uB77C\uAC11\uB2C8\uB2E4."
     highlightTargetName: Stage_Panel
     advanceType: 0
@@ -320,7 +321,7 @@ MonoBehaviour:
     targetId: 
   - order: 33
     id: base_command_center_intro
-    bodyText: "<b>\uBAA8\uB4E0 \uAE30\uC9C0\uB97C \uD55C \uB208\uC5D0 \uD30C\uC545\uD560
+    bodyText: "<b>\uBAA8\uB4E0 \uAE30\uC9C0\uB97C \uD55C\uB208\uC5D0 \uD30C\uC545\uD560
       \uC218 \uC788\uB294 \uD575\uC2EC \uC2DC\uC124</b>\uC785\uB2C8\uB2E4. \uC0AC\uB839\uBD80
       \uB808\uBCA8\uC774 \uC624\uB974\uBA74 \uC0C8\uB85C\uC6B4 \uC2DC\uC124 \uBC0F
       \uCF58\uD150\uCE20\uAC00 \uD574\uAE08\uB429\uB2C8\uB2E4."
@@ -331,7 +332,7 @@ MonoBehaviour:
     targetId: 
   - order: 34
     id: base_command_center_intro
-    bodyText: "\uC9C0\uAE08\uC73C\uB85C\uC36C \uC77C\uBD80 \uAE30\uC9C0\uAC00 \uC7A0\uAE08\uB41C
+    bodyText: "\uD604\uC7AC\uB294 \uC77C\uBD80 \uAE30\uC9C0\uAC00 \uC7A0\uACA8 \uC788\uB294
       \uC0C1\uD0DC\uC785\uB2C8\uB2E4. \uAE30\uC9C0\uB97C \uD574\uAE08\uD558\uB824\uBA74
       <b>\uC5C5\uADF8\uB808\uC774\uB4DC \uBC84\uD2BC</b>\uC744 \uB204\uB974\uC138\uC694."
     highlightTargetName: Upgrade_Button
@@ -358,7 +359,7 @@ MonoBehaviour:
     targetId: 
   - order: 37
     id: base_refinery_intro
-    bodyText: "\uAC00\uB4DD\uCC28\uAE30 \uC804\uC5D0 \uC218\uC9D1\uD574 \uC8FC\uC138\uC694."
+    bodyText: "\uAC00\uB4DD \uCC28\uAE30 \uC804\uC5D0 \uC218\uC9D1\uD574 \uC8FC\uC138\uC694."
     highlightTargetName: Collection_Button
     advanceType: 1
     eventType: 0
@@ -366,8 +367,8 @@ MonoBehaviour:
     targetId: 
   - order: 38
     id: base_refinery_intro
-    bodyText: "\uC88B\uC2B5\uB2C8\uB2E4. \uC774\uC81C \uC790\uC138\uD788 \uB4E4\uC5B4\uB2E4
-      \uBCFC \uC2DC\uAC04\uC785\uB2C8\uB2E4. <b>\uC815\uC81C\uC18C</b>\uB97C \uB204\uB974\uC138\uC694."
+    bodyText: "\uC88B\uC2B5\uB2C8\uB2E4. \uC774\uC81C \uC790\uC138\uD788 \uB4E4\uC5EC\uB2E4\uBCFC
+      \uC2DC\uAC04\uC785\uB2C8\uB2E4. <b>\uC815\uC81C\uC18C</b>\uB97C \uB204\uB974\uC138\uC694."
     highlightTargetName: Credit Refinery
     advanceType: 1
     eventType: 0
@@ -377,7 +378,7 @@ MonoBehaviour:
     id: base_refinery_intro
     bodyText: "<b>\uD06C\uB808\uB527\uC758 \uC6D0\uB8CC\uC778 \uAD11\uBB3C\uC744
       \uCC44\uC9D1\uD558\uACE0 \uC815\uD654\uD558\uB294 \uC2DC\uC124</b>\uC785\uB2C8\uB2E4.
-      \uCD5C\uB300\uC6A9\uB7C9 \uAC2F\uC218\uC640 \uC2DC\uAC04 \uB2F9 \uC218\uC9D1\uB7C9\uC744
+      \uCD5C\uB300 \uC800\uC7A5\uB7C9\uACFC \uC2DC\uAC04\uB2F9 \uC218\uC9D1\uB7C9\uC744
       \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: 
     advanceType: 0
@@ -386,9 +387,9 @@ MonoBehaviour:
     targetId: 
   - order: 40
     id: base_refinery_intro
-    bodyText: "\uC5C5\uADF8\uB808\uC774\uB4DC\uB97C \uD560 \uC218\uB85D <b>\uB354
-      \uBE60\uB974\uACE0, \uB354 \uB9CE\uC774 \uD06C\uB808\uB527</b>\uC744 \uC800\uC7A5\uD560
-      \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    bodyText: "\uC5C5\uADF8\uB808\uC774\uB4DC\uD560\uC218\uB85D <b>\uB354 \uBE60\uB974\uACE0
+      \uB354 \uB9CE\uC740 \uD06C\uB808\uB527</b>\uC744 \uC800\uC7A5\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: UpgradeDetail
     advanceType: 0
     eventType: 0
@@ -396,9 +397,9 @@ MonoBehaviour:
     targetId: 
   - order: 41
     id: base_refinery_intro
-    bodyText: "<b>\uBB3C\uB860 \uC5EC\uAE30\uC5D0\uB3C4 \uC218\uC9D1\uAC00\uB2A5</b>\uD569\uB2C8\uB2E4.
-      \uAC00\uB4DD\uCC28\uAE30 \uC804\uC5D0 <b>\uC218\uC9D1\uBC84\uD2BC</b>\uC744
-      \uB20C\uB7EC\uC8FC\uC138\uC694."
+    bodyText: "<b>\uBB3C\uB860 \uC5EC\uAE30\uC5D0\uB3C4 \uC218\uC9D1\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4.</b> \uAC00\uB4DD \uCC28\uAE30 \uC804\uC5D0 <b>\uC218\uC9D1
+      \uBC84\uD2BC</b>\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
     highlightTargetName: Refinery Storage_Bar_CollectButton
     advanceType: 1
     eventType: 0
@@ -415,7 +416,7 @@ MonoBehaviour:
     targetId: 
   - order: 43
     id: base_TraitPoint_intro
-    bodyText: "<b>\uC2A4\uD15F \uAC15\uD654\uC18C</b>\uB97C \uB204\uB974\uC138\uC694."
+    bodyText: "<b>\uD2B9\uC131 \uC5F0\uAD6C\uC18C</b>\uB97C \uB204\uB974\uC138\uC694."
     highlightTargetName: TraitPointFacility
     advanceType: 1
     eventType: 0
@@ -423,9 +424,9 @@ MonoBehaviour:
     targetId: 
   - order: 44
     id: base_TraitPoint_intro
-    bodyText: "\uC2A4\uD15F\uAC15\uD654\uC5D0 \uC0AC\uC6A9\uD560 <b>\uD3EC\uC778\uD2B8</b>\uC785\uB2C8\uB2E4.
-      \uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 \uC5C5 \uD560\uB54C \uB9C8\uB2E4 \uD558\uB098\uC529
-      \uC5BB\uC2B5\uB2C8\uB2E4."
+    bodyText: "\uC2A4\uD0EF \uAC15\uD654\uC5D0 \uC0AC\uC6A9\uD560 <b>\uD3EC\uC778\uD2B8</b>\uC785\uB2C8\uB2E4.
+      \uD50C\uB808\uC774\uC5B4\uAC00 \uB808\uBCA8 \uC5C5 \uD560 \uB54C\uB9C8\uB2E4
+      \uD558\uB098\uC529 \uC5BB\uC2B5\uB2C8\uB2E4."
     highlightTargetName: point
     advanceType: 0
     eventType: 0
@@ -470,7 +471,7 @@ MonoBehaviour:
     targetId: 
   - order: 49
     id: base_TraitPoint_intro
-    bodyText: "\uB3CC\uC544\uAC00\uAE30 \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC2ED\uC2DC\uC624."
+    bodyText: "\uB3CC\uC544\uAC00\uAE30 \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
     highlightTargetName: ExitButton_TrPoint
     advanceType: 1
     eventType: 0
@@ -478,9 +479,9 @@ MonoBehaviour:
     targetId: 
   - order: 50
     id: base_Factory_intro
-    bodyText: "\uC0AC\uB839\uBD80 \uC5C5\uADF8\uB808\uC774\uB4DC\uB85C \uC2DC\uC124\uD558\uB098\uAC00
-      \uD574\uAE08\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC870\uB9BD\uACF5\uC7A5\uC744
-      \uB204\uB974\uC138\uC694."
+    bodyText: "\uC0AC\uB839\uBD80 \uC5C5\uADF8\uB808\uC774\uB4DC\uB85C \uC2DC\uC124
+      \uD558\uB098\uAC00 \uD574\uAE08\uB418\uC5C8\uC2B5\uB2C8\uB2E4. <b>\uC870\uB9BD
+      \uACF5\uC7A5</b>\uC744 \uB204\uB974\uC138\uC694."
     highlightTargetName: Assembly Factory
     advanceType: 1
     eventType: 0
@@ -488,7 +489,7 @@ MonoBehaviour:
     targetId: 
   - order: 51
     id: base_Factory_intro
-    bodyText: "<b>\uC870\uB9BD\uACF5\uC7A5</b>\uC740 \uBB34\uAE30/\uB4DC\uB860\uC758
+    bodyText: "<b>\uC870\uB9BD \uACF5\uC7A5</b>\uC740 \uBB34\uAE30/\uB4DC\uB860\uC758
       \uD53C\uD574\uB7C9\uC744 \uC62C\uB9AC\uB294 \uB370 \uC0AC\uC6A9\uD569\uB2C8\uB2E4."
     highlightTargetName: 
     advanceType: 0
@@ -514,7 +515,7 @@ MonoBehaviour:
   - order: 54
     id: base_Factory_intro
     bodyText: "<b>\uC7A5\uCC29\uD558\uAE30 \uBC84\uD2BC</b>\uAE4C\uC9C0 \uB20C\uB7EC\uC57C
-      \uC120\uD0DD\uC644\uB8CC\uB429\uB2C8\uB2E4."
+      \uC120\uD0DD\uC774 \uC644\uB8CC\uB429\uB2C8\uB2E4."
     highlightTargetName: Equip_Button
     advanceType: 1
     eventType: 0
@@ -522,9 +523,9 @@ MonoBehaviour:
     targetId: 
   - order: 55
     id: base_Factory_intro
-    bodyText: "\uC120\uD0DD\uC644\uB8CC\uB418\uC5C8\uB2E4\uBA74, \uD558\uB2E8\uC5D0
-      \uAC15\uD654\uBC84\uD2BC\uC774 \uD65C\uC131\uD654 \uB420\uAC81\uB2C8\uB2E4.
-      <b>\uAC15\uD654\uBC84\uD2BC</b>\uC744 \uB204\uB974\uC138\uC694."
+    bodyText: "\uC120\uD0DD\uC774 \uC644\uB8CC\uB418\uC5C8\uB2E4\uBA74, \uD558\uB2E8\uC5D0
+      \uAC15\uD654 \uBC84\uD2BC\uC774 \uD65C\uC131\uD654\uB429\uB2C8\uB2E4. <b>\uAC15\uD654
+      \uBC84\uD2BC</b>\uC744 \uB204\uB974\uC138\uC694."
     highlightTargetName: Weapon Enhance Button
     advanceType: 1
     eventType: 0
@@ -542,7 +543,7 @@ MonoBehaviour:
     targetId: 
   - order: 57
     id: base_Factory_intro
-    bodyText: "<b>\uCD5C\uB300\uAC15\uD654 \uB808\uBCA8</b>\uC744 \uD45C\uC2DC\uD558\uB294
+    bodyText: "<b>\uCD5C\uB300 \uAC15\uD654 \uB808\uBCA8</b>\uC744 \uD45C\uC2DC\uD558\uB294
       \uAD6C\uAC04\uC774\uBA70, <b>\uC5C5\uADF8\uB808\uC774\uB4DC\uD560 \uB54C\uB9C8\uB2E4
       5\uB808\uBCA8\uC529</b> \uC62C\uB77C\uAC11\uB2C8\uB2E4."
     highlightTargetName: AssemblyLevel_txt
@@ -554,7 +555,7 @@ MonoBehaviour:
     id: base_Factory_intro
     bodyText: "\uC774\uC81C \uAE30\uC9C0\uB97C \uD1B5\uD574\uC11C \uC2A4\uD0AC\uC744
       \uAD50\uCCB4\uD558\uB294 \uBC29\uBC95\uC744 \uC54C\uB824\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4.
-      <b>\uB3CC\uC544\uAC00\uAE30 \uBC84\uD2BC</b>\uC744 \uB204\uB974\uC2ED\uC2DC\uC624."
+      <b>\uB3CC\uC544\uAC00\uAE30 \uBC84\uD2BC</b>\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
     highlightTargetName: ExitButton_Factory
     advanceType: 1
     eventType: 0
@@ -571,7 +572,8 @@ MonoBehaviour:
   - order: 60
     id: base_SkillHanger_intro
     bodyText: "\uC5EC\uAE30\uC11C \uD50C\uB808\uC774\uC5B4\uAC00 \uC18C\uC720\uD55C
-      \uC2A4\uD0AC\uC2AC\uB86F\uC744 \uD655\uC778, \uAD50\uCCB4\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+      \uC2A4\uD0AC \uC2AC\uB86F\uC744 \uD655\uC778\uD558\uACE0 \uAD50\uCCB4\uD560
+      \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: 
     advanceType: 0
     eventType: 0
@@ -579,8 +581,8 @@ MonoBehaviour:
     targetId: 
   - order: 61
     id: base_SkillHanger_intro
-    bodyText: "<b>\uC2A4\uD0AC\uB808\uBCA8</b>\uC785\uB2C8\uB2E4. \uC0C1\uC810\uC744
-      \uD1B5\uD574 \uC911\uBCF5\uC73C\uB85C \uD68D\uB4DD\uD588\uB2E4\uBA74 \uC0C1\uC2B9\uD569\uB2C8\uB2E4."
+    bodyText: "<b>\uC2A4\uD0AC \uB808\uBCA8</b>\uC785\uB2C8\uB2E4. \uC0C1\uC810\uC744
+      \uD1B5\uD574 \uC911\uBCF5 \uD68D\uB4DD\uD558\uBA74 \uB808\uBCA8\uC774 \uC0C1\uC2B9\uD569\uB2C8\uB2E4."
     highlightTargetName: Skill Level
     advanceType: 0
     eventType: 0
@@ -589,9 +591,8 @@ MonoBehaviour:
   - order: 62
     id: base_SkillHanger_intro
     bodyText: "\uB808\uBCA8\uC774 \uC624\uB97C\uC218\uB85D <b>\uC2A4\uD0AC \uD53C\uD574\uB7C9</b>\uC774
-      \uC99D\uAC00\uD569\uB2C8\uB2E4. \uC77C\uBD80 \uC2A4\uD0AC\uC740 </b>\uCFE8\uD0C0\uC784
-      \uAC10\uC18C \uBC0F \uACF5\uACA9 \uD69F\uC218\uC99D\uAC00</b>\uB97C \uBD80\uC5EC
-      \uBC1B\uC2B5\uB2C8\uB2E4."
+      \uC99D\uAC00\uD569\uB2C8\uB2E4. \uC77C\uBD80 \uC2A4\uD0AC\uC740 <b>\uCFE8\uD0C0\uC784
+      \uAC10\uC18C \uBC0F \uACF5\uACA9 \uD69F\uC218 \uC99D\uAC00</b>\uB97C \uBD80\uC5EC\uBC1B\uC2B5\uB2C8\uB2E4."
     highlightTargetName: Skill Level
     advanceType: 0
     eventType: 0
@@ -600,7 +601,7 @@ MonoBehaviour:
   - order: 63
     id: base_SkillHanger_intro
     bodyText: "<b>\uCD5C\uB300 \uB808\uBCA8 \uC774\uD6C4 \uC911\uBCF5 \uD68D\uB4DD</b>\uB9C8\uB2E4
-      <color=#60C6DE><b>\uD06C\uB9AC\uC2A4\uD0C8 \uCF54\uC5B4</b></color>\uAC00 \uC9C0\uAE09\uB429\uB2C8\uB2E4."
+      <color=#60C6DE><b>\uCF54\uC5B4 \uD06C\uB9AC\uC2A4\uD0C8</b></color>\uC774 \uC9C0\uAE09\uB429\uB2C8\uB2E4."
     highlightTargetName: Skill Level
     advanceType: 0
     eventType: 0
@@ -620,7 +621,7 @@ MonoBehaviour:
   - order: 65
     id: base_SkillHanger_intro
     bodyText: "\uB2E4\uC74C\uC73C\uB85C <b>\uAD00\uC81C\uD0D1</b>\uC744 \uC548\uB0B4\uD558\uACA0\uC2B5\uB2C8\uB2E4.
-      \uB3CC\uC544\uAC00\uAE30 \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
+      <b>\uB3CC\uC544\uAC00\uAE30 \uBC84\uD2BC</b>\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
     highlightTargetName: ExitButton_SH
     advanceType: 1
     eventType: 0
@@ -628,7 +629,7 @@ MonoBehaviour:
     targetId: 
   - order: 66
     id: base_BossTracker_intro
-    bodyText: "<b>\uAD00\uC81C\uD0D1</b>\uB97C \uB204\uB974\uC138\uC694."
+    bodyText: "<b>\uAD00\uC81C\uD0D1</b>\uC744 \uB204\uB974\uC138\uC694."
     highlightTargetName: Boss Tracker
     advanceType: 1
     eventType: 0
@@ -636,9 +637,8 @@ MonoBehaviour:
     targetId: 
   - order: 67
     id: base_BossTracker_intro
-    bodyText: "\uC5EC\uAE30\uC11C\uB294 <b>\uBCF4\uC2A4\uC815\uBCF4 \uC5F4\uB78C
-      \uBC0F \uB09C\uC774\uB3C4 \uCD94\uAC00\uC870\uC815</b>\uC744 \uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    bodyText: "\uC5EC\uAE30\uC11C\uB294 <b>\uBCF4\uC2A4 \uC815\uBCF4 \uC5F4\uB78C
+      \uBC0F \uB09C\uC774\uB3C4 \uC870\uC815</b>\uC744 \uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: 
     advanceType: 0
     eventType: 0
@@ -657,9 +657,9 @@ MonoBehaviour:
     targetId: 
   - order: 69
     id: base_BossTracker_intro
-    bodyText: "\uBCF4\uC2A4\uC815\uBCF4 \uD45C\uC2DC\uCC3D \uC785\uB2C8\uB2E4. <b>\uCCB4\uB825,
-      \uAD8C\uC7A5 \uC804\uD22C\uB825, \uB09C\uC774\uB3C4, \uC0AC\uC6A9\uBB34\uAE30,
-      \uCC98\uCE58\uBCF4\uC0C1</b>\uC73C\uB85C \uAD6C\uBD84\uB429\uB2C8\uB2E4."
+    bodyText: "\uBCF4\uC2A4 \uC815\uBCF4 \uD45C\uC2DC\uCC3D\uC785\uB2C8\uB2E4. <b>\uCCB4\uB825,
+      \uAD8C\uC7A5 \uC804\uD22C\uB825, \uB09C\uC774\uB3C4, \uC0AC\uC6A9 \uBB34\uAE30,
+      \uCC98\uCE58 \uBCF4\uC0C1</b>\uC73C\uB85C \uAD6C\uBD84\uB429\uB2C8\uB2E4."
     highlightTargetName: Boss Status_Group
     advanceType: 0
     eventType: 0
@@ -667,8 +667,8 @@ MonoBehaviour:
     targetId: 
   - order: 70
     id: base_BossTracker_intro
-    bodyText: "<b>\uBCF4\uC2A4 \uB09C\uC774\uB3C4</b> \uC120\uD0DD\uC740 \uC591\uCABD\uC758
-      \uBC84\uD2BC\uC744 \uD1B5\uD574 \uC120\uD0DD\uD558\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    bodyText: "<b>\uBCF4\uC2A4 \uB09C\uC774\uB3C4</b>\uB294 \uC591\uCABD \uBC84\uD2BC\uC744
+      \uD1B5\uD574 \uC120\uD0DD\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: DifficultySelectButton_Group
     advanceType: 0
     eventType: 0
@@ -687,9 +687,9 @@ MonoBehaviour:
     targetId: 
   - order: 72
     id: base_BossTracker_intro
-    bodyText: "<b>\uD2F0\uCF13 \uBCF4\uC720 \uAC2F\uC218</b>\uB97C \uD45C\uC2DC\uD558\uB294
+    bodyText: "<b>\uD2F0\uCF13 \uBCF4\uC720 \uAC1C\uC218</b>\uB97C \uD45C\uC2DC\uD558\uB294
       \uAD6C\uAC04\uC785\uB2C8\uB2E4."
-    highlightTargetName: BossTicket_Base
+    highlightTargetName: BossTicket_ForPanel
     advanceType: 0
     eventType: 0
     targetAmount: 0
@@ -699,17 +699,17 @@ MonoBehaviour:
     bodyText: "\uBCF4\uC2A4\uC804 \uB3CC\uC785 \uC2DC \uD2F0\uCF13\uC774 \uBC18\uB4DC\uC2DC
       \uD544\uC694\uD558\uBA70, <b>\uD2B9\uC815 \uC2DC\uAC04\uC774 \uC9C0\uB098\uBA74
       \uC790\uB3D9\uC73C\uB85C \uCDA9\uC804</b>\uB429\uB2C8\uB2E4."
-    highlightTargetName: BossTicket_Base
+    highlightTargetName: BossTicket_ForPanel
     advanceType: 0
     eventType: 0
     targetAmount: 0
     targetId: 
   - order: 74
     id: base_BossTracker_intro
-    bodyText: "\uB9CC\uC57D <b>\uCC98\uC74C\uC73C\uB85C \uBCF4\uC2A4\uCC98\uCE58</b>\uC5D0
-      \uC131\uACF5\uD588\uB2E4\uBA74 <b>\uBCF4\uB108\uC2A4\uB85C \uD2F0\uCF13\uC9C0\uAE09</b>
-      \uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
-    highlightTargetName: BossTicket_Base
+    bodyText: "\uB9CC\uC57D <b>\uCC98\uC74C\uC73C\uB85C \uBCF4\uC2A4 \uCC98\uCE58</b>\uC5D0
+      \uC131\uACF5\uD588\uB2E4\uBA74 <b>\uBCF4\uB108\uC2A4\uB85C \uD2F0\uCF13\uC744
+      \uC9C0\uAE09\uBC1B\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</b>"
+    highlightTargetName: BossTicket_ForPanel
     advanceType: 0
     eventType: 0
     targetAmount: 0
@@ -724,7 +724,7 @@ MonoBehaviour:
     targetId: 
   - order: 76
     id: base_outtro
-    bodyText: "\uB9C8\uC9C0\uB9C9\uC73C\uB85C <b>\uCF54\uC5B4 \uCC28\uC800</b>\uB97C
+    bodyText: "\uB9C8\uC9C0\uB9C9\uC73C\uB85C <b>\uCF54\uC5B4 \uAC15\uD654\uC18C</b>\uB97C
       \uAC04\uB7B5\uD558\uAC8C \uC18C\uAC1C\uD558\uACA0\uC2B5\uB2C8\uB2E4. \uC774\uACF3\uC744
       \uD1B5\uD574 <b>\uD0F1\uD06C\uB97C \uAC15\uD654\uD558\uACE0 \uC0C8 \uB4DC\uB860\uC744
       \uD574\uAE08</b>\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
@@ -735,18 +735,18 @@ MonoBehaviour:
     targetId: 
   - order: 77
     id: base_outtro
-    bodyText: "\uC544\uC9C1 <b>\uC0AC\uB839\uBD80 \uB808\uBCA8\uC774 3\uC774\uC0C1</b>\uC5D0
-      \uB3C4\uB2EC\uB418\uC9C0 \uC54A\uC740 \uC0C1\uD0DC\uB77C \uD574\uAE08\uC2DC
-      \uB2E4\uC2DC \uD55C \uBC88 \uC548\uB0B4\uD574\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4."
+    bodyText: "\uC544\uC9C1 <b>\uC0AC\uB839\uBD80 \uB808\uBCA8\uC774 3 \uC774\uC0C1</b>\uC5D0
+      \uB3C4\uB2EC\uD558\uC9C0 \uC54A\uC544 \uD574\uAE08 \uC2DC \uB2E4\uC2DC \uD55C
+      \uBC88 \uC548\uB0B4\uD574\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4."
     highlightTargetName: LockState_CC
     advanceType: 0
     eventType: 0
     targetAmount: 0
     targetId: 
-  - order: 79
+  - order: 78
     id: base_outtro
     bodyText: "\uC774\uAC83\uC73C\uB85C \uAE30\uC9C0\uC5D0 \uB300\uD55C \uC124\uBA85\uC744
-      \uB9C8\uCE58\uB3C4\uB85D \uD558\uACA0\uC2B5\uB2C8\uB2E4."
+      \uB9C8\uCE58\uACA0\uC2B5\uB2C8\uB2E4."
     highlightTargetName: 
     advanceType: 0
     eventType: 0
@@ -754,10 +754,11 @@ MonoBehaviour:
     targetId: 
   - order: 79
     id: base_core_charger_intro
-    bodyText: "\uC0AC\uB839\uBD80 \uB808\uBCA8 3\uB85C \uC5C5\uADF8\uB808\uC774\uB4DC
-      \uB418\uC5B4 <b>\uCF54\uC5B4 \uCC28\uC800</b>\uAC00 \uD574\uAE08\uB418\uC5C8\uC2B5\uB2C8\uB2E4."
-    highlightTargetName: 
-    advanceType: 0
+    bodyText: "\uC0AC\uB839\uBD80 \uB808\uBCA8\uC774 3\uC73C\uB85C \uC5C5\uADF8\uB808\uC774\uB4DC\uB418\uC5B4
+      <b>\uCF54\uC5B4 \uAC15\uD654\uC18C</b>\uAC00 \uD574\uAE08\uB418\uC5C8\uC2B5\uB2C8\uB2E4.
+      \uD45C\uC2DC\uB41C \uC2DC\uC124\uC744 \uB204\uB974\uC138\uC694."
+    highlightTargetName: Core Charger
+    advanceType: 1
     eventType: 0
     targetAmount: 0
     targetId: 
@@ -766,7 +767,7 @@ MonoBehaviour:
     bodyText: "\uC774\uACF3\uC5D0\uC11C\uB294 <b>\uD604\uC7AC \uD0F1\uD06C\uC640
       \uB2E4\uC74C \uAC15\uD654 \uB2E8\uACC4</b>\uB97C \uBE44\uAD50\uD560 \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
-    highlightTargetName: Tank_Unit_Conversion_SubPanel
+    highlightTargetName: 
     advanceType: 0
     eventType: 0
     targetAmount: 0
@@ -774,7 +775,7 @@ MonoBehaviour:
   - order: 81
     id: base_core_charger_intro
     bodyText: "<b>\uD604\uC7AC \uD0F1\uD06C\uC640 \uB2E4\uC74C \uD0F1\uD06C\uC758
-      \uC2A4\uD15F</b>\uC744 \uD655\uC778\uD558\uB294 \uCC3D\uC785\uB2C8\uB2E4."
+      \uC2A4\uD0EF</b>\uC744 \uD655\uC778\uD558\uB294 \uCC3D\uC785\uB2C8\uB2E4."
     highlightTargetName: Tank Route Status
     advanceType: 0
     eventType: 0
@@ -792,8 +793,8 @@ MonoBehaviour:
     targetId: 
   - order: 83
     id: base_core_charger_intro
-    bodyText: "\uCF54\uC5B4 \uCC28\uC800\uB97C \uC5C5\uADF8\uB808\uC774\uB4DC\uD558\uBA74
-      <b>\uB2E4\uC74C\uC720\uB2DB \uAC15\uD654 \uBC84\uD2BC\uC774 \uD65C\uC131\uD654</b>\uB429\uB2C8\uB2E4."
+    bodyText: "\uCF54\uC5B4 \uAC15\uD654\uC18C\uB97C \uC5C5\uADF8\uB808\uC774\uB4DC\uD558\uBA74
+      <b>\uB2E4\uC74C \uC720\uB2DB \uAC15\uD654 \uBC84\uD2BC\uC774 \uD65C\uC131\uD654</b>\uB429\uB2C8\uB2E4."
     highlightTargetName: Enhance Unit Button
     advanceType: 0
     eventType: 0
@@ -819,7 +820,7 @@ MonoBehaviour:
     targetId: 
   - order: 86
     id: base_core_charger_intro
-    bodyText: "<b>\uB2E4\uC74C \uD574\uAE08 \uB4DC\uB860\uC758 \uC2A4\uD15F</b>\uC744
+    bodyText: "<b>\uB2E4\uC74C \uD574\uAE08 \uB4DC\uB860\uC758 \uC2A4\uD0EF</b>\uC744
       \uBCF4\uC5EC\uC8FC\uB294 \uCC3D\uC785\uB2C8\uB2E4. \uC544\uB798\uC758 <b>\uD654\uC0B4\uD45C
       \uBC84\uD2BC</b>\uC744 \uD1B5\uD574 \uC0C1\uC138\uD788 \uC0B4\uD3B4\uBCFC \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
@@ -839,6 +840,15 @@ MonoBehaviour:
     targetAmount: 0
     targetId: 
   - order: 88
+    id: base_core_charger_intro
+    bodyText: "\uC774\uAC83\uC73C\uB85C <b>\uCF54\uC5B4 \uAC15\uD654\uC18C</b>\uC758
+      \uC124\uBA85\uC744 \uB9C8\uCE58\uACA0\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: 
+  - order: 89
     id: inventory_intro
     bodyText: "<b>\uC7A5\uBE44 \uD30C\uCE20</b>\uB97C \uD68D\uB4DD\uD588\uC2B5\uB2C8\uB2E4.
       \uC778\uBCA4\uD1A0\uB9AC\uB97C \uD1B5\uD574 \uBCF4\uC720\uD55C \uD30C\uCE20\uB97C
@@ -848,7 +858,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 89
+  - order: 90
     id: inventory_intro
     bodyText: "\uC7A5\uCC29\uD560 \uD30C\uCE20\uB97C \uC120\uD0DD\uD558\uC138\uC694."
     highlightTargetName: PartButtons(Clone)
@@ -856,7 +866,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 90
+  - order: 91
     id: inventory_intro
     bodyText: "\uD30C\uCE20 \uC120\uD0DD \uC2DC <b>\uB4F1\uAE09\uACFC \uB2A5\uB825\uCE58</b>\uB97C
       \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
@@ -865,7 +875,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 91
+  - order: 92
     id: inventory_intro
     bodyText: "\uC2E4\uC81C \uC804\uD22C\uC5D0 \uC801\uC6A9\uD558\uB824\uBA74 <b>\uD30C\uCE20\uB97C
       \uC7A5\uCC29\uD558\uC138\uC694.</b>"
@@ -874,7 +884,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 92
+  - order: 93
     id: inventory_intro
     bodyText: "\uD30C\uCE20 \uC7A5\uCC29\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.
       \uD0C8\uCC29\uD558\uB824\uBA74 <b>\uC7A5\uCC29\uD574\uC81C \uBC84\uD2BC</b>\uC744
@@ -884,7 +894,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 93
+  - order: 94
     id: inventory_intro
     bodyText: "\uC774\uC81C \uD30C\uCE20\uAC00 \uC7A5\uCC29\uB418\uC5B4 <b>\uC8FC
       \uC635\uC158/\uBD80\uAC00 \uC635\uC158</b>\uC774 \uC2E4\uC81C\uB85C \uC801\uC6A9\uB429\uB2C8\uB2E4.
@@ -895,29 +905,29 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 94
+  - order: 95
     id: inventory_intro
     bodyText: "\uBAA9\uB85D <b>\uC544\uB798\uC758 \uBC84\uD2BC</b>\uC744 \uD1B5\uD574\uC11C
       <b>\uB2E4\uB978 \uD30C\uCE20\uB85C \uAC08\uC544\uD0C8 \uC218 \uC788\uACE0,
-      \uD544\uC694\uC5C6\uB294 \uD30C\uCE20\uB4E4\uC740 \uD310\uB9E4</b>\uD560 \uC218
+      \uD544\uC694 \uC5C6\uB294 \uD30C\uCE20\uB4E4\uC740 \uD310\uB9E4</b>\uD560 \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: Buttons Group
     advanceType: 0
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 95
+  - order: 96
     id: inventory_intro
     bodyText: "<color=#FF0000>\uADF8\uB7EC\uB098 \uD310\uB9E4\uD558\uB294 \uC21C\uAC04
-      \uBC14\uB85C \uCC98\uBD84\uD558\uC5EC \uC774 \uACB0\uC815\uC740 \uB2E4\uC2DC
+      \uBC14\uB85C \uCC98\uBD84\uB418\uC5B4 \uC774 \uACB0\uC815\uC740 \uB2E4\uC2DC
       \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.</color> \uC2E0\uC911\uD558\uAC8C
-      \uACB0\uC815\uD574\uC8FC\uC2ED\uC2DC\uC624!"
+      \uACB0\uC815\uD574 \uC8FC\uC138\uC694!"
     highlightTargetName: Sell_Button
     advanceType: 0
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 96
+  - order: 97
     id: inventory_intro
     bodyText: "\uC2E4\uC81C \uC7A5\uCC29\uD55C \uD30C\uCE20\uB294 <b>\uCE74\uD14C\uACE0\uB9AC
       \uD558\uB2E8\uC758 \uC791\uC740 \uAE00\uC528</b>\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4."
@@ -926,47 +936,47 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 97
+  - order: 98
     id: inventory_intro
-    bodyText: "\uB9CC\uC57D <b>\uC5D4\uC9C4\uD30C\uCE20</b>\uB9CC \uB530\uB85C \uBCF4\uACE0\uC2F6\uB2E4\uBA74
-      \uBC84\uD2BC\uC744 \uD1B5\uD574 \uD544\uD130\uB9C1 \uAC00\uB2A5\uD569\uB2C8\uB2E4.
-      \uD45C\uC2DC\uB41C \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
+    bodyText: "\uB9CC\uC57D <b>\uC5D4\uC9C4 \uD30C\uCE20</b>\uB9CC \uB530\uB85C \uBCF4\uACE0
+      \uC2F6\uB2E4\uBA74 \uBC84\uD2BC\uC744 \uD1B5\uD574 \uD544\uD130\uB9C1\uD560
+      \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uD45C\uC2DC\uB41C \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
     highlightTargetName: Engine_Btn
     advanceType: 1
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 98
+  - order: 99
     id: inventory_intro
-    bodyText: "\uC774\uC81C \uD30C\uCE20\uBAA9\uB85D\uC5D0\uC11C <b>\uC5D4\uC9C4\uD30C\uCE20</b>\uB9CC
-      \uBCF4\uC774\uB294 \uAC83\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    bodyText: "\uC774\uC81C \uD30C\uCE20 \uBAA9\uB85D\uC5D0\uC11C <b>\uC5D4\uC9C4
+      \uD30C\uCE20</b>\uB9CC \uBCF4\uC774\uB294 \uAC83\uC744 \uD655\uC778\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
     highlightTargetName: Scroll View
     advanceType: 0
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 99
+  - order: 100
     id: inventory_intro
-    bodyText: "\uB2E4\uC2DC \uC6D0\uB798\uC0C1\uD0DC\uB85C \uBCF5\uADC0\uD558\uB824\uBA74
-      \uD558\uB2E8\uC5D0 <b>\uCE74\uD14C\uACE0\uB9AC \uD544\uD130 \uCD08\uAE30\uD654
-      \uBC84\uD2BC</b>\uC744 \uB20C\uB7EC\uC8FC\uC2DC\uBA74 \uB429\uB2C8\uB2E4. \uD45C\uC2DC\uB41C
-      \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
+    bodyText: "\uB2E4\uC2DC \uC6D0\uB798 \uC0C1\uD0DC\uB85C \uBCF5\uADC0\uD558\uB824\uBA74
+      \uD558\uB2E8\uC758 <b>\uCE74\uD14C\uACE0\uB9AC \uD544\uD130 \uCD08\uAE30\uD654
+      \uBC84\uD2BC</b>\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
     highlightTargetName: FillterReset_Button
     advanceType: 1
     eventType: 0
     targetAmount: 0
     targetId: true
-  - order: 100
+  - order: 101
     id: boss_intro
     bodyText: "\uBCF4\uC2A4\uC804\uC5D0 \uC785\uC7A5\uD558\uC168\uC2B5\uB2C8\uB2E4.
-      \uBCF4\uC2A4\uC804 \uC2DC\uC791 \uC2DC <b>\uBAA8\uB4E0 \uC801\uC774 \uC0AC\uB77C\uC9C0\uACE0
+      \uC774\uC81C\uBD80\uD130 <b>\uBAA8\uB4E0 \uC801\uC774 \uC0AC\uB77C\uC9C0\uACE0
       \uC624\uC9C1 1:1 \uC804\uD22C</b>\uB85C\uB9CC \uC9C4\uD589\uB429\uB2C8\uB2E4."
     highlightTargetName: 
     advanceType: 0
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 101
+  - order: 102
     id: boss_intro
     bodyText: "<b>\uBCF4\uC2A4 \uC774\uB984\uACFC \uCCB4\uB825</b>\uC740 \uC0C1\uB2E8
       \uBCF4\uC2A4 HUD\uC5D0\uC11C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
@@ -975,7 +985,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 102
+  - order: 103
     id: boss_intro
     bodyText: "\uBCF4\uC2A4\uC804\uC5D0 \uC9C4\uC785\uD558\uB294 \uC21C\uAC04 <b>\uD68C\uD53C\uAE30\uB3D9</b>\uC774
       \uD65C\uC131\uD654\uB429\uB2C8\uB2E4. \uC704\uD5D8\uD55C \uACF5\uACA9\uC744
@@ -985,28 +995,28 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 103
+  - order: 104
     id: boss_intro
     bodyText: "\uD68C\uD53C\uAE30\uB3D9\uC5D0\uB3C4 <b>\uB300\uAE30 \uCFE8\uD0C0\uC784</b>\uC774
       \uC874\uC7AC\uD569\uB2C8\uB2E4. \uD55C \uBC88 \uC4F0\uBA74 \uCFE8\uD0C0\uC784\uC774
-      \uC9C0\uB0A0 \uB54C\uAE4C\uC9C0 \uC0AC\uC6A9\uD560 \uC218\uAC00 \uC5C6\uC73C\uB2C8
-      \uC0C1\uD669\uC5D0 \uB9DE\uCDB0\uC11C \uD68C\uD53C\uD558\uC138\uC694."
+      \uC9C0\uB0A0 \uB54C\uAE4C\uC9C0 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC73C\uB2C8
+      \uC0C1\uD669\uC5D0 \uB9DE\uCDB0 \uD68C\uD53C\uD558\uC138\uC694."
     highlightTargetName: DodgeCooldown
     advanceType: 0
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 104
+  - order: 105
     id: boss_intro
-    bodyText: "\uD22C\uC0AC\uCCB4 \uB9DE\uAE30 \uC9C1\uC804\uC5D0 \uD68C\uD53C\uAE30\uB3D9\uD558\uBA74
-      <color=#59FFFF>PERFECT DODGE!!</color> \uB77C\uB294 \uBB34\uC801\uD310\uC815\uC744
+    bodyText: "\uD22C\uC0AC\uCCB4\uC5D0 \uB9DE\uAE30 \uC9C1\uC804\uC5D0 \uD68C\uD53C\uAE30\uB3D9\uD558\uBA74
+      <color=#59FFFF>PERFECT DODGE!!</color>\uB77C\uB294 \uBB34\uC801 \uD310\uC815\uC744
       \uBC1B\uC2B5\uB2C8\uB2E4."
     highlightTargetName: 
     advanceType: 0
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 105
+  - order: 106
     id: boss_intro
     bodyText: "<b>\uD654\uBA74\uC744 \uB4DC\uB798\uADF8</b>\uD558\uC5EC \uD68C\uD53C\uAE30\uB3D9\uC744
       \uC0AC\uC6A9\uD558\uC138\uC694."

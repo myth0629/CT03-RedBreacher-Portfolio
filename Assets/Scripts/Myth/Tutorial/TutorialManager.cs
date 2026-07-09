@@ -626,20 +626,16 @@ public class TutorialManager : MonoBehaviour
             && step.id.StartsWith(BossEncounterStepIdPrefix, System.StringComparison.OrdinalIgnoreCase);
     }
 
-    // 코어치저 튜토리얼 조건문
+    // 코어차저가 해금된 뒤 Base_Popup을 열면 튜토리얼을 시작한다.
     private static bool IsCoreChargerTutorialReady()
     {
         BaseCampManager camp = BaseCampManager.Instance;
         CommandCenter commandCenter = camp != null
             ? camp.CommandCenter
             : FindFirstObjectByType<CommandCenter>(FindObjectsInactive.Include);
-        if (commandCenter == null || !commandCenter.IsFacilityUnlocked(CoreChargerFacilityId))
-        {
-            return false;
-        }
-
-        CoreChargerPanel panel = FindFirstObjectByType<CoreChargerPanel>(FindObjectsInactive.Include);
-        return panel != null && panel.gameObject.activeInHierarchy;
+        return commandCenter != null
+            && commandCenter.IsFacilityUnlocked(CoreChargerFacilityId)
+            && IsPanelOpen(BasePopupName);
     }
     
     // 인벤토리 튜토리얼 조건문
