@@ -138,6 +138,10 @@ public class BaseCampManager : MonoBehaviour
             ResetMythProgressionForFreshAccount();
         }
 
+        // 계정 전환/신규 계정 대응: 부트스트랩은 로그인 전(다른 계정 키)에 판단하므로,
+        // 동기화가 끝난 지금 현재 계정 키 기준으로 미완료 튜토리얼이 있으면 매니저를 생성한다.
+        TutorialManager.EnsureBootstrappedForCurrentAccount();
+
         SubscribeUnifiedSaveEvents();
         unifiedSaveReady = true;
         SaveUnifiedGame();

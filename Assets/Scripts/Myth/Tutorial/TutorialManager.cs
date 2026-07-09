@@ -23,6 +23,77 @@ public class TutorialManager : MonoBehaviour
     private const string InventoryCompletedKey = "Tutorial.Inventory.Completed";
     private const string BossEncounterStepIndexKey = "Tutorial.BossEncounter.StepIndex";
     private const string BossEncounterCompletedKey = "Tutorial.BossEncounter.Completed";
+    private const string LegacyMigrationFlagKey = "Tutorial.LegacyMigrated";
+
+    private static readonly string[] AllProgressKeys =
+    {
+        StepIndexKey, CompletedKey,
+        BaseStepIndexKey, BaseCompletedKey,
+        CoreChargerStepIndexKey, CoreChargerCompletedKey,
+        InventoryStepIndexKey, InventoryCompletedKey,
+        BossEncounterStepIndexKey, BossEncounterCompletedKey,
+    };
+
+    // 계정별 진행도 키(로그인 시 baseKey_UID, 비로그인 시 baseKey).
+    // BaseCampManager.ResolvedSaveKey와 같은 규칙으로, 같은 기기에서 계정을 전환해도
+    // 이전 계정의 튜토리얼 완료 상태가 새 계정에 새어 들어가지 않게 한다.
+    private static string ScopedKey(string baseKey)
+    {
+        FirebaseAuthManager auth = FirebaseAuthManager.Instance;
+        return auth != null ? auth.ScopedSaveKey(baseKey) : baseKey;
+    }
+
+    private static int GetSavedInt(string baseKey, int fallback)
+    {
+        return PlayerPrefs.GetInt(ScopedKey(baseKey), fallback);
+    }
+
+    private static void SetSavedInt(string baseKey, int value)
+    {
+        PlayerPrefs.SetInt(ScopedKey(baseKey), value);
+    }
+
+    // 구버전(계정 스코프 없는 키)의 진행도를 첫 로그인 시 계정 키로 1회만 이관한다.
+    // 이후 게스트/타계정 데이터가 다시 섞이지 않도록 플래그로 잠근다(BaseCampManager와 동일 패턴).
+    private static void MigrateLegacyKeysIfNeeded()
+    {
+        if (PlayerPrefs.HasKey(LegacyMigrationFlagKey))
+        {
+            return; // 이미 1회 이관 완료.
+        }
+
+        string probe = ScopedKey(CompletedKey);
+        if (probe == CompletedKey)
+        {
+            return; // 비로그인 상태: 로그인 후 다시 시도(플래그 미설정).
+        }
+
+        bool hasScoped = false;
+        bool hasLegacy = false;
+        foreach (string key in AllProgressKeys)
+        {
+            hasScoped |= PlayerPrefs.HasKey(ScopedKey(key));
+            hasLegacy |= PlayerPrefs.HasKey(key);
+        }
+
+        // 계정 데이터가 아직 없고, 옮길 구 데이터가 있을 때만 복사한다.
+        if (!hasScoped && hasLegacy)
+        {
+            foreach (string key in AllProgressKeys)
+            {
+                if (PlayerPrefs.HasKey(key))
+                {
+                    PlayerPrefs.SetInt(ScopedKey(key), PlayerPrefs.GetInt(key, 0));
+                    PlayerPrefs.DeleteKey(key);
+                }
+            }
+        }
+
+        // 이관 완료 플래그는 기기 전역(스코프 없음): 기기당 최초 로그인 1회만 이관한다.
+        PlayerPrefs.SetInt(LegacyMigrationFlagKey, 1);
+        PlayerPrefs.Save();
+    }
+
     private const string BaseStepIdPrefix = "base_";
     private const string CoreChargerStepIdPrefix = "base_core_charger_";
     private const string InventoryStepIdPrefix = "inventory_";
@@ -72,12 +143,15 @@ public class TutorialManager : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
     {
+        // 로그인된 상태라면(에디터 직행 등) 구버전 키를 먼저 계정 키로 이관한 뒤 판정한다.
+        MigrateLegacyKeysIfNeeded();
+
         // 이미 완료했거나 인스턴스가 있으면 생성하지 않는다.
-        if (PlayerPrefs.GetInt(CompletedKey, 0) == 1
-            && PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1
-            && PlayerPrefs.GetInt(CoreChargerCompletedKey, 0) == 1
-            && PlayerPrefs.GetInt(InventoryCompletedKey, 0) == 1
-            && PlayerPrefs.GetInt(BossEncounterCompletedKey, 0) == 1)
+        if (GetSavedInt(CompletedKey, 0) == 1
+            && GetSavedInt(BaseCompletedKey, 0) == 1
+            && GetSavedInt(CoreChargerCompletedKey, 0) == 1
+            && GetSavedInt(InventoryCompletedKey, 0) == 1
+            && GetSavedInt(BossEncounterCompletedKey, 0) == 1)
         {
             return;
         }
@@ -106,16 +180,16 @@ public class TutorialManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         config = TutorialConfig.Current;
-        completed = PlayerPrefs.GetInt(CompletedKey, 0) == 1;
-        stepIndex = Mathf.Max(0, PlayerPrefs.GetInt(StepIndexKey, 0));
-        baseCompleted = PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1;
-        baseStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BaseStepIndexKey, 0));
-        coreChargerCompleted = PlayerPrefs.GetInt(CoreChargerCompletedKey, 0) == 1;
-        coreChargerStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(CoreChargerStepIndexKey, 0));
-        inventoryCompleted = PlayerPrefs.GetInt(InventoryCompletedKey, 0) == 1;
-        inventoryStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(InventoryStepIndexKey, 0));
-        bossEncounterCompleted = PlayerPrefs.GetInt(BossEncounterCompletedKey, 0) == 1;
-        bossEncounterStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BossEncounterStepIndexKey, 0));
+        completed = GetSavedInt(CompletedKey, 0) == 1;
+        stepIndex = Mathf.Max(0, GetSavedInt(StepIndexKey, 0));
+        baseCompleted = GetSavedInt(BaseCompletedKey, 0) == 1;
+        baseStepIndex = Mathf.Max(0, GetSavedInt(BaseStepIndexKey, 0));
+        coreChargerCompleted = GetSavedInt(CoreChargerCompletedKey, 0) == 1;
+        coreChargerStepIndex = Mathf.Max(0, GetSavedInt(CoreChargerStepIndexKey, 0));
+        inventoryCompleted = GetSavedInt(InventoryCompletedKey, 0) == 1;
+        inventoryStepIndex = Mathf.Max(0, GetSavedInt(InventoryStepIndexKey, 0));
+        bossEncounterCompleted = GetSavedInt(BossEncounterCompletedKey, 0) == 1;
+        bossEncounterStepIndex = Mathf.Max(0, GetSavedInt(BossEncounterStepIndexKey, 0));
     }
 
     private void OnDestroy()
@@ -395,7 +469,7 @@ public class TutorialManager : MonoBehaviour
             overlay.Hide();
         }
 
-        PlayerPrefs.SetInt(
+        SetSavedInt(
             bossEncounterTutorial
                 ? BossEncounterCompletedKey
                 : inventoryTutorial
@@ -414,48 +488,64 @@ public class TutorialManager : MonoBehaviour
     // ── 클라우드 동기화(통합 세이브 편입) ──────────────────────────────────────
     // 인스턴스가 없어도 동작하도록 PlayerPrefs를 직접 읽고/쓴다(부트스트랩이 인스턴스 생성을 결정하므로).
 
+    /// <summary>
+    /// 로그인/세이브 동기화 이후 현재 계정 키 기준으로 미완료 튜토리얼이 있으면 매니저를 생성한다.
+    /// 부트스트랩은 로그인 전(게스트/이전 계정 키)에 실행되므로, 신규 계정처럼 클라우드 복원이
+    /// 아예 없는 경우에도 이 호출로 계정에 맞는 튜토리얼이 뜨게 한다. 중복 호출은 무해하다.
+    /// </summary>
+    public static void EnsureBootstrappedForCurrentAccount()
+    {
+        Bootstrap();
+    }
+
     /// <summary>현재 튜토리얼 진행 상태 스냅샷.</summary>
     public static JinyouTutorialSaveData CaptureSaveData()
     {
+        MigrateLegacyKeysIfNeeded();
         return new JinyouTutorialSaveData
         {
             captured = true,
-            completed = PlayerPrefs.GetInt(CompletedKey, 0) == 1,
-            stepIndex = Mathf.Max(0, PlayerPrefs.GetInt(StepIndexKey, 0)),
-            baseCompleted = PlayerPrefs.GetInt(BaseCompletedKey, 0) == 1,
-            baseStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BaseStepIndexKey, 0)),
-            coreChargerCompleted = PlayerPrefs.GetInt(CoreChargerCompletedKey, 0) == 1,
-            coreChargerStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(CoreChargerStepIndexKey, 0)),
-            inventoryCompleted = PlayerPrefs.GetInt(InventoryCompletedKey, 0) == 1,
-            inventoryStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(InventoryStepIndexKey, 0)),
-            bossEncounterCompleted = PlayerPrefs.GetInt(BossEncounterCompletedKey, 0) == 1,
-            bossEncounterStepIndex = Mathf.Max(0, PlayerPrefs.GetInt(BossEncounterStepIndexKey, 0)),
+            completed = GetSavedInt(CompletedKey, 0) == 1,
+            stepIndex = Mathf.Max(0, GetSavedInt(StepIndexKey, 0)),
+            baseCompleted = GetSavedInt(BaseCompletedKey, 0) == 1,
+            baseStepIndex = Mathf.Max(0, GetSavedInt(BaseStepIndexKey, 0)),
+            coreChargerCompleted = GetSavedInt(CoreChargerCompletedKey, 0) == 1,
+            coreChargerStepIndex = Mathf.Max(0, GetSavedInt(CoreChargerStepIndexKey, 0)),
+            inventoryCompleted = GetSavedInt(InventoryCompletedKey, 0) == 1,
+            inventoryStepIndex = Mathf.Max(0, GetSavedInt(InventoryStepIndexKey, 0)),
+            bossEncounterCompleted = GetSavedInt(BossEncounterCompletedKey, 0) == 1,
+            bossEncounterStepIndex = Mathf.Max(0, GetSavedInt(BossEncounterStepIndexKey, 0)),
         };
     }
 
     /// <summary>통합 세이브에서 튜토리얼 상태를 복원한다. 클라우드가 '완료'면 진행 중이던 튜토리얼도 즉시 종료한다.</summary>
     public static void RestoreSaveData(JinyouTutorialSaveData data)
     {
+        MigrateLegacyKeysIfNeeded();
         if (data == null || !data.captured)
         {
             return;
         }
 
-        PlayerPrefs.SetInt(CompletedKey, data.completed ? 1 : 0);
-        PlayerPrefs.SetInt(StepIndexKey, Mathf.Max(0, data.stepIndex));
-        PlayerPrefs.SetInt(BaseCompletedKey, data.baseCompleted ? 1 : 0);
-        PlayerPrefs.SetInt(BaseStepIndexKey, Mathf.Max(0, data.baseStepIndex));
-        PlayerPrefs.SetInt(CoreChargerCompletedKey, data.coreChargerCompleted ? 1 : 0);
-        PlayerPrefs.SetInt(CoreChargerStepIndexKey, Mathf.Max(0, data.coreChargerStepIndex));
-        PlayerPrefs.SetInt(InventoryCompletedKey, data.inventoryCompleted ? 1 : 0);
-        PlayerPrefs.SetInt(InventoryStepIndexKey, Mathf.Max(0, data.inventoryStepIndex));
-        PlayerPrefs.SetInt(BossEncounterCompletedKey, data.bossEncounterCompleted ? 1 : 0);
-        PlayerPrefs.SetInt(BossEncounterStepIndexKey, Mathf.Max(0, data.bossEncounterStepIndex));
+        SetSavedInt(CompletedKey, data.completed ? 1 : 0);
+        SetSavedInt(StepIndexKey, Mathf.Max(0, data.stepIndex));
+        SetSavedInt(BaseCompletedKey, data.baseCompleted ? 1 : 0);
+        SetSavedInt(BaseStepIndexKey, Mathf.Max(0, data.baseStepIndex));
+        SetSavedInt(CoreChargerCompletedKey, data.coreChargerCompleted ? 1 : 0);
+        SetSavedInt(CoreChargerStepIndexKey, Mathf.Max(0, data.coreChargerStepIndex));
+        SetSavedInt(InventoryCompletedKey, data.inventoryCompleted ? 1 : 0);
+        SetSavedInt(InventoryStepIndexKey, Mathf.Max(0, data.inventoryStepIndex));
+        SetSavedInt(BossEncounterCompletedKey, data.bossEncounterCompleted ? 1 : 0);
+        SetSavedInt(BossEncounterStepIndexKey, Mathf.Max(0, data.bossEncounterStepIndex));
         PlayerPrefs.Save();
 
         TutorialManager live = Instance;
         if (live == null)
         {
+            // 부트스트랩(로그인 전, 이전 계정/게스트 키 기준)이 "모두 완료"로 판단해 인스턴스를
+            // 만들지 않았을 수 있다. 방금 쓴 계정 키 기준으로 미완료 튜토리얼이 있으면 다시 생성해,
+            // 계정 전환 직후에도 앱 재시작 없이 튜토리얼이 뜨게 한다.
+            Bootstrap();
             return;
         }
 
@@ -868,28 +958,28 @@ public class TutorialManager : MonoBehaviour
     {
         if (runningBossEncounterTutorial)
         {
-            PlayerPrefs.SetInt(BossEncounterStepIndexKey, bossEncounterStepIndex);
-            PlayerPrefs.SetInt(BossEncounterCompletedKey, bossEncounterCompleted ? 1 : 0);
+            SetSavedInt(BossEncounterStepIndexKey, bossEncounterStepIndex);
+            SetSavedInt(BossEncounterCompletedKey, bossEncounterCompleted ? 1 : 0);
         }
         else if (runningInventoryTutorial)
         {
-            PlayerPrefs.SetInt(InventoryStepIndexKey, inventoryStepIndex);
-            PlayerPrefs.SetInt(InventoryCompletedKey, inventoryCompleted ? 1 : 0);
+            SetSavedInt(InventoryStepIndexKey, inventoryStepIndex);
+            SetSavedInt(InventoryCompletedKey, inventoryCompleted ? 1 : 0);
         }
         else if (runningCoreChargerTutorial)
         {
-            PlayerPrefs.SetInt(CoreChargerStepIndexKey, coreChargerStepIndex);
-            PlayerPrefs.SetInt(CoreChargerCompletedKey, coreChargerCompleted ? 1 : 0);
+            SetSavedInt(CoreChargerStepIndexKey, coreChargerStepIndex);
+            SetSavedInt(CoreChargerCompletedKey, coreChargerCompleted ? 1 : 0);
         }
         else if (runningBaseTutorial)
         {
-            PlayerPrefs.SetInt(BaseStepIndexKey, baseStepIndex);
-            PlayerPrefs.SetInt(BaseCompletedKey, baseCompleted ? 1 : 0);
+            SetSavedInt(BaseStepIndexKey, baseStepIndex);
+            SetSavedInt(BaseCompletedKey, baseCompleted ? 1 : 0);
         }
         else
         {
-            PlayerPrefs.SetInt(StepIndexKey, stepIndex);
-            PlayerPrefs.SetInt(CompletedKey, completed ? 1 : 0);
+            SetSavedInt(StepIndexKey, stepIndex);
+            SetSavedInt(CompletedKey, completed ? 1 : 0);
         }
 
         PlayerPrefs.Save();
