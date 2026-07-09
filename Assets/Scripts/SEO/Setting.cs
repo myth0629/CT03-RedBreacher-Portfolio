@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.UI;
@@ -76,6 +77,10 @@ public static class AudioVolumeSettings
     public const string SfxVolumePrefKey = "Setting.SFXVolume";
     public const string BgmMixerParameter = "BGMVolume";
     public const string SfxMixerParameter = "SFXVolume";
+    // 각 믹서는 자신의 볼륨 파라미터 하나만 노출한다. 다른 믹서의 파라미터를 SetFloat/GetFloat 하면
+    // "Exposed name does not exist" 에러가 나므로, 믹서 이름으로 담당 파라미터를 구분한다.
+    public const string BgmMixerName = "BGMMixer";
+    public const string SfxMixerName = "SFXMixer";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void ApplySavedSettingsAfterSceneLoad()
@@ -92,13 +97,27 @@ public static class AudioVolumeSettings
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
 
+        // 씬에 같은 믹서를 쓰는 소스가 여러 개(적/보스 등)이므로 믹서 단위로 한 번만 적용한다.
+        HashSet<AudioMixer> appliedMixers = new HashSet<AudioMixer>();
         for (int i = 0; i < sources.Length; i++)
         {
             AudioMixer mixer = sources[i] != null && sources[i].outputAudioMixerGroup != null
                 ? sources[i].outputAudioMixerGroup.audioMixer
                 : null;
-            ApplyVolumeToMixer(mixer, BgmMixerParameter, bgmVolume);
-            ApplyVolumeToMixer(mixer, SfxMixerParameter, sfxVolume);
+            if (mixer == null || !appliedMixers.Add(mixer))
+            {
+                continue;
+            }
+
+            // 믹서가 실제 노출한 파라미터에만 적용한다(다른 파라미터 호출 시 콘솔 에러 발생).
+            if (mixer.name == BgmMixerName)
+            {
+                ApplyVolumeToMixer(mixer, BgmMixerParameter, bgmVolume);
+            }
+            else if (mixer.name == SfxMixerName)
+            {
+                ApplyVolumeToMixer(mixer, SfxMixerParameter, sfxVolume);
+            }
         }
     }
 
