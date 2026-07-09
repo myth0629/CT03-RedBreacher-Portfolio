@@ -3,6 +3,10 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Myth/Combat/Boss Enemy Config")]
 public class BossEnemyConfig : EnemyConfig
 {
+    [Header("Unlock conditions")] 
+    [SerializeField] private int unlockStage;
+    [SerializeField] private int unlockPlayerLevel;
+    
     [Header("Tracker")]
     [SerializeField] private Sprite portrait;
 
