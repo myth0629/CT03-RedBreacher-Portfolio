@@ -268,7 +268,10 @@ public class EnemyController : MonoBehaviour
         if (GetComponent<Collider>() == null)
         {
             SphereCollider enemyCollider = gameObject.AddComponent<SphereCollider>();
-            enemyCollider.radius = 0.4f;
+            // radius는 로컬 값이라 루트 스케일(예: Enemy01은 0.25)이 곱해지면 히트박스가 의도보다
+            // 작아져 투사체가 빗나간다. 월드 기준 반경 0.4가 되도록 스케일을 보정한다.
+            float scale = Mathf.Max(0.0001f, Mathf.Abs(transform.lossyScale.x));
+            enemyCollider.radius = 0.4f / scale;
         }
     }
 
