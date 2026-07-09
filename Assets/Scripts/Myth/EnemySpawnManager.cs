@@ -27,6 +27,12 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TMP_Text gameOverCountdownText;
 
+    [Header("Damage Number")]
+    [Tooltip("전투 전체의 기본 데미지 숫자 폰트. 런타임에 CombatHealth가 붙는 적들도 이 폰트를 쓴다.")]
+    [SerializeField] private TMP_FontAsset damageNumberFont;
+    [Tooltip("전투 전체의 데미지 숫자 크기. 0 이하면 각 프리팹의 개별 크기를 그대로 쓴다.")]
+    [SerializeField] private float damageNumberFontSize = 3.2f;
+
     [Header("Enemy Scaling")]
     [SerializeField] private float healthIncreasePerStage = 0.2f;
     [SerializeField] private float damageIncreasePerStage = 0.1f;
@@ -86,6 +92,13 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void Awake()
     {
+        // 데미지 숫자 전역 기본 폰트/크기 주입(플레이어/보스 포함 전 CombatHealth에 적용).
+        if (damageNumberFont != null)
+        {
+            CombatHealth.GlobalDamageNumberFont = damageNumberFont;
+        }
+        CombatHealth.GlobalDamageNumberFontSize = damageNumberFontSize;
+
         ResolvePlayer();
         fallbackPlayerRespawnPosition = player != null
             ? CombatPlane.WithFixedY(player.transform.position)

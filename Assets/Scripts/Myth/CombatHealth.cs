@@ -54,6 +54,15 @@ public class CombatHealth : MonoBehaviour
     [Header("Damage Number")]
     [SerializeField] private bool showDamageNumber = true;
     [SerializeField] private TMP_FontAsset damageNumberFont;
+
+    // 전역 기본 데미지 폰트. CombatHealth가 런타임 AddComponent로 붙는 적(Enemy02~10 등)은
+    // damageNumberFont를 인스펙터로 배선할 수 없으므로, 씬에서 한 번 주입해 공용 기본값으로 쓴다.
+    // 개별 프리팹의 damageNumberFont가 설정되어 있으면 그쪽이 우선한다.
+    public static TMP_FontAsset GlobalDamageNumberFont;
+
+    // 전역 데미지 폰트 크기. 0 이하면 개별 프리팹의 damageNumberFontSize를 그대로 쓴다.
+    // 프리팹마다 직렬화된 크기가 제각각이라, 전투 전체의 데미지 숫자 크기를 한 곳에서 조절하기 위한 값.
+    public static float GlobalDamageNumberFontSize;
     [SerializeField] private Color enemyDamageColor = Color.white;
     [SerializeField] private Color playerDamageColor = new Color(1f, 0.35f, 0.35f);
     [SerializeField] private Color criticalDamageColor = new Color(1f, 0.85f, 0.1f);
@@ -253,13 +262,17 @@ public class CombatHealth : MonoBehaviour
         Color color = isCritical
             ? criticalDamageColor
             : isPlayer ? playerDamageColor : enemyDamageColor;
+        // 전역 크기가 지정되면 개별값 대신 전역값을 사용한다(전투 전체 데미지 숫자 크기 통일).
+        float resolvedFontSize = GlobalDamageNumberFontSize > 0f
+            ? GlobalDamageNumberFontSize
+            : damageNumberFontSize;
         DamageNumberVisual.Play(
             damage,
             isCritical,
             transform.position + damageNumberOffset,
             damageNumberFont,
             color,
-            damageNumberFontSize,
+            resolvedFontSize,
             criticalSizeMultiplier,
             damageNumberDuration,
             damageNumberRiseDistance,
@@ -946,7 +959,9 @@ public class DamageNumberVisual : MonoBehaviour
     {
         StopAnimation();
         text ??= GetComponent<TextMeshPro>();
-        text.font = font != null ? font : TMP_Settings.defaultFontAsset;
+        // 우선순위: 개별 설정 폰트 > 전역 기본 폰트 > TMP 기본 폰트
+        TMP_FontAsset resolvedFont = font != null ? font : CombatHealth.GlobalDamageNumberFont;
+        text.font = resolvedFont != null ? resolvedFont : TMP_Settings.defaultFontAsset;
         text.text = Mathf.Max(1, Mathf.RoundToInt(damage)).ToString();
         text.color = color;
         text.fontSize = Mathf.Max(0.1f, fontSize)
