@@ -44,6 +44,11 @@ public class BossEncounterManager : MonoBehaviour
         ResolveReferences();
     }
 
+    private void OnDestroy()
+    {
+        UnsubscribeActiveBossHealth();
+    }
+
     private void Update()
     {
         if (!encounterActive)
@@ -126,15 +131,27 @@ public class BossEncounterManager : MonoBehaviour
             moveSpeedScale,
             damageScale * GetPlayerLevelScale(damagePerLevel),
             rewardScale * GetPlayerLevelScale(rewardPerLevel));
+        activeBossHealth.OnDied += HandleBossDied;
         encounterActive = true;
         bossEncounterHud?.Show(config, activeBossHealth);
         EncounterStarted?.Invoke();
         return true;
     }
 
+    private void HandleBossDied(CombatDamageEvent damageEvent)
+    {
+        if (!encounterActive)
+        {
+            return;
+        }
+
+        HandleBossDefeat();
+    }
+
     private void HandleBossDefeat()
     {
         encounterActive = false;
+        UnsubscribeActiveBossHealth();
         activeBoss = null;
         activeBossHealth = null;
         bossEncounterHud?.Hide();
@@ -149,6 +166,7 @@ public class BossEncounterManager : MonoBehaviour
     private void AbortEncounter()
     {
         encounterActive = false;
+        UnsubscribeActiveBossHealth();
         activeBoss = null;
         activeBossHealth = null;
         bossEncounterHud?.Hide();
@@ -159,6 +177,7 @@ public class BossEncounterManager : MonoBehaviour
     private void HandlePlayerDefeat()
     {
         encounterActive = false;
+        UnsubscribeActiveBossHealth();
         if (activeBoss != null)
         {
             Destroy(activeBoss.gameObject);
@@ -174,6 +193,14 @@ public class BossEncounterManager : MonoBehaviour
     public void ShowResult(string title, string detail, bool success)
     {
         bossEncounterHud?.ShowResult(title, detail, success);
+    }
+
+    private void UnsubscribeActiveBossHealth()
+    {
+        if (activeBossHealth != null)
+        {
+            activeBossHealth.OnDied -= HandleBossDied;
+        }
     }
 
     private void ResolveReferences()

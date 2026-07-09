@@ -13,6 +13,7 @@ public class BossEncounterHud : MonoBehaviour
     [SerializeField] private Slider bossHealthSlider;
     [SerializeField] private TMP_Text bossHealthText;
     [SerializeField] private float resultDisplaySeconds = 4f;
+    [SerializeField] private TMP_Text bossClearText;
 
     private BossEnemyConfig config;
     private CombatHealth bossHealth;
@@ -50,6 +51,8 @@ public class BossEncounterHud : MonoBehaviour
             guidMissionPanel.SetActive(false);
         }
 
+        SetActive(bossNameText != null ? bossNameText.gameObject : null, true);
+        SetBossClearTextVisible(false);
         Refresh();
     }
 
@@ -67,6 +70,9 @@ public class BossEncounterHud : MonoBehaviour
         {
             guidMissionPanel.SetActive(true);
         }
+
+        SetActive(bossNameText != null ? bossNameText.gameObject : null, true);
+        SetBossClearTextVisible(false);
     }
 
     public void ShowResult(string title, string detail, bool success)
@@ -85,13 +91,16 @@ public class BossEncounterHud : MonoBehaviour
             guidMissionPanel.SetActive(false);
         }
 
-        if (bossNameText != null)
+        if (bossClearText != null)
         {
-            bossNameText.text = title;
-            bossNameText.color = success
-                ? new Color(0.4f, 1f, 0.5f)
+            bossClearText.gameObject.SetActive(true);
+            bossClearText.text = title;
+            bossClearText.color = success
+                ? new Color(0.435f, 0.812f, 0.459f)
                 : new Color(1f, 0.35f, 0.35f);
         }
+
+        SetActive(bossNameText != null ? bossNameText.gameObject : null, false);
 
         if (bossHealthText != null)
         {
@@ -128,6 +137,22 @@ public class BossEncounterHud : MonoBehaviour
         if (bossHealthText != null)
         {
             bossHealthText.text = $"{bossHealth.CurrentHealth:0} / {maxHealth:0}";
+        }
+    }
+
+    private void SetBossClearTextVisible(bool visible)
+    {
+        if (bossClearText != null)
+        {
+            bossClearText.gameObject.SetActive(visible);
+        }
+    }
+
+    private static void SetActive(GameObject target, bool active)
+    {
+        if (target != null)
+        {
+            target.SetActive(active);
         }
     }
 }
