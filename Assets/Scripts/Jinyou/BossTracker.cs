@@ -49,6 +49,8 @@ public class BossTracker : MonoBehaviour
 
     [SerializeField] private CommandCenter cmdCenter;
     [SerializeField] private BossEncounterManager bossEncounterManager;
+    [SerializeField] private EnemySpawnManager enemySpawnManager;
+    [SerializeField] private PlayerProgression playerProgression;
     [SerializeField] private List<BossDefinition> bosses = new List<BossDefinition>();
 
     // Kept under the original field name so existing prefab data remains valid.
@@ -97,6 +99,8 @@ public class BossTracker : MonoBehaviour
     public CommandCenter CmdCenter => cmdCenter;
     public BossDefinition SelectedBoss => GetBoss(selectedBossIndex);
     public BossDifficulty SelectedDifficulty => GetDifficulty(selectedDifficultyIndex);
+    public int CurrentStage => ResolveCurrentStage();
+    public int CommanderLevel => ResolveCommanderLevel();
     public event Action SelectionChanged;
 
     private void Awake()
@@ -116,6 +120,11 @@ public class BossTracker : MonoBehaviour
 
     public bool IsDifficultyUnlocked(BossDifficulty difficulty)
     {
+        return IsDifficultyUnlocked(SelectedBoss, difficulty);
+    }
+
+    public bool IsDifficultyUnlocked(BossDefinition boss, BossDifficulty difficulty)
+    {
         ResolveReferences();
         if (difficulty == null)
         {
@@ -123,7 +132,12 @@ public class BossTracker : MonoBehaviour
         }
 
         int researchLevel = cmdCenter != null ? cmdCenter.Level : 1;
-        return researchLevel >= difficulty.requiredResearchLabLevel;
+        BossEnemyConfig config = GetBossConfig(boss, difficulty);
+        int requiredStage = config != null ? config.UnlockStage : 0;
+        int requiredPlayerLevel = config != null ? config.UnlockPlayerLevel : 0;
+        return researchLevel >= difficulty.requiredResearchLabLevel
+            && (requiredStage <= 0 || CurrentStage >= requiredStage)
+            && (requiredPlayerLevel <= 0 || CommanderLevel >= requiredPlayerLevel);
     }
 
     public bool CanEnterSelected()
@@ -137,7 +151,7 @@ public class BossTracker : MonoBehaviour
         BossEnemyConfig config = GetBossConfig(boss, difficulty);
         return cmdCenter != null
             && cmdCenter.BossTickets > 0
-            && IsDifficultyUnlocked(difficulty)
+            && IsDifficultyUnlocked(boss, difficulty)
             && bossEncounterManager != null
             && bossEncounterManager.CanSummon(config);
     }
@@ -216,7 +230,7 @@ public class BossTracker : MonoBehaviour
         BossDifficulty selected = null;
         foreach (BossDifficulty difficulty in difficulties)
         {
-            if (IsDifficultyUnlocked(difficulty)
+            if (IsDifficultyUnlocked(SelectedBoss, difficulty)
                 && (selected == null
                     || difficulty.requiredResearchLabLevel > selected.requiredResearchLabLevel))
             {
@@ -364,6 +378,11 @@ public class BossTracker : MonoBehaviour
             : difficulty != null ? difficulty.bossConfig : null;
     }
 
+    public BossEnemyConfig ResolveBossConfig(BossDefinition boss, BossDifficulty difficulty)
+    {
+        return GetBossConfig(boss, difficulty);
+    }
+
     private void EnsureValidSelection()
     {
         EnsureBossFallback();
@@ -372,7 +391,7 @@ public class BossTracker : MonoBehaviour
             ? WrapIndex(selectedDifficultyIndex, difficulties.Count)
             : 0;
 
-        if (!IsDifficultyUnlocked(SelectedDifficulty))
+        if (!IsDifficultyUnlocked(SelectedBoss, SelectedDifficulty))
         {
             BossDifficulty highest = GetHighestUnlockedDifficulty();
             int unlockedIndex = difficulties.IndexOf(highest);
@@ -410,6 +429,27 @@ public class BossTracker : MonoBehaviour
             ? BaseCampManager.Instance.CommandCenter
             : FindFirstObjectByType<CommandCenter>();
         bossEncounterManager ??= FindFirstObjectByType<BossEncounterManager>();
+        enemySpawnManager ??= FindFirstObjectByType<EnemySpawnManager>();
+        playerProgression ??= BaseCampManager.Instance != null
+            ? BaseCampManager.Instance.PlayerProgression
+            : FindFirstObjectByType<PlayerProgression>();
+    }
+
+    private int ResolveCurrentStage()
+    {
+        ResolveReferences();
+        return enemySpawnManager != null ? Mathf.Max(1, enemySpawnManager.CurrentStage) : 1;
+    }
+
+    private int ResolveCommanderLevel()
+    {
+        ResolveReferences();
+        if (BaseCampManager.Instance != null)
+        {
+            return Mathf.Max(1, BaseCampManager.Instance.CommanderLevel);
+        }
+
+        return playerProgression != null ? Mathf.Max(1, playerProgression.Level) : 1;
     }
 
     private void SubscribeEncounter()

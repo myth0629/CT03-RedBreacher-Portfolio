@@ -100,7 +100,7 @@ public class BossTrackerPanel : MonoBehaviour
             SetText(productionText, "티켓 생산 정보 없음");
             SetText(levelText, "사령부 Lv. --");
             SetBossInfo(null, null);
-            SetBossLockIcon(null);
+            SetBossLockIcon(null, null);
             SetFill(ticketProgressFill, 0f);
             return;
         }
@@ -113,12 +113,12 @@ public class BossTrackerPanel : MonoBehaviour
         SetText(ticketText, $"티켓 {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}");
         SetText(productionText, $"하루 {commandCenter.BossTicketsProducedPerDay}개 지급");
         SetText(levelText, $"사령부 Lv. {commandCenter.Level:0}");
-        SetText(bossLockStateText, BossLockState(difficulty));
+        SetText(bossLockStateText, BossLockState(boss, difficulty));
         SetText(bossDifficultyText, $"({difficulty.displayName})");
         SetDifficultyTextColor(difficulty);
         SetText(recommendedPowerText, BuildRecommendedPowerText(difficulty));
         SetBossInfo(boss, difficulty);
-        SetBossLockIcon(difficulty);
+        SetBossLockIcon(boss, difficulty);
         SetFill(ticketProgressFill, commandCenter.BossTicketCapacity > 0
             ? (float)commandCenter.BossTickets / commandCenter.BossTicketCapacity
             : 0f);
@@ -131,17 +131,52 @@ public class BossTrackerPanel : MonoBehaviour
     }
     
     // 해금 정보를 표시하는 UI 로직
-    private string BossLockState(BossTracker.BossDifficulty difficulty)
+    private string BossLockState(BossTracker.BossDefinition boss, BossTracker.BossDifficulty difficulty)
     {
         if (bossTracker == null || difficulty == null)
         {
             return "해금 정보 없음";
         }
 
-        string state = bossTracker.IsDifficultyUnlocked(difficulty)
-            ? "해금됨"
-            : $"사령부 Lv.\n{difficulty.requiredResearchLabLevel} 필요";
-        return $"{state}";
+        BossEnemyConfig config = bossTracker.ResolveBossConfig(boss, difficulty);
+        int requiredStage = config != null ? config.UnlockStage : 0;
+        int requiredPlayerLevel = config != null ? config.UnlockPlayerLevel : 0;
+        if (bossTracker.IsDifficultyUnlocked(boss, difficulty))
+        {
+            return "해금됨";
+        }
+
+        string state = string.Empty;
+        CommandCenter commandCenter = baseCampManager != null
+            ? baseCampManager.CommandCenter
+            : bossTracker.CmdCenter;
+        int commandCenterLevel = commandCenter != null ? commandCenter.Level : 1;
+        if (commandCenterLevel < difficulty.requiredResearchLabLevel)
+        {
+            AppendCondition(ref state, $"사령부 Lv.{difficulty.requiredResearchLabLevel} 필요");
+        }
+
+        if (requiredStage > 0 && bossTracker.CurrentStage < requiredStage)
+        {
+            AppendCondition(ref state, $"스테이지 {requiredStage} 도달");
+        }
+
+        if (requiredPlayerLevel > 0 && bossTracker.CommanderLevel < requiredPlayerLevel)
+        {
+            AppendCondition(ref state, $"지휘관 Lv.{requiredPlayerLevel} 달성");
+        }
+
+        return string.IsNullOrWhiteSpace(state) ? "해금 정보 없음" : state;
+    }
+
+    private static void AppendCondition(ref string state, string condition)
+    {
+        if (!string.IsNullOrEmpty(state))
+        {
+            state += "\n";
+        }
+
+        state += condition;
     }
 
     /// <summary>
@@ -173,14 +208,14 @@ public class BossTrackerPanel : MonoBehaviour
             ? result
             : 0;
     }
-    private void SetBossLockIcon(BossTracker.BossDifficulty difficulty)
+    private void SetBossLockIcon(BossTracker.BossDefinition boss, BossTracker.BossDifficulty difficulty)
     {
         if (bossLockIcon == null)
         {
             return;
         }
 
-        bool unlocked = bossTracker != null && bossTracker.IsDifficultyUnlocked(difficulty);
+        bool unlocked = bossTracker != null && bossTracker.IsDifficultyUnlocked(boss, difficulty);
         bossLockIcon.gameObject.SetActive(!unlocked);
     }
 
