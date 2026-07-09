@@ -3,7 +3,8 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Myth/Combat/Boss Enemy Config")]
 public class BossEnemyConfig : EnemyConfig
 {
-    [Header("Unlock conditions")] 
+    [Header("Unlock conditions")]
+    [Tooltip("보스 해금조건 수시로 바꿀 수 있게 여기서 값을 조정하고 관제탑 스크립트에 연결")]
     [SerializeField] private int unlockStage;
     [SerializeField] private int unlockPlayerLevel;
     
@@ -68,6 +69,8 @@ public class BossEnemyConfig : EnemyConfig
     [Header("DeathSounds Boss")]
     [SerializeField] private AudioClip[] deathSoundsSfx;
     
+    public int UnlockStage => Mathf.Max(0, unlockStage);
+    public int UnlockPlayerLevel => Mathf.Max(0, unlockPlayerLevel);
     public Sprite Portrait => portrait;
     public float RangedAttackRange => Mathf.Max(0.1f, rangedAttackRange);
     public float RangedAttackDamage => Mathf.Max(0f, rangedAttackDamage);
