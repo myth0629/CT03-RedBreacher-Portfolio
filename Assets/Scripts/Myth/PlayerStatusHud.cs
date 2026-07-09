@@ -372,9 +372,33 @@ public class PlayerStatusHud : MonoBehaviour
 #endif
     }
 
+    // 대상이 실제 화면에 표시 중일 때만 true. 닫힌 팝업의 문자열 생성/TMP 갱신을 건너뛰기 위한 게이트.
+    private static bool IsVisible(TMP_Text probe)
+    {
+        return probe != null && probe.gameObject.activeInHierarchy;
+    }
+
+    private static bool IsVisible(Graphic probe)
+    {
+        return probe != null && probe.gameObject.activeInHierarchy;
+    }
+
     private void RefreshTankPopup(CombatHealth health, PlayerProgression progression)
     {
         if (player == null)
+        {
+            return;
+        }
+
+        // 블록별 대표 텍스트의 활성 상태로 갱신 여부를 결정한다(팝업이 닫혀 있으면 전부 스킵).
+        bool tankPopupVisible = IsVisible(tankPopupNameText);
+        bool detailVisible = IsVisible(unitStatusDetailText);
+        bool weaponVisible = IsVisible(tankPopupWeaponNameText);
+        bool droneVisible = IsVisible(tankPopupDroneNameText);
+        bool statTankVisible = IsVisible(stattankPopupHealthText);
+        bool powerVisible = IsVisible(tankPlayerPowerText);
+        bool anyIconVisible = IsVisible(tankPopupEquipWeaponIcon) || IsVisible(tankPopupEquipDroneIcon);
+        if (!tankPopupVisible && !detailVisible && !weaponVisible && !droneVisible && !statTankVisible && !powerVisible && !anyIconVisible)
         {
             return;
         }
@@ -385,64 +409,91 @@ public class PlayerStatusHud : MonoBehaviour
         DroneConfig drone = droneController != null ? droneController.DroneConfig : null;
 
         // 탱크 팝업은 연결된 텍스트만 선택적으로 갱신한다.
-        SetText(tankPopupNameText, player.DisplayName);
-        SetText(tankPopupLevelText, progression != null ? $"[Lv. {progression.Level}]" : "[1]");
-        SetText(tankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
-        SetText(tankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
-        SetText(tankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
-        SetText(tankPopupRangeText, $"{player.AttackRange:0.##}");
-        SetText(tankPopupFireIntervalText, $"{player.AttackInterval:0.##}");
-        SetText(tankPopupRotateSpeedText, $"{player.RotationSpeed:0.##}");
-        SetText(tankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
-        SetText(tankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
-        
+        if (tankPopupVisible)
+        {
+            SetText(tankPopupNameText, player.DisplayName);
+            SetText(tankPopupLevelText, progression != null ? $"[Lv. {progression.Level}]" : "[1]");
+            SetText(tankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
+            SetText(tankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
+            SetText(tankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
+            SetText(tankPopupRangeText, $"{player.AttackRange:0.##}");
+            SetText(tankPopupFireIntervalText, $"{player.AttackInterval:0.##}");
+            SetText(tankPopupRotateSpeedText, $"{player.RotationSpeed:0.##}");
+            SetText(tankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
+            SetText(tankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
+        }
+
         // 탱크(자세히 보기)
-        float detailHealth = health != null ? health.CurrentHealth : 0f;
-        SetText(unitStatusDetailText, $"{detailHealth:0}\n"
-                                      + $"{player.AttackRange:0.##}\n"
-                                      + $"{player.AttackRange:0.##}\n"
-                                      + $"{player.AttackInterval:0.##}\n"
-                                      + $"{player.MoveSpeed:0.##}\n"
-                                      + $"{player.RotationSpeed:0.##}\n"
-                                      + $"{player.CritChance * 100f:0.#}%\n"
-                                      + $"{player.CritMultiplier:0.##}x\n"
-                                      + $"{player.CritMultiplier:0.##}x\n"
-                                      + $"{GetBossDodgeCooldown(player):0.##}초\n");
-        
+        if (detailVisible)
+        {
+            float detailHealth = health != null ? health.CurrentHealth : 0f;
+            SetText(unitStatusDetailText, $"{detailHealth:0}\n"
+                                          + $"{player.AttackRange:0.##}\n"
+                                          + $"{player.AttackRange:0.##}\n"
+                                          + $"{player.AttackInterval:0.##}\n"
+                                          + $"{player.MoveSpeed:0.##}\n"
+                                          + $"{player.RotationSpeed:0.##}\n"
+                                          + $"{player.CritChance * 100f:0.#}%\n"
+                                          + $"{player.CritMultiplier:0.##}x\n"
+                                          + $"{player.CritMultiplier:0.##}x\n"
+                                          + $"{GetBossDodgeCooldown(player):0.##}초\n");
+        }
+
+        // 무기/드론 아이콘은 무기·드론 정보 블록과 별개로 표시될 수 있으므로 각자 게이팅한다.
+        if (IsVisible(tankPopupEquipWeaponIcon))
+        {
+            SetIcon(tankPopupEquipWeaponIcon, weapon != null ? weapon.Icon : null);
+        }
+
+        if (IsVisible(tankPopupEquipDroneIcon))
+        {
+            SetDronePreview(tankPopupEquipDroneIcon, drone);
+        }
+
         // 무기
-        SetText(tankPopupWeaponNameText, weapon != null ? weapon.DisplayName : "장착한 무기 없음");
-        SetRarityText(tankPopupWeaponRarityText, weapon);
-        SetText(tankPopupWeaponCategoryText, weapon != null ? $"유형: {weapon.WeaponCategory}" : "무기 카테고리");
-        SetWeaponAttackTypeGroups(weapon);
-        SetIcon(tankPopupEquipWeaponIcon, weapon != null ? weapon.Icon : null);
-        SetDronePreview(tankPopupEquipDroneIcon, drone);
-        SetText(tankPopupWeaponDamageText, weapon != null ? $"{player.WeaponAttackDamage:0.##}" : "0");
-        SetText(tankPopupWeaponSpeedText, weapon != null ? $"{weapon.Speed * weapon.Lifetime:0.##}" : "0");
-        SetText(tankPopupWeaponRadiusText, weapon != null ? $"{weapon.AreaRadius:0.##}" : "0");
-        SetText(tankPopupWeaponMaxPierceTargetsText, weapon != null ? $"{weapon.MaxPierceTargets}" : "0");
-        SetText(tankPopupWeaponKnockbackText, $"{player.KnockbackForce:0.##}");
-        
+        if (weaponVisible)
+        {
+            SetText(tankPopupWeaponNameText, weapon != null ? weapon.DisplayName : "장착한 무기 없음");
+            SetRarityText(tankPopupWeaponRarityText, weapon);
+            SetText(tankPopupWeaponCategoryText, weapon != null ? $"유형: {weapon.WeaponCategory}" : "무기 카테고리");
+            SetWeaponAttackTypeGroups(weapon);
+            SetText(tankPopupWeaponDamageText, weapon != null ? $"{player.WeaponAttackDamage:0.##}" : "0");
+            SetText(tankPopupWeaponSpeedText, weapon != null ? $"{weapon.Speed * weapon.Lifetime:0.##}" : "0");
+            SetText(tankPopupWeaponRadiusText, weapon != null ? $"{weapon.AreaRadius:0.##}" : "0");
+            SetText(tankPopupWeaponMaxPierceTargetsText, weapon != null ? $"{weapon.MaxPierceTargets}" : "0");
+            SetText(tankPopupWeaponKnockbackText, $"{player.KnockbackForce:0.##}");
+        }
+
         // 드론
-        SetText(tankPopupDroneNameText, drone != null ? drone.DisplayName : "장착한 드론 없음");
-        SetText(tankPopupDroneCountText, drone != null ? $" {drone.DroneCount}마리" : " 0마리");
-        SetText(tankPopupDroneDamageText, drone != null ? $"{GetEnhancedDroneDamage(drone):0.##}" : "0");
-        SetText(tankPopupDroneWeaponText, drone != null && drone.ProjectileConfig != null ? drone.ProjectileConfig.DisplayName : "-");
-        SetText(tankPopupDroneIntervalText, drone != null ? $"{drone.AttackInterval:0.##}" : "0");
-        SetText(tankPopupDroneRangeText, drone != null ? $"{drone.AttackRange * drone.ProjectileLifetime:0.##}" : "0");
-        SetText(tankPopupDroneWeaponSpeedText, drone != null ? $"{drone.ProjectileSpeed:0.##}" : "0");
-        SetText(tankPopupDroneFollowSpeedText, drone != null ? $"{drone.FollowSpeed:0.##}" : "0");
-        
+        if (droneVisible)
+        {
+            SetText(tankPopupDroneNameText, drone != null ? drone.DisplayName : "장착한 드론 없음");
+            SetText(tankPopupDroneCountText, drone != null ? $" {drone.DroneCount}마리" : " 0마리");
+            SetText(tankPopupDroneDamageText, drone != null ? $"{GetEnhancedDroneDamage(drone):0.##}" : "0");
+            SetText(tankPopupDroneWeaponText, drone != null && drone.ProjectileConfig != null ? drone.ProjectileConfig.DisplayName : "-");
+            SetText(tankPopupDroneIntervalText, drone != null ? $"{drone.AttackInterval:0.##}" : "0");
+            SetText(tankPopupDroneRangeText, drone != null ? $"{drone.AttackRange * drone.ProjectileLifetime:0.##}" : "0");
+            SetText(tankPopupDroneWeaponSpeedText, drone != null ? $"{drone.ProjectileSpeed:0.##}" : "0");
+            SetText(tankPopupDroneFollowSpeedText, drone != null ? $"{drone.FollowSpeed:0.##}" : "0");
+        }
+
         // 탱크(스탯강화소)
-        SetText(stattankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
-        SetText(stattankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
-        SetText(stattankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
-        SetText(stattankPopupRangeText, $"{player.AttackRange:0.##}");
-        SetText(stattankPopupFireIntervalText, $"{player.AttackInterval:0.##}");
-        SetText(stattankPopupRotateSpeedText, $"{player.RotationSpeed:0.##}");
-        SetText(stattankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
-        SetText(stattankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
-        
-        SetText(tankPlayerPowerText, $"종합 전투력: {BuildPlayerPowerText(player, health, drone)}");
+        if (statTankVisible)
+        {
+            SetText(stattankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
+            SetText(stattankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
+            SetText(stattankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
+            SetText(stattankPopupRangeText, $"{player.AttackRange:0.##}");
+            SetText(stattankPopupFireIntervalText, $"{player.AttackInterval:0.##}");
+            SetText(stattankPopupRotateSpeedText, $"{player.RotationSpeed:0.##}");
+            SetText(stattankPopupCritChanceText, $"{player.CritChance * 100f:0.#}%");
+            SetText(stattankPopupCritMultiplierText, $"{player.CritMultiplier:0.##}x");
+        }
+
+        if (powerVisible)
+        {
+            SetText(tankPlayerPowerText, $"종합 전투력: {BuildPlayerPowerText(player, health, drone)}");
+        }
     }
 
     private void RefreshStatUpgradePopup(PlayerProgression progression)
@@ -453,9 +504,19 @@ public class PlayerStatusHud : MonoBehaviour
             return;
         }
 
+        // 기지(특성 연구소) 쪽 포인트 표시는 스탯 강화 팝업과 별개 화면이므로 따로 게이팅한다.
+        if (IsVisible(statPointText_base))
+        {
+            SetText(statPointText_base, progression != null ? $"보유 포인트 : {progression.StatPoints}" : "보유 포인트 : 0");
+        }
+
+        if (!IsVisible(statUpgradePointText))
+        {
+            return;
+        }
+
         // 미투자 상태를 UI에서는 Lv.1로 표시한다.
         SetText(statUpgradePointText, progression != null ? $"보유 중인 포인트 : {progression.StatPoints}" : "보유 중인 포인트 : 0");
-        SetText(statPointText_base, progression != null ? $"보유 포인트 : {progression.StatPoints}" : "보유 포인트 : 0");
         SetText(attackUpgradeLevelText, $"Lv.{allocator.AttackDisplayLevel}");
         SetText(healthUpgradeLevelText, $"Lv.{allocator.HealthDisplayLevel}");
         SetText(critChanceUpgradeLevelText, $"Lv.{allocator.CritChanceDisplayLevel}");

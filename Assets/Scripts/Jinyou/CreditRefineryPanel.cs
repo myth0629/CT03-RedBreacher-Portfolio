@@ -41,7 +41,7 @@ public class CreditRefineryPanel : MonoBehaviour
         ResolveReferences();
         collectButton?.onClick.AddListener(CollectCredits);
         upgradeButton?.onClick.AddListener(UpgradeRefinery);
-        Refresh();
+        RefreshNow();
     }
 
     private void OnDisable()
@@ -50,8 +50,23 @@ public class CreditRefineryPanel : MonoBehaviour
         upgradeButton?.onClick.RemoveListener(UpgradeRefinery);
     }
 
+    // 매 프레임 문자열 생성/TMP 갱신을 피하기 위한 주기적 갱신 간격.
+    private const float RefreshInterval = 0.25f;
+    private float nextRefreshTime;
+
     private void Update()
     {
+        if (Time.unscaledTime < nextRefreshTime)
+        {
+            return;
+        }
+
+        RefreshNow();
+    }
+
+    private void RefreshNow()
+    {
+        nextRefreshTime = Time.unscaledTime + RefreshInterval;
         Refresh();
     }
 

@@ -308,13 +308,14 @@ public class BossEnemyController : EnemyController
 
     private PlayerProjectile FindClosestProjectileThreat()
     {
-        PlayerProjectile[] projectiles = FindObjectsByType<PlayerProjectile>(FindObjectsSortMode.None);
+        // 씬 전체 스캔(FindObjectsByType) 대신 활성 투사체 정적 레지스트리를 사용한다.
+        IReadOnlyList<PlayerProjectile> projectiles = PlayerProjectile.ActiveProjectiles;
         PlayerProjectile closestThreat = null;
         float closestDistanceSqr = float.PositiveInfinity;
         float detectionRadiusSqr = bossConfig.DodgeDetectionRadius * bossConfig.DodgeDetectionRadius;
         Vector3 bossPosition = CombatPlane.WithFixedY(transform.position);
 
-        for (int i = 0; i < projectiles.Length; i++)
+        for (int i = 0; i < projectiles.Count; i++)
         {
             PlayerProjectile projectile = projectiles[i];
             if (projectile == null || !projectile.IsInFlight || projectile.TravelSpeed <= 0f)

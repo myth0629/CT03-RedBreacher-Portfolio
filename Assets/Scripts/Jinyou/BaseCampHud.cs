@@ -32,12 +32,17 @@ public class BaseCampHud : MonoBehaviour
     [SerializeField] private TMP_Text coreChargerUnlockText;
     [SerializeField] private GameObject coreChargerUnlockPanel;
 
+    // 매 프레임 문자열 생성/TMP 갱신을 피하기 위한 주기적 갱신 간격.
+    // 정제소 저장량처럼 실시간으로 차오르는 표시만 이 주기로 따라가면 충분하다.
+    private const float RefreshInterval = 0.25f;
+    private float nextRefreshTime;
+
     private void OnEnable()
     {
         ResolveReferences();
         collectButton?.onClick.AddListener(CollectCredits);
         EnsureExitButtonVisible();
-        Refresh();
+        RefreshNow();
     }
 
     private void OnDisable()
@@ -47,6 +52,17 @@ public class BaseCampHud : MonoBehaviour
 
     private void Update()
     {
+        if (Time.unscaledTime < nextRefreshTime)
+        {
+            return;
+        }
+
+        RefreshNow();
+    }
+
+    private void RefreshNow()
+    {
+        nextRefreshTime = Time.unscaledTime + RefreshInterval;
         Refresh();
     }
 
@@ -60,7 +76,7 @@ public class BaseCampHud : MonoBehaviour
         bossTicketText = bossTicket;
         refineryStorageText = refineryStorage;
         refineryStorageFill = refineryFill;
-        Refresh();
+        RefreshNow();
     }
 
     private void Refresh()
@@ -195,7 +211,7 @@ public class BaseCampHud : MonoBehaviour
             RewardFlyAnimator.Instance.PlayReward(sourcePosition, CurrencyType.Credits, collectedCredits);
         }
 
-        Refresh();
+        RefreshNow();
     }
 
     private static void SetText(TMP_Text target, string value)

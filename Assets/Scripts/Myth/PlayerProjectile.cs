@@ -40,6 +40,10 @@ public class PlayerProjectile : MonoBehaviour
 
     // 프레임 간 이동 구간 스윕 판정용(빠른 투사체의 관통 누락 방지).
     private static readonly RaycastHit[] sweepHits = new RaycastHit[16];
+    // 오버랩/광역 판정 결과 재사용 버퍼(매 프레임 Collider[] 할당 방지).
+    // 주의: 적/플레이어가 전부 Default 레이어라 레이어 마스크 필터링은 불가.
+    private static readonly Collider[] overlapHits = new Collider[64];
+    private readonly HashSet<CombatHealth> areaDamagedTargets = new HashSet<CombatHealth>();
     private Vector3 lastSweepPosition;
     private bool hasSweepOrigin;
 
@@ -48,11 +52,32 @@ public class PlayerProjectile : MonoBehaviour
     public Vector3 TravelVelocity => direction * speed;
     public bool IsInFlight => !isReleased && gameObject.activeInHierarchy;
 
+    // 활성 투사체 정적 레지스트리(보스 회피 판정 등에서 FindObjectsByType 씬 전체 스캔 대체).
+    private static readonly List<PlayerProjectile> activeProjectiles = new List<PlayerProjectile>();
+    public static IReadOnlyList<PlayerProjectile> ActiveProjectiles => activeProjectiles;
+
+    // 도메인 리로드 비활성 환경에서 이전 세션의 파괴된 참조가 정적 리스트에 남는 것을 막는다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetActiveRegistry()
+    {
+        activeProjectiles.Clear();
+    }
+
     private void Awake()
     {
         Configure(projectileConfig);
         EnsureProjectileComponents();
         _wallLayer = LayerMask.NameToLayer("Wall");
+    }
+
+    private void OnEnable()
+    {
+        activeProjectiles.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        activeProjectiles.Remove(this);
     }
 
     private void Update()
@@ -88,6 +113,7 @@ public class PlayerProjectile : MonoBehaviour
         direction = Vector3.zero;
         isCritical = false;
         piercedTargets.Clear();
+        areaDamagedTargets.Clear();
         hasSweepOrigin = false;
 
         if (body != null)
@@ -496,16 +522,16 @@ public class PlayerProjectile : MonoBehaviour
         }
 
         // 물리 충돌 이벤트가 누락되어도 반경 안의 적을 직접 탐지한다.
-        Collider[] hits = Physics.OverlapSphere(transform.position, collisionRadius);
-        for (int i = 0; i < hits.Length; i++)
+        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, collisionRadius, overlapHits);
+        for (int i = 0; i < hitCount; i++)
         {
-            if (IsWall(hits[i].gameObject))
+            if (IsWall(overlapHits[i].gameObject))
             {
                 HitWall();
                 return;
             }
 
-            CombatHealth target = hits[i].GetComponentInParent<CombatHealth>();
+            CombatHealth target = overlapHits[i].GetComponentInParent<CombatHealth>();
             if (target == null || target == owner)
             {
                 continue;
@@ -582,17 +608,18 @@ public class PlayerProjectile : MonoBehaviour
 
     private void ApplyAreaDamage(CombatHealth directTarget)
     {
-        HashSet<CombatHealth> damagedTargets = new HashSet<CombatHealth>();
+        HashSet<CombatHealth> damagedTargets = areaDamagedTargets;
+        damagedTargets.Clear();
         int targetLimit = Mathf.Max(1, maxAreaTargets);
         float appliedAreaDamage = damage * Mathf.Max(0f, areaDamageMultiplier);
 
         // 직접 충돌한 적은 물리 탐지 결과와 관계없이 우선 피해를 적용한다.
         ApplyAreaTarget(directTarget, appliedAreaDamage, damagedTargets);
 
-        Collider[] hits = Physics.OverlapSphere(transform.position, Mathf.Max(0f, areaRadius));
-        for (int i = 0; i < hits.Length && damagedTargets.Count < targetLimit; i++)
+        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, Mathf.Max(0f, areaRadius), overlapHits);
+        for (int i = 0; i < hitCount && damagedTargets.Count < targetLimit; i++)
         {
-            CombatHealth target = hits[i].GetComponentInParent<CombatHealth>();
+            CombatHealth target = overlapHits[i].GetComponentInParent<CombatHealth>();
             ApplyAreaTarget(target, appliedAreaDamage, damagedTargets);
         }
     }
