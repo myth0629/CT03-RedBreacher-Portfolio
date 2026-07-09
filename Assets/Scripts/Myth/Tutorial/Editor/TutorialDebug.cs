@@ -9,6 +9,14 @@ public static class TutorialDebug
 {
     private const string StepIndexKey = "Tutorial.StepIndex";
     private const string CompletedKey = "Tutorial.Completed";
+    private const string BaseStepIndexKey = "Tutorial.BasePopup.StepIndex";
+    private const string BaseCompletedKey = "Tutorial.BasePopup.Completed";
+    private const string CoreChargerStepIndexKey = "Tutorial.CoreCharger.StepIndex";
+    private const string CoreChargerCompletedKey = "Tutorial.CoreCharger.Completed";
+    private const string InventoryStepIndexKey = "Tutorial.Inventory.StepIndex";
+    private const string InventoryCompletedKey = "Tutorial.Inventory.Completed";
+    private const string BossEncounterStepIndexKey = "Tutorial.BossEncounter.StepIndex";
+    private const string BossEncounterCompletedKey = "Tutorial.BossEncounter.Completed";
     private const string TutorialFolder = "Assets/Resources/Tutorial";
     private const string ConfigAssetPath = TutorialFolder + "/TutorialConfig.asset";
     private const string OverlayPrefabPath = TutorialFolder + "/TutorialOverlay.prefab";
@@ -18,6 +26,14 @@ public static class TutorialDebug
     {
         PlayerPrefs.DeleteKey(StepIndexKey);
         PlayerPrefs.DeleteKey(CompletedKey);
+        PlayerPrefs.DeleteKey(BaseStepIndexKey);
+        PlayerPrefs.DeleteKey(BaseCompletedKey);
+        PlayerPrefs.DeleteKey(CoreChargerStepIndexKey);
+        PlayerPrefs.DeleteKey(CoreChargerCompletedKey);
+        PlayerPrefs.DeleteKey(BossEncounterStepIndexKey);
+        PlayerPrefs.DeleteKey(BossEncounterCompletedKey);
+        PlayerPrefs.DeleteKey(InventoryStepIndexKey);
+        PlayerPrefs.DeleteKey(InventoryCompletedKey);
         PlayerPrefs.Save();
         Debug.Log("[Tutorial] 진행도를 초기화했습니다. 다음 재생 시 온보딩이 처음부터 시작됩니다.");
     }
