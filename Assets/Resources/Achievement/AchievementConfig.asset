@@ -15,8 +15,8 @@ MonoBehaviour:
   achievements:
   - id: player_level
     progressType: 0
-    title: "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 \uB2EC\uC131"
-    description: "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 {0} \uB2EC\uC131"
+    title: "\uC9C0\uD718\uAD00 \uB808\uBCA8 \uB2EC\uC131"
+    description: "\uC9C0\uD718\uAD00 \uB808\uBCA8 {0} \uB2EC\uC131"
     iconSprite: {fileID: 0}
     targetAmount: 5
     nextTargetAmounts: 
@@ -68,3 +68,59 @@ MonoBehaviour:
     progressAmountPerEvent: 1
     rewardCurrency: 1
     rewardAmount: 10
+  - id: boss_clear
+    progressType: 5
+    title: "\uBCF4\uC2A4\uCC98\uCE58"
+    description: "\uBCF4\uC2A4 {0}\uB9C8\uB9AC \uCC98\uCE58"
+    iconSprite: {fileID: 0}
+    targetAmount: 2
+    nextTargetAmounts: 
+    repeatRequirementAmount: 2
+    progressAmountPerEvent: 1
+    rewardCurrency: 1
+    rewardAmount: 20
+  - id: boss_difficulty_clear
+    progressType: 6
+    title: "\uBCF4\uC2A4\uCC98\uCE58 (\uACE0\uB09C\uC774\uB3C4)"
+    description: "\uBCF4\uC2A4 {0}\uB9C8\uB9AC \uCC98\uCE58\n(\uC5B4\uB824\uC6C0
+      \uB09C\uC774\uB3C4 \uC774\uC0C1)"
+    iconSprite: {fileID: 0}
+    targetAmount: 1
+    nextTargetAmounts: 
+    repeatRequirementAmount: 1
+    progressAmountPerEvent: 1
+    rewardCurrency: 1
+    rewardAmount: 30
+  - id: facility_upgrade
+    progressType: 7
+    title: "\uAE30\uC9C0 \uC5C5\uADF8\uB808\uC774\uB4DC"
+    description: "\uAE30\uC9C0 {0}\uAC1C \uC5C5\uADF8\uB808\uC774\uB4DC \uC644\uB8CC"
+    iconSprite: {fileID: 0}
+    targetAmount: 6
+    nextTargetAmounts: 
+    repeatRequirementAmount: 6
+    progressAmountPerEvent: 1
+    rewardCurrency: 1
+    rewardAmount: 10
+  - id: weapon_upgrade
+    progressType: 8
+    title: "\uBB34\uAE30 \uAC15\uD654"
+    description: "\uBB34\uAE30 \uAC15\uD654 {0}\uD68C \uC644\uB8CC"
+    iconSprite: {fileID: 0}
+    targetAmount: 1
+    nextTargetAmounts: 
+    repeatRequirementAmount: 1
+    progressAmountPerEvent: 1
+    rewardCurrency: 1
+    rewardAmount: 5
+  - id: drone_upgrade
+    progressType: 9
+    title: "\uB4DC\uB860 \uAC15\uD654"
+    description: "\uB4DC\uB860 \uAC15\uD654 {0}\uD68C \uC644\uB8CC"
+    iconSprite: {fileID: 0}
+    targetAmount: 1
+    nextTargetAmounts: 
+    repeatRequirementAmount: 1
+    progressAmountPerEvent: 1
+    rewardCurrency: 1
+    rewardAmount: 5

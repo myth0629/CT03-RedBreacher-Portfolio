@@ -178,6 +178,7 @@ public class SkillHangerFacility : MonoBehaviour, IBaseCampFacility
         currentUpgradeDurationSeconds = 0f;
         level++;
         OnLevelChanged.Invoke(level);
+        AchievementManager.ReportFacilityUpgraded();
         OnUpgradeCompleted.Invoke();
     }
 

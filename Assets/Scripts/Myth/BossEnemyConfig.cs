@@ -4,7 +4,6 @@ using UnityEngine;
 public class BossEnemyConfig : EnemyConfig
 {
     [Header("Unlock conditions")]
-    [Tooltip("보스 해금조건 수시로 바꿀 수 있게 여기서 값을 조정하고 관제탑 스크립트에 연결")]
     [SerializeField] private int unlockStage;
     [SerializeField] private int unlockPlayerLevel;
     

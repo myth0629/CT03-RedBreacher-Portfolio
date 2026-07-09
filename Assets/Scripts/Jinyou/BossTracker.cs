@@ -303,6 +303,12 @@ public class BossTracker : MonoBehaviour
             wallet?.AddCoreCrystals(completedDifficulty.firstClearCoreCrystalBonus);
         }
 
+        AchievementManager.ReportBossCleared();
+        if (!string.Equals(completedDifficulty.difficultyId, "normal", StringComparison.OrdinalIgnoreCase))
+        {
+            AchievementManager.ReportBossDifficultyCleared();
+        }
+
         PlayerPrefs.Save();
         string firstClearText = firstClear
             ? $"\n최초 클리어 보너스: 크레딧 +{completedDifficulty.firstClearCreditBonus}"

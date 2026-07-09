@@ -367,6 +367,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         ApplyLevelBalance();
         RefreshUnlocks();
         OnLevelChanged.Invoke(level);
+        AchievementManager.ReportFacilityUpgraded();
         OnUpgradeCompleted.Invoke();
     }
 

@@ -233,6 +233,7 @@ public class CreditRefinery : MonoBehaviour, IBaseCampFacility
         level++;
         storedCredits = Mathf.Clamp(storedCredits, 0, StorageCapacity);
         OnLevelChanged.Invoke(level);
+        AchievementManager.ReportFacilityUpgraded();
         OnUpgradeCompleted.Invoke();
     }
 
