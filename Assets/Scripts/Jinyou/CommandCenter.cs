@@ -91,7 +91,7 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
         }
         else
         {
-            Debug.LogError($"지휘 본부 밸런스 초기화 실패: {error}", this);
+            Debug.LogError($"사령부 밸런스 초기화 실패: {error}", this);
         }
     }
 

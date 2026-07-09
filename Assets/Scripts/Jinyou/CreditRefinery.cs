@@ -61,7 +61,7 @@ public class CreditRefinery : MonoBehaviour, IBaseCampFacility
         }
         else
         {
-            Debug.LogError($"에너지 정제소 밸런스 초기화 실패: {error}", this);
+            Debug.LogError($"자원 정제소 밸런스 초기화 실패: {error}", this);
         }
     }
 

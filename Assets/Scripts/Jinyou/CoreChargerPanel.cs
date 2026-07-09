@@ -130,7 +130,7 @@ public class CoreChargerPanel : MonoBehaviour
             SetActive(coinIcon != null ? coinIcon.gameObject : null, false);
             SetUpgradeRemainingText(upgradeRemainingText, false, 0f);
             SetActive(upgradeText != null ? upgradeText.gameObject : null, true);
-            SetText(enhanceUnitButtonStateText, "코어 차저가 연결되지 않았습니다.");
+            SetText(enhanceUnitButtonStateText, "코어 강화소가 연결되지 않았습니다.");
             SetEnhanceUnitConditionText(string.Empty);
             SetText(currentUnitText, string.Empty);
             SetText(enhanceUnitText, string.Empty);
@@ -191,7 +191,7 @@ public class CoreChargerPanel : MonoBehaviour
     {
         if (coreCharger == null)
         {
-            return "코어 차저가 연결되지 않았습니다.";
+            return "코어 강화소가 연결되지 않았습니다.";
         }
 
         if (stage == null)
@@ -240,7 +240,7 @@ public class CoreChargerPanel : MonoBehaviour
         if (coreCharger.Level < requiredCoreLevel)
         {
             message += $"{(message.Length > 0 ? "\n" : string.Empty)}"
-                + $"- 코어 차저 Lv.{requiredCoreLevel} 필요 (현재 Lv.{coreCharger.Level})";
+                + $"- 코어 강화소 Lv.{requiredCoreLevel} 필요 (현재 Lv.{coreCharger.Level})";
         }
 
         if (!ownsCurrentUnit && !hasCurrentUnitEquipped)
@@ -266,7 +266,7 @@ public class CoreChargerPanel : MonoBehaviour
         {
             SetInteractable(unlockDroneButton, false);
             SetText(unlockDroneButtonStateText, "해금 불가");
-            SetUnlockDroneConditionText("코어 차저가 연결되지 않았습니다.");
+            SetUnlockDroneConditionText("코어 강화소가 연결되지 않았습니다.");
             SetText(unlockDroneText, string.Empty);
             SetText(unlockDroneCountText, string.Empty);
             SetText(unlockDroneEquipWeaponText, string.Empty);
@@ -294,8 +294,8 @@ public class CoreChargerPanel : MonoBehaviour
 
     /// <summary>
     /// unlockDroneButtonStateText를 통해서 탱크 유닛을 강화할 때 필요한 조건이 무엇인지 확인할 수 있으며,
-    /// 현재로는 코어 차저 레벨에 따라 드론 해금하기로 조건을 걸어놨음.
-    /// 예: 드론 해금 조건 \n 코어 차저 Lv. 3 필요 (현재 Lv. 1)
+    /// 현재로는 코어 강화소 레벨에 따라 드론 해금하기로 조건을 걸어놨음.
+    /// 예: 드론 해금 조건 \n 코어 강화소 Lv. 3 필요 (현재 Lv. 1)
     /// </summary>
     /// <param name="nextUnlock"></param>
     /// <returns></returns>
@@ -310,7 +310,7 @@ public class CoreChargerPanel : MonoBehaviour
     {
         if (coreCharger == null)
         {
-            return "코어 차저가 연결되지 않았습니다.";
+            return "코어 강화소가 연결되지 않았습니다.";
         }
 
         if (inventory == null)
@@ -327,7 +327,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         int requiredLevel = Mathf.Max(1, nextUnlock.requiredCoreChargerLevel);
         return coreCharger.Level < requiredLevel
-            ? $"코어 차저 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})"
+            ? $"코어 강화소 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})"
             : string.Empty;
     }
 
@@ -339,7 +339,7 @@ public class CoreChargerPanel : MonoBehaviour
             !string.IsNullOrEmpty(message));
     }
 
-    // UnlockDrone 스텟 관련 텍스트에 연결
+    // UnlockDrone 스탯 관련 텍스트에 연결
     private void RefreshUnlockDroneStatTexts(DroneConfig drone)
     {
         if (drone == null)

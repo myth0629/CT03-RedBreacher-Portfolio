@@ -125,14 +125,14 @@ public class BaseCampBalanceConfig : ScriptableObject
                     || balance.ticketsPerDay <= 0
                     || balance.ticketCapacity < 0))
             {
-                error = $"지휘 본부 Lv.{currentLevel}의 티켓 설정이 올바르지 않습니다.";
+                error = $"사령부 Lv.{currentLevel}의 티켓 설정이 올바르지 않습니다.";
                 return false;
             }
 
             if (string.Equals(facilityId, "energy_refinery", StringComparison.OrdinalIgnoreCase)
                 && (balance.creditsPerMinute < 0f || balance.storageCapacity <= 0))
             {
-                error = $"에너지 정제소 Lv.{currentLevel}의 생산 설정이 올바르지 않습니다.";
+                error = $"자원 정제소 Lv.{currentLevel}의 생산 설정이 올바르지 않습니다.";
                 return false;
             }
 

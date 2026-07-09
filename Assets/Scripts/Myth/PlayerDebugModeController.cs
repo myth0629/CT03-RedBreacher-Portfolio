@@ -113,7 +113,7 @@ public sealed class PlayerDebugModeController : MonoBehaviour
         {
             if (IsDebugModeEnabled)
             {
-                _debugStatusText.text = $"[디버그 모드]\n1: 무적 상태: {(_invulnerableInDebugMode ? "ON" : "OFF")}\n2: 크리스탈 +100\n3: 보스 티켓 +5";
+                _debugStatusText.text = $"[디버그 모드]\n1: 무적 상태: {(_invulnerableInDebugMode ? "ON" : "OFF")}\n2: 코어 크리스탈 +100\n3: 보스 티켓 +5";
             }
             else
             {
@@ -148,7 +148,7 @@ public sealed class PlayerDebugModeController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[디버그 모드] PlayerCurrencyWallet을 찾을 수 없어 크리스탈을 지급하지 못했습니다.", this);
+            Debug.LogWarning("[디버그 모드] PlayerCurrencyWallet을 찾을 수 없어 코어 크리스탈을 지급하지 못했습니다.", this);
         }
     }
 }

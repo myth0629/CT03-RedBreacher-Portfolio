@@ -557,7 +557,7 @@ public class PlayerStatusHud : MonoBehaviour
         SetActive(tankPopupWeaponPierceGroup, isPiercing);
     }
 
-    // 조립공장으로 강화한 드론 데미지 보너스 수치를 기존 데미지와 합산하기 위해 가져온다.
+    // 조립 공장으로 강화한 드론 데미지 보너스 수치를 기존 데미지와 합산하기 위해 가져온다.
     private static float GetEnhancedDroneDamage(DroneConfig drone)
     {
         if (drone == null)

@@ -122,10 +122,10 @@ public class BaseCampHud : MonoBehaviour
         BaseCampManager manager)
     {
         SetFacilityTitle(commandCenterTitleText, "command_center", "사령부", commandCenter != null ? commandCenter.Level : (int?)null);
-        SetFacilityTitle(creditRefineryTitleText, "energy_refinery", "에너지 정제소", refinery != null ? refinery.Level : (int?)null);
+        SetFacilityTitle(creditRefineryTitleText, "energy_refinery", "자원 정제소", refinery != null ? refinery.Level : (int?)null);
         SetFacilityTitle(assemblyFactoryTitleText, "assembly_factory", "조립 공장", manager?.AssemblyFactory != null ? manager.AssemblyFactory.Level : (int?)null);
-        SetFacilityTitle(bossTrackerTitleText, "boss_tracker", "관제소", commandCenter != null ? commandCenter.Level : (int?)null);
-        SetFacilityTitle(coreChargerTitleText, "core_charger", "코어 차저", manager?.CoreCharger != null ? manager.CoreCharger.Level : (int?)null);
+        SetFacilityTitle(bossTrackerTitleText, "boss_tracker", "관제탑", commandCenter != null ? commandCenter.Level : (int?)null);
+        SetFacilityTitle(coreChargerTitleText, "core_charger", "코어 강화소", manager?.CoreCharger != null ? manager.CoreCharger.Level : (int?)null);
         SetFacilityTitle(traitPointTitleText, "trait_point_facility", "특성 연구소", 1);
         SetFacilityTitle(skillHangerTitleText, "skill_hanger", "스킬 격납고", manager?.SkillHanger != null ? manager.SkillHanger.Level : (int?)null);
         SetTitleVisibleByUnlock(assemblyFactoryTitleText, commandCenter, "assembly_factory");
@@ -136,8 +136,8 @@ public class BaseCampHud : MonoBehaviour
     {
         string displayName = GetFacilityDisplayName(facilityId, fallbackName);
         SetText(target, level.HasValue
-            ? $"{displayName} Lv. {level.Value}"
-            : $"{displayName} Lv. --");
+            ? $"{displayName} <color=#EC9A0E>Lv. {level.Value}</color>"
+            : $"{displayName} <color=#EC9A0E>Lv. --</color>");
     }
 
     private string GetFacilityDisplayName(string facilityId, string fallbackName)
