@@ -67,7 +67,7 @@ public class BossTracker : MonoBehaviour
         {
             difficultyId = "hard",
             displayName = "어려움",
-            requiredResearchLabLevel = 3,
+            requiredResearchLabLevel = 5,
             recommendedPower = 30000,
             healthMultiplier = 1.75f,
             moveSpeedMultiplier = 1.1f,
@@ -78,7 +78,7 @@ public class BossTracker : MonoBehaviour
         {
             difficultyId = "elite",
             displayName = "정예",
-            requiredResearchLabLevel = 5,
+            requiredResearchLabLevel = 7,
             recommendedPower = 60000,
             healthMultiplier = 3f,
             moveSpeedMultiplier = 1.2f,
