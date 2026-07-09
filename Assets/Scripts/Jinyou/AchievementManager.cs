@@ -10,7 +10,12 @@ public enum AchievementProgressType
     EnemyKill,
     StageClear,
     WeaponCollect,
-    DroneCollect
+    DroneCollect,
+    BossClear,
+    BossDifficultyClear,
+    FacilityUpgrade,
+    WeaponUpgrade,
+    DroneUpgrade
 }
 
 [DisallowMultipleComponent]
@@ -286,6 +291,31 @@ public class AchievementManager : MonoBehaviour
     public static void ReportDroneCollected(int amount = 1)
     {
         Instance?.AddProgress(AchievementProgressType.DroneCollect, amount);
+    }
+
+    public static void ReportBossCleared(int amount = 1)
+    {
+        Instance?.AddProgress(AchievementProgressType.BossClear, amount);
+    }
+
+    public static void ReportBossDifficultyCleared(int amount = 1)
+    {
+        Instance?.AddProgress(AchievementProgressType.BossDifficultyClear, amount);
+    }
+
+    public static void ReportFacilityUpgraded(int amount = 1)
+    {
+        Instance?.AddProgress(AchievementProgressType.FacilityUpgrade, amount);
+    }
+
+    public static void ReportWeaponUpgraded(int amount = 1)
+    {
+        Instance?.AddProgress(AchievementProgressType.WeaponUpgrade, amount);
+    }
+
+    public static void ReportDroneUpgraded(int amount = 1)
+    {
+        Instance?.AddProgress(AchievementProgressType.DroneUpgrade, amount);
     }
 
     [ContextMenu("Reset Achievement Progress")]

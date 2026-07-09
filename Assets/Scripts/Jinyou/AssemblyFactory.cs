@@ -552,6 +552,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
 
         selectedWeapon.enhanceLevel++;
         SaveWeaponEnhancements();
+        AchievementManager.ReportWeaponUpgraded();
         OnWeaponEnhanced.Invoke(selectedWeapon.weaponConfig, selectedWeapon.enhanceLevel);
     }
 
@@ -592,6 +593,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         DroneEnhancement selectedDrone = SelectedDroneEnhancement;
         availableCredits -= selectedDrone.costPerEnhancement;
         selectedDrone.enhanceLevel++;
+        AchievementManager.ReportDroneUpgraded();
         OnDroneEnhanced.Invoke(selectedDrone.droneConfig, selectedDrone.enhanceLevel);
         return true;
     }
@@ -735,6 +737,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         ApplyFactoryEnhanceLevelCaps();
         RefreshUnlocks();
         OnLevelChanged.Invoke(level);
+        AchievementManager.ReportFacilityUpgraded();
         OnUpgradeCompleted.Invoke();
     }
 
