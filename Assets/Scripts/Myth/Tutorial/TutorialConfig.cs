@@ -142,6 +142,13 @@ public class TutorialConfig : ScriptableObject
         List<TutorialStep> result = new List<TutorialStep>();
         foreach (Dictionary<string, string> row in ParseCsv(csv))
         {
+            // id 없는 행(끝의 잔여 쉼표 줄 등)은 스텝이 아니다. 이런 행이 들어오면
+            // id 접두사 그룹 판정에서 메인 튜토리얼로 분류되어 끝에 빈 스텝이 하나 더 뜬다.
+            if (string.IsNullOrWhiteSpace(Get(row, "id")))
+            {
+                continue;
+            }
+
             result.Add(new TutorialStep
             {
                 order = GetInt(row, "order", result.Count + 1),

@@ -556,23 +556,37 @@ public class TutorialManager : MonoBehaviour
         else
         {
             live.completed = false;
-            if (!live.running)
+            if (live.running)
             {
-                live.stepIndex = Mathf.Max(0, data.stepIndex);
+                // 클라우드 복원은 부팅 후 비동기로 도착하므로, 그 전에 로컬(빈/이전 계정) 상태로
+                // 이미 시작된 스텝이 있을 수 있다. 그대로 두면 복원된 진행도가 무시되고 이후 저장이
+                // 클라우드 진행도를 뒤로 덮어쓴다. 진행 중 스텝을 중단하고 복원된 인덱스를 적용해
+                // 다음 프레임 Update에서 올바른 스텝부터 다시 시작하게 한다.
+                live.ClearArmedButton();
+                live.running = false;
+                live.runningBaseTutorial = false;
+                live.runningCoreChargerTutorial = false;
+                live.runningInventoryTutorial = false;
+                live.runningBossEncounterTutorial = false;
+                live.activeStep = null;
+                live.RestoreBossTutorialTimeScale();
+                if (live.overlay != null)
+                {
+                    live.overlay.Hide();
+                }
             }
+
+            live.stepIndex = Mathf.Max(0, data.stepIndex);
         }
 
         live.baseCompleted = data.baseCompleted;
         live.coreChargerCompleted = data.coreChargerCompleted;
         live.inventoryCompleted = data.inventoryCompleted;
         live.bossEncounterCompleted = data.bossEncounterCompleted;
-        if (!live.running)
-        {
-            live.baseStepIndex = Mathf.Max(0, data.baseStepIndex);
-            live.coreChargerStepIndex = Mathf.Max(0, data.coreChargerStepIndex);
-            live.inventoryStepIndex = Mathf.Max(0, data.inventoryStepIndex);
-            live.bossEncounterStepIndex = Mathf.Max(0, data.bossEncounterStepIndex);
-        }
+        live.baseStepIndex = Mathf.Max(0, data.baseStepIndex);
+        live.coreChargerStepIndex = Mathf.Max(0, data.coreChargerStepIndex);
+        live.inventoryStepIndex = Mathf.Max(0, data.inventoryStepIndex);
+        live.bossEncounterStepIndex = Mathf.Max(0, data.bossEncounterStepIndex);
     }
 
     // 강조 타깃을 이름으로 계속 탐색해 늦게 활성화되는 패널 내부 요소도 따라간다.
