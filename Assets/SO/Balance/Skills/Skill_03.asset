@@ -37,6 +37,37 @@ MonoBehaviour:
   bombCountIncreasePerInterval: 0
   turretCountIncreasePerInterval: 0
   maxLevelDuplicateCoreCrystalReward: 1
+  levelSkinStyles:
+  - collectionLevel: 1
+    bodyPaint: 0
+    chevronMark: 0
+  - collectionLevel: 2
+    bodyPaint: 0
+    chevronMark: 1
+  - collectionLevel: 3
+    bodyPaint: 1
+    chevronMark: 2
+  - collectionLevel: 4
+    bodyPaint: 2
+    chevronMark: 3
+  - collectionLevel: 5
+    bodyPaint: 3
+    chevronMark: 4
+  - collectionLevel: 6
+    bodyPaint: 4
+    chevronMark: 5
+  - collectionLevel: 7
+    bodyPaint: 5
+    chevronMark: 6
+  - collectionLevel: 8
+    bodyPaint: 6
+    chevronMark: 7
+  - collectionLevel: 9
+    bodyPaint: 7
+    chevronMark: 8
+  - collectionLevel: 10
+    bodyPaint: 8
+    chevronMark: 9
   impactDelay: 0.5
   warningEffectPrefab: {fileID: 0}
   impactEffectPrefab: {fileID: 0}
@@ -52,6 +83,8 @@ MonoBehaviour:
   _screenShakeDuration: 0.22
   _screenShakeStrength: 0.4
   _screenShakeFrequency: 1.5
+  _airplaneTakeOffSfx: {fileID: 0}
+  impactSfx: []
   turretPrefab: {fileID: 0}
   turretProjectileConfig: {fileID: 11400000, guid: 74fba0a59bdac460b88e300c14c8b741, type: 2}
   turretDuration: 8
@@ -99,3 +132,5 @@ MonoBehaviour:
   helicopterRocketSpeed: 16
   helicopterRotorName: Propeller
   helicopterRotorSpeed: 900
+  helicopterRocketLunchSfx: {fileID: 0}
+  firstRocketLunchSfx: {fileID: 0}

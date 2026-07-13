@@ -23,7 +23,7 @@ public class SkillLoadoutPanel : MonoBehaviour
     [SerializeField] private GameObject[] slotLockedObjects = new GameObject[4];
 
     [Header("Detail")]
-    [SerializeField] private Image detailSkillIcon;
+    [SerializeField] private RawImage detailSkillIcon;
     [SerializeField] private TMP_Text skillNameText;
     [SerializeField] private TMP_Text skillLevelText;
     [SerializeField] private TMP_Text skillCooldownText;
@@ -258,7 +258,7 @@ public class SkillLoadoutPanel : MonoBehaviour
         PlayerSkillConfig detailSkill = GetSelectedSlotSkill();
         bool selectedSlotUnlocked = player == null || player.IsSkillSlotUnlocked(selectedSlotIndex);
         SetInteractable(unequipSelectedButton, selectedSlotUnlocked && detailSkill != null);
-        SetSkillIcon(detailSkillIcon, detailSkill);
+        SetSkillPreview(detailSkillIcon, detailSkill);
         SetText(
             skillNameText,
             !selectedSlotUnlocked && player != null
@@ -344,7 +344,8 @@ public class SkillLoadoutPanel : MonoBehaviour
         upgradeButton ??= FindChildComponentByName<Button>(transform, "Upgrade Button");
         loadoutSelectionPanel ??= FindChildComponentByName<PlayerLoadoutSelectionPanel>(transform, "LoadoutSelectionPanel_Skill");
         loadoutSelectionPanel ??= FindFirstObjectByType<PlayerLoadoutSelectionPanel>(FindObjectsInactive.Include);
-        detailSkillIcon ??= FindChildComponentByName<Image>(FindChildTransformByName(transform, "Detail_SkillIcon"), "Skill_Icon");
+        detailSkillIcon ??= FindChildComponentByName<RawImage>(FindChildTransformByName(transform, "Detail_SkillIcon"), "Skill_Icon");
+        detailSkillIcon ??= FindChildComponentByName<RawImage>(transform, "Detail_SkillIcon");
         ResolveSlotButtons();
     }
 
@@ -713,6 +714,48 @@ public class SkillLoadoutPanel : MonoBehaviour
         }
 
         SetSkillIcon(targets[index], skill);
+    }
+
+    private static void SetSkillPreview(RawImage target, PlayerSkillConfig skill)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        GameObject prefab = GetSkillPreviewPrefab(skill);
+        if (prefab == null)
+        {
+            target.texture = null;
+            target.color = Color.clear;
+            target.enabled = false;
+            target.gameObject.SetActive(false);
+            return;
+        }
+
+        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
+        target.texture = preview;
+        target.color = preview != null ? Color.white : Color.clear;
+        target.enabled = preview != null;
+        target.gameObject.SetActive(preview != null);
+    }
+
+    private static GameObject GetSkillPreviewPrefab(PlayerSkillConfig skill)
+    {
+        if (skill == null)
+        {
+            return null;
+        }
+
+        return skill.SkillType switch
+        {
+            PlayerSkillType.Bombardment => skill.AirplanePrefab,
+            PlayerSkillType.AutoTurret => skill.TurretPrefab,
+            PlayerSkillType.MissileTurret => skill.MissileTurretPrefab,
+            PlayerSkillType.StealthBomber => skill.StealthBomberPrefab,
+            PlayerSkillType.AttackHelicopter => skill.AttackHelicopterPrefab,
+            _ => null
+        };
     }
 
     private static void SetActive(GameObject[] targets, int index, bool active)
