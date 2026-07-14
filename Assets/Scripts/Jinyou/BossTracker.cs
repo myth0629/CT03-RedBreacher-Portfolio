@@ -303,8 +303,11 @@ public class BossTracker : MonoBehaviour
             wallet?.AddCoreCrystals(completedDifficulty.firstClearCoreCrystalBonus);
         }
 
-        AchievementManager.ReportBossCleared();
-        if (!string.Equals(completedDifficulty.difficultyId, "normal", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(completedDifficulty.difficultyId, "normal", StringComparison.OrdinalIgnoreCase))
+        {
+            AchievementManager.ReportBossCleared();
+        }
+        else
         {
             AchievementManager.ReportBossDifficultyCleared();
         }

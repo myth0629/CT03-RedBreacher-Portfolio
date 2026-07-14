@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum PlayerSkillType
@@ -7,6 +8,18 @@ public enum PlayerSkillType
     MissileTurret,
     StealthBomber,
     AttackHelicopter
+}
+
+[System.Serializable]
+public class PlayerSkillLevelSkinStyle
+{
+    [SerializeField, Min(1)] private int collectionLevel = 1;
+    [SerializeField] private SkinEditor_SkillLevel.BodyPaint bodyPaint = SkinEditor_SkillLevel.BodyPaint.None;
+    [SerializeField] private SkinEditor_SkillLevel.ChevronMark chevronMark = SkinEditor_SkillLevel.ChevronMark.None;
+
+    public int CollectionLevel => Mathf.Max(1, collectionLevel);
+    public SkinEditor_SkillLevel.BodyPaint BodyPaint => bodyPaint;
+    public SkinEditor_SkillLevel.ChevronMark ChevronMark => chevronMark;
 }
 
 [CreateAssetMenu(menuName = "Myth/Combat/Player Skill Config")]
@@ -43,6 +56,9 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private int bombCountIncreasePerInterval = 1;
     [SerializeField] private int turretCountIncreasePerInterval = 1;
     [SerializeField] private int maxLevelDuplicateCoreCrystalReward = 1;
+
+    [Header("Collection Level Skin")]
+    [SerializeField] private List<PlayerSkillLevelSkinStyle> levelSkinStyles = new List<PlayerSkillLevelSkinStyle>();
 
     [Header("Bombardment")]
     [SerializeField] private float impactDelay = 0.5f;
@@ -143,6 +159,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public int BombCountIncreasePerInterval => Mathf.Max(0, bombCountIncreasePerInterval);
     public int TurretCountIncreasePerInterval => Mathf.Max(0, turretCountIncreasePerInterval);
     public int MaxLevelDuplicateCoreCrystalReward => Mathf.Max(0, maxLevelDuplicateCoreCrystalReward);
+    public IReadOnlyList<PlayerSkillLevelSkinStyle> LevelSkinStyles => levelSkinStyles;
     public float ImpactDelay => Mathf.Max(0f, impactDelay);
     public GameObject WarningEffectPrefab => warningEffectPrefab;
     public GameObject ImpactEffectPrefab => impactEffectPrefab;
@@ -228,6 +245,36 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     public int GetTurretCount(int level)
     {
         return 1 + GetCountIncreaseStepCount(level) * TurretCountIncreasePerInterval;
+    }
+
+    public PlayerSkillLevelSkinStyle GetSkinStyle(int collectionLevel)
+    {
+        if (levelSkinStyles == null || levelSkinStyles.Count == 0)
+        {
+            return null;
+        }
+
+        int level = Mathf.Clamp(collectionLevel, 1, MaxLevel);
+        PlayerSkillLevelSkinStyle bestMatch = null;
+        int bestLevel = 0;
+
+        for (int i = 0; i < levelSkinStyles.Count; i++)
+        {
+            PlayerSkillLevelSkinStyle style = levelSkinStyles[i];
+            if (style == null)
+            {
+                continue;
+            }
+
+            int styleLevel = style.CollectionLevel;
+            if (styleLevel <= level && styleLevel >= bestLevel)
+            {
+                bestMatch = style;
+                bestLevel = styleLevel;
+            }
+        }
+
+        return bestMatch;
     }
 
     private static int GetLevelBonusCount(int level)

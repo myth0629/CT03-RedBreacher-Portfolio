@@ -36,6 +36,37 @@ MonoBehaviour:
   bombCountIncreasePerInterval: 0
   turretCountIncreasePerInterval: 0
   maxLevelDuplicateCoreCrystalReward: 1
+  levelSkinStyles:
+  - collectionLevel: 1
+    bodyPaint: 0
+    chevronMark: 0
+  - collectionLevel: 2
+    bodyPaint: 0
+    chevronMark: 1
+  - collectionLevel: 3
+    bodyPaint: 1
+    chevronMark: 2
+  - collectionLevel: 4
+    bodyPaint: 2
+    chevronMark: 3
+  - collectionLevel: 5
+    bodyPaint: 3
+    chevronMark: 4
+  - collectionLevel: 6
+    bodyPaint: 4
+    chevronMark: 5
+  - collectionLevel: 7
+    bodyPaint: 5
+    chevronMark: 6
+  - collectionLevel: 8
+    bodyPaint: 6
+    chevronMark: 7
+  - collectionLevel: 9
+    bodyPaint: 7
+    chevronMark: 8
+  - collectionLevel: 10
+    bodyPaint: 8
+    chevronMark: 9
   impactDelay: 0.25
   warningEffectPrefab: {fileID: 9179389450710726649, guid: 0309f63716c8a4a4e84bead042662d12, type: 3}
   impactEffectPrefab: {fileID: 1320533090949476, guid: f20077a0be0f3fa4495d97be6faa09bc, type: 3}
