@@ -43,7 +43,11 @@ public static class CombatRewardService
         }
 
         wallet.Add(CurrencyType.Credits, enemy.CreditReward);
-        wallet.Add(CurrencyType.CoreCrystals, enemy.CoreCrystalReward);
+        // 코어 크리스탈은 보스 처치 시에만 지급한다.
+        if (enemy is BossEnemyController)
+        {
+            wallet.Add(CurrencyType.CoreCrystals, enemy.CoreCrystalReward);
+        }
     }
 
     private static void TryGrantEquipmentPart(PlayerController player, EnemyController enemy, bool killedBoss)
