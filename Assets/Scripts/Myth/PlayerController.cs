@@ -149,6 +149,7 @@ public class PlayerController : MonoBehaviour
 
     private float MaxHealthValue => (unitConfig != null ? unitConfig.MaxHealth : maxHealth)
         * (statAllocator != null ? statAllocator.HealthMultiplier : 1f)
+        * (progression != null ? progression.AutoHealthMultiplier : 1f)
         * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.HealthPercent : 0f));
     private float CritChanceValue
     {
@@ -244,6 +245,8 @@ public class PlayerController : MonoBehaviour
         }
 
         equipmentPartLoadout.OnLoadoutChanged.AddListener(HandleEquipmentPartLoadoutChanged);
+        // 레벨업 자동 성장(AutoHealthMultiplier)이 최대체력에 즉시 반영되도록 진행도 변경을 구독한다.
+        progression.Changed += HandleProgressionChanged;
         ResolveCollectionSystems();
         InitializeCollectionLoadout();
         EnsureAutoSkillController();
@@ -271,6 +274,11 @@ public class PlayerController : MonoBehaviour
     private void OnDestroy()
     {
         equipmentPartLoadout?.OnLoadoutChanged.RemoveListener(HandleEquipmentPartLoadoutChanged);
+        if (progression != null)
+        {
+            progression.Changed -= HandleProgressionChanged;
+        }
+
         UnsubscribeSkillHanger();
     }
 
@@ -1179,6 +1187,11 @@ public class PlayerController : MonoBehaviour
         ApplyHealthStats();
     }
 
+    private void HandleProgressionChanged()
+    {
+        ApplyHealthStats();
+    }
+
     private void ReplaceUnitPrefab(GameObject unitPrefab)
     {
         if (spawnedUnitObject != null)
@@ -1523,6 +1536,7 @@ public class PlayerController : MonoBehaviour
         // 기체, 무기, 스탯, 장비, 퍼펙트 회피 보정을 한 곳에서 합산한다.
         return (AttackDamageValue + GetWeaponAttackDamage(activeProjectileConfig))
             * (statAllocator != null ? statAllocator.AttackMultiplier : 1f)
+            * (progression != null ? progression.AutoAttackMultiplier : 1f)
             * (1f + (equipmentPartLoadout != null ? equipmentPartLoadout.AttackPercent : 0f))
             * (bossDodgeController != null ? bossDodgeController.AttackDamageMultiplier : 1f);
     }

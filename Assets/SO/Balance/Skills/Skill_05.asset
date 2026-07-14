@@ -23,10 +23,10 @@ MonoBehaviour:
   cooldown: 24
   castRange: 8
   minimumEnemyCount: 1
-  attackPowerMultiplier: 1.3
+  attackPowerMultiplier: 1.8
   flatDamage: 0
   canCritical: 1
-  effectRadius: 2
+  effectRadius: 2.5
   maxTargets: 12
   knockbackForce: 1
   maxLevel: 10
@@ -91,13 +91,13 @@ MonoBehaviour:
   helicopterProjectileConfig: {fileID: 11400000, guid: 7eb1b98301c03438e9df49bfd1f36277, type: 2}
   helicopterRocketPrefab: {fileID: 1678767144466112, guid: e2ba727a17e461d44b33e480e2f56d18, type: 3}
   attackHelicopterDuration: 15
-  attackHelicopterAttackInterval: 0.9
+  attackHelicopterAttackInterval: 0.45
   attackHelicopterAttackRange: 7
   attackHelicopterMoveSpeed: 6
   attackHelicopterFollowOffset: 2.5
   attackHelicopterMaxDistanceFromPlayer: 6
-  helicopterOpeningRocketCount: 2
-  helicopterRocketRadius: 2
+  helicopterOpeningRocketCount: 4
+  helicopterRocketRadius: 2.5
   helicopterRocketSpeed: 16
   helicopterRotorName: Propeller
   helicopterRotorSpeed: 900

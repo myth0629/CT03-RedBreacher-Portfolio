@@ -23,7 +23,7 @@ MonoBehaviour:
   cooldown: 10
   castRange: 8
   minimumEnemyCount: 1
-  attackPowerMultiplier: 2
+  attackPowerMultiplier: 1
   flatDamage: 0
   canCritical: 0
   effectRadius: 3.5
@@ -55,7 +55,7 @@ MonoBehaviour:
   turretPrefab: {fileID: 214164098778057125, guid: 2e8cee64f5e8b9140af5805bee03240f, type: 3}
   turretProjectileConfig: {fileID: 11400000, guid: a4f6791bba7734104951adbb8a62c00d, type: 2}
   turretDuration: 8
-  turretAttackInterval: 0.05
+  turretAttackInterval: 0.5
   turretAttackRange: 6
   turretRotationSpeed: 240
   turretPlacementDistance: 1.5

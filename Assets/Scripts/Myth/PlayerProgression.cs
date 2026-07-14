@@ -16,6 +16,12 @@ public class PlayerProgression : MonoBehaviour
     [SerializeField] private int statPoints;
     [SerializeField] private bool saveToPlayerPrefs = true;
 
+    [Header("Auto Growth")]
+    [Tooltip("레벨업 시 특성 포인트와 별개로 자동 적용되는 레벨당 체력 증가율.")]
+    [SerializeField] private float autoHealthPercentPerLevel = 0.015f;
+    [Tooltip("레벨업 시 특성 포인트와 별개로 자동 적용되는 레벨당 공격력 증가율.")]
+    [SerializeField] private float autoAttackPercentPerLevel = 0.01f;
+
     private int initialLevel;
     private float initialExperienceToNextLevel;
 
@@ -24,6 +30,8 @@ public class PlayerProgression : MonoBehaviour
     public float ExperienceToNextLevel => experienceToNextLevel;
     public float ExperienceProgress01 => experienceToNextLevel > 0f ? Mathf.Clamp01(currentExperience / experienceToNextLevel) : 0f;
     public int StatPoints => statPoints;
+    public float AutoHealthMultiplier => 1f + Mathf.Max(0f, autoHealthPercentPerLevel) * Mathf.Max(0, level - 1);
+    public float AutoAttackMultiplier => 1f + Mathf.Max(0f, autoAttackPercentPerLevel) * Mathf.Max(0, level - 1);
     public event Action Changed;
 
     private void Awake()

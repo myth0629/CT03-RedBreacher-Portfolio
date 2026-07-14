@@ -18,6 +18,8 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] private int baseEnemyCount = 4;
     [SerializeField] private int enemyCountIncreasePerStage = 3;
     [SerializeField] private int enemyCountIncreasePerRound = 1;
+    [Tooltip("라운드당 스폰되는 적 수의 상한. 고스테이지 포위 즉사와 성능 저하를 막는다.")]
+    [SerializeField] private int maxEnemyCountPerRound = 80;
     [SerializeField] private float timeBetweenRounds = 2f;
 
     [Header("Player Death")]
@@ -36,6 +38,9 @@ public class EnemySpawnManager : MonoBehaviour
     [Header("Enemy Scaling")]
     [SerializeField] private float healthIncreasePerStage = 0.2f;
     [SerializeField] private float damageIncreasePerStage = 0.1f;
+    [Tooltip("이 스테이지를 넘어서면 적 데미지 증가율이 아래 값으로 낮아진다.")]
+    [SerializeField] private int damageSoftCapStage = 50;
+    [SerializeField] private float damageIncreasePerStageAfterCap = 0.05f;
     [SerializeField] private float moveSpeedIncreasePerStage = 0.03f;
     [SerializeField] private float rewardIncreasePerStage = 0.15f;
 
@@ -285,9 +290,10 @@ public class EnemySpawnManager : MonoBehaviour
     {
         int stageOffset = Mathf.Max(0, GetStageForRound(round) - startStage);
         int roundInStageOffset = Mathf.Max(0, GetRoundInStage(round) - 1);
-        return Mathf.Max(1, baseEnemyCount
+        int count = Mathf.Max(1, baseEnemyCount
             + enemyCountIncreasePerStage * stageOffset
             + enemyCountIncreasePerRound * roundInStageOffset);
+        return maxEnemyCountPerRound > 0 ? Mathf.Min(count, maxEnemyCountPerRound) : count;
     }
 
     private int GetStageForRound(int round)
@@ -359,7 +365,7 @@ public class EnemySpawnManager : MonoBehaviour
             GetEnemyLevel(),
             GetStageScale(healthIncreasePerStage),
             GetStageScale(moveSpeedIncreasePerStage),
-            GetStageScale(damageIncreasePerStage),
+            GetDamageStageScale(),
             GetStageScale(rewardIncreasePerStage));
 
         CombatHealth enemyHealth = enemyObject.GetComponent<CombatHealth>();
@@ -493,6 +499,17 @@ public class EnemySpawnManager : MonoBehaviour
     {
         int stageOffset = Mathf.Max(0, currentStage - startStage);
         return Mathf.Max(0.01f, 1f + increasePerStage * stageOffset);
+    }
+
+    private float GetDamageStageScale()
+    {
+        // 소프트캡 스테이지까지는 기본 증가율, 그 이후는 완화된 증가율을 적용해
+        // 고스테이지에서 접촉데미지 포위 즉사를 막는다.
+        int fullRateStages = Mathf.Max(0, Mathf.Min(currentStage, damageSoftCapStage) - startStage);
+        int reducedStages = Mathf.Max(0, currentStage - Mathf.Max(startStage, damageSoftCapStage));
+        return Mathf.Max(0.01f, 1f
+            + damageIncreasePerStage * fullRateStages
+            + damageIncreasePerStageAfterCap * reducedStages);
     }
 
     private Vector3 GetSpawnCenterPosition()
