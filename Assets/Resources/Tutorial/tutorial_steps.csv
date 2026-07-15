@@ -81,11 +81,11 @@ order,id,bodyText,highlightTargetName,advanceType,eventType,targetAmount,targetI
 80,base_core_charger_intro,<b>현재 탱크와 다음 강화 단계</b>를 비교해 볼 수 있는 곳입니다.,,Tap,None,0
 81,base_core_charger_intro,<b>현재 탱크와 다음 탱크의 스탯</b>을 확인하는 창입니다.,Tank Route Status,Tap,None,0,
 82,base_core_charger_intro,<b>화살표 버튼</b>을 누르면 <b>상세 정보</b>를 볼 수 있습니다.,RouteDetailButton,Tap,None,0,
-83,base_core_charger_intro,코어 강화소를 업그레이드하면 <b>다음 유닛 강화 버튼이 활성화</b>됩니다.,Enhance Unit Button,Tap,None,0
+83,base_core_charger_intro,코어 강화소를 업그레이드하면 <b>다음 유닛 강화 버튼이 활성화</b>됩니다. 강화 시 <color=#60C6DE><b>코어 크리스탈</b></color> 비용이 요구됩니다.,Enhance Unit Button,Tap,None,0
 84,base_core_charger_intro,다음은 <b>드론 해금</b>입니다. 표시된 버튼을 눌러주세요.,Button_DroneUnlock,TargetClicked,None,0,
 85,base_core_charger_intro,여기서 <b>다음 드론의 해금 조건</b>을 확인할 수 있습니다.,DroneUnlock_Conversion_SubPanel,Tap,None,0
 86,base_core_charger_intro,<b>다음에 해금될 드론의 스탯</b>을 보여주는 창입니다. <b>화살표 버튼</b>으로 자세히 볼 수 있습니다.,Drone Status,Tap,None,0,
-87,base_core_charger_intro,기지를 업그레이드할수록 <b>더 강력한 드론</b>을 해금할 수 있는 단계가 늘어납니다.,Unlock Drone Button,Tap,None,0
+87,base_core_charger_intro,기지를 업그레이드할수록 <b>더 강력한 드론</b>을 해금할 수 있는 단계가 늘어납니다. 마찬가지로 <color=#60C6DE><b>코어 크리스탈</b></color> 비용이 요구됩니다.,Unlock Drone Button,Tap,None,0
 88,base_core_charger_intro,코어 강화소 설명을 마치겠습니다!,,Tap,None,0,,
 89,inventory_intro,<b>장비 파츠</b>를 획득했습니다! 인벤토리에서 보유한 파츠를 확인할 수 있습니다.,,Tap,None,0,true
 90,inventory_intro,장착할 파츠를 선택하세요.,PartButtons(Clone),TargetClicked,None,0,true
