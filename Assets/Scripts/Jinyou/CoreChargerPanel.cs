@@ -369,7 +369,7 @@ public class CoreChargerPanel : MonoBehaviour
         string message = string.Empty;
         if (coreCharger.Level < requiredLevel)
         {
-            message += $"코어 강화소 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})";
+            message += $"- 코어 강화소 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})";
         }
 
         int coreCost = coreCharger.GetDroneUnlockCoreCost(nextUnlock);
