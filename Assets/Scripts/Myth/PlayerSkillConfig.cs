@@ -52,7 +52,7 @@ public class PlayerSkillConfig : ScriptableObject, IDuplicateLevelConfig
     [SerializeField] private float damagePercentPerLevel = 0.1f;
     [SerializeField] private float cooldownReductionPercentPerLevel = 0.03f;
     [SerializeField] private float maxCooldownReductionPercent = 0.5f;
-    [SerializeField] private int countIncreaseLevelInterval = 3;
+    [SerializeField] private int countIncreaseLevelInterval = 4;
     [SerializeField] private int bombCountIncreasePerInterval = 1;
     [SerializeField] private int turretCountIncreasePerInterval = 1;
     [SerializeField] private int maxLevelDuplicateCoreCrystalReward = 1;
