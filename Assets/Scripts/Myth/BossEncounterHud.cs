@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +19,11 @@ public class BossEncounterHud : MonoBehaviour
     private BossEnemyConfig config;
     private CombatHealth bossHealth;
     private float resultHideTime;
+
+    // 보스 체력바를 목표값이 바뀔 때만 DOTween으로 부드럽게 보간한다(플레이어 HUD와 동일 방식).
+    private readonly BarAnimator bossHealthSliderAnim = new BarAnimator();
+    // 보스가 처음 등장하는 프레임에는 애니메이션 없이 꽉 찬 상태로 스냅한다.
+    private bool snapHealthNextRefresh;
 
     public bool IsBossHudVisible => bossHudPanel != null && bossHudPanel.activeInHierarchy;
 
@@ -41,6 +47,7 @@ public class BossEncounterHud : MonoBehaviour
         config = bossConfig;
         bossHealth = health;
         resultHideTime = 0f;
+        snapHealthNextRefresh = true;
         if (bossHudPanel != null)
         {
             bossHudPanel.SetActive(true);
@@ -61,6 +68,8 @@ public class BossEncounterHud : MonoBehaviour
         config = null;
         bossHealth = null;
         resultHideTime = 0f;
+        snapHealthNextRefresh = true;
+        bossHealthSliderAnim.Kill();
         if (bossHudPanel != null)
         {
             bossHudPanel.SetActive(false);
@@ -131,8 +140,10 @@ public class BossEncounterHud : MonoBehaviour
         if (bossHealthSlider != null)
         {
             bossHealthSlider.gameObject.SetActive(true);
-            bossHealthSlider.value = healthRate;
+            bossHealthSliderAnim.ApplySlider(bossHealthSlider, healthRate, snapHealthNextRefresh);
         }
+
+        snapHealthNextRefresh = false;
 
         if (bossHealthText != null)
         {
@@ -153,6 +164,54 @@ public class BossEncounterHud : MonoBehaviour
         if (target != null)
         {
             target.SetActive(active);
+        }
+    }
+
+    private void OnDisable()
+    {
+        bossHealthSliderAnim.Kill();
+    }
+
+    // 슬라이더 채움을 목표값이 바뀔 때만 DOTween으로 보간한다(매 프레임 트윈 생성 방지).
+    private class BarAnimator
+    {
+        private const float FillDuration = 0.25f;
+
+        private float target = float.NaN;
+        private Tween tween;
+
+        public void ApplySlider(Slider slider, float value, bool immediate = false)
+        {
+            if (slider == null)
+            {
+                return;
+            }
+
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+
+            if (immediate)
+            {
+                target = value;
+                tween?.Kill();
+                tween = null;
+                slider.value = value;
+                return;
+            }
+
+            if (!Mathf.Approximately(target, value))
+            {
+                target = value;
+                tween?.Kill();
+                tween = slider.DOValue(value, FillDuration).SetEase(Ease.OutCubic).SetUpdate(true);
+            }
+        }
+
+        public void Kill()
+        {
+            tween?.Kill();
+            tween = null;
+            target = float.NaN;
         }
     }
 }
