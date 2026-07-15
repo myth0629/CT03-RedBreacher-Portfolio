@@ -19,13 +19,15 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private GameObject droneUnlockSubPanel;
     
     [Header("TankUnit subPanel")]
-    [SerializeField] private Button enhanceUnitButton;
-    [SerializeField] private TMP_Text enhanceUnitButtonStateText;
-    [SerializeField] private TMP_Text enhanceUnitEmptyText;
     [SerializeField] private RawImage currentUnitPreviewImage;
     [SerializeField] private TMP_Text currentUnitText;
     [SerializeField] private RawImage enhanceUnitPreviewImage;
     [SerializeField] private TMP_Text enhanceUnitText;
+    [SerializeField] private Button enhanceUnitButton;
+    [SerializeField] private TMP_Text enhanceUnitButtonStateText;
+    [SerializeField] private TMP_Text enhanceUnitEmptyText;
+    [SerializeField] private TMP_Text enhanceUnitCoreCostText;
+    [SerializeField] private GameObject enhanceUnitCoreCostGroup;
 
     [Header("TankUnit subPanel Status")]
     [SerializeField] private TMP_Text enhanceUnitHealthText;
@@ -42,6 +44,8 @@ public class CoreChargerPanel : MonoBehaviour
     [SerializeField] private RawImage unlockDronePreviewImage;
     [SerializeField] private TMP_Text unlockDroneText;
     [SerializeField] private TMP_Text unlockDroneEmptyText;
+    [SerializeField] private TMP_Text unlockDroneCoreCostText;
+    [SerializeField] private GameObject unlockDroneCoreCostGroup;
 
     [Header("DroneUnlock subPanel")]
     [SerializeField] private TMP_Text unlockDroneCountText;
@@ -132,7 +136,11 @@ public class CoreChargerPanel : MonoBehaviour
     private void UnlockNextDrone()
     {
         ResolveReferences();
-        coreCharger?.TryUnlockNextDrone(inventory);
+        if (coreCharger != null && coreCharger.TryUnlockNextDrone(inventory, GetCurrencyWallet()))
+        {
+            baseCampManager?.RequestUnifiedSave();
+        }
+
         Refresh();
     }
 
@@ -149,12 +157,14 @@ public class CoreChargerPanel : MonoBehaviour
             SetEnhanceUnitConditionText(string.Empty);
             SetText(currentUnitText, string.Empty);
             SetText(enhanceUnitText, string.Empty);
+            SetText(enhanceUnitCoreCostText, string.Empty);
             RefreshEnhanceUnitStatTexts(null);
             SetUnitPreview(currentUnitPreviewImage, null);
             SetUnitPreview(enhanceUnitPreviewImage, null);
             RefreshDroneUnlockPanel();
             SetInteractable(upgradeButton, false);
             SetInteractable(enhanceUnitButton, false);
+            SetActive(enhanceUnitCoreCostGroup, false);
             return;
         }
 
@@ -180,13 +190,15 @@ public class CoreChargerPanel : MonoBehaviour
         SetActive(coinIcon != null ? coinIcon.gameObject : null, !coreCharger.IsUpgrading);
         SetText(currentUnitText, stage != null ? FormatUnitName(stage.currentUnit) : "모든 변환 완료");
         SetText(enhanceUnitText, stage != null ? FormatUnitName(stage.nextUnit) : string.Empty);
+        SetText(enhanceUnitCoreCostText, stage != null ? coreCharger.CurrentUnitConversionCoreCost.ToString() : string.Empty);
         SetUnitPreview(currentUnitPreviewImage, stage?.currentUnit);
         SetUnitPreview(enhanceUnitPreviewImage, stage?.nextUnit);
         SetText(unitStatusDetailText, BuildUnitDetailStatusText(stage));
         RefreshEnhanceUnitStatTexts(stage);
 
-        bool canConvert = coreCharger.CanConvertCurrentUnit(inventory, player, playerLevel);
+        bool canConvert = coreCharger.CanConvertCurrentUnit(inventory, player, playerLevel, GetCurrencyWallet());
         SetInteractable(enhanceUnitButton, canConvert);
+        SetActive(enhanceUnitCoreCostGroup, canConvert);
         SetText(enhanceUnitButtonStateText, BuildEnhanceUnitButtonStateText(stage, playerLevel));
         SetEnhanceUnitConditionText(BuildEnhanceUnitConditionText(stage, playerLevel));
         SetEnhanceUnitButtonLabel(stage != null ? "유닛 강화" : "완료");
@@ -227,9 +239,10 @@ public class CoreChargerPanel : MonoBehaviour
 
         if (playerLevel >= stage.requiredPlayerLevel
             && coreCharger.Level >= requiredCoreLevel
-            && (ownsCurrentUnit || hasCurrentUnitEquipped))
+            && (ownsCurrentUnit || hasCurrentUnitEquipped)
+            && HasEnoughCoreCrystals(coreCharger.CurrentUnitConversionCoreCost))
         {
-            return "강화 가능";
+            return $"{FormatUnitName(stage.nextUnit)} 해금하기";
         }
 
         return string.Empty;
@@ -264,6 +277,13 @@ public class CoreChargerPanel : MonoBehaviour
                 + $"- {stage.currentUnit.DisplayName} 보유 또는 장착 필요";
         }
 
+        int coreCost = coreCharger.CurrentUnitConversionCoreCost;
+        if (!HasEnoughCoreCrystals(coreCost))
+        {
+            message += $"{(message.Length > 0 ? "\n" : string.Empty)}"
+                + $"- 코어 크리스탈{coreCost}개 필요 (현재 {GetCoreCrystals()})";
+        }
+
         return message;
     }
 
@@ -283,6 +303,8 @@ public class CoreChargerPanel : MonoBehaviour
             SetText(unlockDroneButtonStateText, "해금 불가");
             SetUnlockDroneConditionText("코어 강화소가 연결되지 않았습니다.");
             SetText(unlockDroneText, string.Empty);
+            SetText(unlockDroneCoreCostText, string.Empty);
+            SetActive(unlockDroneCoreCostGroup, false);
             SetText(unlockDroneCountText, string.Empty);
             SetText(unlockDroneEquipWeaponText, string.Empty);
             SetDronePreview(unlockDronePreviewImage, null);
@@ -294,10 +316,13 @@ public class CoreChargerPanel : MonoBehaviour
         CoreCharger.DroneUnlock nextUnlock = coreCharger.GetNextLockedDroneUnlock(inventory);
         DroneConfig nextDrone = nextUnlock?.droneConfig;
 
-        SetInteractable(unlockDroneButton, coreCharger.CanUnlockNextDrone(inventory));
+        bool canUnlockDrone = coreCharger.CanUnlockNextDrone(inventory, GetCurrencyWallet());
+        SetInteractable(unlockDroneButton, canUnlockDrone);
+        SetActive(unlockDroneCoreCostGroup, canUnlockDrone);
         SetText(unlockDroneButtonStateText, BuildUnlockDroneButtonStateText(nextUnlock));
         SetUnlockDroneConditionText(BuildUnlockDroneConditionText(nextUnlock));
         SetText(unlockDroneText, nextDrone != null ? nextDrone.DisplayName : "모든 드론 해금 완료");
+        SetText(unlockDroneCoreCostText, nextDrone != null ? coreCharger.GetDroneUnlockCoreCost(nextUnlock).ToString() : string.Empty);
         SetText(unlockDroneCountText, nextDrone != null ? $"{nextDrone.DroneCount}마리" : string.Empty);
         SetText(unlockDroneEquipWeaponText, nextDrone?.ProjectileConfig != null
             ? nextDrone.ProjectileConfig.DisplayName
@@ -341,9 +366,20 @@ public class CoreChargerPanel : MonoBehaviour
         }
 
         int requiredLevel = Mathf.Max(1, nextUnlock.requiredCoreChargerLevel);
-        return coreCharger.Level < requiredLevel
-            ? $"코어 강화소 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})"
-            : string.Empty;
+        string message = string.Empty;
+        if (coreCharger.Level < requiredLevel)
+        {
+            message += $"코어 강화소 Lv.{requiredLevel} 필요 (현재 Lv.{coreCharger.Level})";
+        }
+
+        int coreCost = coreCharger.GetDroneUnlockCoreCost(nextUnlock);
+        if (!HasEnoughCoreCrystals(coreCost))
+        {
+            message += $"{(message.Length > 0 ? "\n" : string.Empty)}"
+                + $"- 코어 크리스탈{coreCost}개 필요 (현재 {GetCoreCrystals()})";
+        }
+
+        return message;
     }
 
     private void SetUnlockDroneConditionText(string message)
@@ -479,6 +515,26 @@ public class CoreChargerPanel : MonoBehaviour
         return baseCampManager != null ? baseCampManager.CommanderLevel : 1;
     }
 
+    private PlayerCurrencyWallet GetCurrencyWallet()
+    {
+        return baseCampManager != null
+            ? baseCampManager.CurrencyWallet
+            : FindFirstObjectByType<PlayerCurrencyWallet>();
+    }
+
+    private int GetCoreCrystals()
+    {
+        PlayerCurrencyWallet wallet = GetCurrencyWallet();
+        return wallet != null ? wallet.CoreCrystals : 0;
+    }
+
+    private bool HasEnoughCoreCrystals(int cost)
+    {
+        cost = Mathf.Max(0, cost);
+        PlayerCurrencyWallet wallet = GetCurrencyWallet();
+        return cost <= 0 || (wallet != null && wallet.CanSpend(CurrencyType.CoreCrystals, cost));
+    }
+
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
@@ -530,7 +586,8 @@ public class CoreChargerPanel : MonoBehaviour
         {
             if (label != null
                 && label != enhanceUnitButtonStateText
-                && label != enhanceUnitEmptyText)
+                && label != enhanceUnitEmptyText
+                && label != enhanceUnitCoreCostText)
             {
                 label.text = value;
                 return;

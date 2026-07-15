@@ -461,7 +461,7 @@ public class BaseCampManager : MonoBehaviour
 
         PlayerController player = FindFirstObjectByType<PlayerController>();
         int playerLevel = PlayerProgression != null ? PlayerProgression.Level : commanderLevel;
-        if (coreCharger.TryConvertCurrentUnit(Inventory, player, playerLevel))
+        if (coreCharger.TryConvertCurrentUnit(Inventory, player, playerLevel, CurrencyWallet))
         {
             DailyMissionManager.ReportUnitEnhanced();
             MainGuideMissionManager.ReportUnitEnhanced();
