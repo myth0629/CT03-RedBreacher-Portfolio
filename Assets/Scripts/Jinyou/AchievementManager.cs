@@ -431,9 +431,30 @@ public class AchievementManager : MonoBehaviour
             wallet.Add(achievement.RewardCurrency, achievement.RewardAmount);
         }
 
+        ResyncAbsoluteProgress(achievement.ProgressType);
         Save();
         OnAchievementsChanged.Invoke();
         return true;
+    }
+
+    /// <summary>
+    /// 예를 들어 실제 지휘관 레벨이 19인데 도전과제가 Lv.9 보상 단계에서 멈춰 있었다면, 보상을 받는 순간
+    /// PlayerProgression.Level을 다시 읽어 현재 레벨(19레벨)로 다시 반영한다.
+    /// 이후 기존처럼 순차적으로 보상을 받을 수 있게 한다.
+    /// </summary>
+    /// <param name="progressType">지휘관 레벨 진행도</param>
+    private void ResyncAbsoluteProgress(AchievementProgressType progressType)
+    {
+        switch (progressType)
+        {
+            case AchievementProgressType.PlayerLevel:
+                PlayerProgression progression = FindFirstObjectByType<PlayerProgression>(FindObjectsInactive.Include);
+                if (progression != null)
+                {
+                    SetProgress(progressType, progression.Level);
+                }
+                break;
+        }
     }
 
     private PlayerCurrencyWallet ResolveCurrencyWallet()

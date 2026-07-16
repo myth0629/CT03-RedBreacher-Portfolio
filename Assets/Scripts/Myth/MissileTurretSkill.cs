@@ -30,20 +30,51 @@ public class MissileTurretSkill : MonoBehaviour
             placementDirection = CombatPlane.DirectionFromYRotation(player.transform);
         }
 
-        Vector3 placementPosition = CombatPlane.WithFixedY(
-            player.transform.position + placementDirection * skillConfig.MissileTurretPlacementDistance);
-        GameObject turretObject = Instantiate(skillConfig.MissileTurretPrefab, placementPosition, SkillSpawnRotation);
-        turretObject.transform.position = placementPosition;
-        turretObject.transform.rotation = SkillSpawnRotation;
-
-        MissileTurretSkill turret = turretObject.GetComponent<MissileTurretSkill>();
-        if (turret == null)
+        int turretCount = skillConfig.GetTurretCount(player.GetSkillLevel(skillConfig));
+        bool spawnedAny = false;
+        for (int i = 0; i < turretCount; i++)
         {
-            turret = turretObject.AddComponent<MissileTurretSkill>();
+            Vector3 placementPosition = GetPlacementPosition(
+                player,
+                skillConfig,
+                placementDirection,
+                i,
+                turretCount);
+            GameObject turretObject = Instantiate(skillConfig.MissileTurretPrefab, placementPosition, SkillSpawnRotation);
+            turretObject.transform.position = placementPosition;
+            turretObject.transform.rotation = SkillSpawnRotation;
+
+            MissileTurretSkill turret = turretObject.GetComponent<MissileTurretSkill>();
+            if (turret == null)
+            {
+                turret = turretObject.AddComponent<MissileTurretSkill>();
+            }
+
+            turret.Initialize(player, skillConfig);
+            spawnedAny = true;
         }
 
-        turret.Initialize(player, skillConfig);
-        return true;
+        return spawnedAny;
+    }
+
+    private static Vector3 GetPlacementPosition(
+        PlayerController player,
+        PlayerSkillConfig skillConfig,
+        Vector3 placementDirection,
+        int index,
+        int count)
+    {
+        if (count <= 1)
+        {
+            return CombatPlane.WithFixedY(
+                player.transform.position + placementDirection * skillConfig.MissileTurretPlacementDistance);
+        }
+
+        float spreadAngle = Mathf.Min(120f, 30f * (count - 1));
+        float offsetAngle = Mathf.Lerp(-spreadAngle * 0.5f, spreadAngle * 0.5f, index / (float)(count - 1));
+        Vector3 rotatedDirection = Quaternion.Euler(0f, offsetAngle, 0f) * placementDirection;
+        return CombatPlane.WithFixedY(
+            player.transform.position + rotatedDirection * skillConfig.MissileTurretPlacementDistance);
     }
 
     private void Initialize(PlayerController player, PlayerSkillConfig skillConfig)

@@ -248,6 +248,12 @@ public class CoreChargerPanel : MonoBehaviour
         return string.Empty;
     }
 
+    /// <summary>
+    /// 탱크 유닛강화 할 때 필요한 조건을 출력하는 문구 (플레이어 레벨, 코어 강화소 레벨, 코어 크리스탈 보유 수, 기타 연결오류 등)
+    /// </summary>
+    /// <param name="stage">유닛강화 단계</param>
+    /// <param name="playerLevel">지휘관(플레이어) 레벨</param>
+    /// <returns></returns>
     private string BuildEnhanceUnitConditionText(CoreCharger.UnitConversionStage stage, int playerLevel)
     {
         if (coreCharger == null || stage == null || !stage.IsConfigured)
@@ -295,6 +301,7 @@ public class CoreChargerPanel : MonoBehaviour
             !string.IsNullOrEmpty(message));
     }
 
+    // 드론해금 UI Refresh
     private void RefreshDroneUnlockPanel()
     {
         if (coreCharger == null)
@@ -333,11 +340,10 @@ public class CoreChargerPanel : MonoBehaviour
     }
 
     /// <summary>
-    /// unlockDroneButtonStateText를 통해서 탱크 유닛을 강화할 때 필요한 조건이 무엇인지 확인할 수 있으며,
-    /// 현재로는 코어 강화소 레벨에 따라 드론 해금하기로 조건을 걸어놨음.
+    /// 드론 해금하는데 필요한 조건을 출력하는 문구 (코어 강화소 레벨, 코어 크리스탈 보유 수, 기타 연결오류 등)
     /// 예: 드론 해금 조건 \n 코어 강화소 Lv. 3 필요 (현재 Lv. 1)
     /// </summary>
-    /// <param name="nextUnlock"></param>
+    /// <param name="nextUnlock">다음 해금에 사용할 드론명칭</param>
     /// <returns></returns>
     private string BuildUnlockDroneButtonStateText(CoreCharger.DroneUnlock nextUnlock)
     {
@@ -515,6 +521,7 @@ public class CoreChargerPanel : MonoBehaviour
         return baseCampManager != null ? baseCampManager.CommanderLevel : 1;
     }
 
+    // 강화비용(코어 크리스탈)과 보유한 비용의 계산을 위해 baseCampManager를 통해서 플레이어 지갑연결
     private PlayerCurrencyWallet GetCurrencyWallet()
     {
         return baseCampManager != null
@@ -522,12 +529,13 @@ public class CoreChargerPanel : MonoBehaviour
             : FindFirstObjectByType<PlayerCurrencyWallet>();
     }
 
+    // 플레이어가 소유한 코어 크리스탈 가져오기
     private int GetCoreCrystals()
     {
         PlayerCurrencyWallet wallet = GetCurrencyWallet();
         return wallet != null ? wallet.CoreCrystals : 0;
     }
-
+    
     private bool HasEnoughCoreCrystals(int cost)
     {
         cost = Mathf.Max(0, cost);
@@ -560,6 +568,7 @@ public class CoreChargerPanel : MonoBehaviour
         }
     }
 
+    // 특정 조건(예: 버튼이 비활성화 될 때)이 있을 때 UI 오브젝트를 감추는 함수
     private static void SetActive(GameObject target, bool active)
     {
         if (target != null && target.activeSelf != active)
@@ -568,6 +577,7 @@ public class CoreChargerPanel : MonoBehaviour
         }
     }
 
+    // 업그레이드 완료 시간 표시 함수
     private static void SetUpgradeRemainingText(TMP_Text target, bool isUpgrading, float remainingSeconds)
     {
         SetText(target, isUpgrading ? $"완료까지 {remainingSeconds:0}초" : string.Empty);
