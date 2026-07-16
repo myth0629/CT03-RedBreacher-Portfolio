@@ -591,13 +591,13 @@ public class SkillLoadoutPanel : MonoBehaviour
             return;
         }
 
-        SetText(facilityLevelText, $"Lv. {skillHanger.Level}");
+        SetText(facilityLevelText, $"Lv.{skillHanger.Level}");
 
         bool canShowCost = !skillHanger.IsUpgrading && skillHanger.Level < skillHanger.MaxLevel;
         BaseCampUpgradeButtonText.Set(
             upgradeText,
             upgradeCostText,
-            skillHanger.Level >= skillHanger.MaxLevel ? "최대레벨" : "시설 업그레이드",
+            skillHanger.Level >= skillHanger.MaxLevel ? "최대 레벨" : "업그레이드",
             skillHanger.UpgradeCost,
             canShowCost);
         if (skillHanger.Level >= skillHanger.MaxLevel)

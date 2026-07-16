@@ -126,7 +126,7 @@ public class SkillLoadoutSelectionPanel : MonoBehaviour
         int level = GetSkillLevel(skill);
         SetIcon(detailIconSkill, skill.Icon);
         SetText(detailSkillNameText, skill.DisplayName);
-        SetText(detailSkillLevelText, $"Lv. {level}/{skill.MaxLevel}");
+        SetText(detailSkillLevelText, $"Lv.{level}/{skill.MaxLevel}");
         SetText(detailSkillCooldownText, $"{skill.GetCooldown(level):0.##}초");
         SetText(detailSkillDescriptionText, skill.Description);
         SetButtonInteractable(equipButton, targetSlotIndex >= 0);

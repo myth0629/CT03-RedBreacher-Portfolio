@@ -415,7 +415,7 @@ public class EquipmentPartsPanel : MonoBehaviour
             ? inventory.ResolveEquipmentPartConfig(part.configId)
             : null;
 
-        SetText(beforeSelectText, part != null ? string.Empty : "파츠를 선택하세요");
+        SetText(beforeSelectText, part != null ? string.Empty : "파츠를 선택하세요.");
         SetText(partNameText, part != null ? GetDisplayName(config, part) : string.Empty);
         SetText(rarityText, part != null ? $"/ Lv.{part.level} {GetRarityName(part.rarity)}" : string.Empty);
         SetText(mainStatTitle, part != null ? "주 옵션" : string.Empty);

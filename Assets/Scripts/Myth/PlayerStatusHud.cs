@@ -412,7 +412,7 @@ public class PlayerStatusHud : MonoBehaviour
         if (tankPopupVisible)
         {
             SetText(tankPopupNameText, player.DisplayName);
-            SetText(tankPopupLevelText, progression != null ? $"[Lv. {progression.Level}]" : "[1]");
+            SetText(tankPopupLevelText, progression != null ? $"[Lv.{progression.Level}]" : "[1]");
             SetText(tankPopupHealthText, health != null ? $"{health.CurrentHealth:0}" : "0");
             SetText(tankPopupDpsText, $"{player.EstimatedDamagePerSecond:0.##}");
             SetText(tankPopupMoveSpeedText, $"{player.MoveSpeed:0.##}");
@@ -468,7 +468,7 @@ public class PlayerStatusHud : MonoBehaviour
         if (droneVisible)
         {
             SetText(tankPopupDroneNameText, drone != null ? drone.DisplayName : "장착한 드론 없음");
-            SetText(tankPopupDroneCountText, drone != null ? $" {drone.DroneCount}마리" : " 0마리");
+            SetText(tankPopupDroneCountText, drone != null ? $"{drone.DroneCount}마리" : "0마리");
             SetText(tankPopupDroneDamageText, drone != null ? $"{GetEnhancedDroneDamage(drone):0.##}" : "0");
             SetText(tankPopupDroneWeaponText, drone != null && drone.ProjectileConfig != null ? drone.ProjectileConfig.DisplayName : "-");
             SetText(tankPopupDroneIntervalText, drone != null ? $"{drone.AttackInterval:0.##}" : "0");
@@ -516,7 +516,7 @@ public class PlayerStatusHud : MonoBehaviour
         }
 
         // 미투자 상태를 UI에서는 Lv.1로 표시한다.
-        SetText(statUpgradePointText, progression != null ? $"보유 중인 포인트 : {progression.StatPoints}" : "보유 중인 포인트 : 0");
+        SetText(statUpgradePointText, progression != null ? $"보유 포인트 : {progression.StatPoints}" : "보유 포인트 : 0");
         SetText(attackUpgradeLevelText, $"Lv.{allocator.AttackDisplayLevel}");
         SetText(healthUpgradeLevelText, $"Lv.{allocator.HealthDisplayLevel}");
         SetText(critChanceUpgradeLevelText, $"Lv.{allocator.CritChanceDisplayLevel}");

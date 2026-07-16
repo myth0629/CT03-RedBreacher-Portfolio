@@ -112,7 +112,7 @@ public class BossTrackerPanel : MonoBehaviour
 
         SetText(ticketText, $"티켓 {commandCenter.BossTickets}/{commandCenter.BossTicketCapacity}");
         SetText(productionText, $"하루 {commandCenter.BossTicketsProducedPerDay}개 지급");
-        SetText(levelText, $"사령부 Lv. {commandCenter.Level:0}");
+        SetText(levelText, $"사령부 Lv.{commandCenter.Level:0}");
         SetText(bossLockStateText, BossLockState(boss, difficulty));
         SetText(bossDifficultyText, $"({difficulty.displayName})");
         SetDifficultyTextColor(difficulty);

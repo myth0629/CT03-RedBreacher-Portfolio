@@ -45,7 +45,7 @@ public class baseUnlockStatus : MonoBehaviour
             ? facilityUnlock.displayName
             : string.Empty);
         SetText(baseLevelText, facilityUnlock != null && facilityUnlock.unlocked
-            ? $"Lv. {GetCurrentFacilityLevel()}"
+            ? $"Lv.{GetCurrentFacilityLevel()}"
             : string.Empty);
     }
 

@@ -648,11 +648,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         SetIcon(detailIconWeapon, null);
         SetDroneIcon(detailIconDrone, drone);
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
-        SetText(detailCategoryText, drone != null ? $"장착무기: {drone.ProjectileConfig.DisplayName}" : string.Empty);
+        SetText(detailCategoryText, drone != null ? $"장착한 무기: {drone.ProjectileConfig.DisplayName}" : string.Empty);
         SetText(detailStatsText, drone != null
             ? $"공장강화 Lv. <color=#4AD787>{droneEnhanceLevel}</color>\n"
                 + "\n"
-                + $"드론갯수: <color=#EC9A0E>{drone.DroneCount:0.##}마리</color>\n"
+                + $"드론 개수: <color=#EC9A0E>{drone.DroneCount:0.##}마리</color>\n"
                 + $"피해량: <color=#EC9A0E>{drone.AttackDamage:0.##}</color> (+ <color=#4AD787>{droneDamageBonus:0.##}</color>)\n"
                 + $"사거리: <color=#EC9A0E>{drone.AttackRange:0.##}</color>\n"
                 + $"발사간격: <color=#EC9A0E>{drone.AttackInterval:0.##}</color>"
@@ -907,7 +907,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     {
         return drone != null && drone.ProjectileConfig != null
             ? drone.ProjectileConfig.DisplayName
-            : "장착무기 없음";
+            : "장착한 무기 없음";
     }
 
     private void EnsureAudioSource()

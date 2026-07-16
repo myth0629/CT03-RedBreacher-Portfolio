@@ -103,7 +103,7 @@ public class SkillHangerPanel : MonoBehaviour
         SetButtonInteractable(changeSkillButton, true);
         SetSkillIcon(skillIconImage, selectedSkill.Icon);
         SetText(skillNameText, selectedSkill.DisplayName);
-        SetText(skillLevelText, $"Lv. {level}/{selectedSkill.MaxLevel}");
+        SetText(skillLevelText, $"Lv.{level}/{selectedSkill.MaxLevel}");
         SetText(skillCooldownText, $"{selectedSkill.GetCooldown(level):0.##}초");
         SetText(skillDescriptionText, selectedSkill.Description);
     }

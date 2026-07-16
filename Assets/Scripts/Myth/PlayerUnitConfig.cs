@@ -5,7 +5,7 @@ public class PlayerUnitConfig : ScriptableObject
 {
     [Header("Visual")]
     [SerializeField] private string id = "unit_default";
-    [SerializeField] private string displayName = "탱크이름";
+    [SerializeField] private string displayName = "유닛이름";
     [SerializeField] private GameObject unitPrefab;
 
     [Header("Stats")]

@@ -27,7 +27,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform unitRoot;
     [Tooltip("머즐 플래시를 유닛 최상단 스프라이트보다 몇 단계 위에 그릴지(유닛 위에 확실히 보이게).")]
     [SerializeField] private int muzzleFlashSortingOffset = 1;
-    [SerializeField] private string displayName = "탱크이름";
+    [SerializeField] private string displayName = "유닛이름";
 
     [Header("Stats")]
     [SerializeField] private float maxHealth = 100f;

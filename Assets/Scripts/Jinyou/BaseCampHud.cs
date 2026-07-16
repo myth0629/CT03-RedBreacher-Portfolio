@@ -152,7 +152,7 @@ public class BaseCampHud : MonoBehaviour
     {
         string displayName = GetFacilityDisplayName(facilityId, fallbackName);
         SetText(target, level.HasValue
-            ? $"{displayName} <color=#EC9A0E>Lv. {level.Value}</color>"
+            ? $"{displayName} <color=#EC9A0E>Lv.{level.Value}</color>"
             : $"{displayName} <color=#EC9A0E>Lv. --</color>");
     }
 

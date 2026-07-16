@@ -175,11 +175,11 @@ public class CoreChargerPanel : MonoBehaviour
             ? baseCampManager.CommandCenter.Level
             : 1;
 
-        SetText(levelText, $"Lv. {coreCharger.Level}");
+        SetText(levelText, $"Lv.{coreCharger.Level}");
         BaseCampUpgradeButtonText.Set(
             upgradeText,
             upgradeCostText,
-            "기지 업그레이드",
+            "업그레이드",
             coreCharger.UpgradeCost,
             !coreCharger.IsUpgrading && coreCharger.Level < coreCharger.MaxLevel);
         SetUpgradeRemainingText(
@@ -230,7 +230,7 @@ public class CoreChargerPanel : MonoBehaviour
 
         if (!stage.IsConfigured)
         {
-            return "현재 탱크와 다음 탱크 데이터가 필요합니다.";
+            return "현재 유닛과 다음 유닛 데이터가 필요합니다.";
         }
 
         int requiredCoreLevel = coreCharger.GetRequiredCoreChargerLevel(coreCharger.CurrentStageIndex);
@@ -242,7 +242,7 @@ public class CoreChargerPanel : MonoBehaviour
             && (ownsCurrentUnit || hasCurrentUnitEquipped)
             && HasEnoughCoreCrystals(coreCharger.CurrentUnitConversionCoreCost))
         {
-            return $"{FormatUnitName(stage.nextUnit)} 해금하기";
+            return "강화하기";
         }
 
         return string.Empty;
@@ -281,7 +281,7 @@ public class CoreChargerPanel : MonoBehaviour
         if (!HasEnoughCoreCrystals(coreCost))
         {
             message += $"{(message.Length > 0 ? "\n" : string.Empty)}"
-                + $"- 코어 크리스탈{coreCost}개 필요 (현재 {GetCoreCrystals()})";
+                + $"- 코어 크리스탈 {coreCost}개 필요 (현재 {GetCoreCrystals()})";
         }
 
         return message;
@@ -342,7 +342,7 @@ public class CoreChargerPanel : MonoBehaviour
     private string BuildUnlockDroneButtonStateText(CoreCharger.DroneUnlock nextUnlock)
     {
         return string.IsNullOrEmpty(BuildUnlockDroneConditionText(nextUnlock))
-            ? $"{nextUnlock.droneConfig.DisplayName} 해금하기"
+            ? "해금하기"
             : string.Empty;
     }
 
@@ -376,7 +376,7 @@ public class CoreChargerPanel : MonoBehaviour
         if (!HasEnoughCoreCrystals(coreCost))
         {
             message += $"{(message.Length > 0 ? "\n" : string.Empty)}"
-                + $"- 코어 크리스탈{coreCost}개 필요 (현재 {GetCoreCrystals()})";
+                + $"- 코어 크리스탈 {coreCost}개 필요 (현재 {GetCoreCrystals()})";
         }
 
         return message;

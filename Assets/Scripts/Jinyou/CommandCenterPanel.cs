@@ -108,9 +108,9 @@ public class CommandCenterPanel : MonoBehaviour
             return;
         }
 
-        SetText(levelText, $"Lv. {cmdCenter.Level}");
+        SetText(levelText, $"Lv.{cmdCenter.Level}");
         SetText(commandNextLevelText, cmdCenter.Level < cmdCenter.MaxLevel
-            ? $"사령부 Lv. {cmdCenter.Level + 1}"
+            ? $"사령부 Lv.{cmdCenter.Level + 1}"
             : "최대 레벨");
         UpdateFacilityVisual();
         BaseCampUpgradeButtonText.Set(
@@ -280,7 +280,7 @@ public class CommandCenterPanel : MonoBehaviour
             return;
         }
 
-        SetText(playerLevelText, $"Lv. {progression.Level}");
+        SetText(playerLevelText, $"Lv.{progression.Level}");
         SetText(playerEXPText,
             $"{progression.CurrentExperience:0} / {progression.ExperienceToNextLevel:0}");
         SetFill(playerEXPProgressFill, progression.ExperienceProgress01);

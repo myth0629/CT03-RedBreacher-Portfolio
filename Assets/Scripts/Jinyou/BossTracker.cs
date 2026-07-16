@@ -275,7 +275,7 @@ public class BossTracker : MonoBehaviour
             cmdCenter?.RefundBossTicket();
             IncrementRecord(completedBoss, completedDifficulty, "Failures");
             bossEncounterManager.ShowResult(
-                "보스처치 실패 (티켓 반환)",
+                "보스 처치 실패 (티켓 반환)",
                 $"{completedDifficulty.displayName}\n{GetRecordSummary(completedBoss, completedDifficulty)}",
                 false);
             return;
@@ -318,7 +318,7 @@ public class BossTracker : MonoBehaviour
                 + $" / 코어 +{completedDifficulty.firstClearCoreCrystalBonus}"
             : string.Empty;
         bossEncounterManager.ShowResult(
-            "보스 처치성공",
+            "보스 처치 성공",
             $"{completedDifficulty.displayName} {clearTime:0.0}초{firstClearText}",
             true);
     }

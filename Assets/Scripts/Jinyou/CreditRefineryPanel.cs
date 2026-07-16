@@ -140,7 +140,7 @@ public class CreditRefineryPanel : MonoBehaviour
                              refinery.StoredCredits >= refinery.StorageCapacity;
 
         UpdateFacilityVisual();
-        SetText(levelText, $"Lv. {refinery.Level}");
+        SetText(levelText, $"Lv.{refinery.Level}");
         SetText(storedCreditsText, isStorageFull
             ? $"수집하기 (<b>{refinery.StorageCapacity}</b>)"
             : $"수집하기 (<b>{refinery.StoredCredits}</b>/{refinery.StorageCapacity})");

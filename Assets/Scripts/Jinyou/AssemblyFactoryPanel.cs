@@ -174,7 +174,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
         bool droneMode = assemblyFactory.SelectedMenuId == "drone";
         RefreshSelectedTargetDisplay(droneMode);
-        SetText(levelText, $"Lv. {assemblyFactory.Level}");
+        SetText(levelText, $"Lv.{assemblyFactory.Level}");
         SetText(upgradeText, droneMode
             ? BuildSelectedDroneHeader()
             : BuildSelectedWeaponHeader());
@@ -198,8 +198,8 @@ public class AssemblyFactoryPanel : MonoBehaviour
             upgradeText,
             upgradeCostText,
             assemblyFactory.Level >= assemblyFactory.MaxLevel
-                ? "최대레벨"
-                : "기지 업그레이드",
+                ? "최대 레벨"
+                : "업그레이드",
             assemblyFactory.UpgradeCost,
             !assemblyFactory.IsUpgrading && assemblyFactory.Level < assemblyFactory.MaxLevel);
         SetUpgradeRemainingText(
@@ -265,7 +265,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
             DroneConfig drone = enhancement?.droneConfig;
             SetText(selectedWeaponNameText, drone != null ? drone.DisplayName : string.Empty);
             SetText(selectedWeaponLevelText, enhancement != null && drone != null
-                ? $"Lv. {enhancement.enhanceLevel}/{enhancement.maxEnhanceLevel}"
+                ? $"Lv.{enhancement.enhanceLevel}/{enhancement.maxEnhanceLevel}"
                 : string.Empty);
             SetIcon(selectedWeaponIcon, null);
             SetDroneIcon(selectedDroneIcon, drone);
@@ -276,7 +276,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         ProjectileConfig weapon = weaponEnhancement?.weaponConfig;
         SetText(selectedWeaponNameText, weapon != null ? weapon.DisplayName : string.Empty);
         SetText(selectedWeaponLevelText, weaponEnhancement != null && weapon != null
-            ? $"Lv. {weaponEnhancement.enhanceLevel}/{weaponEnhancement.MaxEnhanceLevel}"
+            ? $"Lv.{weaponEnhancement.enhanceLevel}/{weaponEnhancement.MaxEnhanceLevel}"
             : string.Empty);
         SetIcon(selectedWeaponIcon, weapon != null ? weapon.Icon : null);
         SetDroneIcon(selectedDroneIcon, null);
@@ -384,7 +384,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         AssemblyFactory.DroneEnhancement enhancement = assemblyFactory.SelectedDroneEnhancement;
         if (enhancement?.droneConfig == null)
         {
-            return "드론 및 무기를 먼저 선택하십시오.";
+            return "드론 및 무기를 먼저 선택하세요.";
         }
 
         return enhancement.IsMaxLevel
