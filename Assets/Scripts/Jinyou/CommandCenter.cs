@@ -62,6 +62,18 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
     public float CurrentUpgradeDurationSeconds => currentUpgradeDurationSeconds;
     public IReadOnlyList<FacilityUnlock> FacilityUnlocks => facilityUnlocks;
 
+    public int GetBossTicketCapacityForLevel(int targetLevel)
+    {
+        EnsureBalanceInitialized();
+        return Mathf.Max(0, GetBalanceForLevel(targetLevel)?.ticketCapacity ?? 0);
+    }
+
+    public int GetBossTicketsProducedPerDayForLevel(int targetLevel)
+    {
+        EnsureBalanceInitialized();
+        return Mathf.Max(0, GetBalanceForLevel(targetLevel)?.ticketsPerDay ?? 0);
+    }
+
     private void Awake()
     {
         EnsureBalanceInitialized();
@@ -426,7 +438,13 @@ public class CommandCenter : MonoBehaviour, IBaseCampFacility
 
     private BaseCampBalanceConfig.FacilityLevelData GetCurrentBalance()
     {
-        return BaseCampBalanceConfig.Current?.GetLevel(FacilityId, level);
+        return GetBalanceForLevel(level);
+    }
+
+    private BaseCampBalanceConfig.FacilityLevelData GetBalanceForLevel(int targetLevel)
+    {
+        int clampedLevel = Mathf.Clamp(targetLevel, 1, maxLevel);
+        return BaseCampBalanceConfig.Current?.GetLevel(FacilityId, clampedLevel);
     }
 
     private void ApplyLevelBalance()

@@ -36,6 +36,7 @@ public class CommandCenterPanel : MonoBehaviour
 
     private readonly List<baseUnlockStatus> _baseUnlockStatusList = new List<baseUnlockStatus>();
     private CommandCenter cmdCenter;
+    private BossTracker bossTracker;
     private PlayerProgression progression;
     private float observedUpgradeDuration;
 
@@ -242,7 +243,7 @@ public class CommandCenterPanel : MonoBehaviour
     // 다음 업그레이드 시 해금요소 미리보기
     private string BuildUnlockSummary()
     {
-        string summary = string.Empty;
+        List<string> summaryLines = new List<string>();
         int nextLevel = cmdCenter.Level + 1;
 
         foreach (CommandCenter.FacilityUnlock item in cmdCenter.FacilityUnlocks)
@@ -252,19 +253,65 @@ public class CommandCenterPanel : MonoBehaviour
                 continue;
             }
 
-            summary += $"{item.displayName} 해금\n";
+            summaryLines.Add($"{item.displayName} 해금");
         }
 
-        summary = summary.TrimEnd();
-        return string.IsNullOrEmpty(summary)
+        // 관제탑 레벨은 실제로 사령부 레벨과 연결되어 있어 보스전 관련 해금요소를 미리 보여줄 필요가 있음.
+        AddBossTicketPreview(summaryLines, nextLevel);
+        AddBossDifficultyPreview(summaryLines, nextLevel);
+
+        return summaryLines.Count == 0
             ? "해금 요소 없음"
-            : summary;
+            : string.Join("\n", summaryLines);
+    }
+    
+    // 보스 티켓 수/ 1일 지급량 변화수치를 미리 보여주는 메소드
+    private void AddBossTicketPreview(List<string> summaryLines, int nextLevel)
+    {
+        int currentCapacity = cmdCenter.BossTicketCapacity;
+        int nextCapacity = cmdCenter.GetBossTicketCapacityForLevel(nextLevel);
+        if (nextCapacity > currentCapacity)
+        {
+            summaryLines.Add($"보스 티켓 최대치 <b>{currentCapacity} > {nextCapacity}</b>");
+        }
+
+        int currentTicketsPerDay = cmdCenter.BossTicketsProducedPerDay;
+        int nextTicketsPerDay = cmdCenter.GetBossTicketsProducedPerDayForLevel(nextLevel);
+        if (nextTicketsPerDay > currentTicketsPerDay)
+        {
+            summaryLines.Add($"보스 티켓 일일 지급량 <b>{currentTicketsPerDay}개 > {nextTicketsPerDay}개</b>");
+        }
+    }
+
+    // 보스 난이도 해금 정보를 미리 보여주는 메소드
+    private void AddBossDifficultyPreview(List<string> summaryLines, int nextLevel)
+    {
+        if (bossTracker == null)
+        {
+            return;
+        }
+
+        foreach (BossTracker.BossDifficulty difficulty in bossTracker.Difficulties)
+        {
+            if (difficulty == null
+                || difficulty.requiredResearchLabLevel > nextLevel
+                || difficulty.requiredResearchLabLevel <= cmdCenter.Level)
+            {
+                continue;
+            }
+
+            string difficultyName = !string.IsNullOrWhiteSpace(difficulty.displayName)
+                ? difficulty.displayName
+                : difficulty.difficultyId;
+            summaryLines.Add($"보스 난이도 해금 <b>{difficultyName}</b>");
+        }
     }
 
     private void ResolveReferences()
     {
         baseCampManager ??= BaseCampManager.Instance ?? FindFirstObjectByType<BaseCampManager>();
         cmdCenter = baseCampManager != null ? baseCampManager.CommandCenter : null;
+        bossTracker ??= FindFirstObjectByType<BossTracker>(FindObjectsInactive.Include);
         progression = baseCampManager != null
             ? baseCampManager.PlayerProgression
             : FindFirstObjectByType<PlayerProgression>();
