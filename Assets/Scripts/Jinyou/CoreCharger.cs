@@ -12,16 +12,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         [Min(1)] public int requiredPlayerLevel = 5;
         public PlayerUnitConfig currentUnit;
         public PlayerUnitConfig nextUnit;
-
-        public string DisplayName
-        {
-            get
-            {
-                string currentName = currentUnit != null ? currentUnit.DisplayName : "Unassigned";
-                string nextName = nextUnit != null ? nextUnit.DisplayName : "Unassigned";
-                return $"{currentName} -> {nextName}";
-            }
-        }
+        [Min(1)] public int requiredCrystalCoreCostUnit = 5;
 
         public bool IsConfigured => currentUnit != null && nextUnit != null && currentUnit != nextUnit;
     }
@@ -31,6 +22,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     {
         public DroneConfig droneConfig;
         [Min(1)] public int requiredCoreChargerLevel = 2;
+        [Min(1)] public int requiredCrystalCoreCostDrone = 5;
     }
 
     [Header("Level")]
@@ -73,6 +65,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
     public float DroneAttackRangeBonus => Mathf.Max(0f, GetCurrentBalance()?.droneAttackRangeBonus ?? 0f);
     public float DroneAttackIntervalReduction => Mathf.Max(0f, GetCurrentBalance()?.droneAttackIntervalReduction ?? 0f);
     public float DroneFollowSpeedBonus => Mathf.Max(0f, GetCurrentBalance()?.droneFollowSpeedBonus ?? 0f);
+    public int CurrentUnitConversionCoreCost => GetUnitConversionCoreCost(CurrentConversionStage);
 
     private void Awake()
     {
@@ -110,7 +103,11 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return convertedStageIndices.Contains(stageIndex);
     }
 
-    public bool CanConvertCurrentUnit(InventoryFacility inventory, PlayerController player, int playerLevel)
+    public bool CanConvertCurrentUnit(
+        InventoryFacility inventory,
+        PlayerController player,
+        int playerLevel,
+        PlayerCurrencyWallet wallet = null)
     {
         int stageIndex = CurrentStageIndex;
         UnitConversionStage stage = GetConversionStageAt(stageIndex);
@@ -124,18 +121,29 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         int requiredCoreChargerLevel = GetRequiredCoreChargerLevel(stageIndex);
         return playerLevel >= stage.requiredPlayerLevel
             && level >= requiredCoreChargerLevel
-            && (ownsCurrentUnit || hasCurrentUnitEquipped);
+            && (ownsCurrentUnit || hasCurrentUnitEquipped)
+            && CanSpendCoreCrystals(wallet, GetUnitConversionCoreCost(stage));
     }
 
-    public bool TryConvertCurrentUnit(InventoryFacility inventory, PlayerController player, int playerLevel)
+    public bool TryConvertCurrentUnit(
+        InventoryFacility inventory,
+        PlayerController player,
+        int playerLevel,
+        PlayerCurrencyWallet wallet = null)
     {
-        if (!CanConvertCurrentUnit(inventory, player, playerLevel))
+        if (!CanConvertCurrentUnit(inventory, player, playerLevel, wallet))
         {
             return false;
         }
 
         int stageIndex = CurrentStageIndex;
         UnitConversionStage stage = conversionStages[stageIndex];
+        int coreCrystalCost = GetUnitConversionCoreCost(stage);
+        if (!TrySpendCoreCrystals(wallet, coreCrystalCost))
+        {
+            return false;
+        }
+
         bool inventoryChanged = inventory != null && inventory.ReplaceUnit(stage.currentUnit, stage.nextUnit);
 
         if (!inventoryChanged && inventory != null && !inventory.ContainsUnit(stage.nextUnit))
@@ -236,23 +244,39 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return null;
     }
 
-    public bool CanUnlockNextDrone(InventoryFacility inventory)
+    public int GetDroneUnlockCoreCost(DroneUnlock droneUnlock)
+    {
+        return Mathf.Max(0, droneUnlock?.requiredCrystalCoreCostDrone ?? 0);
+    }
+
+    public bool CanUnlockNextDrone(InventoryFacility inventory, PlayerCurrencyWallet wallet = null)
     {
         DroneUnlock nextUnlock = GetNextLockedDroneUnlock(inventory);
         return nextUnlock?.droneConfig != null
             && inventory != null
-            && level >= Mathf.Max(1, nextUnlock.requiredCoreChargerLevel);
+            && level >= Mathf.Max(1, nextUnlock.requiredCoreChargerLevel)
+            && CanSpendCoreCrystals(wallet, GetDroneUnlockCoreCost(nextUnlock));
     }
 
-    public bool TryUnlockNextDrone(InventoryFacility inventory)
+    public bool TryUnlockNextDrone(InventoryFacility inventory, PlayerCurrencyWallet wallet = null)
     {
-        if (!CanUnlockNextDrone(inventory))
+        if (!CanUnlockNextDrone(inventory, wallet))
         {
             return false;
         }
 
         DroneUnlock nextUnlock = GetNextLockedDroneUnlock(inventory);
-        return nextUnlock?.droneConfig != null && inventory.AddDrone(nextUnlock.droneConfig);
+        if (nextUnlock?.droneConfig == null)
+        {
+            return false;
+        }
+
+        if (!TrySpendCoreCrystals(wallet, GetDroneUnlockCoreCost(nextUnlock)))
+        {
+            return false;
+        }
+
+        return inventory.AddDrone(nextUnlock.droneConfig);
     }
 
     public bool CanUpgrade(int credits, int commanderLevel)
@@ -390,6 +414,23 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
         return Mathf.Max(0, GetCurrentBalance()?.upgradeCost ?? 0);
     }
 
+    private static int GetUnitConversionCoreCost(UnitConversionStage stage)
+    {
+        return Mathf.Max(0, stage?.requiredCrystalCoreCostUnit ?? 0);
+    }
+
+    private static bool CanSpendCoreCrystals(PlayerCurrencyWallet wallet, int cost)
+    {
+        cost = Mathf.Max(0, cost);
+        return cost <= 0 || (wallet != null && wallet.CanSpend(CurrencyType.CoreCrystals, cost));
+    }
+
+    private static bool TrySpendCoreCrystals(PlayerCurrencyWallet wallet, int cost)
+    {
+        cost = Mathf.Max(0, cost);
+        return cost <= 0 || (wallet != null && wallet.TrySpendCoreCrystals(cost));
+    }
+
     private float GetUpgradeDurationForCurrentLevel()
     {
         return Mathf.Max(0f, GetCurrentBalance()?.upgradeSeconds ?? 0f);
@@ -414,6 +455,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             if (stage != null)
             {
                 stage.requiredPlayerLevel = (i + 1) * levelsPerConversion;
+                stage.requiredCrystalCoreCostUnit = Mathf.Max(0, stage.requiredCrystalCoreCostUnit);
             }
         }
 
@@ -433,6 +475,7 @@ public class CoreCharger : MonoBehaviour, IBaseCampFacility
             if (droneUnlock != null)
             {
                 droneUnlock.requiredCoreChargerLevel = Mathf.Max(1, droneUnlock.requiredCoreChargerLevel);
+                droneUnlock.requiredCrystalCoreCostDrone = Mathf.Max(0, droneUnlock.requiredCrystalCoreCostDrone);
             }
         }
     }

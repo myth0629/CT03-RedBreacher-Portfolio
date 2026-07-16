@@ -2863,6 +2863,7 @@ MonoBehaviour:
   baseEnemyCount: 4
   enemyCountIncreasePerStage: 3
   enemyCountIncreasePerRound: 2
+  maxEnemyCountPerRound: 80
   timeBetweenRounds: 2
   player: {fileID: 2078203335}
   playerRespawnPoint: {fileID: 0}
@@ -2873,6 +2874,8 @@ MonoBehaviour:
   damageNumberFontSize: 3.2
   healthIncreasePerStage: 0.2
   damageIncreasePerStage: 0.1
+  damageSoftCapStage: 50
+  damageIncreasePerStageAfterCap: 0.05
   moveSpeedIncreasePerStage: 0.03
   rewardIncreasePerStage: 0.15
   enemyConfig: {fileID: 11400000, guid: 69366f638fefc49aa9cb8a43f38903e4, type: 2}
