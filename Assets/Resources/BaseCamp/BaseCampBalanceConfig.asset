@@ -55,7 +55,7 @@ MonoBehaviour:
   - facilityId: command_center
     level: 3
     upgradeCost: 2000
-    upgradeSeconds: 30
+    upgradeSeconds: 60
     requiredCommanderLevel: 3
     requiredCommandCenterLevel: 1
     creditsPerMinute: 0
@@ -74,7 +74,7 @@ MonoBehaviour:
   - facilityId: command_center
     level: 4
     upgradeCost: 4000
-    upgradeSeconds: 40
+    upgradeSeconds: 80
     requiredCommanderLevel: 4
     requiredCommandCenterLevel: 1
     creditsPerMinute: 0
@@ -93,7 +93,7 @@ MonoBehaviour:
   - facilityId: command_center
     level: 5
     upgradeCost: 10000
-    upgradeSeconds: 50
+    upgradeSeconds: 150
     requiredCommanderLevel: 5
     requiredCommandCenterLevel: 1
     creditsPerMinute: 0
@@ -112,7 +112,7 @@ MonoBehaviour:
   - facilityId: command_center
     level: 6
     upgradeCost: 25000
-    upgradeSeconds: 60
+    upgradeSeconds: 180
     requiredCommanderLevel: 6
     requiredCommandCenterLevel: 1
     creditsPerMinute: 0
@@ -131,7 +131,7 @@ MonoBehaviour:
   - facilityId: command_center
     level: 7
     upgradeCost: 50000
-    upgradeSeconds: 70
+    upgradeSeconds: 280
     requiredCommanderLevel: 7
     requiredCommandCenterLevel: 1
     creditsPerMinute: 0
@@ -150,7 +150,7 @@ MonoBehaviour:
   - facilityId: command_center
     level: 8
     upgradeCost: 100000
-    upgradeSeconds: 80
+    upgradeSeconds: 320
     requiredCommanderLevel: 8
     requiredCommandCenterLevel: 1
     creditsPerMinute: 0
@@ -169,7 +169,7 @@ MonoBehaviour:
   - facilityId: command_center
     level: 9
     upgradeCost: 200000
-    upgradeSeconds: 90
+    upgradeSeconds: 450
     requiredCommanderLevel: 9
     requiredCommandCenterLevel: 1
     creditsPerMinute: 0
@@ -245,7 +245,7 @@ MonoBehaviour:
   - facilityId: energy_refinery
     level: 3
     upgradeCost: 1000
-    upgradeSeconds: 20
+    upgradeSeconds: 40
     requiredCommanderLevel: 3
     requiredCommandCenterLevel: 2
     creditsPerMinute: 240
@@ -264,7 +264,7 @@ MonoBehaviour:
   - facilityId: energy_refinery
     level: 4
     upgradeCost: 2500
-    upgradeSeconds: 30
+    upgradeSeconds: 60
     requiredCommanderLevel: 4
     requiredCommandCenterLevel: 2
     creditsPerMinute: 480
@@ -283,7 +283,7 @@ MonoBehaviour:
   - facilityId: energy_refinery
     level: 5
     upgradeCost: 5000
-    upgradeSeconds: 45
+    upgradeSeconds: 135
     requiredCommanderLevel: 5
     requiredCommandCenterLevel: 3
     creditsPerMinute: 900
@@ -302,7 +302,7 @@ MonoBehaviour:
   - facilityId: energy_refinery
     level: 6
     upgradeCost: 10000
-    upgradeSeconds: 60
+    upgradeSeconds: 180
     requiredCommanderLevel: 6
     requiredCommandCenterLevel: 3
     creditsPerMinute: 1600
@@ -321,7 +321,7 @@ MonoBehaviour:
   - facilityId: energy_refinery
     level: 7
     upgradeCost: 20000
-    upgradeSeconds: 90
+    upgradeSeconds: 360
     requiredCommanderLevel: 7
     requiredCommandCenterLevel: 4
     creditsPerMinute: 2800
@@ -340,7 +340,7 @@ MonoBehaviour:
   - facilityId: energy_refinery
     level: 8
     upgradeCost: 40000
-    upgradeSeconds: 120
+    upgradeSeconds: 480
     requiredCommanderLevel: 8
     requiredCommandCenterLevel: 4
     creditsPerMinute: 4800
@@ -359,7 +359,7 @@ MonoBehaviour:
   - facilityId: energy_refinery
     level: 9
     upgradeCost: 80000
-    upgradeSeconds: 180
+    upgradeSeconds: 900
     requiredCommanderLevel: 9
     requiredCommandCenterLevel: 5
     creditsPerMinute: 8000
@@ -435,7 +435,7 @@ MonoBehaviour:
   - facilityId: assembly_factory
     level: 3
     upgradeCost: 1400
-    upgradeSeconds: 20
+    upgradeSeconds: 40
     requiredCommanderLevel: 3
     requiredCommandCenterLevel: 2
     creditsPerMinute: 0
@@ -454,7 +454,7 @@ MonoBehaviour:
   - facilityId: assembly_factory
     level: 4
     upgradeCost: 2800
-    upgradeSeconds: 30
+    upgradeSeconds: 60
     requiredCommanderLevel: 4
     requiredCommandCenterLevel: 2
     creditsPerMinute: 0
@@ -473,7 +473,7 @@ MonoBehaviour:
   - facilityId: assembly_factory
     level: 5
     upgradeCost: 5600
-    upgradeSeconds: 45
+    upgradeSeconds: 135
     requiredCommanderLevel: 5
     requiredCommandCenterLevel: 3
     creditsPerMinute: 0
@@ -492,7 +492,7 @@ MonoBehaviour:
   - facilityId: assembly_factory
     level: 6
     upgradeCost: 11200
-    upgradeSeconds: 60
+    upgradeSeconds: 180
     requiredCommanderLevel: 6
     requiredCommandCenterLevel: 3
     creditsPerMinute: 0
@@ -511,7 +511,7 @@ MonoBehaviour:
   - facilityId: assembly_factory
     level: 7
     upgradeCost: 22400
-    upgradeSeconds: 90
+    upgradeSeconds: 360
     requiredCommanderLevel: 7
     requiredCommandCenterLevel: 4
     creditsPerMinute: 0
@@ -530,7 +530,7 @@ MonoBehaviour:
   - facilityId: assembly_factory
     level: 8
     upgradeCost: 44800
-    upgradeSeconds: 120
+    upgradeSeconds: 480
     requiredCommanderLevel: 8
     requiredCommandCenterLevel: 4
     creditsPerMinute: 0
@@ -549,7 +549,7 @@ MonoBehaviour:
   - facilityId: assembly_factory
     level: 9
     upgradeCost: 89600
-    upgradeSeconds: 180
+    upgradeSeconds: 900
     requiredCommanderLevel: 9
     requiredCommandCenterLevel: 5
     creditsPerMinute: 0
@@ -625,7 +625,7 @@ MonoBehaviour:
   - facilityId: skill_hanger
     level: 3
     upgradeCost: 1200
-    upgradeSeconds: 20
+    upgradeSeconds: 40
     requiredCommanderLevel: 3
     requiredCommandCenterLevel: 2
     creditsPerMinute: 0
@@ -701,7 +701,7 @@ MonoBehaviour:
   - facilityId: core_charger
     level: 3
     upgradeCost: 1600
-    upgradeSeconds: 20
+    upgradeSeconds: 40
     requiredCommanderLevel: 3
     requiredCommandCenterLevel: 3
     creditsPerMinute: 0
@@ -720,7 +720,7 @@ MonoBehaviour:
   - facilityId: core_charger
     level: 4
     upgradeCost: 3200
-    upgradeSeconds: 30
+    upgradeSeconds: 60
     requiredCommanderLevel: 4
     requiredCommandCenterLevel: 3
     creditsPerMinute: 0
@@ -739,7 +739,7 @@ MonoBehaviour:
   - facilityId: core_charger
     level: 5
     upgradeCost: 6400
-    upgradeSeconds: 45
+    upgradeSeconds: 135
     requiredCommanderLevel: 5
     requiredCommandCenterLevel: 3
     creditsPerMinute: 0
@@ -758,7 +758,7 @@ MonoBehaviour:
   - facilityId: core_charger
     level: 6
     upgradeCost: 12800
-    upgradeSeconds: 60
+    upgradeSeconds: 180
     requiredCommanderLevel: 6
     requiredCommandCenterLevel: 4
     creditsPerMinute: 0
@@ -777,7 +777,7 @@ MonoBehaviour:
   - facilityId: core_charger
     level: 7
     upgradeCost: 25600
-    upgradeSeconds: 90
+    upgradeSeconds: 360
     requiredCommanderLevel: 7
     requiredCommandCenterLevel: 4
     creditsPerMinute: 0
@@ -796,7 +796,7 @@ MonoBehaviour:
   - facilityId: core_charger
     level: 8
     upgradeCost: 51200
-    upgradeSeconds: 120
+    upgradeSeconds: 480
     requiredCommanderLevel: 8
     requiredCommandCenterLevel: 4
     creditsPerMinute: 0
@@ -815,7 +815,7 @@ MonoBehaviour:
   - facilityId: core_charger
     level: 9
     upgradeCost: 102400
-    upgradeSeconds: 180
+    upgradeSeconds: 900
     requiredCommanderLevel: 9
     requiredCommandCenterLevel: 5
     creditsPerMinute: 0
