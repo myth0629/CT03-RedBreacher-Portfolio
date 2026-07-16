@@ -338,7 +338,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
         }
 
         SetText(weaponAttackLevelText, $"{currentAttack:0.##}  ->  <color=#4AD787>{nextAttack:0.##}</color>");
-        SetText(weaponEnhanceCostText, $"{enhancement.costPerEnhancement}");
+        SetText(weaponEnhanceCostText, $"{enhancement.NextEnhanceCost}");
         return string.Empty;
     }
 

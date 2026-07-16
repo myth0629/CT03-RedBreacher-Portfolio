@@ -18089,20 +18089,18 @@ MonoBehaviour:
     displayName: Drone Enhancement
     requiredFactoryLevel: 1
     unlocked: 1
-  - menuId: skill
-    displayName: Skill Upgrade
-    requiredFactoryLevel: 2
-    unlocked: 0
   weaponEnhancements: []
   selectedWeaponIndex: 0
   saveWeaponEnhancementsToPlayerPrefs: 1
   defaultWeaponEnhanceCost: 100
   defaultWeaponEnhanceCostIncreasePerLevel: 50
+  defaultWeaponEnhanceCostGrowthMultiplier: 1.3
   defaultWeaponAttackIncrease: 1
   defaultWeaponAttackIncreasePerLevel: 0.25
   droneEnhancements: []
   selectedDroneIndex: 0
   defaultDroneEnhanceCost: 100
+  defaultDroneEnhanceCostGrowthMultiplier: 1.35
   defaultDroneAttackIncrease: 2
   OnLevelChanged:
     m_PersistentCalls:
