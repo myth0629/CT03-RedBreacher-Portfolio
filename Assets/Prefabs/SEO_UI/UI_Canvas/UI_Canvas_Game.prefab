@@ -19426,6 +19426,7 @@ MonoBehaviour:
   defaultDroneEnhanceCost: 100
   defaultDroneEnhanceCostGrowthMultiplier: 1.35
   defaultDroneAttackIncrease: 2
+  defaultDroneAttackIncreasePerLevel: 0.5
   OnLevelChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -50173,67 +50174,67 @@ MonoBehaviour:
   - requiredPlayerLevel: 10
     currentUnit: {fileID: 11400000, guid: b535319339de54f20b16ab7ad83876b4, type: 2}
     nextUnit: {fileID: 11400000, guid: 1b09e14ee9c1c4819a25d6ae79a99aed, type: 2}
-    requiredCrystalCoreCostUnit: 10
+    requiredCrystalCoreCostUnit: 25
   - requiredPlayerLevel: 15
     currentUnit: {fileID: 11400000, guid: 1b09e14ee9c1c4819a25d6ae79a99aed, type: 2}
     nextUnit: {fileID: 11400000, guid: 13d7f73cfd910410193b4068e032d2e4, type: 2}
-    requiredCrystalCoreCostUnit: 15
+    requiredCrystalCoreCostUnit: 50
   - requiredPlayerLevel: 20
     currentUnit: {fileID: 11400000, guid: 13d7f73cfd910410193b4068e032d2e4, type: 2}
     nextUnit: {fileID: 11400000, guid: aaa8f364b28444e249d29f0d45528398, type: 2}
-    requiredCrystalCoreCostUnit: 20
+    requiredCrystalCoreCostUnit: 100
   - requiredPlayerLevel: 25
     currentUnit: {fileID: 11400000, guid: aaa8f364b28444e249d29f0d45528398, type: 2}
     nextUnit: {fileID: 11400000, guid: 916e46552ec34463287a47882e8267d5, type: 2}
-    requiredCrystalCoreCostUnit: 25
+    requiredCrystalCoreCostUnit: 150
   - requiredPlayerLevel: 30
     currentUnit: {fileID: 11400000, guid: 916e46552ec34463287a47882e8267d5, type: 2}
     nextUnit: {fileID: 11400000, guid: 6f73a84cde5eb4e63bca255f36534195, type: 2}
-    requiredCrystalCoreCostUnit: 30
+    requiredCrystalCoreCostUnit: 225
   - requiredPlayerLevel: 35
     currentUnit: {fileID: 11400000, guid: 6f73a84cde5eb4e63bca255f36534195, type: 2}
     nextUnit: {fileID: 11400000, guid: 394620a82606b4a9a9a23b4cc72a1abd, type: 2}
-    requiredCrystalCoreCostUnit: 35
+    requiredCrystalCoreCostUnit: 325
   - requiredPlayerLevel: 40
     currentUnit: {fileID: 11400000, guid: 394620a82606b4a9a9a23b4cc72a1abd, type: 2}
     nextUnit: {fileID: 11400000, guid: e28a933543b9d40508a43f36876752b7, type: 2}
-    requiredCrystalCoreCostUnit: 40
+    requiredCrystalCoreCostUnit: 550
   - requiredPlayerLevel: 45
     currentUnit: {fileID: 11400000, guid: e28a933543b9d40508a43f36876752b7, type: 2}
     nextUnit: {fileID: 11400000, guid: 17004bd252efd4db98ecca26469c5c40, type: 2}
-    requiredCrystalCoreCostUnit: 45
+    requiredCrystalCoreCostUnit: 800
   convertedStageIndices: 
   droneUnlocks:
   - droneConfig: {fileID: 11400000, guid: 30f23e51557154a2fa9274534a86abd7, type: 2}
     requiredCoreChargerLevel: 1
-    requiredCrystalCoreCostDrone: 5
+    requiredCrystalCoreCostDrone: 10
   - droneConfig: {fileID: 11400000, guid: a93bb0aa025a74f39aa3a6441b0b9200, type: 2}
     requiredCoreChargerLevel: 2
-    requiredCrystalCoreCostDrone: 10
+    requiredCrystalCoreCostDrone: 35
   - droneConfig: {fileID: 11400000, guid: 3756b241be6a94d029bcf731c5cb62e1, type: 2}
     requiredCoreChargerLevel: 3
-    requiredCrystalCoreCostDrone: 15
+    requiredCrystalCoreCostDrone: 50
   - droneConfig: {fileID: 11400000, guid: 5faadff3b83884b2089d0f1ad60e50e0, type: 2}
     requiredCoreChargerLevel: 4
-    requiredCrystalCoreCostDrone: 20
+    requiredCrystalCoreCostDrone: 100
   - droneConfig: {fileID: 11400000, guid: ae3a2e63d1ae14b47a7e0d9b676fc95e, type: 2}
     requiredCoreChargerLevel: 5
-    requiredCrystalCoreCostDrone: 25
+    requiredCrystalCoreCostDrone: 200
   - droneConfig: {fileID: 11400000, guid: dfe3330626cdb4676b35f99164f35d0f, type: 2}
     requiredCoreChargerLevel: 6
-    requiredCrystalCoreCostDrone: 30
+    requiredCrystalCoreCostDrone: 350
   - droneConfig: {fileID: 11400000, guid: bd627f069d96e4798a3a6b6fcfa94ab3, type: 2}
     requiredCoreChargerLevel: 7
-    requiredCrystalCoreCostDrone: 35
+    requiredCrystalCoreCostDrone: 550
   - droneConfig: {fileID: 11400000, guid: 1845985246b8748c69a3698aafe170ed, type: 2}
     requiredCoreChargerLevel: 8
-    requiredCrystalCoreCostDrone: 40
+    requiredCrystalCoreCostDrone: 700
   - droneConfig: {fileID: 11400000, guid: 927676cb259ef4cd5bf3a0cb603a7426, type: 2}
     requiredCoreChargerLevel: 9
-    requiredCrystalCoreCostDrone: 45
+    requiredCrystalCoreCostDrone: 880
   - droneConfig: {fileID: 11400000, guid: 9dcb2e68ea8944e2abbe7b475690091e, type: 2}
     requiredCoreChargerLevel: 10
-    requiredCrystalCoreCostDrone: 50
+    requiredCrystalCoreCostDrone: 1000
   OnLevelChanged:
     m_PersistentCalls:
       m_Calls: []

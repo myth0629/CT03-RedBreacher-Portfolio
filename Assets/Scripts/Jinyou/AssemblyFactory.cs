@@ -88,7 +88,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     public class WeaponEnhancement
     {
         public ProjectileConfig weaponConfig;
-        public string displayNameOverride;
         public int enhanceLevel;
         [NonSerialized] public int maxEnhanceLevel;
         public List<WeaponEnhancementLevel> enhancementLevels = new List<WeaponEnhancementLevel>
