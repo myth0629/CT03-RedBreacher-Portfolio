@@ -99,9 +99,17 @@ order,id,bodyText,highlightTargetName,advanceType,eventType,targetAmount,targetI
 98,inventory_intro,<b>엔진 파츠</b>만 따로 보고 싶다면 필터를 사용할 수 있습니다. 표시된 버튼을 눌러주세요.,Engine_Btn,TargetClicked,None,0,true
 99,inventory_intro,이제 목록에 <b>엔진 파츠</b>만 표시됩니다.,Scroll View,Tap,None,0,true
 100,inventory_intro,원래대로 되돌리려면 아래 <b>필터 초기화 버튼</b>을 눌러주세요.,FillterReset_Button,TargetClicked,None,0,true
-101,boss_intro,보스전에 입장했습니다! 지금부터는 <b>다른 적 없이 보스와 1:1</b>로 싸웁니다.,,Tap,None,1
-102,boss_intro,<b>보스의 이름과 체력</b>은 화면 상단 보스 HUD에서 확인할 수 있습니다.,BossPanel,Tap,None,1
-103,boss_intro,보스전에 들어오면 <b>회피기동</b>이 활성화됩니다. 위험한 공격을 피할 때 유용합니다.,DodgeCooldown,Tap,None,1
-104,boss_intro,회피기동에는 <b>쿨타임</b>이 있습니다. 한 번 쓰면 쿨타임이 끝날 때까지 사용할 수 없으니 타이밍을 잘 노리세요.,DodgeCooldown,Tap,None,1
-105,boss_intro,공격에 맞기 직전에 회피하면 <color=#59FFFF>PERFECT DODGE!!</color> <b>무적 판정</b>을 받습니다.,,Tap,None,1,,
-106,boss_intro,<b>화면을 드래그</b>해 회피기동을 사용해 보세요.,DodgeInputArea,GameEvent,BossDodgeUsed,1,,
+101,inventory_intro,마지막으로 <b>자동판매 설정</b>창을 소개하고 마치겠습니다. 표시된 버튼을 눌러주세요.,AutoSell_Button,TargetClicked,None,0,true,
+102,inventory_intro,<b>자동판매 설정</b>은 수 많은 불필요한 파츠들을 한꺼번에 처리할 때 사용합니다.,,Tap,None,0,true,
+103,inventory_intro,자동판매는 기본적으로 비활성화되어 있습니다. 원하실 때 <b>상단의 ON/OFF 버튼</b>을 눌러 자동으로 활성화할 수 있습니다.,AutoSellActive,Tap,None,0,true,
+104,inventory_intro,가운데의 3가지 버튼 중 하나를 눌러 <b>자동판매 등급 기준</b>을 어디까지 정할지 결정할 수 있습니다.,AutoSellTire,Tap,None,0,true,
+105,inventory_intro,"다만, 하단에 있는 보라색 버튼은 <b>[전설등급]을 제외한 모두 자동판매</b>합니다.",EpicAutoSell_Button,Tap,None,0,true,
+106,inventory_intro,실수를 방지하기 위해 <b>전설장비 5개이상 소지 시 해금</b>되는 추가제한을 걸어놨습니다.,EpicAutoSell_Button,Tap,None,0,true,
+107,inventory_intro,이 2가지 기능은 변경할 때마다 <b>자동으로 저장</b>됩니다.,,Tap,None,0,true,
+108,inventory_intro,인벤토리 설명을 마치겠습니다!,,Tap,None,0,true,
+109,boss_intro,보스전에 입장했습니다! 지금부터는 <b>다른 적 없이 보스와 1:1</b>로 싸웁니다.,,Tap,None,1
+110,boss_intro,<b>보스의 이름과 체력</b>은 화면 상단 보스 HUD에서 확인할 수 있습니다.,BossPanel,Tap,None,1
+111,boss_intro,보스전에 들어오면 <b>회피기동</b>이 활성화됩니다. 위험한 공격을 피할 때 유용합니다.,DodgeCooldown,Tap,None,1
+112,boss_intro,회피기동에는 <b>쿨타임</b>이 있습니다. 한 번 쓰면 쿨타임이 끝날 때까지 사용할 수 없으니 타이밍을 잘 노리세요.,DodgeCooldown,Tap,None,1
+113,boss_intro,공격에 맞기 직전에 회피하면 <color=#59FFFF>PERFECT DODGE!!</color> <b>무적 판정</b>을 받습니다.,,Tap,None,1,,
+114,boss_intro,<b>화면을 드래그</b>해 회피기동을 사용해 보세요.,DodgeInputArea,GameEvent,BossDodgeUsed,1,,

@@ -66,7 +66,7 @@ public class InventoryFacility : MonoBehaviour
     [Header("Equipment Parts")]
     [SerializeField] private List<EquipmentPartConfig> equipmentPartConfigs = new List<EquipmentPartConfig>();
     [SerializeField] private List<EquipmentPartInstance> equipmentParts = new List<EquipmentPartInstance>();
-    [SerializeField] private bool autoSellEquipmentPartsEnabled = true;
+    [SerializeField] private bool autoSellEquipmentPartsEnabled;
     [SerializeField] private EquipmentPartRarity autoSellMaxRarity = EquipmentPartRarity.Rare;
     [SerializeField] private bool saveEquipmentPartsToPlayerPrefs = true;
     [SerializeField] private bool saveCollectionProgressToPlayerPrefs = true;
@@ -1270,7 +1270,7 @@ public class InventoryFacility : MonoBehaviour
         autoSellSettingsInitialized = true;
         if (PlayerPrefs.HasKey(EquipmentAutoSellEnabledKey))
         {
-            autoSellEquipmentPartsEnabled = PlayerPrefs.GetInt(EquipmentAutoSellEnabledKey, 1) != 0;
+            autoSellEquipmentPartsEnabled = PlayerPrefs.GetInt(EquipmentAutoSellEnabledKey, 0) != 0;
         }
 
         if (PlayerPrefs.HasKey(EquipmentAutoSellMaxRarityKey))

@@ -951,6 +951,83 @@ MonoBehaviour:
     targetAmount: 0
     targetId: true
   - order: 101
+    id: inventory_intro
+    bodyText: "\uB9C8\uC9C0\uB9C9\uC73C\uB85C <b>\uC790\uB3D9\uD310\uB9E4 \uC124\uC815</b>\uCC3D\uC744
+      \uC18C\uAC1C\uD558\uACE0 \uB9C8\uCE58\uACA0\uC2B5\uB2C8\uB2E4. \uD45C\uC2DC\uB41C
+      \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694."
+    highlightTargetName: AutoSell_Button
+    advanceType: 1
+    eventType: 0
+    targetAmount: 0
+    targetId: true
+  - order: 102
+    id: inventory_intro
+    bodyText: "<b>\uC790\uB3D9\uD310\uB9E4 \uC124\uC815</b>\uC740 \uC218 \uB9CE\uC740
+      \uBD88\uD544\uC694\uD55C \uD30C\uCE20\uB4E4\uC744 \uD55C\uAEBC\uBC88\uC5D0
+      \uCC98\uB9AC\uD560 \uB54C \uC0AC\uC6A9\uD569\uB2C8\uB2E4."
+    highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: true
+  - order: 103
+    id: inventory_intro
+    bodyText: "\uC790\uB3D9\uD310\uB9E4\uB294 \uAE30\uBCF8\uC801\uC73C\uB85C \uBE44\uD65C\uC131\uD654\uB418\uC5B4
+      \uC788\uC2B5\uB2C8\uB2E4. \uC6D0\uD558\uC2E4 \uB54C <b>\uC0C1\uB2E8\uC758 ON/OFF
+      \uBC84\uD2BC</b>\uC744 \uB20C\uB7EC \uC790\uB3D9\uC73C\uB85C \uD65C\uC131\uD654\uD560
+      \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: AutoSellActive
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: true
+  - order: 104
+    id: inventory_intro
+    bodyText: "\uAC00\uC6B4\uB370\uC758 3\uAC00\uC9C0 \uBC84\uD2BC \uC911 \uD558\uB098\uB97C
+      \uB20C\uB7EC <b>\uC790\uB3D9\uD310\uB9E4 \uB4F1\uAE09 \uAE30\uC900</b>\uC744
+      \uC5B4\uB514\uAE4C\uC9C0 \uC815\uD560\uC9C0 \uACB0\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: AutoSellTire
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: true
+  - order: 105
+    id: inventory_intro
+    bodyText: "\uB2E4\uB9CC, \uD558\uB2E8\uC5D0 \uC788\uB294 \uBCF4\uB77C\uC0C9 \uBC84\uD2BC\uC740
+      <b>[\uC804\uC124\uB4F1\uAE09]\uC744 \uC81C\uC678\uD55C \uBAA8\uB450 \uC790\uB3D9\uD310\uB9E4</b>\uD569\uB2C8\uB2E4."
+    highlightTargetName: EpicAutoSell_Button
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: true
+  - order: 106
+    id: inventory_intro
+    bodyText: "\uC2E4\uC218\uB97C \uBC29\uC9C0\uD558\uAE30 \uC704\uD574 <b>\uC804\uC124\uC7A5\uBE44
+      5\uAC1C\uC774\uC0C1 \uC18C\uC9C0 \uC2DC \uD574\uAE08</b>\uB418\uB294 \uCD94\uAC00\uC81C\uD55C\uC744
+      \uAC78\uC5B4\uB1A8\uC2B5\uB2C8\uB2E4."
+    highlightTargetName: EpicAutoSell_Button
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: true
+  - order: 107
+    id: inventory_intro
+    bodyText: "\uC774 2\uAC00\uC9C0 \uAE30\uB2A5\uC740 \uBCC0\uACBD\uD560 \uB54C\uB9C8\uB2E4
+      <b>\uC790\uB3D9\uC73C\uB85C \uC800\uC7A5</b>\uB429\uB2C8\uB2E4."
+    highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: true
+  - order: 108
+    id: inventory_intro
+    bodyText: "\uC778\uBCA4\uD1A0\uB9AC \uC124\uBA85\uC744 \uB9C8\uCE58\uACA0\uC2B5\uB2C8\uB2E4!"
+    highlightTargetName: 
+    advanceType: 0
+    eventType: 0
+    targetAmount: 0
+    targetId: true
+  - order: 109
     id: boss_intro
     bodyText: "\uBCF4\uC2A4\uC804\uC5D0 \uC785\uC7A5\uD588\uC2B5\uB2C8\uB2E4! \uC9C0\uAE08\uBD80\uD130\uB294
       <b>\uB2E4\uB978 \uC801 \uC5C6\uC774 \uBCF4\uC2A4\uC640 1:1</b>\uB85C \uC2F8\uC6C1\uB2C8\uB2E4."
@@ -959,7 +1036,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 102
+  - order: 110
     id: boss_intro
     bodyText: "<b>\uBCF4\uC2A4\uC758 \uC774\uB984\uACFC \uCCB4\uB825</b>\uC740 \uD654\uBA74
       \uC0C1\uB2E8 \uBCF4\uC2A4 HUD\uC5D0\uC11C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
@@ -968,7 +1045,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 103
+  - order: 111
     id: boss_intro
     bodyText: "\uBCF4\uC2A4\uC804\uC5D0 \uB4E4\uC5B4\uC624\uBA74 <b>\uD68C\uD53C\uAE30\uB3D9</b>\uC774
       \uD65C\uC131\uD654\uB429\uB2C8\uB2E4. \uC704\uD5D8\uD55C \uACF5\uACA9\uC744
@@ -978,7 +1055,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 104
+  - order: 112
     id: boss_intro
     bodyText: "\uD68C\uD53C\uAE30\uB3D9\uC5D0\uB294 <b>\uCFE8\uD0C0\uC784</b>\uC774
       \uC788\uC2B5\uB2C8\uB2E4. \uD55C \uBC88 \uC4F0\uBA74 \uCFE8\uD0C0\uC784\uC774
@@ -989,7 +1066,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 105
+  - order: 113
     id: boss_intro
     bodyText: "\uACF5\uACA9\uC5D0 \uB9DE\uAE30 \uC9C1\uC804\uC5D0 \uD68C\uD53C\uD558\uBA74
       <color=#59FFFF>PERFECT DODGE!!</color> <b>\uBB34\uC801 \uD310\uC815</b>\uC744
@@ -999,7 +1076,7 @@ MonoBehaviour:
     eventType: 0
     targetAmount: 1
     targetId: 
-  - order: 106
+  - order: 114
     id: boss_intro
     bodyText: "<b>\uD654\uBA74\uC744 \uB4DC\uB798\uADF8</b>\uD574 \uD68C\uD53C\uAE30\uB3D9\uC744
       \uC0AC\uC6A9\uD574 \uBCF4\uC138\uC694."
