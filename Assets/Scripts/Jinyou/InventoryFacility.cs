@@ -6,6 +6,8 @@ public class InventoryFacility : MonoBehaviour
 {
     private const string EquipmentPartsKey = "InventoryFacility.EquipmentParts";
     private const string CollectionProgressKey = "InventoryFacility.CollectionProgress";
+    private const string EquipmentAutoSellEnabledKey = "InventoryFacility.EquipmentAutoSell.Enabled";
+    private const string EquipmentAutoSellMaxRarityKey = "InventoryFacility.EquipmentAutoSell.MaxRarity";
 
     [System.Serializable]
     private class EquipmentPartSaveData
@@ -64,6 +66,8 @@ public class InventoryFacility : MonoBehaviour
     [Header("Equipment Parts")]
     [SerializeField] private List<EquipmentPartConfig> equipmentPartConfigs = new List<EquipmentPartConfig>();
     [SerializeField] private List<EquipmentPartInstance> equipmentParts = new List<EquipmentPartInstance>();
+    [SerializeField] private bool autoSellEquipmentPartsEnabled = true;
+    [SerializeField] private EquipmentPartRarity autoSellMaxRarity = EquipmentPartRarity.Rare;
     [SerializeField] private bool saveEquipmentPartsToPlayerPrefs = true;
     [SerializeField] private bool saveCollectionProgressToPlayerPrefs = true;
 
@@ -86,9 +90,11 @@ public class InventoryFacility : MonoBehaviour
     public UnityEvent<string, int> OnWeaponLevelChanged = new UnityEvent<string, int>();
     public UnityEvent<string, int> OnSkillLevelChanged = new UnityEvent<string, int>();
     public UnityEvent OnEquipmentPartsChanged = new UnityEvent();
+    public UnityEvent<bool> OnEquipmentAutoSellChanged = new UnityEvent<bool>();
 
     private bool equipmentPartsInitialized;
     private bool collectionProgressInitialized;
+    private bool autoSellSettingsInitialized;
     private List<CollectionProgress> weaponProgress = new List<CollectionProgress>();
     private List<CollectionProgress> skillProgress = new List<CollectionProgress>();
     private List<string> ownedDroneIds = new List<string>();
@@ -137,9 +143,26 @@ public class InventoryFacility : MonoBehaviour
         }
     }
     public bool ForceEquipmentPartDrop => forceEquipmentPartDrop;
+    public bool AutoSellEquipmentPartsEnabled
+    {
+        get
+        {
+            EnsureAutoSellSettingsInitialized();
+            return autoSellEquipmentPartsEnabled;
+        }
+    }
+    public EquipmentPartRarity AutoSellMaxRarity
+    {
+        get
+        {
+            EnsureAutoSellSettingsInitialized();
+            return autoSellMaxRarity;
+        }
+    }
 
     private void Awake()
     {
+        EnsureAutoSellSettingsInitialized();
         EnsureCollectionProgressInitialized();
         EnsureEquipmentPartsInitialized();
     }
@@ -159,7 +182,9 @@ public class InventoryFacility : MonoBehaviour
             weapons = CloneProgressList(weaponProgress),
             skills = CloneProgressList(skillProgress),
             drones = new List<string>(ownedDroneIds),
-            equipmentParts = new List<EquipmentPartInstance>(equipmentParts)
+            equipmentParts = new List<EquipmentPartInstance>(equipmentParts),
+            equipmentAutoSellEnabled = autoSellEquipmentPartsEnabled,
+            equipmentAutoSellMaxRarity = autoSellMaxRarity
         };
     }
 
@@ -178,6 +203,9 @@ public class InventoryFacility : MonoBehaviour
         equipmentParts = data.equipmentParts != null
             ? new List<EquipmentPartInstance>(data.equipmentParts)
             : new List<EquipmentPartInstance>();
+        autoSellSettingsInitialized = true;
+        autoSellEquipmentPartsEnabled = data.equipmentAutoSellEnabled;
+        autoSellMaxRarity = ClampAutoSellMaxRarity(data.equipmentAutoSellMaxRarity);
 
         NormalizeCollectionProgress();
         NormalizeEquipmentParts();
@@ -198,7 +226,40 @@ public class InventoryFacility : MonoBehaviour
 
         PlayerPrefs.DeleteKey(CollectionProgressKey);
         PlayerPrefs.DeleteKey(EquipmentPartsKey);
+        PlayerPrefs.DeleteKey(EquipmentAutoSellEnabledKey);
+        PlayerPrefs.DeleteKey(EquipmentAutoSellMaxRarityKey);
         PlayerPrefs.Save();
+    }
+
+    public void SetEquipmentAutoSellEnabled(bool enabled)
+    {
+        EnsureAutoSellSettingsInitialized();
+        if (autoSellEquipmentPartsEnabled == enabled)
+        {
+            OnEquipmentAutoSellChanged.Invoke(autoSellEquipmentPartsEnabled);
+            return;
+        }
+
+        autoSellEquipmentPartsEnabled = enabled;
+        SaveAutoSellSettings();
+        OnEquipmentAutoSellChanged.Invoke(autoSellEquipmentPartsEnabled);
+        OnInventoryChanged.Invoke();
+    }
+
+    public void SetEquipmentAutoSellMaxRarity(EquipmentPartRarity maxRarity)
+    {
+        EnsureAutoSellSettingsInitialized();
+        EquipmentPartRarity clampedRarity = ClampAutoSellMaxRarity(maxRarity);
+        if (autoSellMaxRarity == clampedRarity)
+        {
+            OnEquipmentAutoSellChanged.Invoke(autoSellEquipmentPartsEnabled);
+            return;
+        }
+
+        autoSellMaxRarity = clampedRarity;
+        SaveAutoSellSettings();
+        OnEquipmentAutoSellChanged.Invoke(autoSellEquipmentPartsEnabled);
+        OnInventoryChanged.Invoke();
     }
 
     private static List<CollectionProgress> CloneProgressList(List<CollectionProgress> source)
@@ -597,10 +658,12 @@ public class InventoryFacility : MonoBehaviour
             return false;
         }
 
-        EquipmentPartInstance equippedPart = loadout != null
-            ? loadout.GetEquippedPart(part.slot)
-            : null;
-        if (equippedPart == null || part.rarity >= equippedPart.rarity)
+        if (!AutoSellEquipmentPartsEnabled)
+        {
+            return AddEquipmentPart(part);
+        }
+
+        if (part.rarity > AutoSellMaxRarity)
         {
             return AddEquipmentPart(part);
         }
@@ -1195,6 +1258,59 @@ public class InventoryFacility : MonoBehaviour
         }
 
         NormalizeEquipmentParts();
+    }
+
+    private void EnsureAutoSellSettingsInitialized()
+    {
+        if (autoSellSettingsInitialized)
+        {
+            return;
+        }
+
+        autoSellSettingsInitialized = true;
+        if (PlayerPrefs.HasKey(EquipmentAutoSellEnabledKey))
+        {
+            autoSellEquipmentPartsEnabled = PlayerPrefs.GetInt(EquipmentAutoSellEnabledKey, 1) != 0;
+        }
+
+        if (PlayerPrefs.HasKey(EquipmentAutoSellMaxRarityKey))
+        {
+            autoSellMaxRarity = ClampAutoSellMaxRarity(PlayerPrefs.GetInt(
+                EquipmentAutoSellMaxRarityKey,
+                (int)EquipmentPartRarity.Rare));
+        }
+    }
+
+    private void SaveAutoSellSettings()
+    {
+        if (!saveEquipmentPartsToPlayerPrefs)
+        {
+            return;
+        }
+
+        PlayerPrefs.SetInt(EquipmentAutoSellEnabledKey, autoSellEquipmentPartsEnabled ? 1 : 0);
+        PlayerPrefs.SetInt(EquipmentAutoSellMaxRarityKey, (int)autoSellMaxRarity);
+        PlayerPrefs.Save();
+    }
+
+    private static EquipmentPartRarity ClampAutoSellMaxRarity(int value)
+    {
+        if (value < (int)EquipmentPartRarity.Common)
+        {
+            return EquipmentPartRarity.Common;
+        }
+
+        if (value > (int)EquipmentPartRarity.Epic)
+        {
+            return EquipmentPartRarity.Epic;
+        }
+
+        return (EquipmentPartRarity)value;
+    }
+
+    private static EquipmentPartRarity ClampAutoSellMaxRarity(EquipmentPartRarity value)
+    {
+        return ClampAutoSellMaxRarity((int)value);
     }
 
     private void NormalizeEquipmentParts()

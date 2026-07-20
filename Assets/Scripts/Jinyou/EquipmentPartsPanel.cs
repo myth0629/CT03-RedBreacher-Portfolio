@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -46,6 +46,15 @@ public class EquipmentPartsPanel : MonoBehaviour
     [SerializeField] private Button chipFilterButton;
     [SerializeField] private Button allFilterButton;
 
+    [Header("AutoSellSettings")] 
+    [SerializeField] private Button autoSellActiveButton;
+    [SerializeField] private Button autoSellDeActiveButton;
+    [SerializeField] private Button commonAutoSellButton;
+    [SerializeField] private Button rareAutoSellButton;
+    [SerializeField] private Button epicAutoSellButton;
+    [SerializeField] private TMP_Text autoSellWarningText;
+    [SerializeField] private TMP_Text epicAutoSellButtonText;
+
     private readonly List<Button> spawnedButtons = new List<Button>();
     private readonly Dictionary<string, GameObject> newBadges = new Dictionary<string, GameObject>();
     private string selectedInstanceId;
@@ -66,6 +75,11 @@ public class EquipmentPartsPanel : MonoBehaviour
         engineFilterButton?.onClick.AddListener(FilterByEngine);
         chipFilterButton?.onClick.AddListener(FilterByChip);
         allFilterButton?.onClick.AddListener(ShowAllParts);
+        autoSellActiveButton?.onClick.AddListener(EnableAutoSell);
+        autoSellDeActiveButton?.onClick.AddListener(DisableAutoSell);
+        commonAutoSellButton?.onClick.AddListener(SetCommonAutoSell);
+        rareAutoSellButton?.onClick.AddListener(SetRareAndBelowAutoSell);
+        epicAutoSellButton?.onClick.AddListener(SetEpicAndBelowAutoSell);
         Rebuild();
     }
 
@@ -79,6 +93,11 @@ public class EquipmentPartsPanel : MonoBehaviour
         engineFilterButton?.onClick.RemoveListener(FilterByEngine);
         chipFilterButton?.onClick.RemoveListener(FilterByChip);
         allFilterButton?.onClick.RemoveListener(ShowAllParts);
+        autoSellActiveButton?.onClick.RemoveListener(EnableAutoSell);
+        autoSellDeActiveButton?.onClick.RemoveListener(DisableAutoSell);
+        commonAutoSellButton?.onClick.RemoveListener(SetCommonAutoSell);
+        rareAutoSellButton?.onClick.RemoveListener(SetRareAndBelowAutoSell);
+        epicAutoSellButton?.onClick.RemoveListener(SetEpicAndBelowAutoSell);
         ClearButtons();
     }
 
@@ -97,6 +116,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         }
 
         RefreshFilterButtons();
+        RefreshAutoSellButtons();
         RefreshEquippedSlots();
         RefreshDetail();
     }
@@ -174,6 +194,189 @@ public class EquipmentPartsPanel : MonoBehaviour
         SetFilterButtonActive(engineFilterButton, slotFilter == EquipmentPartSlot.Engine);
         SetFilterButtonActive(chipFilterButton, slotFilter == EquipmentPartSlot.Chip);
         SetFilterButtonActive(allFilterButton, slotFilter == null);
+    }
+
+    // 자동판매 기능 활성여부를 확인하는 메소드들
+    private void EnableAutoSell()
+    {
+        inventory?.SetEquipmentAutoSellEnabled(true);
+        RefreshAutoSellButtons();
+    }
+
+    private void DisableAutoSell()
+    {
+        inventory?.SetEquipmentAutoSellEnabled(false);
+        RefreshAutoSellButtons();
+    }
+
+    // 판매 기준 등급을 설정하는 메소드들 일반/일반, 희귀/일반, 희귀, 영웅
+    private void SetCommonAutoSell()
+    {
+        SetAutoSellMaxRarity(EquipmentPartRarity.Common);
+    }
+
+    private void SetRareAndBelowAutoSell()
+    {
+        SetAutoSellMaxRarity(EquipmentPartRarity.Rare);
+    }
+
+    private void SetEpicAndBelowAutoSell()
+    {
+        SetAutoSellMaxRarity(EquipmentPartRarity.Epic);
+    }
+
+    private void SetAutoSellMaxRarity(EquipmentPartRarity maxRarity)
+    {
+        inventory?.SetEquipmentAutoSellMaxRarity(maxRarity);
+        RefreshAutoSellButtons();
+    }
+
+    // 자동판매 설정창 관련버튼 Refresh
+    private void RefreshAutoSellButtons()
+    {
+        if (autoSellActiveButton == null
+            && autoSellDeActiveButton == null
+            && commonAutoSellButton == null
+            && rareAutoSellButton == null
+            && epicAutoSellButton == null
+            && autoSellWarningText == null
+            && epicAutoSellButtonText == null)
+        {
+            return;
+        }
+
+        bool autoSellEnabled = inventory != null && inventory.AutoSellEquipmentPartsEnabled;
+        bool canUseEpicAutoSell = CanUseEpicAutoSell();
+        EquipmentPartRarity selectedMaxRarity = inventory != null
+            ? inventory.AutoSellMaxRarity
+            : EquipmentPartRarity.Rare;
+        if (autoSellActiveButton != null)
+        {
+            autoSellActiveButton.interactable = !autoSellEnabled;
+        }
+
+        if (autoSellDeActiveButton != null)
+        {
+            autoSellDeActiveButton.interactable = autoSellEnabled;
+        }
+
+        if (commonAutoSellButton != null)
+        {
+            commonAutoSellButton.interactable = autoSellEnabled
+                && selectedMaxRarity != EquipmentPartRarity.Common;
+        }
+
+        if (rareAutoSellButton != null)
+        {
+            rareAutoSellButton.interactable = autoSellEnabled
+                && selectedMaxRarity != EquipmentPartRarity.Rare;
+        }
+
+        if (epicAutoSellButton != null)
+        {
+            epicAutoSellButton.interactable = autoSellEnabled
+                && canUseEpicAutoSell
+                && selectedMaxRarity != EquipmentPartRarity.Epic;
+        }
+
+        RefreshEpicAutoSellButtonText(canUseEpicAutoSell);
+        RefreshAutoSellWarningText(autoSellEnabled, selectedMaxRarity);
+    }
+
+    private void RefreshAutoSellButtons(bool _)
+    {
+        RefreshAutoSellButtons();
+    }
+
+    private void RefreshAutoSellWarningText(bool autoSellEnabled, EquipmentPartRarity selectedMaxRarity)
+    {
+        if (autoSellWarningText == null)
+        {
+            return;
+        }
+
+        if (!autoSellEnabled)
+        {
+            autoSellWarningText.text = string.Empty;
+            return;
+        }
+
+        autoSellWarningText.text = selectedMaxRarity switch
+        {
+            EquipmentPartRarity.Common => "일반등급의 장비는 \n<color=#EC6363><b>획득 즉시 자동판매</b></color>됩니다.",
+            EquipmentPartRarity.Rare => "일반, 희귀등급의 장비는 \n<color=#EC6363><b>획득 즉시 자동판매</b></color>됩니다.",
+            EquipmentPartRarity.Epic => "경고! <color=#EC6363><b>[전설등급]을 제외한 모든 장비는 \n획득 즉시 자동판매</b></color>됩니다.",
+            _ => string.Empty
+        };
+    }
+
+    private void RefreshEpicAutoSellButtonText(bool canUseEpicAutoSell)
+    {
+        if (epicAutoSellButtonText == null)
+        {
+            return;
+        }
+
+        epicAutoSellButtonText.text = canUseEpicAutoSell
+            ? "일반, 희귀, 영웅등급"
+            : "전설장비 5개 이상 소유 시 활성";
+    }
+
+    private bool CanUseEpicAutoSell()
+    {
+        return CountOwnedLegendaryParts() >= 5;
+    }
+
+    private int CountOwnedLegendaryParts()
+    {
+        HashSet<string> countedIds = new HashSet<string>();
+        int count = 0;
+
+        if (inventory != null)
+        {
+            foreach (EquipmentPartInstance part in inventory.EquipmentParts)
+            {
+                if (TryCountLegendaryPart(part, countedIds))
+                {
+                    count++;
+                }
+            }
+        }
+
+        if (loadout != null)
+        {
+            if (TryCountLegendaryPart(loadout.GetEquippedPart(EquipmentPartSlot.Armor), countedIds))
+            {
+                count++;
+            }
+
+            if (TryCountLegendaryPart(loadout.GetEquippedPart(EquipmentPartSlot.Engine), countedIds))
+            {
+                count++;
+            }
+
+            if (TryCountLegendaryPart(loadout.GetEquippedPart(EquipmentPartSlot.Chip), countedIds))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static bool TryCountLegendaryPart(EquipmentPartInstance part, HashSet<string> countedIds)
+    {
+        if (part == null || part.rarity != EquipmentPartRarity.Legendary)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(part.instanceId))
+        {
+            return true;
+        }
+
+        return countedIds.Add(part.instanceId);
     }
 
     private static void SetFilterButtonActive(Button button, bool active)
@@ -503,12 +706,14 @@ public class EquipmentPartsPanel : MonoBehaviour
     private void SubscribeEvents()
     {
         inventory?.OnEquipmentPartsChanged.AddListener(Rebuild);
+        inventory?.OnEquipmentAutoSellChanged.AddListener(RefreshAutoSellButtons);
         loadout?.OnLoadoutChanged.AddListener(Rebuild);
     }
 
     private void UnsubscribeEvents()
     {
         inventory?.OnEquipmentPartsChanged.RemoveListener(Rebuild);
+        inventory?.OnEquipmentAutoSellChanged.RemoveListener(RefreshAutoSellButtons);
         loadout?.OnLoadoutChanged.RemoveListener(Rebuild);
     }
 
@@ -602,3 +807,4 @@ public class EquipmentPartsPanel : MonoBehaviour
         target.preserveAspect = true;
     }
 }
+

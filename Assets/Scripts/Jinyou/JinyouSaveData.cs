@@ -117,6 +117,8 @@ public class JinyouInventorySaveData
     public List<InventoryFacility.CollectionProgress> skills = new List<InventoryFacility.CollectionProgress>();
     public List<string> drones = new List<string>();
     public List<EquipmentPartInstance> equipmentParts = new List<EquipmentPartInstance>();
+    public bool equipmentAutoSellEnabled = true;
+    public EquipmentPartRarity equipmentAutoSellMaxRarity = EquipmentPartRarity.Rare;
 }
 
 [Serializable]
