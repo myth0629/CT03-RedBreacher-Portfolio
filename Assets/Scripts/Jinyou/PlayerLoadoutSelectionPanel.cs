@@ -37,7 +37,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     [Header("Detail")] 
     [SerializeField] private Image detailIconWeapon;
-    [SerializeField] private RawImage detailIconDrone;
+    [SerializeField] private RawImage detailIconDroneOfSkill;
     [SerializeField] private TMP_Text detailNameText;
     [SerializeField] private TMP_Text detailCategoryText;
     [SerializeField] private TMP_Text detailStatsText;
@@ -78,7 +78,37 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             return;
         }
 
-        GameObject prefab = drone != null ? drone.DronePrefab : null;
+        SetPrefabPreview(target, drone != null ? drone.DronePrefab : null, null, null);
+    }
+
+    private void SetSkillPreview(RawImage target, PlayerSkillConfig skill)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        int skillLevel = skill != null ? GetCollectionSkillLevel(skill) : 1;
+        GameObject prefab = GetSkillPreviewPrefab(skill);
+        string cacheKey = skill != null ? $"{skill.GetInstanceID()}_Level{skillLevel}" : null;
+        SetPrefabPreview(
+            target,
+            prefab,
+            cacheKey,
+            instance => ApplySkillPreviewSkin(instance, skill, skillLevel));
+    }
+
+    private static void SetPrefabPreview(
+        RawImage target,
+        GameObject prefab,
+        string cacheKey,
+        Action<GameObject> configureInstance)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
         if (prefab == null)
         {
             target.texture = null;
@@ -87,10 +117,44 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
             return;
         }
 
-        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
+        RenderTexture preview = string.IsNullOrWhiteSpace(cacheKey)
+            ? UnitPreviewRenderer.Instance.GetPreview(prefab)
+            : UnitPreviewRenderer.Instance.GetPreview(prefab, cacheKey, configureInstance);
         target.texture = preview;
         target.color = preview != null ? Color.white : Color.clear;
         target.gameObject.SetActive(preview != null);
+    }
+
+    private static void ApplySkillPreviewSkin(GameObject instance, PlayerSkillConfig skill, int skillLevel)
+    {
+        if (instance == null || skill == null)
+        {
+            return;
+        }
+
+        SkinEditor_SkillLevel[] skinEditors = instance.GetComponentsInChildren<SkinEditor_SkillLevel>(true);
+        for (int i = 0; i < skinEditors.Length; i++)
+        {
+            skinEditors[i]?.SetSkill(skill, skillLevel);
+        }
+    }
+
+    private static GameObject GetSkillPreviewPrefab(PlayerSkillConfig skill)
+    {
+        if (skill == null)
+        {
+            return null;
+        }
+
+        return skill.SkillType switch
+        {
+            PlayerSkillType.Bombardment => skill.AirplanePrefab,
+            PlayerSkillType.AutoTurret => skill.TurretPrefab,
+            PlayerSkillType.MissileTurret => skill.MissileTurretPrefab,
+            PlayerSkillType.StealthBomber => skill.StealthBomberPrefab,
+            PlayerSkillType.AttackHelicopter => skill.AttackHelicopterPrefab,
+            _ => null
+        };
     }
 
 #if UNITY_EDITOR
@@ -625,7 +689,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         int weaponEnhanceLevel = weapon != null ? GetFactoryWeaponLevel(weapon) : 0;
         float weaponBonusDamage = weapon != null ? GetWeaponBonusDamage(weapon) : 0f;
         SetIcon(detailIconWeapon, weapon != null ? weapon.Icon : null);
-        SetDroneIcon(detailIconDrone, null);
+        SetDroneIcon(detailIconDroneOfSkill, null);
         SetText(detailNameText, weapon != null ? weapon.DisplayName : "무기를 선택하세요.");
         SetText(detailCategoryText, weapon != null ? $"{weapon.WeaponCategory}" : string.Empty);
         SetText(detailStatsText, weapon != null
@@ -646,7 +710,7 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
         int droneEnhanceLevel = drone != null ? GetFactoryDroneLevel(drone) : 0;
         float droneDamageBonus = droneEnhanceLevel > 0 ? GetFactoryDroneDamageBonus(drone) : 0f;
         SetIcon(detailIconWeapon, null);
-        SetDroneIcon(detailIconDrone, drone);
+        SetDroneIcon(detailIconDroneOfSkill, drone);
         SetText(detailNameText, drone != null ? drone.DisplayName : "드론을 선택하세요.");
         SetText(detailCategoryText, drone != null ? $"장착한 무기: {drone.ProjectileConfig.DisplayName}" : string.Empty);
         SetText(detailStatsText, drone != null
@@ -663,8 +727,8 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
     {
         ResolveDetailIconReferences();
 
-        SetIcon(detailIconWeapon, skill != null ? skill.Icon : null);
-        SetDroneIcon(detailIconDrone, null);
+        SetIcon(detailIconWeapon, null);
+        SetSkillPreview(detailIconDroneOfSkill, skill);
         SetText(detailNameText, skill != null ? skill.DisplayName : "스킬을 선택하세요.");
         SetText(detailCategoryText, skill != null ? GetSkillTypeLabel(skill.SkillType) : string.Empty);
         SetText(detailStatsText, skill != null
@@ -737,14 +801,20 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
 
     private void ResolveDetailIconReferences()
     {
-        if (detailIconWeapon != null)
+        if (detailIconWeapon == null)
         {
-            return;
+            Transform detailRoot = FindChildTransformByName(transform, "Detail_WeaponIcon");
+            // 상세 프레임의 배경이 아니라 내부 아이콘 슬롯에 무기 스프라이트를 반영한다.
+            detailIconWeapon = FindChildComponentByName<Image>(detailRoot, "Icon");
         }
 
-        Transform detailRoot = FindChildTransformByName(transform, "Detail_WeaponIcon");
-        // 상세 프레임의 배경이 아니라 내부 아이콘 슬롯에 무기 스프라이트를 반영한다.
-        detailIconWeapon = FindChildComponentByName<Image>(detailRoot, "Icon");
+        if (detailIconDroneOfSkill == null)
+        {
+            detailIconDroneOfSkill = FindChildComponentByName<RawImage>(transform, "detailIconDroneOfSkill");
+            detailIconDroneOfSkill ??= FindChildComponentByName<RawImage>(transform, "DetailIconDroneOfSkill");
+            detailIconDroneOfSkill ??= FindChildComponentByName<RawImage>(transform, "Detail_DroneIcon");
+            detailIconDroneOfSkill ??= FindChildComponentByName<RawImage>(transform, "Detail_SkillIcon");
+        }
     }
 
     private static Transform FindChildTransformByName(Transform root, string childName)
