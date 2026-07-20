@@ -19,7 +19,7 @@ public class SkillLoadoutPanel : MonoBehaviour
     [Header("Equipped Slots")]
     [SerializeField] private TMP_Text[] equippedSlotTexts = new TMP_Text[3];
     [SerializeField] private Button[] slotButtons = new Button[4];
-    [SerializeField] private Image[] slotSkillIcons = new Image[4];
+    [SerializeField] private RawImage[] slotSkillIcons = new RawImage[4];
     [SerializeField] private GameObject[] slotLockedObjects = new GameObject[4];
 
     [Header("Detail")]
@@ -234,7 +234,7 @@ public class SkillLoadoutPanel : MonoBehaviour
             bool unlocked = player == null || player.IsSkillSlotUnlocked(i);
             PlayerSkillConfig equipped = player != null ? player.GetEquippedSkill(i) : null;
             SetInteractable(slotButtons[i], unlocked);
-            SetSkillIcon(slotSkillIcons, i, equipped);
+            SetSkillPreview(slotSkillIcons, i, equipped);
             SetActive(slotLockedObjects, i, !unlocked);
         }
 
@@ -649,14 +649,14 @@ public class SkillLoadoutPanel : MonoBehaviour
 
         if (slotSkillIcons == null || slotSkillIcons.Length != slotButtons.Length)
         {
-            slotSkillIcons = new Image[slotButtons.Length];
+            slotSkillIcons = new RawImage[slotButtons.Length];
         }
 
         for (int i = 0; i < slotButtons.Length; i++)
         {
             slotButtons[i] ??= FindChildComponentByName<Button>(transform, $"SkillButton_{i + 1}");
             // 슬롯 버튼 안의 SkillIcon 이미지를 현재 장착 스킬 아이콘으로 동기화한다.
-            slotSkillIcons[i] ??= FindChildComponentByName<Image>(
+            slotSkillIcons[i] ??= FindChildComponentByName<RawImage>(
                 slotButtons[i] != null ? slotButtons[i].transform : null,
                 "SkillIcon");
             slotLockedObjects[i] ??= FindChildTransformByName(
@@ -692,31 +692,17 @@ public class SkillLoadoutPanel : MonoBehaviour
         return player != null ? player.GetEquippedSkill(selectedSlotIndex) : null;
     }
 
-    private static void SetSkillIcon(Image target, PlayerSkillConfig skill)
-    {
-        if (target == null)
-        {
-            return;
-        }
-
-        Sprite icon = skill != null ? skill.Icon : null;
-        target.sprite = icon;
-        target.enabled = icon != null;
-        target.preserveAspect = true;
-        target.gameObject.SetActive(icon != null);
-    }
-
-    private static void SetSkillIcon(Image[] targets, int index, PlayerSkillConfig skill)
+    private void SetSkillPreview(RawImage[] targets, int index, PlayerSkillConfig skill)
     {
         if (targets == null || index < 0 || index >= targets.Length)
         {
             return;
         }
 
-        SetSkillIcon(targets[index], skill);
+        SetSkillPreview(targets[index], skill);
     }
 
-    private static void SetSkillPreview(RawImage target, PlayerSkillConfig skill)
+    private void SetSkillPreview(RawImage target, PlayerSkillConfig skill)
     {
         if (target == null)
         {
@@ -733,11 +719,31 @@ public class SkillLoadoutPanel : MonoBehaviour
             return;
         }
 
-        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
+        int skillLevel = GetSkillLevel(skill);
+        string cacheKey = $"{skill.GetInstanceID()}_Level{skillLevel}";
+        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(
+            prefab,
+            cacheKey,
+            instance => ApplySkillPreviewSkin(instance, skill, skillLevel));
         target.texture = preview;
         target.color = preview != null ? Color.white : Color.clear;
         target.enabled = preview != null;
         target.gameObject.SetActive(preview != null);
+    }
+
+    // 스킬 프리팹을 수집 레벨에 따라 색상을 다르게 표시
+    private static void ApplySkillPreviewSkin(GameObject instance, PlayerSkillConfig skill, int skillLevel)
+    {
+        if (instance == null || skill == null)
+        {
+            return;
+        }
+
+        SkinEditor_SkillLevel[] skinEditors = instance.GetComponentsInChildren<SkinEditor_SkillLevel>(true);
+        for (int i = 0; i < skinEditors.Length; i++)
+        {
+            skinEditors[i]?.SetSkill(skill, skillLevel);
+        }
     }
 
     private static GameObject GetSkillPreviewPrefab(PlayerSkillConfig skill)

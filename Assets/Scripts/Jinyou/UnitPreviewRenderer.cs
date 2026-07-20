@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -53,6 +54,7 @@ public class UnitPreviewRenderer : MonoBehaviour
         previewCamera.enabled = false; // 수동 Render만 사용
     }
 
+    // 기존의 프리뷰 호출부
     public RenderTexture GetPreview(GameObject prefab)
     {
         if (prefab == null)
@@ -76,7 +78,34 @@ public class UnitPreviewRenderer : MonoBehaviour
         return rt;
     }
 
-    private void RenderPrefab(GameObject prefab, RenderTexture target)
+    // 스킬 프리팹용 프리뷰 호출부 (GetPreview 커스텀한 별도의 오버로드)
+    // 스킬에 담긴 색상스킨(SkinEditor_SkillLevel)을 표시하려면
+    // 프리팹 + 스킬 + 레벨 조합을 별도 키로 저장하는 커스텀 오버로드가 필요하다.
+    public RenderTexture GetPreview(GameObject prefab, string cacheKeySuffix, Action<GameObject> configureInstance)
+    {
+        if (prefab == null)
+        {
+            return null;
+        }
+
+        string suffix = string.IsNullOrWhiteSpace(cacheKeySuffix) ? "default" : cacheKeySuffix;
+        int key = HashCode.Combine(prefab.GetInstanceID(), suffix);
+        if (cache.TryGetValue(key, out RenderTexture cached) && cached != null)
+        {
+            return cached;
+        }
+
+        RenderTexture rt = new RenderTexture(TextureSize, TextureSize, 16, RenderTextureFormat.ARGB32)
+        {
+            name = "UnitPreview_" + prefab.name + "_" + suffix
+        };
+        rt.Create();
+        RenderPrefab(prefab, rt, configureInstance);
+        cache[key] = rt;
+        return rt;
+    }
+
+    private void RenderPrefab(GameObject prefab, RenderTexture target, Action<GameObject> configureInstance = null)
     {
         // 비활성 부모 아래에 복제 → 인스턴스의 Awake/OnEnable이 실행되지 않는다.
         GameObject stage = new GameObject("PreviewStage");
@@ -86,6 +115,7 @@ public class UnitPreviewRenderer : MonoBehaviour
 
         GameObject unit = Instantiate(prefab, stage.transform);
         unit.transform.localPosition = Vector3.zero;
+        configureInstance?.Invoke(unit);
 
         // 렌더에 필요한 SpriteRenderer만 남기고 스크립트/물리는 제거(활성화 전이라 Awake 미실행).
         foreach (MonoBehaviour mb in unit.GetComponentsInChildren<MonoBehaviour>(true))
