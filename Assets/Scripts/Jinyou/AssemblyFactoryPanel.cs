@@ -325,7 +325,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
         SetActive(weaponCost, true);
         float currentAttack = drone.AttackDamage + enhancement.AttackDamageBonus;
-        float nextAttack = currentAttack + enhancement.attackDamagePerLevel;
+        float nextAttack = currentAttack + enhancement.NextAttackDamageIncrease;
 
         SetText(weaponCurrentAttackText, $"피해량: <color=#EC9A0E>{currentAttack:0.##}</color>");
 
@@ -389,7 +389,7 @@ public class AssemblyFactoryPanel : MonoBehaviour
 
         return enhancement.IsMaxLevel
             ? $"{enhancement.droneConfig.DisplayName} 모두 완료됨"
-            : $"강화하기 {enhancement.droneConfig.DisplayName} +{enhancement.attackDamagePerLevel:0.##}";
+            : $"강화하기 {enhancement.droneConfig.DisplayName} +{enhancement.NextAttackDamageIncrease:0.##}";
     }
 
     private static float GetNextWeaponAttackIncrease(AssemblyFactory.WeaponEnhancement enhancement)

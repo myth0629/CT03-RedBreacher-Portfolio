@@ -9,6 +9,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     private const string WeaponEnhancementSaveKey = "AssemblyFactory.WeaponEnhancements";
     private const float DefaultWeaponEnhanceCostGrowthMultiplier = 1.3f;
     private const float DefaultDroneEnhanceCostGrowthMultiplier = 1.35f;
+    private const float DefaultDroneAttackIncreasePerLevel = 0.5f;
 
     [Serializable]
     private class WeaponEnhancementSaveEntry
@@ -95,19 +96,6 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             new WeaponEnhancementLevel()
         };
 
-        public string DisplayName
-        {
-            get
-            {
-                if (!string.IsNullOrWhiteSpace(displayNameOverride))
-                {
-                    return displayNameOverride;
-                }
-
-                return weaponConfig != null ? weaponConfig.DisplayName : "Unassigned Weapon";
-            }
-        }
-
         public int MaxEnhanceLevel => enhancementLevels != null
             ? Mathf.Min(maxEnhanceLevel, enhancementLevels.Count)
             : 0;
@@ -177,13 +165,34 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         [Min(0)] public int costPerEnhancement = 100;
         [Min(1f)] public float costGrowthMultiplier = DefaultDroneEnhanceCostGrowthMultiplier;
         [Min(0f)] public float attackDamagePerLevel = 2f;
-
-        public string DisplayName => droneConfig != null ? droneConfig.DisplayName : "Unassigned Drone";
+        [Min(0f)] public float attackDamageIncreasePerLevel = DefaultDroneAttackIncreasePerLevel;
+        
         public bool IsMaxLevel => enhanceLevel >= maxEnhanceLevel;
         public int NextEnhanceCost => Mathf.RoundToInt(
             Mathf.Max(0, costPerEnhancement)
             * Mathf.Pow(Mathf.Max(1f, costGrowthMultiplier), Mathf.Max(0, enhanceLevel)));
-        public float AttackDamageBonus => enhanceLevel * attackDamagePerLevel;
+        public float NextAttackDamageIncrease => GetAttackDamageIncreaseForLevel(enhanceLevel);
+        public float AttackDamageBonus => GetAttackDamageBonusForLevel(enhanceLevel);
+
+        // DroneAttackIncreasePerLevel => 드론 강화 시 고정 2+가 아닌
+        // 강화레벨에 따라 보너스(0.5)에 붙은 성장형 구조로하여
+        // 드론 강화의 기대 수치를 많이 확보한다.
+        public float GetAttackDamageIncreaseForLevel(int levelIndex)
+        {
+            return Mathf.Max(0f, attackDamagePerLevel)
+                + Mathf.Max(0f, attackDamageIncreasePerLevel) * Mathf.Max(0, levelIndex);
+        }
+        
+        public float GetAttackDamageBonusForLevel(int targetLevel)
+        {
+            int clampedLevel = Mathf.Max(0, targetLevel);
+            float baseBonus = Mathf.Max(0f, attackDamagePerLevel) * clampedLevel;
+            float growthBonus = Mathf.Max(0f, attackDamageIncreasePerLevel)
+                * clampedLevel
+                * Mathf.Max(0, clampedLevel - 1)
+                * 0.5f;
+            return baseBonus + growthBonus;
+        }
 
         public void Normalize()
         {
@@ -196,6 +205,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
                 ? DefaultDroneEnhanceCostGrowthMultiplier
                 : Mathf.Max(1f, costGrowthMultiplier);
             attackDamagePerLevel = Mathf.Max(0f, attackDamagePerLevel);
+            attackDamageIncreasePerLevel = Mathf.Max(0f, attackDamageIncreasePerLevel);
         }
     }
 
@@ -228,6 +238,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
     [SerializeField, Min(0)] private int defaultDroneEnhanceCost = 100;
     [SerializeField, Min(1f)] private float defaultDroneEnhanceCostGrowthMultiplier = DefaultDroneEnhanceCostGrowthMultiplier;
     [SerializeField, Min(0f)] private float defaultDroneAttackIncrease = 2f;
+    [SerializeField, Min(0f)] private float defaultDroneAttackIncreasePerLevel = DefaultDroneAttackIncreasePerLevel;
 
     [Header("Events")]
     public UnityEvent<int> OnLevelChanged = new UnityEvent<int>();
@@ -878,7 +889,8 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
             maxEnhanceLevel = GetDroneEnhanceLevelCap(),
             costPerEnhancement = defaultDroneEnhanceCost,
             costGrowthMultiplier = defaultDroneEnhanceCostGrowthMultiplier,
-            attackDamagePerLevel = defaultDroneAttackIncrease
+            attackDamagePerLevel = defaultDroneAttackIncrease,
+            attackDamageIncreasePerLevel = defaultDroneAttackIncreasePerLevel
         };
         enhancement.Normalize();
         if (savedDroneLevels.TryGetValue(droneConfig.Id, out int savedLevel))
@@ -952,6 +964,11 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         droneEnhancements ??= new List<DroneEnhancement>();
         foreach (DroneEnhancement enhancement in droneEnhancements)
         {
+            if (enhancement != null && enhancement.attackDamageIncreasePerLevel <= 0f)
+            {
+                enhancement.attackDamageIncreasePerLevel = defaultDroneAttackIncreasePerLevel;
+            }
+
             enhancement?.Normalize();
         }
 
@@ -1230,6 +1247,7 @@ public class AssemblyFactory : MonoBehaviour, IBaseCampFacility
         defaultDroneEnhanceCost = Mathf.Max(0, defaultDroneEnhanceCost);
         defaultDroneEnhanceCostGrowthMultiplier = Mathf.Max(1f, defaultDroneEnhanceCostGrowthMultiplier);
         defaultDroneAttackIncrease = Mathf.Max(0f, defaultDroneAttackIncrease);
+        defaultDroneAttackIncreasePerLevel = Mathf.Max(0f, defaultDroneAttackIncreasePerLevel);
         NormalizeDroneEnhancements();
     }
 }
