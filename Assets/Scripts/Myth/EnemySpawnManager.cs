@@ -16,10 +16,10 @@ public class EnemySpawnManager : MonoBehaviour
     [SerializeField] private bool startOnAwake = true;
     [SerializeField] private int startRound = 1;
     [SerializeField] private int baseEnemyCount = 4;
-    [SerializeField] private int enemyCountIncreasePerStage = 3;
+    [SerializeField] private int enemyCountIncreasePerStage = 2;
     [SerializeField] private int enemyCountIncreasePerRound = 1;
     [Tooltip("라운드당 스폰되는 적 수의 상한. 고스테이지 포위 즉사와 성능 저하를 막는다.")]
-    [SerializeField] private int maxEnemyCountPerRound = 80;
+    [SerializeField] private int maxEnemyCountPerRound = 55;
     [SerializeField] private float timeBetweenRounds = 2f;
 
     [Header("Player Death")]
@@ -41,7 +41,7 @@ public class EnemySpawnManager : MonoBehaviour
     [Tooltip("이 스테이지를 넘어서면 적 데미지 증가율이 아래 값으로 낮아진다.")]
     [SerializeField] private int damageSoftCapStage = 50;
     [SerializeField] private float damageIncreasePerStageAfterCap = 0.05f;
-    [SerializeField] private float moveSpeedIncreasePerStage = 0.03f;
+    [SerializeField] private float moveSpeedIncreasePerStage = 0.018f;
     [SerializeField] private float rewardIncreasePerStage = 0.15f;
 
     [Header("Spawn")]
