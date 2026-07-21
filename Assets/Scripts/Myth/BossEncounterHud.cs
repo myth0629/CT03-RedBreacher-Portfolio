@@ -15,6 +15,8 @@ public class BossEncounterHud : MonoBehaviour
     [SerializeField] private TMP_Text bossHealthText;
     [SerializeField] private float resultDisplaySeconds = 4f;
     [SerializeField] private TMP_Text bossClearText;
+    [SerializeField] private TMP_Text bossClearTimeText;
+    [SerializeField] private GameObject bossClearTimeSubPanel;
 
     private BossEnemyConfig config;
     private CombatHealth bossHealth;
@@ -60,6 +62,7 @@ public class BossEncounterHud : MonoBehaviour
 
         SetActive(bossNameText != null ? bossNameText.gameObject : null, true);
         SetBossClearTextVisible(false);
+        SetBossClearTimeVisible(false);
         Refresh();
     }
 
@@ -82,9 +85,10 @@ public class BossEncounterHud : MonoBehaviour
 
         SetActive(bossNameText != null ? bossNameText.gameObject : null, true);
         SetBossClearTextVisible(false);
+        SetBossClearTimeVisible(false);
     }
 
-    public void ShowResult(string title, string detail, bool success)
+    public void ShowResult(string title, string detail, bool success, string clearTimeText = null)
     {
         config = null;
         bossHealth = null;
@@ -103,17 +107,21 @@ public class BossEncounterHud : MonoBehaviour
         if (bossClearText != null)
         {
             bossClearText.gameObject.SetActive(true);
-            bossClearText.text = title;
+            bossClearText.text = string.IsNullOrWhiteSpace(detail)
+                ? title
+                : $"{title}\n{detail}";
             bossClearText.color = success
                 ? new Color(0.435f, 0.812f, 0.459f)
                 : new Color(1f, 0.35f, 0.35f);
         }
 
+        SetBossClearTime(clearTimeText);
+
         SetActive(bossNameText != null ? bossNameText.gameObject : null, false);
 
         if (bossHealthText != null)
         {
-            bossHealthText.text = detail;
+            bossHealthText.text = string.Empty;
         }
 
         if (bossHealthSlider != null)
@@ -156,6 +164,29 @@ public class BossEncounterHud : MonoBehaviour
         if (bossClearText != null)
         {
             bossClearText.gameObject.SetActive(visible);
+        }
+    }
+
+    private void SetBossClearTime(string text)
+    {
+        bool visible = !string.IsNullOrWhiteSpace(text);
+        SetBossClearTimeVisible(visible);
+        if (bossClearTimeText != null)
+        {
+            bossClearTimeText.text = visible ? text : string.Empty;
+        }
+    }
+
+    private void SetBossClearTimeVisible(bool visible)
+    {
+        if (bossClearTimeSubPanel != null)
+        {
+            bossClearTimeSubPanel.SetActive(visible);
+        }
+
+        if (bossClearTimeText != null)
+        {
+            bossClearTimeText.gameObject.SetActive(visible);
         }
     }
 

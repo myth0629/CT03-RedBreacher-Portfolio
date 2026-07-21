@@ -13644,7 +13644,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD65C\uC131"
+  m_text: ON
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 99d460ef43f55ae41b2fe57f6d43e8a8, type: 2}
   m_sharedMaterial: {fileID: 4813561800046946171, guid: 99d460ef43f55ae41b2fe57f6d43e8a8, type: 2}
@@ -14732,7 +14732,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0.0011159617}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 17.526306, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1108269018157686690
 MonoBehaviour:
@@ -41260,8 +41260,8 @@ MonoBehaviour:
     moveSpeedMultiplier: 1
     damageMultiplier: 1
     rewardMultiplier: 1
-    firstClearCreditBonus: 0
-    firstClearCoreCrystalBonus: 0
+    firstClearCreditBonus: 2500
+    firstClearCoreCrystalBonus: 25
   - difficultyId: hard
     displayName: "\uC5B4\uB824\uC6C0"
     requiredResearchLabLevel: 5
@@ -41271,8 +41271,8 @@ MonoBehaviour:
     moveSpeedMultiplier: 1.1
     damageMultiplier: 1.5
     rewardMultiplier: 1.75
-    firstClearCreditBonus: 0
-    firstClearCoreCrystalBonus: 0
+    firstClearCreditBonus: 13500
+    firstClearCoreCrystalBonus: 35
   - difficultyId: elite
     displayName: "\uC815\uC608"
     requiredResearchLabLevel: 7
@@ -41282,8 +41282,8 @@ MonoBehaviour:
     moveSpeedMultiplier: 1.2
     damageMultiplier: 2.25
     rewardMultiplier: 3
-    firstClearCreditBonus: 0
-    firstClearCoreCrystalBonus: 0
+    firstClearCreditBonus: 42500
+    firstClearCoreCrystalBonus: 45
   selectedBossIndex: 0
   selectedDifficultyIndex: 0
 --- !u!114 &8571527837070923623
@@ -42853,7 +42853,7 @@ RectTransform:
   m_Father: {fileID: 8506302745225834492}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -43068,7 +43068,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uBE44\uD65C\uC131"
+  m_text: OFF
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 99d460ef43f55ae41b2fe57f6d43e8a8, type: 2}
   m_sharedMaterial: {fileID: 4813561800046946171, guid: 99d460ef43f55ae41b2fe57f6d43e8a8, type: 2}

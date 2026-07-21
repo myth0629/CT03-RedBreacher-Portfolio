@@ -190,9 +190,9 @@ public class BossEncounterManager : MonoBehaviour
         EncounterEnded?.Invoke(false);
     }
 
-    public void ShowResult(string title, string detail, bool success)
+    public void ShowResult(string title, string detail, bool success, string clearTimeText = null)
     {
-        bossEncounterHud?.ShowResult(title, detail, success);
+        bossEncounterHud?.ShowResult(title, detail, success, clearTimeText);
     }
 
     private void UnsubscribeActiveBossHealth()

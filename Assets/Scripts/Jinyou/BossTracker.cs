@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class BossTracker : MonoBehaviour
 {
+    private const string FirstBossClearTicketBonusKey = "BossDungeon.FirstBossClearTicketBonusGranted";
+    private const int FirstBossClearTicketBonusAmount = 1;
+
     // 보스 SO 데이터수정 구조를 따로 수정하기 않고 직관적으로 반영하기 위해 [HideInInspector]를 추가하고
     // 그 아래의 public 함수로 데이터를 동기화
     [Serializable]
@@ -293,6 +296,7 @@ public class BossTracker : MonoBehaviour
             PlayerPrefs.SetFloat(bestTimeKey, clearTime);
         }
 
+        bool grantedFirstBossTicketBonus = false;
         if (firstClear)
         {
             // 기본 보상은 전투 보상 서비스가 지급하므로 최초 클리어 보너스만 추가한다.
@@ -301,6 +305,7 @@ public class BossTracker : MonoBehaviour
                 : FindFirstObjectByType<PlayerCurrencyWallet>();
             wallet?.AddCredits(completedDifficulty.firstClearCreditBonus);
             wallet?.AddCoreCrystals(completedDifficulty.firstClearCoreCrystalBonus);
+            grantedFirstBossTicketBonus = TryGrantFirstBossClearTicketBonus();
         }
 
         if (string.Equals(completedDifficulty.difficultyId, "normal", StringComparison.OrdinalIgnoreCase))
@@ -313,14 +318,52 @@ public class BossTracker : MonoBehaviour
         }
 
         PlayerPrefs.Save();
+        string ticketBonusText = grantedFirstBossTicketBonus
+            ? $" / 티켓 +{FirstBossClearTicketBonusAmount}"
+            : string.Empty;
         string firstClearText = firstClear
-            ? $"\n최초 클리어 보너스: 크레딧 +{completedDifficulty.firstClearCreditBonus}"
+            ? $"최초 클리어 보너스: 크레딧 +{completedDifficulty.firstClearCreditBonus}"
                 + $" / 코어 +{completedDifficulty.firstClearCoreCrystalBonus}"
             : string.Empty;
+        string resultDetail = $"\n<size=32><color=#FFFFFF>{firstClearText}{ticketBonusText}</color></size>".TrimStart();
         bossEncounterManager.ShowResult(
             "보스 처치 성공",
-            $"{completedDifficulty.displayName} {clearTime:0.0}초{firstClearText}",
-            true);
+            resultDetail,
+            true,
+            $"{BuildDifficultyResultName(completedDifficulty)} / {clearTime:0.0}초");
+    }
+
+    private static string BuildDifficultyResultName(BossDifficulty difficulty)
+    {
+        if (difficulty == null)
+        {
+            return string.Empty;
+        }
+
+        return difficulty.difficultyId switch
+        {
+            "hard" => $"<color=#FF8100>{difficulty.displayName}</color>",
+            "elite" => $"<color=#FF0000>{difficulty.displayName}</color>",
+            _ => difficulty.displayName
+        };
+    }
+
+    private bool TryGrantFirstBossClearTicketBonus()
+    {
+        if (PlayerPrefs.GetInt(FirstBossClearTicketBonusKey, 0) != 0)
+        {
+            return false;
+        }
+
+        ResolveReferences();
+        if (cmdCenter == null)
+        {
+            return false;
+        }
+
+        cmdCenter.AddBossTickets(FirstBossClearTicketBonusAmount);
+        PlayerPrefs.SetInt(FirstBossClearTicketBonusKey, 1);
+        return true;
     }
 
     private void IncrementRecord(
