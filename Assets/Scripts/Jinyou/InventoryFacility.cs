@@ -8,6 +8,8 @@ public class InventoryFacility : MonoBehaviour
     private const string CollectionProgressKey = "InventoryFacility.CollectionProgress";
     private const string EquipmentAutoSellEnabledKey = "InventoryFacility.EquipmentAutoSell.Enabled";
     private const string EquipmentAutoSellMaxRarityKey = "InventoryFacility.EquipmentAutoSell.MaxRarity";
+    private const bool DefaultEquipmentAutoSellEnabled = false;
+    private const EquipmentPartRarity DefaultEquipmentAutoSellMaxRarity = EquipmentPartRarity.Common;
 
     [System.Serializable]
     private class EquipmentPartSaveData
@@ -67,7 +69,7 @@ public class InventoryFacility : MonoBehaviour
     [SerializeField] private List<EquipmentPartConfig> equipmentPartConfigs = new List<EquipmentPartConfig>();
     [SerializeField] private List<EquipmentPartInstance> equipmentParts = new List<EquipmentPartInstance>();
     [SerializeField] private bool autoSellEquipmentPartsEnabled;
-    [SerializeField] private EquipmentPartRarity autoSellMaxRarity = EquipmentPartRarity.Rare;
+    [SerializeField] private EquipmentPartRarity autoSellMaxRarity = DefaultEquipmentAutoSellMaxRarity;
     [SerializeField] private bool saveEquipmentPartsToPlayerPrefs = true;
     [SerializeField] private bool saveCollectionProgressToPlayerPrefs = true;
 
@@ -175,6 +177,7 @@ public class InventoryFacility : MonoBehaviour
 
     public JinyouInventorySaveData CaptureState()
     {
+        EnsureAutoSellSettingsInitialized();
         EnsureCollectionProgressInitialized();
         EnsureEquipmentPartsInitialized();
         return new JinyouInventorySaveData
@@ -228,6 +231,9 @@ public class InventoryFacility : MonoBehaviour
         PlayerPrefs.DeleteKey(EquipmentPartsKey);
         PlayerPrefs.DeleteKey(EquipmentAutoSellEnabledKey);
         PlayerPrefs.DeleteKey(EquipmentAutoSellMaxRarityKey);
+        autoSellSettingsInitialized = false;
+        autoSellEquipmentPartsEnabled = DefaultEquipmentAutoSellEnabled;
+        autoSellMaxRarity = DefaultEquipmentAutoSellMaxRarity;
         PlayerPrefs.Save();
     }
 
@@ -1272,12 +1278,20 @@ public class InventoryFacility : MonoBehaviour
         {
             autoSellEquipmentPartsEnabled = PlayerPrefs.GetInt(EquipmentAutoSellEnabledKey, 0) != 0;
         }
+        else
+        {
+            autoSellEquipmentPartsEnabled = DefaultEquipmentAutoSellEnabled;
+        }
 
         if (PlayerPrefs.HasKey(EquipmentAutoSellMaxRarityKey))
         {
             autoSellMaxRarity = ClampAutoSellMaxRarity(PlayerPrefs.GetInt(
                 EquipmentAutoSellMaxRarityKey,
-                (int)EquipmentPartRarity.Rare));
+                (int)DefaultEquipmentAutoSellMaxRarity));
+        }
+        else
+        {
+            autoSellMaxRarity = DefaultEquipmentAutoSellMaxRarity;
         }
     }
 
