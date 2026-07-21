@@ -66,6 +66,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private AudioClip[] repositionClips;
     [SerializeField] private AudioSource repositionSource;
 
+    [Header("Boss Movement Guard")]
+    [SerializeField] private bool disableAutoRepositionDuringBoss = true;
+    [SerializeField] private float bossApproachClearance = 0.35f;
+
     [Header("Fallback Effects")]
     [SerializeField] private GameObject fireFlashEffectPrefab;
     [SerializeField] private GameObject projectileEffectPrefab;
@@ -796,6 +800,11 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        if (disableAutoRepositionDuringBoss && BossEnemyController.IsBossBattleActive && isRepositioning)
+        {
+            FinishAutoReposition();
+        }
+
         if (bossDodgeController != null && bossDodgeController.IsDodging)
         {
             if (isRepositioning)
@@ -853,6 +862,16 @@ public class PlayerController : MonoBehaviour
 
     private bool HandleAutoReposition()
     {
+        if (disableAutoRepositionDuringBoss && BossEnemyController.IsBossBattleActive)
+        {
+            if (isRepositioning)
+            {
+                FinishAutoReposition();
+            }
+
+            return false;
+        }
+
         if (!enableAutoReposition)
         {
             isRepositioning = false;
@@ -1376,7 +1395,8 @@ public class PlayerController : MonoBehaviour
     private void MoveUntilInRange(CombatHealth target, Vector3 direction)
     {
         float distance = Mathf.Sqrt(CombatPlane.DistanceSqr(transform.position, target.transform.position));
-        float remainingMoveDistance = Mathf.Max(0f, distance - AttackRangeValue);
+        float stopDistance = GetApproachStopDistance(target);
+        float remainingMoveDistance = Mathf.Max(0f, distance - stopDistance);
         float moveDistance = Mathf.Min(MoveSpeedValue * Time.deltaTime, remainingMoveDistance);
 
         // 사거리 경계까지만 이동해 타겟을 지나치지 않게 한다. (아레나 경계로 제한해 벽 밖으로 못 나가게 함)
@@ -1386,6 +1406,45 @@ public class PlayerController : MonoBehaviour
         // 회피/자동 재배치와 동일하게 transform을 직접 이동해 매 프레임 부드럽게 움직인다.
         transform.position = nextPosition;
         SetVehicleMoveInput(moveDistance > 0f ? 1f : 0f, 0f);
+    }
+
+    private float GetApproachStopDistance(CombatHealth target)
+    {
+        float stopDistance = AttackRangeValue;
+        BossEnemyController boss = target != null ? target.GetComponentInParent<BossEnemyController>() : null;
+        if (boss == null)
+        {
+            return stopDistance;
+        }
+
+        float bossRadius = GetHorizontalColliderRadius(boss.gameObject, 1.2f);
+        float playerRadius = Mathf.Max(0.01f, repositionCollisionRadius);
+        float bossSafetyDistance = bossRadius + playerRadius + Mathf.Max(0f, bossApproachClearance);
+        return Mathf.Max(stopDistance, bossSafetyDistance);
+    }
+
+    private static float GetHorizontalColliderRadius(GameObject owner, float fallback)
+    {
+        if (owner == null)
+        {
+            return Mathf.Max(0.01f, fallback);
+        }
+
+        Collider[] colliders = owner.GetComponentsInChildren<Collider>(false);
+        float radius = 0f;
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider == null || !collider.enabled)
+            {
+                continue;
+            }
+
+            Vector3 extents = collider.bounds.extents;
+            radius = Mathf.Max(radius, extents.x, extents.z);
+        }
+
+        return radius > 0f ? radius : Mathf.Max(0.01f, fallback);
     }
 
     private bool IsFacing(Vector3 direction)

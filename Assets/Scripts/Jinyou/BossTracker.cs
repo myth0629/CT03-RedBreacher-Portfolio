@@ -279,7 +279,7 @@ public class BossTracker : MonoBehaviour
             IncrementRecord(completedBoss, completedDifficulty, "Failures");
             bossEncounterManager.ShowResult(
                 "보스 처치 실패 (티켓 반환)",
-                $"{completedDifficulty.displayName}\n{GetRecordSummary(completedBoss, completedDifficulty)}",
+                string.Empty,
                 false);
             return;
         }

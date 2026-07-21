@@ -21,6 +21,10 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
     [SerializeField] private AudioClip[] dodgeClips;
     [SerializeField] private AudioSource dodgeSource;
 
+    [Header("Boss Overlap Guard")]
+    [SerializeField] private bool preventBossOverlap = true;
+    [SerializeField] private float bossDodgeClearance = 0.35f;
+
     [Header("회피 속도감 연출")]
     [Tooltip("값이 클수록 회피 초반이 더 폭발적으로 가속됩니다. (이전 기본값 3)")]
     [SerializeField, Range(1f, 6f)] private float dodgeEaseExponent = 4.5f;
@@ -262,6 +266,7 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
             distance = Mathf.Max(0f, hit.distance - Mathf.Max(0f, wallClearance));
         }
 
+        distance = ClampDodgeDistanceAgainstBoss(direction, distance);
         if (distance <= 0.01f)
         {
             return;
@@ -279,6 +284,88 @@ public sealed class PlayerBossDodgeController : MonoBehaviour
         afterimageEmitter?.Emit(true);
         PlayDodgeSfx();
         TutorialManager.Report(TutorialEventType.BossDodgeUsed);
+    }
+
+    // 플레이어가 대쉬로 접근하여 보스 콜라이더와 겹치는 꼼수 플레이가 되지않게 봉쇄한다.
+    private float ClampDodgeDistanceAgainstBoss(Vector3 direction, float distance)
+    {
+        if (!preventBossOverlap || distance <= 0f || !BossEnemyController.IsBossBattleActive)
+        {
+            return distance;
+        }
+
+        BossEnemyController boss = FindFirstObjectByType<BossEnemyController>();
+        if (boss == null || boss.Health == null || boss.Health.IsDead)
+        {
+            return distance;
+        }
+
+        Vector3 bossPosition = CombatPlane.WithFixedY(boss.transform.position);
+        Vector3 fromBossToStart = CombatPlane.WithFixedY(dodgeStartPosition) - bossPosition;
+        Vector3 flatDirection = CombatPlane.ProjectDirection(direction);
+        if (flatDirection.sqrMagnitude <= 0f)
+        {
+            return distance;
+        }
+
+        float safetyRadius = GetBossSafetyRadius(boss);
+        float safetyRadiusSqr = safetyRadius * safetyRadius;
+        float startDistanceSqr = fromBossToStart.sqrMagnitude;
+        if (startDistanceSqr <= safetyRadiusSqr)
+        {
+            Vector3 awayFromBoss = CombatPlane.ProjectDirection(fromBossToStart);
+            return Vector3.Dot(flatDirection, awayFromBoss) > 0f ? distance : 0f;
+        }
+
+        float projected = Vector3.Dot(fromBossToStart, flatDirection);
+        if (projected >= 0f)
+        {
+            return distance;
+        }
+
+        float discriminant = projected * projected - (startDistanceSqr - safetyRadiusSqr);
+        if (discriminant < 0f)
+        {
+            return distance;
+        }
+
+        float hitDistance = -projected - Mathf.Sqrt(discriminant);
+        if (hitDistance < 0f || hitDistance > distance)
+        {
+            return distance;
+        }
+
+        return Mathf.Max(0f, hitDistance - Mathf.Max(0f, wallClearance));
+    }
+
+    private float GetBossSafetyRadius(BossEnemyController boss)
+    {
+        float bossRadius = GetHorizontalColliderRadius(boss.gameObject, 1.2f);
+        return bossRadius + Mathf.Max(0.01f, collisionRadius) + Mathf.Max(0f, bossDodgeClearance);
+    }
+
+    private static float GetHorizontalColliderRadius(GameObject owner, float fallback)
+    {
+        if (owner == null)
+        {
+            return Mathf.Max(0.01f, fallback);
+        }
+
+        Collider[] colliders = owner.GetComponentsInChildren<Collider>(false);
+        float radius = 0f;
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider == null || !collider.enabled)
+            {
+                continue;
+            }
+
+            Vector3 extents = collider.bounds.extents;
+            radius = Mathf.Max(radius, extents.x, extents.z);
+        }
+
+        return radius > 0f ? radius : Mathf.Max(0.01f, fallback);
     }
 
     private void PlayDodgeSfx()
