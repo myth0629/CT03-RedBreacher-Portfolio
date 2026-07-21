@@ -8,7 +8,7 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
     [SerializeField] private Button button;
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private Image weaponIcon;
-    [SerializeField] private RawImage droneIcon;
+    [SerializeField] private RawImage droneOfSkillIcon;
     [SerializeField] private TMP_Text rarityText;
     [SerializeField] private TMP_Text summaryText;
     [SerializeField] private GameObject selectedMark;
@@ -45,7 +45,9 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
         System.Action clickAction,
         Sprite iconSprite = null,
         DroneConfig droneConfig = null,
-        Color? rarityColor = null)
+        Color? rarityColor = null,
+        PlayerSkillConfig skillConfig = null,
+        int skillLevel = 1)
     {
         onClick = clickAction;
         SetText(nameText, title);
@@ -53,7 +55,7 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
         SetRarityTextColor(rarityColor);
         SetText(summaryText, summary);
         SetWeaponIcon(iconSprite);
-        SetDroneIcon(droneConfig);
+        SetDroneOfSkillIcon(droneConfig, skillConfig, skillLevel);
         SetSelected(selected);
     }
 
@@ -114,26 +116,70 @@ public class PlayerLoadoutOptionButton : MonoBehaviour
         weaponIcon.gameObject.SetActive(sprite != null);
     }
 
-    // 드론은 프리팹으로 렌더링헤서 이미지 동기화
-    private void SetDroneIcon(DroneConfig droneConfig)
+    // 드론 및 스킬은 프리팹으로 렌더링헤서 이미지 동기화
+    private void SetDroneOfSkillIcon(DroneConfig droneConfig, PlayerSkillConfig skillConfig, int skillLevel)
     {
-        if (droneIcon == null)
+        if (droneOfSkillIcon == null)
         {
             return;
         }
 
-        GameObject prefab = droneConfig != null ? droneConfig.DronePrefab : null;
+        GameObject prefab = droneConfig != null
+            ? droneConfig.DronePrefab
+            : GetSkillPreviewPrefab(skillConfig);
+        string cacheKey = skillConfig != null
+            ? $"{skillConfig.GetInstanceID()}_Level{Mathf.Max(1, skillLevel)}"
+            : null;
         if (prefab == null)
         {
-            droneIcon.texture = null;
-            droneIcon.color = Color.clear;
-            droneIcon.gameObject.SetActive(false);
+            droneOfSkillIcon.texture = null;
+            droneOfSkillIcon.color = Color.clear;
+            droneOfSkillIcon.gameObject.SetActive(false);
             return;
         }
 
-        RenderTexture preview = UnitPreviewRenderer.Instance.GetPreview(prefab);
-        droneIcon.texture = preview;
-        droneIcon.color = preview != null ? Color.white : Color.clear;
-        droneIcon.gameObject.SetActive(preview != null);
+        RenderTexture preview = skillConfig != null
+            ? UnitPreviewRenderer.Instance.GetPreview(
+                prefab,
+                cacheKey,
+                instance => ApplySkillPreviewSkin(instance, skillConfig, skillLevel))
+            : UnitPreviewRenderer.Instance.GetPreview(prefab);
+        droneOfSkillIcon.texture = preview;
+        droneOfSkillIcon.color = preview != null ? Color.white : Color.clear;
+        droneOfSkillIcon.gameObject.SetActive(preview != null);
+    }
+
+    // 수집레벨에 따른 스킬스킨 적용도 동기화하여 반영한다.
+    private static void ApplySkillPreviewSkin(GameObject instance, PlayerSkillConfig skill, int skillLevel)
+    {
+        if (instance == null || skill == null)
+        {
+            return;
+        }
+
+        SkinEditor_SkillLevel[] skinEditors = instance.GetComponentsInChildren<SkinEditor_SkillLevel>(true);
+        for (int i = 0; i < skinEditors.Length; i++)
+        {
+            skinEditors[i]?.SetSkill(skill, Mathf.Max(1, skillLevel));
+        }
+    }
+
+    // 스킬 타입별 프리팹 가져오기
+    private static GameObject GetSkillPreviewPrefab(PlayerSkillConfig skill)
+    {
+        if (skill == null)
+        {
+            return null;
+        }
+
+        return skill.SkillType switch
+        {
+            PlayerSkillType.Bombardment => skill.AirplanePrefab,
+            PlayerSkillType.AutoTurret => skill.TurretPrefab,
+            PlayerSkillType.MissileTurret => skill.MissileTurretPrefab,
+            PlayerSkillType.StealthBomber => skill.StealthBomberPrefab,
+            PlayerSkillType.AttackHelicopter => skill.AttackHelicopterPrefab,
+            _ => null
+        };
     }
 }

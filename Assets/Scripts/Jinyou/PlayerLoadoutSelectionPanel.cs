@@ -576,9 +576,11 @@ public class PlayerLoadoutSelectionPanel : MonoBehaviour
                     PlayOptionButtonAudio();
                     SelectSkill(skill);
                 },
-                skill.Icon,
                 null,
-                RarityVisuals.GetColor(skill.Rarity));
+                null,
+                RarityVisuals.GetColor(skill.Rarity),
+                skill,
+                GetCollectionSkillLevel(skill));
         }
     }
 

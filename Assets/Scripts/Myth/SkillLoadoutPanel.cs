@@ -191,7 +191,11 @@ public class SkillLoadoutPanel : MonoBehaviour
                 BuildSkillSummary(skill),
                 skill == selectedSkill,
                 () => SelectSkill(capturedSkill),
-                skill.Icon);
+                null,
+                null,
+                null,
+                skill,
+                GetSkillLevel(skill));
             spawnedButtons.Add(option);
         }
 
