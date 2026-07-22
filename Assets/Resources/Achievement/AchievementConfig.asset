@@ -52,19 +52,19 @@ MonoBehaviour:
     description: "\uBB34\uAE30 {0}\uAC1C \uC218\uC9D1"
     iconSprite: {fileID: 21300000, guid: 777b3ee7eedde3e4dabcbdbe11082b13, type: 3}
     targetAmount: 5
-    nextTargetAmounts: 0a0000000f00000014000000
-    repeatRequirementAmount: 5
+    nextTargetAmounts: 0a0000000f0000001400000019000000
+    repeatRequirementAmount: 0
     progressAmountPerEvent: 1
     rewardCurrency: 1
     rewardAmount: 10
   - id: drone_collect
     progressType: 4
-    title: "\uB4DC\uB860 \uC218\uC9D1"
-    description: "\uB4DC\uB860 {0}\uAC1C \uC218\uC9D1"
+    title: "\uB4DC\uB860 \uD574\uAE08"
+    description: "\uB4DC\uB860 {0}\uAC1C \uD574\uAE08"
     iconSprite: {fileID: 21300000, guid: 483bcab199586ea4b8cd20b21786247d, type: 3}
-    targetAmount: 3
-    nextTargetAmounts: 0600000009000000
-    repeatRequirementAmount: 3
+    targetAmount: 4
+    nextTargetAmounts: 05000000
+    repeatRequirementAmount: 0
     progressAmountPerEvent: 1
     rewardCurrency: 1
     rewardAmount: 10
@@ -82,8 +82,8 @@ MonoBehaviour:
   - id: boss_difficulty_clear
     progressType: 6
     title: "\uBCF4\uC2A4\uCC98\uCE58 (\uACE0\uB09C\uC774\uB3C4)"
-    description: "\uBCF4\uC2A4 {0}\uB9C8\uB9AC \uCC98\uCE58\n(\uC5B4\uB824\uC6C0
-      \uB09C\uC774\uB3C4 \uC774\uC0C1)"
+    description: "\uBCF4\uC2A4 {0}\uB9C8\uB9AC \uCC98\uCE58(\uC5B4\uB824\uC6C0 \uB09C\uC774\uB3C4
+      \uC774\uC0C1)"
     iconSprite: {fileID: 21300000, guid: d4a8f6ffefad5bf4796645607a795314, type: 3}
     targetAmount: 1
     nextTargetAmounts: 020000000300000004000000
@@ -93,12 +93,12 @@ MonoBehaviour:
     rewardAmount: 30
   - id: facility_upgrade
     progressType: 7
-    title: "\uAE30\uC9C0 \uC5C5\uADF8\uB808\uC774\uB4DC"
-    description: "\uAE30\uC9C0 {0}\uAC1C \uC5C5\uADF8\uB808\uC774\uB4DC \uC644\uB8CC"
+    title: "\uAE30\uC9C0 \uC131\uC7A5"
+    description: "\uAE30\uC9C0 \uB204\uC801 Lv.{0} \uB2EC\uC131"
     iconSprite: {fileID: 21300000, guid: 3f891ff4fadde804790fad919f7dcaf0, type: 3}
-    targetAmount: 2
-    nextTargetAmounts: 0400000006000000
-    repeatRequirementAmount: 6
+    targetAmount: 10
+    nextTargetAmounts: 0f00000014000000190000001e00000023000000280000002c000000
+    repeatRequirementAmount: 0
     progressAmountPerEvent: 1
     rewardCurrency: 1
     rewardAmount: 10

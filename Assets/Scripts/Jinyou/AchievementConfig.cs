@@ -84,7 +84,7 @@ public class AchievementConfig : ScriptableObject
                 previousRequirement = achievement.nextTargetAmounts[i];
             }
 
-            achievement.repeatRequirementAmount = Mathf.Max(1, achievement.repeatRequirementAmount);
+            achievement.repeatRequirementAmount = Mathf.Max(0, achievement.repeatRequirementAmount);
             achievement.progressAmountPerEvent = Mathf.Max(1, achievement.progressAmountPerEvent);
             achievement.rewardAmount = Mathf.Max(0, achievement.rewardAmount);
         }
@@ -122,7 +122,7 @@ public class AchievementConfig : ScriptableObject
                 description = Get(row, "description"),
                 targetAmount = Mathf.Max(1, GetInt(row, "targetAmount", 1)),
                 nextTargetAmounts = ParseIntList(Get(row, "nextTargetAmounts")),
-                repeatRequirementAmount = Mathf.Max(1, GetInt(row, "repeatRequirementAmount", 1)),
+                repeatRequirementAmount = Mathf.Max(0, GetInt(row, "repeatRequirementAmount", 1)),
                 progressAmountPerEvent = Mathf.Max(1, GetInt(row, "progressAmountPerEvent", 1)),
                 rewardCurrency = GetEnum(row, "rewardCurrency", CurrencyType.CoreCrystals),
                 rewardAmount = Mathf.Max(0, GetInt(row, "rewardAmount"))

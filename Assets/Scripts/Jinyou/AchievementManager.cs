@@ -33,7 +33,7 @@ public class AchievementManager : MonoBehaviour
         [Min(1)]
         [SerializeField, FormerlySerializedAs("targetAmount")] private int _targetAmount = 1;
         [SerializeField, FormerlySerializedAs("nextTargetAmounts")] private List<int> _nextTargetAmounts = new List<int>();
-        [Min(1)]
+        [Min(0)]
         [SerializeField, FormerlySerializedAs("repeatRequirementAmount")] private int _repeatRequirementAmount = 1;
         [Min(1)]
         [SerializeField, FormerlySerializedAs("progressAmountPerEvent")] private int _progressAmountPerEvent = 1;
@@ -51,7 +51,7 @@ public class AchievementManager : MonoBehaviour
         public Sprite IconSprite => _iconSprite;
         public int TargetAmount => Mathf.Max(1, _targetAmount);
         public IReadOnlyList<int> NextTargetAmounts => _nextTargetAmounts;
-        public int RepeatRequirementAmount => Mathf.Max(1, _repeatRequirementAmount);
+        public int RepeatRequirementAmount => Mathf.Max(0, _repeatRequirementAmount);
         public int ProgressAmountPerEvent => Mathf.Max(1, _progressAmountPerEvent);
         public CurrencyType RewardCurrency => _rewardCurrency;
         public int RewardAmount => Mathf.Max(0, _rewardAmount);
@@ -88,7 +88,7 @@ public class AchievementManager : MonoBehaviour
             this._description = description;
             this._targetAmount = Mathf.Max(1, targetAmount);
             this._progressAmountPerEvent = Mathf.Max(1, progressAmountPerEvent);
-            this._repeatRequirementAmount = Mathf.Max(1, repeatRequirementAmount);
+            this._repeatRequirementAmount = Mathf.Max(0, repeatRequirementAmount);
             this._rewardCurrency = rewardCurrency;
             this._rewardAmount = Mathf.Max(0, rewardAmount);
         }
@@ -104,7 +104,7 @@ public class AchievementManager : MonoBehaviour
             _nextTargetAmounts = definition.nextTargetAmounts != null
                 ? new List<int>(definition.nextTargetAmounts)
                 : new List<int>();
-            _repeatRequirementAmount = Mathf.Max(1, definition.repeatRequirementAmount);
+            _repeatRequirementAmount = Mathf.Max(0, definition.repeatRequirementAmount);
             _progressAmountPerEvent = Mathf.Max(1, definition.progressAmountPerEvent);
             _rewardCurrency = definition.rewardCurrency;
             _rewardAmount = Mathf.Max(0, definition.rewardAmount);
@@ -148,6 +148,11 @@ public class AchievementManager : MonoBehaviour
 
             _completedCount++;
             _completed = false;
+            if (IsFinalMilestoneClaimed)
+            {
+                _currentAmount = GetLastConfiguredTargetAmount();
+            }
+
             return true;
         }
 
@@ -181,7 +186,7 @@ public class AchievementManager : MonoBehaviour
                 previousRequirement = _nextTargetAmounts[i];
             }
 
-            _repeatRequirementAmount = Mathf.Max(1, _repeatRequirementAmount);
+            _repeatRequirementAmount = Mathf.Max(0, _repeatRequirementAmount);
             _progressAmountPerEvent = Mathf.Max(1, _progressAmountPerEvent);
             _rewardAmount = Mathf.Max(0, _rewardAmount);
             _completedCount = Mathf.Max(0, _completedCount);
@@ -191,8 +196,14 @@ public class AchievementManager : MonoBehaviour
 
         private void RefreshCompletionState()
         {
-            _completed = _currentAmount >= NextTargetAmount;
+            _completed = !IsFinalMilestoneClaimed && _currentAmount >= NextTargetAmount;
         }
+
+        private bool RepeatEnabled => RepeatRequirementAmount > 0;
+
+        private int ConfiguredMilestoneCount => 1 + (_nextTargetAmounts != null ? _nextTargetAmounts.Count : 0);
+
+        private bool IsFinalMilestoneClaimed => !RepeatEnabled && CompletedCount >= ConfiguredMilestoneCount;
 
         private int GetRequiredAmountForCompletion(int completionIndex)
         {
@@ -213,8 +224,24 @@ public class AchievementManager : MonoBehaviour
                 lastConfiguredTarget = Mathf.Max(TargetAmount, _nextTargetAmounts[_nextTargetAmounts.Count - 1]);
             }
 
+            if (!RepeatEnabled)
+            {
+                return lastConfiguredTarget;
+            }
+
             int repeatIndex = completionIndex - (_nextTargetAmounts != null ? _nextTargetAmounts.Count : 0);
             return lastConfiguredTarget + Mathf.Max(0, repeatIndex) * RepeatRequirementAmount;
+        }
+
+        private int GetLastConfiguredTargetAmount()
+        {
+            int lastConfiguredTarget = TargetAmount;
+            if (_nextTargetAmounts != null && _nextTargetAmounts.Count > 0)
+            {
+                lastConfiguredTarget = Mathf.Max(TargetAmount, _nextTargetAmounts[_nextTargetAmounts.Count - 1]);
+            }
+
+            return lastConfiguredTarget;
         }
     }
 
@@ -305,7 +332,7 @@ public class AchievementManager : MonoBehaviour
 
     public static void ReportFacilityUpgraded(int amount = 1)
     {
-        Instance?.AddProgress(AchievementProgressType.FacilityUpgrade, amount);
+        Instance?.SetFacilityUpgradeProgressToCurrentTotal();
     }
 
     public static void ReportWeaponUpgraded(int amount = 1)
@@ -370,6 +397,7 @@ public class AchievementManager : MonoBehaviour
         }
 
         Save();
+        ResyncAbsoluteProgress(AchievementProgressType.FacilityUpgrade);
         OnAchievementsChanged.Invoke();
     }
 
@@ -454,7 +482,41 @@ public class AchievementManager : MonoBehaviour
                     SetProgress(progressType, progression.Level);
                 }
                 break;
+            case AchievementProgressType.FacilityUpgrade:
+                SetFacilityUpgradeProgressToCurrentTotal();
+                break;
         }
+    }
+
+    private void SetFacilityUpgradeProgressToCurrentTotal()
+    {
+        SetProgress(AchievementProgressType.FacilityUpgrade, ResolveTotalFacilityLevel());
+    }
+
+    private static int ResolveTotalFacilityLevel()
+    {
+        BaseCampManager baseCampManager = BaseCampManager.Instance
+            ?? FindFirstObjectByType<BaseCampManager>(FindObjectsInactive.Include);
+
+        if (baseCampManager != null)
+        {
+            return GetFacilityLevel(baseCampManager.CommandCenter)
+                + GetFacilityLevel(baseCampManager.CreditRefinery)
+                + GetFacilityLevel(baseCampManager.AssemblyFactory)
+                + GetFacilityLevel(baseCampManager.CoreCharger)
+                + GetFacilityLevel(baseCampManager.SkillHanger);
+        }
+
+        return GetFacilityLevel(FindFirstObjectByType<CommandCenter>(FindObjectsInactive.Include))
+            + GetFacilityLevel(FindFirstObjectByType<CreditRefinery>(FindObjectsInactive.Include))
+            + GetFacilityLevel(FindFirstObjectByType<AssemblyFactory>(FindObjectsInactive.Include))
+            + GetFacilityLevel(FindFirstObjectByType<CoreCharger>(FindObjectsInactive.Include))
+            + GetFacilityLevel(FindFirstObjectByType<SkillHangerFacility>(FindObjectsInactive.Include));
+    }
+
+    private static int GetFacilityLevel(IBaseCampFacility facility)
+    {
+        return facility != null ? Mathf.Max(0, facility.Level) : 0;
     }
 
     private PlayerCurrencyWallet ResolveCurrencyWallet()

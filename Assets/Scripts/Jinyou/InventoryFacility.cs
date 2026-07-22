@@ -1169,7 +1169,6 @@ public class InventoryFacility : MonoBehaviour
     private void NotifyCollectionChanged()
     {
         AchievementManager.ReportWeaponCollected();
-        AchievementManager.ReportDroneCollected();
         OnCollectionProgressChanged.Invoke();
         OnInventoryChanged.Invoke();
     }
