@@ -307,7 +307,7 @@ public class AchievementManager : MonoBehaviour
 
     public static void ReportStageCleared(int amount = 1)
     {
-        Instance?.AddProgress(AchievementProgressType.StageClear, amount);
+        Instance?.SetProgress(AchievementProgressType.StageClear, Mathf.Max(1, amount));
     }
 
     public static void ReportWeaponCollected(int amount = 1)
@@ -480,6 +480,13 @@ public class AchievementManager : MonoBehaviour
                 if (progression != null)
                 {
                     SetProgress(progressType, progression.Level);
+                }
+                break;
+            case AchievementProgressType.StageClear:
+                EnemySpawnManager spawnManager = FindFirstObjectByType<EnemySpawnManager>(FindObjectsInactive.Include);
+                if (spawnManager != null)
+                {
+                    SetProgress(progressType, spawnManager.CurrentStage);
                 }
                 break;
             case AchievementProgressType.FacilityUpgrade:

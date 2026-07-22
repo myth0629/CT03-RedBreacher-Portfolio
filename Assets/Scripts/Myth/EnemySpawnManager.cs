@@ -322,6 +322,7 @@ public class EnemySpawnManager : MonoBehaviour
 
         if (currentStage != previousStage)
         {
+            AchievementManager.ReportStageCleared(currentStage);
             StageChanged?.Invoke(currentStage);
         }
     }
@@ -340,7 +341,7 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         lastReportedStageClearRound = clearedRound;
-        AchievementManager.ReportStageCleared();
+        AchievementManager.ReportStageCleared(currentStage);
         MainGuideMissionManager.ReportStageCleared();
     }
 

@@ -288,7 +288,7 @@ MonoBehaviour:
   regenPercentPerSecond: 0.01
   regenFlatPerSecond: 0
   showDamageNumber: 1
-  damageNumberFont: {fileID: 11400000, guid: 38aecd77a18d544bfb836befe83883b7, type: 2}
+  damageNumberFont: {fileID: 11400000, guid: d9b454495b7d24a7a933eb61bdfa0607, type: 2}
   enemyDamageColor: {r: 1, g: 1, b: 1, a: 1}
   playerDamageColor: {r: 1, g: 0.35, b: 0.35, a: 1}
   criticalDamageColor: {r: 1, g: 0.85, b: 0.1, a: 1}
@@ -356,6 +356,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a2c9d533b475740ea8080bdfec73409f, type: 3}
   - {fileID: 8300000, guid: 2c264d55a5aff4f1db7d0f011cc7ecbe, type: 3}
   repositionSource: {fileID: 3166007947446319929}
+  disableAutoRepositionDuringBoss: 1
+  bossApproachClearance: 0.35
   fireFlashEffectPrefab: {fileID: 0}
   projectileEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
@@ -383,6 +385,8 @@ MonoBehaviour:
   experienceGrowthRate: 1.13
   statPoints: 0
   saveToPlayerPrefs: 1
+  autoHealthPercentPerLevel: 0.015
+  autoAttackPercentPerLevel: 0.01
 --- !u!114 &2421075610840562408
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -474,6 +478,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a2c9d533b475740ea8080bdfec73409f, type: 3}
   - {fileID: 8300000, guid: 2c264d55a5aff4f1db7d0f011cc7ecbe, type: 3}
   dodgeSource: {fileID: 3166007947446319929}
+  preventBossOverlap: 1
+  bossDodgeClearance: 0.35
   dodgeEaseExponent: 4.5
   perfectDodgeAttackBonus: 0.2
   perfectDodgeBuffDuration: 2
