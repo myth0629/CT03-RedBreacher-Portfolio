@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -18,6 +19,7 @@ public class EquipmentPartsPanel : MonoBehaviour
     [SerializeField] private Color rareFrameColor = new Color(0.25f, 0.55f, 1f, 1f);
     [SerializeField] private Color epicFrameColor = new Color(0.75f, 0.3f, 1f, 1f);
     [SerializeField] private Color legendaryFrameColor = new Color(1f, 0.72f, 0.18f, 1f);
+    [SerializeField, Min(1)] private int partButtonsPerFrame = 40;
 
     [Header("Equipped Slots")]
     [SerializeField] private TMP_Text armorSlotText;
@@ -60,6 +62,7 @@ public class EquipmentPartsPanel : MonoBehaviour
     private readonly Dictionary<string, GameObject> selectIcons = new Dictionary<string, GameObject>();
     private string selectedInstanceId;
     private PanelTweenTransition panelTransition;
+    private Coroutine partListBuildCoroutine;
 
     // null이면 전체 표시, 값이 있으면 해당 슬롯 파츠만 표시한다.
     private EquipmentPartSlot? slotFilter;
@@ -86,6 +89,7 @@ public class EquipmentPartsPanel : MonoBehaviour
 
     private void OnDisable()
     {
+        StopPartListBuild();
         UnsubscribeEvents();
         equipButton?.onClick.RemoveListener(EquipSelected);
         unequipButton?.onClick.RemoveListener(UnequipSelected);
@@ -105,14 +109,23 @@ public class EquipmentPartsPanel : MonoBehaviour
     public void Rebuild()
     {
         ResolveReferences();
+        StopPartListBuild();
         ClearButtons();
 
         if (inventory != null && partContentRoot != null && partButtonPrefab != null)
         {
             List<EquipmentPartInstance> parts = CollectSortedParts();
-            for (int i = 0; i < parts.Count; i++)
+
+            if (parts.Count <= partButtonsPerFrame)
             {
-                CreatePartButton(parts[i]);
+                for (int i = 0; i < parts.Count; i++)
+                {
+                    CreatePartButton(parts[i]);
+                }
+            }
+            else
+            {
+                partListBuildCoroutine = StartCoroutine(CreatePartButtonsBatched(parts));
             }
         }
 
@@ -609,6 +622,28 @@ public class EquipmentPartsPanel : MonoBehaviour
         RefreshDetail();
     }
 
+    private IEnumerator CreatePartButtonsBatched(List<EquipmentPartInstance> parts)
+    {
+        int createdThisFrame = 0;
+        int maxPerFrame = Mathf.Max(1, partButtonsPerFrame);
+
+        for (int i = 0; i < parts.Count; i++)
+        {
+            CreatePartButton(parts[i]);
+            createdThisFrame++;
+
+            if (createdThisFrame >= maxPerFrame)
+            {
+                createdThisFrame = 0;
+                RefreshSelectionIcons();
+                yield return null;
+            }
+        }
+
+        partListBuildCoroutine = null;
+        RefreshSelectionIcons();
+    }
+
     private void RefreshSelectionIcons()
     {
         foreach (KeyValuePair<string, GameObject> pair in selectIcons)
@@ -746,6 +781,17 @@ public class EquipmentPartsPanel : MonoBehaviour
         loadout?.OnLoadoutChanged.RemoveListener(Rebuild);
     }
 
+    private void StopPartListBuild()
+    {
+        if (partListBuildCoroutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(partListBuildCoroutine);
+        partListBuildCoroutine = null;
+    }
+
     private void ClearButtons()
     {
         for (int i = 0; i < spawnedButtons.Count; i++)
@@ -837,4 +883,5 @@ public class EquipmentPartsPanel : MonoBehaviour
         target.preserveAspect = true;
     }
 }
+
 
