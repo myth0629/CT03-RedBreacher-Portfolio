@@ -57,6 +57,7 @@ public class EquipmentPartsPanel : MonoBehaviour
 
     private readonly List<Button> spawnedButtons = new List<Button>();
     private readonly Dictionary<string, GameObject> newBadges = new Dictionary<string, GameObject>();
+    private readonly Dictionary<string, GameObject> selectIcons = new Dictionary<string, GameObject>();
     private string selectedInstanceId;
     private PanelTweenTransition panelTransition;
 
@@ -118,6 +119,7 @@ public class EquipmentPartsPanel : MonoBehaviour
         RefreshFilterButtons();
         RefreshAutoSellButtons();
         RefreshEquippedSlots();
+        RefreshSelectionIcons();
         RefreshDetail();
     }
 
@@ -421,6 +423,8 @@ public class EquipmentPartsPanel : MonoBehaviour
         if (inventory.TrySellEquipmentPart(part.instanceId, loadout, currencyWallet))
         {
             selectedInstanceId = string.Empty;
+            RefreshSelectionIcons();
+            RefreshDetail();
         }
     }
 
@@ -499,6 +503,18 @@ public class EquipmentPartsPanel : MonoBehaviour
             if (!string.IsNullOrEmpty(part.instanceId))
             {
                 newBadges[part.instanceId] = newBadge.gameObject;
+            }
+        }
+
+        Transform selectIcon = FindChildObject(button.transform, "Select_Icon");
+        if (selectIcon != null)
+        {
+            bool isSelected = !string.IsNullOrEmpty(part.instanceId)
+                && part.instanceId == selectedInstanceId;
+            selectIcon.gameObject.SetActive(isSelected);
+            if (!string.IsNullOrEmpty(part.instanceId))
+            {
+                selectIcons[part.instanceId] = selectIcon.gameObject;
             }
         }
 
@@ -589,7 +605,20 @@ public class EquipmentPartsPanel : MonoBehaviour
             badge.SetActive(false);
         }
 
+        RefreshSelectionIcons();
         RefreshDetail();
+    }
+
+    private void RefreshSelectionIcons()
+    {
+        foreach (KeyValuePair<string, GameObject> pair in selectIcons)
+        {
+            if (pair.Value != null)
+            {
+                pair.Value.SetActive(!string.IsNullOrEmpty(selectedInstanceId)
+                    && pair.Key == selectedInstanceId);
+            }
+        }
     }
 
     private void RefreshEquippedSlots()
@@ -729,6 +758,7 @@ public class EquipmentPartsPanel : MonoBehaviour
 
         spawnedButtons.Clear();
         newBadges.Clear();
+        selectIcons.Clear();
     }
 
     private static string GetDisplayName(EquipmentPartConfig config, EquipmentPartInstance part)
