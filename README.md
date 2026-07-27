@@ -4,6 +4,12 @@
 
 3인 팀 프로젝트에서 전투·스킬 시스템, 적·보스, 튜토리얼, 플레이어 성장과 CSV 기반 밸런스 데이터 파이프라인을 담당했습니다.
 
+## 플레이 영상
+
+[![RedBreacher 플레이 영상](https://img.youtube.com/vi/IPUwWMKDSJQ/hqdefault.jpg)](https://youtu.be/IPUwWMKDSJQ)
+
+[YouTube에서 플레이 영상 보기](https://youtu.be/IPUwWMKDSJQ)
+
 ## 핵심 구현
 
 - **CSV ↔ ScriptableObject 데이터 파이프라인**: 유닛·무기·스킬·적·드론·장비·가챠 등 8종의 밸런스 데이터를 CSV로 관리하고, 에디터 임포터로 `ScriptableObject`와 동기화해 코드 수정 없이 밸런싱을 반복할 수 있도록 했습니다.
