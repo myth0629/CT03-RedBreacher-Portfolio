@@ -45,6 +45,8 @@ public class CloudSaveService : MonoBehaviour
     // 이번 세션에 이미 클라우드와 맞춘 키. 타이틀 프리워밍 후 같은 키를 재다운로드하지 않게 한다.
     private readonly HashSet<string> syncedKeys = new HashSet<string>();
     private readonly HashSet<string> pendingPushKeys = new HashSet<string>();
+    // 키별 변경 순번으로 비동기 업로드 중 발생한 새 저장을 식별한다.
+    private readonly Dictionary<string, int> pushRevisions = new Dictionary<string, int>();
     private float nextPushTime;
     private bool pushing;
     // 종료 지연 플러시가 진행 중인 업로드까지 기다릴 수 있도록 마지막 푸시 작업을 추적한다.
@@ -55,6 +57,21 @@ public class CloudSaveService : MonoBehaviour
     {
         public long lastSavedUnixTime;
         public int version;
+    }
+
+    // 업로드 시작 시점의 JSON과 변경 순번을 고정해 전송 중 변경과 분리한다.
+    private sealed class PushRequest
+    {
+        public readonly string key;
+        public readonly string json;
+        public readonly int revision;
+
+        public PushRequest(string key, string json, int revision)
+        {
+            this.key = key;
+            this.json = json;
+            this.revision = revision;
+        }
     }
 
     private void Awake()
@@ -116,8 +133,7 @@ public class CloudSaveService : MonoBehaviour
             return;
         }
 
-        pendingPushKeys.Add(playerPrefsKey);
-        nextPushTime = Time.unscaledTime + PushDebounceSeconds;
+        MarkDirty(playerPrefsKey);
     }
 
     /// <summary>일시정지/종료 등 Update가 멈추는 상황에서 즉시 업로드한다(대기 중인 키 전부).</summary>
@@ -128,9 +144,13 @@ public class CloudSaveService : MonoBehaviour
             return;
         }
 
-        List<string> keys = new List<string>(pendingPushKeys);
-        pendingPushKeys.Clear();
-        lastPushTask = PushManyAsync(keys);
+        List<PushRequest> requests = TakePendingPushRequests();
+        if (requests.Count == 0)
+        {
+            return;
+        }
+
+        lastPushTask = PushManyAsync(requests);
     }
 
     /// <summary>대기/진행 중인 업로드가 있는지(종료 지연 플러시 판단용).</summary>
@@ -141,9 +161,11 @@ public class CloudSaveService : MonoBehaviour
     {
         if (IsReady() && pendingPushKeys.Count > 0 && !pushing)
         {
-            List<string> keys = new List<string>(pendingPushKeys);
-            pendingPushKeys.Clear();
-            lastPushTask = PushManyAsync(keys);
+            List<PushRequest> requests = TakePendingPushRequests();
+            if (requests.Count > 0)
+            {
+                lastPushTask = PushManyAsync(requests);
+            }
         }
 
         return lastPushTask;
@@ -157,6 +179,7 @@ public class CloudSaveService : MonoBehaviour
     public void HandleAccountChanged()
     {
         pendingPushKeys.Clear();
+        pushRevisions.Clear();
         syncedKeys.Clear();
     }
 
@@ -202,13 +225,15 @@ public class CloudSaveService : MonoBehaviour
                 }
                 else if (localTs > cloudTs)
                 {
-                    await PushAsync(key, uid);
+                    RequestPush(key);
+                    await FlushNowAsync();
                     Debug.Log($"[Cloud] 로컬 세이브 업로드 (local {localTs} > cloud {cloudTs}).");
                 }
             }
             else if (localTs >= 0)
             {
-                await PushAsync(key, uid);
+                RequestPush(key);
+                await FlushNowAsync();
                 Debug.Log("[Cloud] 클라우드에 첫 세이브 업로드.");
             }
 
@@ -221,7 +246,7 @@ public class CloudSaveService : MonoBehaviour
         }
     }
 
-    private async Task PushManyAsync(List<string> keys)
+    private async Task PushManyAsync(List<PushRequest> requests)
     {
         pushing = true;
         try
@@ -232,14 +257,33 @@ public class CloudSaveService : MonoBehaviour
                 return;
             }
 
-            foreach (string key in keys)
+            foreach (PushRequest request in requests)
             {
-                await PushAsync(key, uid);
+                if (CurrentUid() != uid)
+                {
+                    return;
+                }
+
+                try
+                {
+                    await PushAsync(request, uid);
+                    if (CurrentUid() != uid)
+                    {
+                        return;
+                    }
+
+                    // 전송 중 변경된 경우 최신 JSON을 새 요청으로 다시 직렬화한다.
+                    if (GetPushRevision(request.key) != request.revision)
+                    {
+                        QueuePendingPush(request.key, 0f);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[Cloud] 업로드 실패: {e.Message}");
+                    QueuePendingPush(request.key, PushDebounceSeconds);
+                }
             }
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning($"[Cloud] 업로드 실패: {e.Message}");
         }
         finally
         {
@@ -247,23 +291,17 @@ public class CloudSaveService : MonoBehaviour
         }
     }
 
-    private async Task PushAsync(string key, string uid)
+    private async Task PushAsync(PushRequest request, string uid)
     {
-        if (!IsReady() || string.IsNullOrEmpty(uid))
+        if (!IsReady() || string.IsNullOrEmpty(uid) || string.IsNullOrEmpty(request.json))
         {
             return;
         }
 
-        string json = PlayerPrefs.GetString(key, string.Empty);
-        if (string.IsNullOrEmpty(json))
-        {
-            return;
-        }
-
-        SaveMeta meta = ParseMeta(json);
+        SaveMeta meta = ParseMeta(request.json);
         Dictionary<string, object> payload = new Dictionary<string, object>
         {
-            { SaveField, json },
+            { SaveField, request.json },
             { TimestampField, meta != null ? meta.lastSavedUnixTime : 0L },
             { VersionField, meta != null ? meta.version : 0 },
             { UpdatedAtField, FieldValue.ServerTimestamp },
@@ -276,6 +314,39 @@ public class CloudSaveService : MonoBehaviour
         }
 
         await Doc(uid).SetAsync(payload, SetOptions.MergeAll);
+    }
+
+    private void MarkDirty(string key)
+    {
+        pushRevisions[key] = GetPushRevision(key) + 1;
+        QueuePendingPush(key, PushDebounceSeconds);
+    }
+
+    private void QueuePendingPush(string key, float delay)
+    {
+        pendingPushKeys.Add(key);
+        nextPushTime = Mathf.Max(nextPushTime, Time.unscaledTime + delay);
+    }
+
+    private List<PushRequest> TakePendingPushRequests()
+    {
+        List<PushRequest> requests = new List<PushRequest>(pendingPushKeys.Count);
+        foreach (string key in pendingPushKeys)
+        {
+            string json = PlayerPrefs.GetString(key, string.Empty);
+            if (!string.IsNullOrEmpty(json))
+            {
+                requests.Add(new PushRequest(key, json, GetPushRevision(key)));
+            }
+        }
+
+        pendingPushKeys.Clear();
+        return requests;
+    }
+
+    private int GetPushRevision(string key)
+    {
+        return pushRevisions.TryGetValue(key, out int revision) ? revision : 0;
     }
 
     private DocumentReference Doc(string uid)
