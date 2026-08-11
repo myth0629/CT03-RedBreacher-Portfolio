@@ -16,6 +16,36 @@
 - **자동 스킬 전투**: 스킬별 쿨타임에 맞춰 자동 발동하며, 후보 적 주변의 밀집도를 비교해 광역 스킬의 중심점을 선택했습니다. 지속형 소환 스킬은 소환 종료 후 쿨타임을 시작해 중첩을 방지했습니다.
 - **계정 기반 클라우드 세이브**: Google/Play Games 로그인과 Firestore를 연동하고, 로컬과 클라우드 저장 시각을 비교해 최신 데이터를 적용하는 방식으로 기기 변경 시에도 진행 데이터를 이어갈 수 있도록 했습니다.
 
+## 폴더 구조
+
+코드와 밸런스 데이터를 빠르게 찾을 수 있도록 주요 경로를 정리했습니다. Unity가 자동 생성하는 `.meta` 파일과 세부 에셋 파일은 생략했습니다.
+
+```text
+Assets/
+├── Data/Balance/              # CSV 밸런스 원본
+├── SO/Balance/                # 밸런스 ScriptableObject
+│   ├── Boss/ Drones/ Enemies/
+│   ├── EquipmentParts/ Gacha/
+│   ├── Skills/ Units/ Weapons/
+│   └── Legacy/                # 이전 데이터 구조
+├── Scripts/
+│   ├── Myth/                  # 전투, 스킬, 적, 보스, 플레이어
+│   ├── Jinyou/                # 기지, 가챠, 장비, 저장, 업적
+│   ├── SEO/                   # 타이틀, 인증, UI 제어
+│   └── Common/                # 공용 UI·프레임·토스트
+├── Prefab/                    # 전투 오브젝트와 기본 UI 프리팹
+├── Prefabs/                   # 기지·상점·업적 등 UI 프리팹
+├── Scenes/                    # Title, Myth, Jin 및 테스트 씬
+├── Resources/                # 튜토리얼, 가이드, 기지, 업적 데이터
+├── Plugins/                  # Android/iOS 로그인 브리지와 빌드 설정
+├── Settings/                 # URP 및 렌더러 설정
+└── Screenshots/              # 포트폴리오 미리보기 이미지
+Packages/                    # Unity 패키지 의존성
+ProjectSettings/             # 입력·빌드·렌더링 프로젝트 설정
+.github/workflows/           # 공개 저장소 동기화 워크플로
+README.md
+```
+
 ## 저장소 공개 범위
 
 이 저장소는 포트폴리오용 공개 버전입니다. 라이선스 보호와 보안 정보 노출 방지를 위해 Unity Asset Store 및 제3자 에셋 원본, 사운드·이미지·폰트·VFX 리소스, 외부 SDK 바이너리와 Firebase 환경 설정 파일을 전체 Git 기록에서 제외했습니다.
